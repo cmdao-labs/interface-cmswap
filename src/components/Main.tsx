@@ -103,7 +103,7 @@ export default function Main() {
             <footer className='mt-10 w-full p-8 flex flex-row justify-between'>
                 <div className="gap-3 flex flex-col text-xs text-left">
                     <div>{'CommuDAO dev by second labs ' + v}</div>
-                    <a style={{color: "#fff", textDecoration: "none"}} href="https://github.com/cmdao-labs/CommuDAO-dev-by-second-labs" target="_blank" rel="noreferrer">Github</a>
+                    <a style={{color: "#fff", textDecoration: "none"}} href="https://github.com/coshi190/cmd-dev-mode-frontend" target="_blank" rel="noreferrer">Github</a>
                 </div>
                 <div className="gap-3 flex flex-col text-xs text-right">
                     <a style={{color: "#fff", textDecoration: "none"}} href="https://vote.commudao.xyz" target="_blank" rel="noreferrer">Governance on Snapshot</a>
