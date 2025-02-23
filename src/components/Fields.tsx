@@ -16,7 +16,7 @@ export default function Fields({ callMode, navigate }: {callMode: (_mode: number
             <div className="w-full mt-8 px-10 flex flex-row items-start justify-start">
                 <div className="w-full xl:w-1/4 h-[450px] bg-neutral-800 gap-8 flex flex-col items-center justify-center rounded-xl" style={{backgroundImage: "url('https://gateway.commudao.xyz/ipfs/bafybeicyixoicb7ai6zads6t5k6qpyocoyelfbyoi73nmtobfjlv7fseiq')"}}>
                     <img src="https://gateway.commudao.xyz/ipfs/bafybeicyixoicb7ai6zads6t5k6qpyocoyelfbyoi73nmtobfjlv7fseiq" height="250" width="300" alt="Field001" />
-                    <button className="pixel w-3/4 rounded-xl text-lg text-black p-2 bg-emerald-400 hover:bg-emerald-300 hover:font-bold" onClick={() => {callMode(11); navigate('/fields/test001');}}>Go to Test Field</button>
+                    <button className="pixel w-3/4 rounded-xl text-lg text-black p-2 bg-emerald-400 hover:bg-emerald-300 hover:font-bold" onClick={() => {callMode(11); navigate('/fields/cmdao-valley');}}>Go to CMDAO Valley</button>
                 </div>
             </div>
         </>

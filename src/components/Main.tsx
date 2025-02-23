@@ -23,7 +23,6 @@ createAppKit({
     projectId,
     themeMode: 'dark',
     themeVariables: {
-        '--w3m-accent': '#ff007a',
         '--w3m-font-family': 'Inter',
         '--w3m-font-size-master': '8px',
         '--w3m-z-index': 1000, 
@@ -37,7 +36,7 @@ createAppKit({
 })
 
 const Fields = React.lazy(() => import('./Fields'))
-const Test001 = React.lazy(() => import('./Fields-Test001'))
+const CmdaoValley = React.lazy(() => import('./Fields-CmdaoValley'))
 
 export default function Main() {    
     const navigate = useNavigate()
@@ -46,17 +45,17 @@ export default function Main() {
     if (modeText !== undefined) {
         if (modeText.toUpperCase() === "FIELDS") {
             if (subModeText !== undefined) {
-                if (modeText.toUpperCase() === "FIELDS" && subModeText.toUpperCase() === "TEST001") {
+                if (modeText.toUpperCase() === "FIELDS" && subModeText.toUpperCase() === "CMDAO-VALLEY") {
                     preset = 11
-                    document.title = "Test001 | CommuDAO"
+                    document.title = "CmdaoValley | CommuDAO Dev By Second Labs"
                 }
             } else {
                 preset = 1
-                document.title = "Fields | CommuDAO"
+                document.title = "Fields | CommuDAO Dev By Second Labs"
             }
         } else {
             preset = 404
-            document.title = "404 | CommuDAO"
+            document.title = "404 | CommuDAO Dev By Second Labs"
         }
     } else {
         document.title = "CommuDAO Dev By Second Labs"
@@ -91,7 +90,7 @@ export default function Main() {
                     {mode === 0 && <Home />}
                     <Suspense fallback={<div className="w-full h-[100vh] flex items-center justify-center" />}>
                         {mode === 1 && <Fields callMode={callMode} navigate={navigate} />}
-                        {mode === 11 && <Test001 config={wagmiAdapter.wagmiConfig} intrasubModetext={intrasubModetext} navigate={navigate} setIsLoading={setIsLoading} txupdate={txupdate} setTxupdate={setTxupdate} setErrMsg={setErrMsg}/>}
+                        {mode === 11 && <CmdaoValley config={wagmiAdapter.wagmiConfig} intrasubModetext={intrasubModetext} navigate={navigate} setIsLoading={setIsLoading} txupdate={txupdate} setTxupdate={setTxupdate} setErrMsg={setErrMsg}/>}
                     </Suspense>
                     {mode === 404 &&
                         <div className="w-full h-[100vh] flex items-center justify-center pixel">

@@ -14,10 +14,13 @@ const nftIndex2Addr = '0x20724DC1D37E67B7B69B52300fDbA85E558d8F9A'
 const nftIndex2CreatedAt = BigInt(335027)
 const nftIndex3Addr = '0xA6f8cE1425E0fC4b74f3b1c2f9804e9968f90e17'
 const nftIndex3CreatedAt = BigInt(2260250)
+const nftIndex4Addr = '0xb6aaD2B2f9fD5eA0356F49c60Ee599De56206251'
+const nftIndex4CreatedAt = BigInt(119318)
+// add nft addr, created at here
 
 const publicClient = createPublicClient({ chain: jbc, transport: http() })
 
-export default function Test001({ 
+export default function FieldCmdaoValley({ 
     config, intrasubModetext, navigate, setIsLoading, txupdate, setTxupdate, setErrMsg,
 }: {
     config: Config,
@@ -27,43 +30,45 @@ export default function Test001({
     txupdate: String | null,
     setTxupdate: React.Dispatch<React.SetStateAction<String | null>>,
     setErrMsg: React.Dispatch<React.SetStateAction<String | null>>,
-
 }) {
     React.useEffect(() => { window.scrollTo(0, 0) }, [])
     let { address, chain } = useAccount()
     const [addr, setAddr] = React.useState(address)
     const [nftIndexSelect, setNftIndexSelect] = React.useState(2)
-    const [nftIndexHashRate, setNftIndexHashRate] = React.useState('0')
+    const [globNftAddr, setGlobNftAddr] = React.useState<'0xstring'>()
+    const [nftIndexHashRate, setNftIndexHashRate] = React.useState(BigInt(0))
     const [nft, setNft] = React.useState<{ Id: bigint | undefined; Name: any; Description: any; Image: any; Attribute: any; isStaked: boolean; isPeripheryAllow: string; PointPerSec: number; Point: string; }[]>()
     const [totalPoint, setTotalPoint] = React.useState(0)
 
     React.useEffect(() => {
         setNft(undefined)
-        setNftIndexHashRate('0')
+        setNftIndexHashRate(BigInt(0))
         if (intrasubModetext === undefined) {
-            navigate('/fields/test001/' + address)
+            navigate('/fields/cmdao-valley/' + address)
         } else if (intrasubModetext.length === 42) {
             setAddr(intrasubModetext as '0xstring')
         } else if (address === undefined) {
-            navigate('/fields/test001/undefined')
+            navigate('/fields/cmdao-valley/undefined')
         } else {
-            navigate('/fields/test001/' + address)
+            navigate('/fields/cmdao-valley/' + address)
         }
         console.log("Connected to " + address)
         console.log("View profile of " + addr)
 
-        let nftIndex: bigint;
-        let nftAddr: '0xstring'
+        let nftAddr = '0x0' as '0xstring'
         let nftCreatedAt: bigint
         if (nftIndexSelect === 2) {
-            nftIndex = BigInt(2)
             nftAddr = nftIndex2Addr as '0xstring'
             nftCreatedAt = nftIndex2CreatedAt
         } else if (nftIndexSelect === 3) {
-            nftIndex = BigInt(3)
             nftAddr = nftIndex3Addr as '0xstring'
             nftCreatedAt = nftIndex3CreatedAt
+        } else if (nftIndexSelect === 4) {
+            nftAddr = nftIndex4Addr as '0xstring'
+            nftCreatedAt = nftIndex4CreatedAt
         }
+        // add condition here when listing more NFT
+        setGlobNftAddr(nftAddr)
         
         const thefetch = async () => {
             const checkNftIndexHashRate = await readContract(config, {
@@ -71,9 +76,9 @@ export default function Test001({
                 abi: FieldsHook001,
                 address: hook001Addr as '0xstring',
                 functionName: 'hashRateForNftIndex',
-                args: [nftIndex],
+                args: [BigInt(nftIndexSelect)],
             })
-            setNftIndexHashRate(formatEther(checkNftIndexHashRate, 'gwei'))
+            setNftIndexHashRate(BigInt(formatEther(checkNftIndexHashRate, 'gwei')))
 
             const _eventMyNftStaking = (await publicClient.getContractEvents({
                 abi: FieldsV2RouterAbi,
@@ -81,7 +86,7 @@ export default function Test001({
                 eventName: 'NftStaked',
                 args: { 
                     staker: addr as '0xstring',
-                    nftIndex: nftIndex,
+                    nftIndex: BigInt(nftIndexSelect),
                 },
                 fromBlock: v2routerCreatedAt,
                 toBlock: 'latest',
@@ -96,7 +101,7 @@ export default function Test001({
                         abi: FieldsV2RouterAbi,
                         address: v2routerAddr as '0xstring',
                         functionName: 'stakedData',
-                        args: [nftIndex, obj],
+                        args: [BigInt(nftIndexSelect), obj],
                     }
                 ))
             })
@@ -112,7 +117,7 @@ export default function Test001({
                         abi: FieldsV2RouterAbi,
                         address: v2routerAddr as '0xstring',
                         functionName: 'stakedUseByPeriphery',
-                        args: [BigInt(2), nftIndex, obj],
+                        args: [BigInt(2), BigInt(nftIndexSelect), obj],
                     }
                 ))
             })
@@ -134,7 +139,7 @@ export default function Test001({
                         abi: FieldsHook001,
                         address: hook001Addr as '0xstring',
                         functionName: 'calculatePoint',
-                        args: [nftIndex, obj],
+                        args: [BigInt(nftIndexSelect), obj],
                     }
                 ))
             })
@@ -197,7 +202,7 @@ export default function Test001({
                         abi: FieldsV2RouterAbi,
                         address: v2routerAddr as '0xstring',
                         functionName: 'stakedUseByPeriphery',
-                        args: [BigInt(2), nftIndex, obj],
+                        args: [BigInt(2), BigInt(nftIndexSelect), obj],
                     }
                 ))
             })
@@ -219,7 +224,7 @@ export default function Test001({
                         abi: FieldsHook001,
                         address: hook001Addr as '0xstring',
                         functionName: 'calculatePoint',
-                        args: [nftIndex, obj],
+                        args: [BigInt(nftIndexSelect), obj],
                     }
                 ))
             })
@@ -258,19 +263,10 @@ export default function Test001({
     const stakeNft = async (_nftId: bigint) => {
         setIsLoading(true)
         try {
-            let nftIndex: bigint = BigInt(0);
-            let nftAddr = '0x0' as '0xstring'
-            if (nftIndexSelect === 2) {
-                nftIndex = BigInt(2)
-                nftAddr = nftIndex2Addr as '0xstring'
-            } else if (nftIndexSelect === 3) {
-                nftIndex = BigInt(3)
-                nftAddr = nftIndex3Addr as '0xstring'
-            }
             const nftAllow = await readContract(config, {
                 chainId: 8899,
                 abi: erc721Abi,
-                address: nftAddr,
+                address: globNftAddr as '0xstring',
                 functionName: 'getApproved',
                 args: [_nftId],
             })
@@ -278,7 +274,7 @@ export default function Test001({
                 let { request } = await simulateContract(config, {
                     chainId: 8899,
                     abi: erc721Abi,
-                    address: nftAddr,
+                    address: globNftAddr as '0xstring',
                     functionName: 'approve',
                     args: [v2routerAddr, _nftId],
                 })
@@ -290,7 +286,7 @@ export default function Test001({
                 abi: FieldsV2RouterAbi,
                 address: v2routerAddr,
                 functionName: 'nftStake',
-                args: [nftIndex, _nftId],
+                args: [BigInt(nftIndexSelect), _nftId],
             })
             let h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
@@ -303,15 +299,6 @@ export default function Test001({
     const stakeNftAll = async () => {
         setIsLoading(true)
         try {
-            let nftIndex: bigint = BigInt(0);
-            let nftAddr = '0x0' as '0xstring'
-            if (nftIndexSelect === 2) {
-                nftIndex = BigInt(2)
-                nftAddr = nftIndex2Addr as '0xstring'
-            } else if (nftIndexSelect === 3) {
-                nftIndex = BigInt(3)
-                nftAddr = nftIndex3Addr as '0xstring'
-            }
             const nftManipulation = nft?.filter((obj) => {
                 return obj.isStaked === false
             })
@@ -319,7 +306,7 @@ export default function Test001({
                 const nftAllow = await readContract(config, {
                     chainId: 8899,
                     abi: erc721Abi,
-                    address: nftAddr,
+                    address: globNftAddr as '0xstring',
                     functionName: 'getApproved',
                     args: [nftManipulation[i].Id as bigint],
                 })
@@ -327,7 +314,7 @@ export default function Test001({
                     await writeContract(config, {
                         chainId: 8899,
                         abi: erc721Abi,
-                        address: nftAddr,
+                        address: globNftAddr as '0xstring',
                         functionName: 'approve',
                         args: [v2routerAddr, nftManipulation[i].Id as bigint],
                     })
@@ -337,7 +324,7 @@ export default function Test001({
                     abi: FieldsV2RouterAbi,
                     address: v2routerAddr,
                     functionName: 'nftStake',
-                    args: [nftIndex, nftManipulation[i].Id as bigint],
+                    args: [BigInt(nftIndexSelect), nftManipulation[i].Id as bigint],
                 })
                 if (i === nftManipulation.length - 1) {
                     await waitForTransactionReceipt(config, { hash: h })
@@ -353,18 +340,12 @@ export default function Test001({
     const unstakeNft = async (_nftId: bigint) => {
         setIsLoading(true)
         try {
-            let nftIndex: bigint = BigInt(0);
-            if (nftIndexSelect === 2) {
-                nftIndex = BigInt(2)
-            } else if (nftIndexSelect === 3) {
-                nftIndex = BigInt(3)
-            }
             let { request } = await simulateContract(config, {
                 chainId: 8899,
                 abi: FieldsV2RouterAbi,
                 address: v2routerAddr,
                 functionName: 'nftUnstake',
-                args: [nftIndex, _nftId],
+                args: [BigInt(nftIndexSelect), _nftId],
             })
             let h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
@@ -377,12 +358,6 @@ export default function Test001({
     const unstakeNftAll = async () => {
         setIsLoading(true)
         try {
-            let nftIndex: bigint = BigInt(0);
-            if (nftIndexSelect === 2) {
-                nftIndex = BigInt(2)
-            } else if (nftIndexSelect === 3) {
-                nftIndex = BigInt(3)
-            }
             const nftManipulation = nft?.filter((obj) => {
                 return obj.isStaked === true
             })
@@ -392,7 +367,7 @@ export default function Test001({
                     abi: FieldsV2RouterAbi,
                     address: v2routerAddr,
                     functionName: 'nftUnstake',
-                    args: [nftIndex, nftManipulation[i].Id as bigint],
+                    args: [BigInt(nftIndexSelect), nftManipulation[i].Id as bigint],
                 })
                 if (i === nftManipulation.length - 1) {
                     await waitForTransactionReceipt(config, { hash: h })
@@ -408,18 +383,12 @@ export default function Test001({
     const allowPeriphery = async (_nftId: bigint) => {
         setIsLoading(true)
         try {
-            let nftIndex: bigint = BigInt(0);
-            if (nftIndexSelect === 2) {
-                nftIndex = BigInt(2)
-            } else if (nftIndexSelect === 3) {
-                nftIndex = BigInt(3)
-            }
             let { request } = await simulateContract(config, {
                 chainId: 8899,
                 abi: FieldsV2RouterAbi,
                 address: v2routerAddr,
                 functionName: 'allowStakedUseByPeriphery',
-                args: [BigInt(2), nftIndex, _nftId],
+                args: [BigInt(2), BigInt(nftIndexSelect), _nftId],
             })
             let h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
@@ -432,12 +401,6 @@ export default function Test001({
     const allowPeripheryAll = async () => {
         setIsLoading(true)
         try {
-            let nftIndex: bigint = BigInt(0);
-            if (nftIndexSelect === 2) {
-                nftIndex = BigInt(2)
-            } else if (nftIndexSelect === 3) {
-                nftIndex = BigInt(3)
-            }
             const nftManipulation = nft?.filter((obj) => {
                 return obj.isPeripheryAllow === '0'
             })
@@ -447,7 +410,7 @@ export default function Test001({
                     abi: FieldsV2RouterAbi,
                     address: v2routerAddr,
                     functionName: 'allowStakedUseByPeriphery',
-                    args: [BigInt(2), nftIndex, nftManipulation[i].Id as bigint],
+                    args: [BigInt(2), BigInt(nftIndexSelect), nftManipulation[i].Id as bigint],
                 })
                 if (i === nftManipulation.length - 1) {
                     await waitForTransactionReceipt(config, { hash: h })
@@ -463,18 +426,12 @@ export default function Test001({
     const revokePeriphery = async (_nftId: bigint) => {
         setIsLoading(true)
         try {
-            let nftIndex: bigint = BigInt(0);
-            if (nftIndexSelect === 2) {
-                nftIndex = BigInt(2)
-            } else if (nftIndexSelect === 3) {
-                nftIndex = BigInt(3)
-            }
             let { request } = await simulateContract(config, {
                 chainId: 8899,
                 abi: FieldsV2RouterAbi,
                 address: v2routerAddr,
                 functionName: 'revokeStakedUseByPeriphery',
-                args: [BigInt(2), nftIndex, _nftId],
+                args: [BigInt(2), BigInt(nftIndexSelect), _nftId],
             })
             let h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
@@ -487,12 +444,6 @@ export default function Test001({
     const revokePeripheryAll = async () => {
         setIsLoading(true)
         try {
-            let nftIndex: bigint = BigInt(0);
-            if (nftIndexSelect === 2) {
-                nftIndex = BigInt(2)
-            } else if (nftIndexSelect === 3) {
-                nftIndex = BigInt(3)
-            }
             const nftManipulation = nft?.filter((obj) => {
                 return obj.isPeripheryAllow !== '0'
             })
@@ -502,7 +453,7 @@ export default function Test001({
                     abi: FieldsV2RouterAbi,
                     address: v2routerAddr,
                     functionName: 'revokeStakedUseByPeriphery',
-                    args: [BigInt(2), nftIndex, nftManipulation[i].Id as bigint],
+                    args: [BigInt(2), BigInt(nftIndexSelect), nftManipulation[i].Id as bigint],
                 })
                 if (i === nftManipulation.length - 1) {
                     await waitForTransactionReceipt(config, { hash: h })
@@ -518,7 +469,7 @@ export default function Test001({
     return (
         <>
             <div className="pixel w-full h-[300px] flex flex-col items-center justify-center bg-[url('https://gateway.commudao.xyz/ipfs/bafybeicyixoicb7ai6zads6t5k6qpyocoyelfbyoi73nmtobfjlv7fseiq')] text-black">
-                <span className='text-7xl'>Test001</span>
+                <span className='text-7xl'>CMDAO Valley</span>
             </div>
             <div className='pixel w-full mt-14 gap-10 flex flex-col items-center justify-center text-sm'>
                 <div className='w-full px-14 h-[50px] gap-4 flex flex-row items-start justify-start'>
@@ -528,12 +479,13 @@ export default function Test001({
                 <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
                 <div className='w-full h-[50px] gap-6 flex flex-row items-center justify-center'>
                     <button className={'hover:underline ' + (nftIndexSelect === 2 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(2)}>CommuDAO Dungeon</button>
+                    <button className={'hover:underline ' + (nftIndexSelect === 4 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(4)}>CM Hexa Cat Meaw JIB JIB</button>
                     <button className={'hover:underline ' + (nftIndexSelect === 3 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(3)}>The Mythical Guardians</button>
                 </div>
                 <div className='w-3/4 h-[120px] mb-4 p-[20px] flex flex-row justify-around rounded-full bg-slate-800'>
                     <div className="flex flex-col justify-around">
                         <div style={{marginBottom: "20px"}}>NFT COLLECTION HASHRATE</div>
-                        <div style={{fontSize: "24px", marginBottom: "20px"}}>{nftIndexHashRate}</div>
+                        <div style={{fontSize: "24px", marginBottom: "20px"}}>{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(nftIndexHashRate)}</div>
                     </div>
                     <div className="flex flex-col justify-around">
                         <div style={{marginBottom: "20px"}}>MY ELIGIBLE NFT</div>
