@@ -8,10 +8,13 @@ import { FieldsV2RouterAbi, FieldsHook001 } from './abi'
 import { readContracts, readContract, simulateContract, waitForTransactionReceipt, writeContract } from '@wagmi/core'
 
 const v2routerAddr = '0x4b958647b3D5240587843C16d4dfC13B19de2671'
-const v2routerCreatedAt = 4938709
+const v2routerCreatedAt = BigInt(4938709)
 const hook001Addr = '0xE8757f3e371410B5dbeE83dcAE0876e61B1A2042'
 const nftIndex2Addr = '0x20724DC1D37E67B7B69B52300fDbA85E558d8F9A'
-const nftIndex2CreatedAt = 335027
+const nftIndex2CreatedAt = BigInt(335027)
+const nftIndex3Addr = '0xA6f8cE1425E0fC4b74f3b1c2f9804e9968f90e17'
+const nftIndex3CreatedAt = BigInt(2260250)
+
 const publicClient = createPublicClient({ chain: jbc, transport: http() })
 
 export default function Test001({ 
@@ -27,14 +30,17 @@ export default function Test001({
     setErrMsg: React.Dispatch<React.SetStateAction<String | null>>,
 
 }) {
-    window.scrollTo(0, 0)
+    React.useEffect(() => { window.scrollTo(0, 0) }, [])
     let { address, chain } = useAccount()
     const [addr, setAddr] = React.useState(address)
+    const [nftIndexSelect, setNftIndexSelect] = React.useState(2)
+    const [nftIndexHashRate, setNftIndexHashRate] = React.useState('0')
     const [nft, setNft] = React.useState<{ Id: bigint | undefined; Name: any; Description: any; Image: any; Attribute: any; isStaked: boolean; isPeripheryAllow: string; PointPerSec: number; Point: string; }[]>()
     const [totalPoint, setTotalPoint] = React.useState(0)
 
     React.useEffect(() => {
         setNft(undefined)
+        setNftIndexHashRate('0')
         if (intrasubModetext === undefined) {
             navigate('/fields/test001/' + address)
         } else if (intrasubModetext.length === 42) {
@@ -46,17 +52,39 @@ export default function Test001({
         }
         console.log("Connected to " + address)
         console.log("View profile of " + addr)
+
+        let nftIndex: bigint;
+        let nftAddr: '0xstring'
+        let nftCreatedAt: bigint
+        if (nftIndexSelect === 2) {
+            nftIndex = BigInt(2)
+            nftAddr = nftIndex2Addr as '0xstring'
+            nftCreatedAt = nftIndex2CreatedAt
+        } else if (nftIndexSelect === 3) {
+            nftIndex = BigInt(3)
+            nftAddr = nftIndex3Addr as '0xstring'
+            nftCreatedAt = nftIndex3CreatedAt
+        }
         
         const thefetch = async () => {
+            const checkNftIndexHashRate = await readContract(config, {
+                chainId: 8899,
+                abi: FieldsHook001,
+                address: hook001Addr as '0xstring',
+                functionName: 'hashRateForNftIndex',
+                args: [nftIndex],
+            })
+            setNftIndexHashRate(formatEther(checkNftIndexHashRate, 'gwei'))
+
             const _eventMyNftStaking = (await publicClient.getContractEvents({
                 abi: FieldsV2RouterAbi,
                 address: v2routerAddr as '0xstring',
                 eventName: 'NftStaked',
                 args: { 
                     staker: addr as '0xstring',
-                    nftIndex: BigInt(2),
+                    nftIndex: nftIndex,
                 },
-                fromBlock: BigInt(v2routerCreatedAt),
+                fromBlock: v2routerCreatedAt,
                 toBlock: 'latest',
             })).map((obj) => {
                 return obj.args.nftId
@@ -69,7 +97,7 @@ export default function Test001({
                         abi: FieldsV2RouterAbi,
                         address: v2routerAddr as '0xstring',
                         functionName: 'stakedData',
-                        args: [BigInt(2), obj],
+                        args: [nftIndex, obj],
                     }
                 ))
             })
@@ -85,7 +113,7 @@ export default function Test001({
                         abi: FieldsV2RouterAbi,
                         address: v2routerAddr as '0xstring',
                         functionName: 'stakedUseByPeriphery',
-                        args: [BigInt(2), BigInt(2), obj],
+                        args: [BigInt(2), nftIndex, obj],
                     }
                 ))
             })
@@ -94,7 +122,7 @@ export default function Test001({
                     {
                         chainId: 8899,
                         abi: erc721Abi,
-                        address: nftIndex2Addr as '0xstring',
+                        address: nftAddr,
                         functionName: 'tokenURI',
                         args: [obj],
                     }
@@ -107,7 +135,7 @@ export default function Test001({
                         abi: FieldsHook001,
                         address: hook001Addr as '0xstring',
                         functionName: 'calculatePoint',
-                        args: [BigInt(2), obj],
+                        args: [nftIndex, obj],
                     }
                 ))
             })
@@ -129,19 +157,19 @@ export default function Test001({
                     Attribute: metadata.attributes,
                     isStaked: true,
                     isPeripheryAllow: String(checkPeripheryAllowNftStaked[index].result),
-                    PointPerSec: 1, // better dynamic fetch
+                    PointPerSec: 0, // better dynamic fetch
                     Point: _point
                 }
             }))
 
             const _eventMyNftHolding = (await publicClient.getContractEvents({
                 abi: erc721Abi,
-                address: nftIndex2Addr as '0xstring',
+                address: nftAddr,
                 eventName: 'Transfer',
                 args: { 
                     to: addr as '0xstring',
                 },
-                fromBlock: BigInt(nftIndex2CreatedAt),
+                fromBlock: nftCreatedAt,
                 toBlock: 'latest',
             })).map((obj) => {
                 return obj.args.tokenId
@@ -152,7 +180,7 @@ export default function Test001({
                     {
                         chainId: 8899,
                         abi: erc721Abi,
-                        address: nftIndex2Addr as '0xstring',
+                        address: nftAddr,
                         functionName: 'ownerOf',
                         args: [obj],
                     }
@@ -170,7 +198,7 @@ export default function Test001({
                         abi: FieldsV2RouterAbi,
                         address: v2routerAddr as '0xstring',
                         functionName: 'stakedUseByPeriphery',
-                        args: [BigInt(2), BigInt(2), obj],
+                        args: [BigInt(2), nftIndex, obj],
                     }
                 ))
             })
@@ -179,7 +207,7 @@ export default function Test001({
                     {
                         chainId: 8899,
                         abi: erc721Abi,
-                        address: nftIndex2Addr as '0xstring',
+                        address: nftAddr,
                         functionName: 'tokenURI',
                         args: [obj],
                     }
@@ -192,7 +220,7 @@ export default function Test001({
                         abi: FieldsHook001,
                         address: hook001Addr as '0xstring',
                         functionName: 'calculatePoint',
-                        args: [BigInt(2), obj],
+                        args: [nftIndex, obj],
                     }
                 ))
             })
@@ -213,7 +241,7 @@ export default function Test001({
                     Attribute: metadata.attributes,
                     isStaked: false,
                     isPeripheryAllow: String(checkPeripheryAllowNftHolding[index].result),
-                    PointPerSec: 1, // better dynamic fetch
+                    PointPerSec: 0, // better dynamic fetch
                     Point: _point
                 }
             }))
@@ -226,15 +254,24 @@ export default function Test001({
         } else {
             setNft([])
         }
-    }, [config, address, addr, intrasubModetext, navigate, chain, txupdate])
+    }, [config, address, addr, intrasubModetext, navigate, chain, txupdate, nftIndexSelect])
 
     const stakeNft = async (_nftId: bigint) => {
         setIsLoading(true)
         try {
+            let nftIndex: bigint = BigInt(0);
+            let nftAddr = '0x0' as '0xstring'
+            if (nftIndexSelect === 2) {
+                nftIndex = BigInt(2)
+                nftAddr = nftIndex2Addr as '0xstring'
+            } else if (nftIndexSelect === 3) {
+                nftIndex = BigInt(3)
+                nftAddr = nftIndex3Addr as '0xstring'
+            }
             const nftAllow = await readContract(config, {
                 chainId: 8899,
                 abi: erc721Abi,
-                address: nftIndex2Addr,
+                address: nftAddr,
                 functionName: 'getApproved',
                 args: [_nftId],
             })
@@ -242,7 +279,7 @@ export default function Test001({
                 let { request } = await simulateContract(config, {
                     chainId: 8899,
                     abi: erc721Abi,
-                    address: nftIndex2Addr,
+                    address: nftAddr,
                     functionName: 'approve',
                     args: [v2routerAddr, _nftId],
                 })
@@ -254,7 +291,7 @@ export default function Test001({
                 abi: FieldsV2RouterAbi,
                 address: v2routerAddr,
                 functionName: 'nftStake',
-                args: [BigInt(2), _nftId],
+                args: [nftIndex, _nftId],
             })
             let h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
@@ -268,12 +305,18 @@ export default function Test001({
     const unstakeNft = async (_nftId: bigint) => {
         setIsLoading(true)
         try {
+            let nftIndex: bigint = BigInt(0);
+            if (nftIndexSelect === 2) {
+                nftIndex = BigInt(2)
+            } else if (nftIndexSelect === 3) {
+                nftIndex = BigInt(3)
+            }
             let { request } = await simulateContract(config, {
                 chainId: 8899,
                 abi: FieldsV2RouterAbi,
                 address: v2routerAddr,
                 functionName: 'nftUnstake',
-                args: [BigInt(2), _nftId],
+                args: [nftIndex, _nftId],
             })
             let h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
@@ -287,12 +330,18 @@ export default function Test001({
     const allowPeriphery = async (_nftId: bigint) => {
         setIsLoading(true)
         try {
+            let nftIndex: bigint = BigInt(0);
+            if (nftIndexSelect === 2) {
+                nftIndex = BigInt(2)
+            } else if (nftIndexSelect === 3) {
+                nftIndex = BigInt(3)
+            }
             let { request } = await simulateContract(config, {
                 chainId: 8899,
                 abi: FieldsV2RouterAbi,
                 address: v2routerAddr,
                 functionName: 'allowStakedUseByPeriphery',
-                args: [BigInt(2), BigInt(2), _nftId],
+                args: [BigInt(2), nftIndex, _nftId],
             })
             let h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
@@ -306,12 +355,18 @@ export default function Test001({
     const revokePeriphery = async (_nftId: bigint) => {
         setIsLoading(true)
         try {
+            let nftIndex: bigint = BigInt(0);
+            if (nftIndexSelect === 2) {
+                nftIndex = BigInt(2)
+            } else if (nftIndexSelect === 3) {
+                nftIndex = BigInt(3)
+            }
             let { request } = await simulateContract(config, {
                 chainId: 8899,
                 abi: FieldsV2RouterAbi,
                 address: v2routerAddr,
                 functionName: 'revokeStakedUseByPeriphery',
-                args: [BigInt(2), BigInt(2), _nftId],
+                args: [BigInt(2), nftIndex, _nftId],
             })
             let h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
@@ -328,14 +383,22 @@ export default function Test001({
                 <span className='text-7xl'>Test001</span>
                 <span>[Non-committed point-to-token hook]</span>
             </div>
-            <div className='pixel w-full gap-10 flex flex-col items-center justify-center text-sm'>
-                <div className='w-3/4 h-[120px] mt-14 mb-4 p-[20px] flex flex-row justify-around rounded-full bg-slate-800'>
+            <div className='pixel w-full mt-14 gap-10 flex flex-col items-center justify-center text-sm'>
+                <div className='w-full h-[100px] gap-6 flex flex-row items-center justify-center'>
+                    <button className={'hover:underline ' + (nftIndexSelect === 2 ? 'font-bold' : 'text-gray-500')} onClick={() => setNftIndexSelect(2)}>CommuDAO Dungeon</button>
+                    <button className={'hover:underline ' + (nftIndexSelect === 3 ? 'font-bold' : 'text-gray-500')} onClick={() => setNftIndexSelect(3)}>The Mythical Guardians</button>
+                </div>
+                <div className='w-3/4 h-[120px] mb-4 p-[20px] flex flex-row justify-around rounded-full bg-slate-800'>
+                    <div className="flex flex-col justify-around">
+                        <div style={{marginBottom: "20px"}}>NFT COLLECTION HASHRATE</div>
+                        <div style={{fontSize: "24px", marginBottom: "20px"}}>{nftIndexHashRate}</div>
+                    </div>
                     <div className="flex flex-col justify-around">
                         <div style={{marginBottom: "20px"}}>MY ELIGIBLE NFT</div>
                         <div style={{fontSize: "24px", marginBottom: "20px"}}>{nft !== undefined && nft.length > 0 && addr !== undefined ? nft.length : 0}</div>
                     </div>
                     <div className="flex flex-col justify-around">
-                        <div style={{marginBottom: "20px"}}>TOTAL PENDING POINT</div>
+                        <div style={{marginBottom: "20px"}}>TOTAL POINT</div>
                         <div style={{fontSize: "24px", marginBottom: "20px", display: "flex", flexFlow: "row wrap", alignItems: "center", justifyContent: "center"}}>
                             {nft !== undefined && nft.length > 0 && addr !== undefined ? totalPoint : 0}                                
                         </div>
@@ -360,7 +423,7 @@ export default function Test001({
                                             <span className='w-full h-1/3 overflow-hidden text-ellipsis'>{obj.Description}</span>
                                             <div className={'w-full p-[20px] border-solid border-2 rounded-xl flex flex-row items-center justify-between ' + (obj.isPeripheryAllow !== '0' ? 'border-emerald-300' : 'border-neutral-700 text-gray-600')}>
                                                 <div className='flex flex-col'>
-                                                    <span>Pending Point</span>
+                                                    <span>Point</span>
                                                     <span className='text-lg'>{String(obj.Point)}</span>
                                                 </div>
                                             </div>
