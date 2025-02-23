@@ -91,7 +91,7 @@ export default function Main() {
                     {mode === 0 && <Home />}
                     <Suspense fallback={<div className="w-full h-[100vh] flex items-center justify-center" />}>
                         {mode === 1 && <Fields callMode={callMode} navigate={navigate} />}
-                        {mode === 11 && <Test001 config={wagmiAdapter.wagmiConfig} intrasubModetext={intrasubModetext} callMode={callMode} navigate={navigate} setIsLoading={setIsLoading} txupdate={txupdate} setTxupdate={setTxupdate} setErrMsg={setErrMsg}/>}
+                        {mode === 11 && <Test001 config={wagmiAdapter.wagmiConfig} intrasubModetext={intrasubModetext} navigate={navigate} setIsLoading={setIsLoading} txupdate={txupdate} setTxupdate={setTxupdate} setErrMsg={setErrMsg}/>}
                     </Suspense>
                     {mode === 404 &&
                         <div className="w-full h-[100vh] flex items-center justify-center pixel">

@@ -18,11 +18,10 @@ const nftIndex3CreatedAt = BigInt(2260250)
 const publicClient = createPublicClient({ chain: jbc, transport: http() })
 
 export default function Test001({ 
-    config, intrasubModetext, callMode, navigate, setIsLoading, txupdate, setTxupdate, setErrMsg,
+    config, intrasubModetext, navigate, setIsLoading, txupdate, setTxupdate, setErrMsg,
 }: {
     config: Config,
     intrasubModetext: string | undefined,
-    callMode: (_mode: number) => void,
     navigate: NavigateFunction,
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
     txupdate: String | null,
@@ -301,6 +300,55 @@ export default function Test001({
         }
         setIsLoading(false)
     }
+    const stakeNftAll = async () => {
+        setIsLoading(true)
+        try {
+            let nftIndex: bigint = BigInt(0);
+            let nftAddr = '0x0' as '0xstring'
+            if (nftIndexSelect === 2) {
+                nftIndex = BigInt(2)
+                nftAddr = nftIndex2Addr as '0xstring'
+            } else if (nftIndexSelect === 3) {
+                nftIndex = BigInt(3)
+                nftAddr = nftIndex3Addr as '0xstring'
+            }
+            const nftManipulation = nft?.filter((obj) => {
+                return obj.isStaked === false
+            })
+            for (let i = 0; nftManipulation !== undefined && i <= nftManipulation.length - 1; i++) {
+                const nftAllow = await readContract(config, {
+                    chainId: 8899,
+                    abi: erc721Abi,
+                    address: nftAddr,
+                    functionName: 'getApproved',
+                    args: [nftManipulation[i].Id as bigint],
+                })
+                if (nftAllow.toUpperCase() !== v2routerAddr.toUpperCase()) {
+                    await writeContract(config, {
+                        chainId: 8899,
+                        abi: erc721Abi,
+                        address: nftAddr,
+                        functionName: 'approve',
+                        args: [v2routerAddr, nftManipulation[i].Id as bigint],
+                    })
+                }
+                let h = await writeContract(config, {
+                    chainId: 8899,
+                    abi: FieldsV2RouterAbi,
+                    address: v2routerAddr,
+                    functionName: 'nftStake',
+                    args: [nftIndex, nftManipulation[i].Id as bigint],
+                })
+                if (i === nftManipulation.length - 1) {
+                    await waitForTransactionReceipt(config, { hash: h })
+                    setTxupdate(h)
+                }
+            }
+        } catch (e) {
+            setErrMsg(String(e))
+        }
+        setIsLoading(false)
+    }
 
     const unstakeNft = async (_nftId: bigint) => {
         setIsLoading(true)
@@ -321,6 +369,36 @@ export default function Test001({
             let h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
+        } catch (e) {
+            setErrMsg(String(e))
+        }
+        setIsLoading(false)
+    }
+    const unstakeNftAll = async () => {
+        setIsLoading(true)
+        try {
+            let nftIndex: bigint = BigInt(0);
+            if (nftIndexSelect === 2) {
+                nftIndex = BigInt(2)
+            } else if (nftIndexSelect === 3) {
+                nftIndex = BigInt(3)
+            }
+            const nftManipulation = nft?.filter((obj) => {
+                return obj.isStaked === true
+            })
+            for (let i = 0; nftManipulation !== undefined && i <= nftManipulation.length - 1; i++) {
+                let h =  await writeContract(config, {
+                    chainId: 8899,
+                    abi: FieldsV2RouterAbi,
+                    address: v2routerAddr,
+                    functionName: 'nftUnstake',
+                    args: [nftIndex, nftManipulation[i].Id as bigint],
+                })
+                if (i === nftManipulation.length - 1) {
+                    await waitForTransactionReceipt(config, { hash: h })
+                    setTxupdate(h)
+                }
+            }
         } catch (e) {
             setErrMsg(String(e))
         }
@@ -351,6 +429,36 @@ export default function Test001({
         }
         setIsLoading(false)
     }
+    const allowPeripheryAll = async () => {
+        setIsLoading(true)
+        try {
+            let nftIndex: bigint = BigInt(0);
+            if (nftIndexSelect === 2) {
+                nftIndex = BigInt(2)
+            } else if (nftIndexSelect === 3) {
+                nftIndex = BigInt(3)
+            }
+            const nftManipulation = nft?.filter((obj) => {
+                return obj.isPeripheryAllow === '0'
+            })
+            for (let i = 0; nftManipulation !== undefined && i <= nftManipulation.length - 1; i++) {
+                let h = await writeContract(config, {
+                    chainId: 8899,
+                    abi: FieldsV2RouterAbi,
+                    address: v2routerAddr,
+                    functionName: 'allowStakedUseByPeriphery',
+                    args: [BigInt(2), nftIndex, nftManipulation[i].Id as bigint],
+                })
+                if (i === nftManipulation.length - 1) {
+                    await waitForTransactionReceipt(config, { hash: h })
+                    setTxupdate(h)
+                }
+            }
+        } catch (e) {
+            setErrMsg(String(e))
+        }
+        setIsLoading(false)
+    }
 
     const revokePeriphery = async (_nftId: bigint) => {
         setIsLoading(true)
@@ -376,17 +484,51 @@ export default function Test001({
         }
         setIsLoading(false)
     }
+    const revokePeripheryAll = async () => {
+        setIsLoading(true)
+        try {
+            let nftIndex: bigint = BigInt(0);
+            if (nftIndexSelect === 2) {
+                nftIndex = BigInt(2)
+            } else if (nftIndexSelect === 3) {
+                nftIndex = BigInt(3)
+            }
+            const nftManipulation = nft?.filter((obj) => {
+                return obj.isPeripheryAllow !== '0'
+            })
+            for (let i = 0; nftManipulation !== undefined && i <= nftManipulation.length - 1; i++) {
+                let h = await writeContract(config, {
+                    chainId: 8899,
+                    abi: FieldsV2RouterAbi,
+                    address: v2routerAddr,
+                    functionName: 'revokeStakedUseByPeriphery',
+                    args: [BigInt(2), nftIndex, nftManipulation[i].Id as bigint],
+                })
+                if (i === nftManipulation.length - 1) {
+                    await waitForTransactionReceipt(config, { hash: h })
+                    setTxupdate(h)
+                }
+            }
+        } catch (e) {
+            setErrMsg(String(e))
+        }
+        setIsLoading(false)
+    }
 
     return (
         <>
             <div className="pixel w-full h-[300px] flex flex-col items-center justify-center bg-[url('https://gateway.commudao.xyz/ipfs/bafybeicyixoicb7ai6zads6t5k6qpyocoyelfbyoi73nmtobfjlv7fseiq')] text-black">
                 <span className='text-7xl'>Test001</span>
-                <span>[Non-committed point-to-token hook]</span>
             </div>
             <div className='pixel w-full mt-14 gap-10 flex flex-col items-center justify-center text-sm'>
-                <div className='w-full h-[100px] gap-6 flex flex-row items-center justify-center'>
-                    <button className={'hover:underline ' + (nftIndexSelect === 2 ? 'font-bold' : 'text-gray-500')} onClick={() => setNftIndexSelect(2)}>CommuDAO Dungeon</button>
-                    <button className={'hover:underline ' + (nftIndexSelect === 3 ? 'font-bold' : 'text-gray-500')} onClick={() => setNftIndexSelect(3)}>The Mythical Guardians</button>
+                <div className='w-full px-14 h-[50px] gap-4 flex flex-row items-start justify-start'>
+                    <button className='py-2 px-4 bg-slate-800 rounded-full hover:font-bold'>Non-committed point hook</button>
+                    <button className='py-2 px-4 bg-neutral-800 rounded-full text-gray-500 hover:font-bold cursor-not-allowed'>Fishing hook [Coming soon...]</button>
+                </div>
+                <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
+                <div className='w-full h-[50px] gap-6 flex flex-row items-center justify-center'>
+                    <button className={'hover:underline ' + (nftIndexSelect === 2 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(2)}>CommuDAO Dungeon</button>
+                    <button className={'hover:underline ' + (nftIndexSelect === 3 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(3)}>The Mythical Guardians</button>
                 </div>
                 <div className='w-3/4 h-[120px] mb-4 p-[20px] flex flex-row justify-around rounded-full bg-slate-800'>
                     <div className="flex flex-col justify-around">
@@ -403,6 +545,49 @@ export default function Test001({
                             {nft !== undefined && nft.length > 0 && addr !== undefined ? totalPoint : 0}                                
                         </div>
                     </div>
+                </div>
+                <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
+                <div className='w-full px-14 my-2 h-[30px] gap-4 flex flex-row items-start justify-start'>
+                    <button 
+                        className={'py-2 px-4 rounded-xl hover:font-bold ' + ((nft?.filter((obj) => {return obj.isStaked === false}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === false})).length !== 0) ? 'bg-blue-500 hover:bg-blue-400' : 'bg-neutral-400 text-gray-500 cursor-not-allowed')}
+                        onClick={() => {
+                            if (nft?.filter((obj) => {return obj.isStaked === false}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === false})).length !== 0) {
+                                stakeNftAll()
+                            }
+                        }}
+                    >
+                        STAKE ALL
+                    </button>
+                    <button
+                        className={'py-2 px-4 rounded-xl hover:font-bold ' + ((nft?.filter((obj) => {return obj.isPeripheryAllow === '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'})).length !== 0) ? 'bg-blue-500 hover:bg-blue-400' : 'bg-neutral-400 text-gray-500 cursor-not-allowed')}
+                        onClick={() => {
+                            if (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'})).length !== 0) {
+                                allowPeripheryAll()
+                            }
+                        }}
+                    >
+                        ACTIVATE ALL
+                    </button>
+                    <button 
+                        className={'py-2 px-4 rounded-xl hover:font-bold ' + ((nft?.filter((obj) => {return obj.isStaked === true}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === true})).length !== 0) ? 'bg-red-500 hover:bg-red-400' : 'bg-neutral-400 text-gray-500 cursor-not-allowed')}
+                        onClick={() => {
+                            if (nft?.filter((obj) => {return obj.isStaked === true}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === true})).length !== 0) {
+                                unstakeNftAll()
+                            }
+                        }}
+                    >
+                        UNSTAKE ALL
+                    </button>
+                    <button 
+                        className={'py-2 px-4 rounded-xl hover:font-bold ' + ((nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'})).length !== 0) ? 'bg-red-500 hover:bg-red-400' : 'bg-neutral-400 text-gray-500 cursor-not-allowed')}
+                        onClick={() => {
+                            if (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'})).length !== 0) {
+                                revokePeripheryAll()
+                            }
+                        }}
+                    >
+                        REVOKE ALL
+                    </button>
                 </div>
                 <div className='w-full px-10 gap-5 flex flex-row flex-wrap items-center justify-start'>
                     {nft !== undefined ?
@@ -432,11 +617,11 @@ export default function Test001({
                                                     {address.toUpperCase() === intrasubModetext.toUpperCase() &&
                                                         <div className='w-full flex flex-row gap-2 text-xs'>
                                                             {obj.isStaked ?
-                                                                <button className="w-[150px] p-3 rounded-xl bg-neutral-700 hover:font-bold hover:bg-neutral-400" onClick={() => {unstakeNft(obj.Id as bigint)}}>UNSTAKE</button> :
-                                                                <button className="w-[150px] p-3 rounded-xl bg-emerald-600 hover:font-bold hover:bg-emerald-400" onClick={() => {stakeNft(obj.Id as bigint)}}>STAKE</button>
+                                                                <button className="w-[150px] p-3 rounded-xl bg-red-500 hover:bg-red-400 hover:font-bold" onClick={() => {unstakeNft(obj.Id as bigint)}}>UNSTAKE</button> :
+                                                                <button className="w-[150px] p-3 rounded-xl bg-blue-500 hover:bg-blue-400 hover:font-bold" onClick={() => {stakeNft(obj.Id as bigint)}}>STAKE</button>
                                                             }
-                                                            {obj.isPeripheryAllow === '0' && obj.isStaked && <button className="w-[150px] p-3 rounded-xl bg-emerald-600 hover:font-bold hover:bg-emerald-400" onClick={() => {allowPeriphery(obj.Id as bigint)}}>ACTIVATE POINT</button>}
-                                                            {obj.isPeripheryAllow !== '0' && obj.isStaked && <button className="w-[150px] p-3 rounded-xl bg-red-600 hover:font-bold hover:bg-red-400" onClick={() => {revokePeriphery(obj.Id as bigint)}}>DEACTIVATE POINT</button>}
+                                                            {obj.isPeripheryAllow === '0' && obj.isStaked && <button className="w-[150px] p-3 rounded-xl bg-blue-500 hover:bg-blue-400 hover:font-bold hover:bg-blue-400" onClick={() => {allowPeriphery(obj.Id as bigint)}}>ACTIVATE POINT</button>}
+                                                            {obj.isPeripheryAllow !== '0' && obj.isStaked && <button className="w-[150px] p-3 rounded-xl bg-red-500 hover:bg-red-400 hover:font-bold" onClick={() => {revokePeriphery(obj.Id as bigint)}}>DEACTIVATE POINT</button>}
                                                         </div>
                                                     }
                                                 </>
@@ -452,6 +637,7 @@ export default function Test001({
                         </div>
                     }
                 </div>
+                <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
             </div>
         </>
     )
