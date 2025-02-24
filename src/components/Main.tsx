@@ -47,18 +47,18 @@ export default function Main() {
             if (subModeText !== undefined) {
                 if (modeText.toUpperCase() === "FIELDS" && subModeText.toUpperCase() === "CMDAO-VALLEY") {
                     preset = 11
-                    document.title = "CmdaoValley | CommuDAO Dev By Second Labs"
+                    document.title = "CMDAO Valley | CMDAO Dev Interface"
                 }
             } else {
                 preset = 1
-                document.title = "Fields | CommuDAO Dev By Second Labs"
+                document.title = "Fields | CMDAO Dev Interface"
             }
         } else {
             preset = 404
-            document.title = "404 | CommuDAO Dev By Second Labs"
+            document.title = "404 | CMDAO Dev Interface"
         }
     } else {
-        document.title = "CommuDAO Dev By Second Labs"
+        document.title = "CMDAO Dev Interface"
     }
     const [mode, setMode] = React.useState(preset) 
     const callMode = (_mode: number) => { setMode(_mode) }

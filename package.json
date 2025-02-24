@@ -1,5 +1,5 @@
 {
-  "name": "commu-dao-dev",
+  "name": "cmd-dev-interface",
   "version": "0.0.1",
   "private": true,
   "dependencies": {
@@ -10,8 +10,6 @@
     "react-query": "^3.39.3",
     "react-router-dom": "^6.8.1",
     "react-scripts": "5.0.1",
-    "react-select": "^5.7.2",
-    "use-debounce": "^10.0.4",
     "viem": "~2.23.4",
     "wagmi": "^2.14.11"
   },
