@@ -16,6 +16,8 @@ const nftIndex3Addr = '0xA6f8cE1425E0fC4b74f3b1c2f9804e9968f90e17'
 const nftIndex3CreatedAt = BigInt(2260250)
 const nftIndex4Addr = '0xb6aaD2B2f9fD5eA0356F49c60Ee599De56206251'
 const nftIndex4CreatedAt = BigInt(119318)
+const nftIndex5Addr = '0xD492E20Ecf3Ae85Fe3E3159BB064442b86D6DC02'
+const nftIndex5CreatedAt = BigInt(515400)
 // add nft addr, created at here
 
 const publicClient = createPublicClient({ chain: jbc, transport: http() })
@@ -66,6 +68,9 @@ export default function FieldCmdaoValley({
         } else if (nftIndexSelect === 4) {
             nftAddr = nftIndex4Addr as '0xstring'
             nftCreatedAt = nftIndex4CreatedAt
+        } else if (nftIndexSelect === 5) {
+            nftAddr = nftIndex5Addr as '0xstring'
+            nftCreatedAt = nftIndex5CreatedAt
         }
         // add condition here when listing more NFT
         setGlobNftAddr(nftAddr)
@@ -480,7 +485,9 @@ export default function FieldCmdaoValley({
                 <div className='w-full h-[50px] gap-6 flex flex-row items-center justify-center'>
                     <button className={'hover:underline ' + (nftIndexSelect === 2 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(2)}>CommuDAO Dungeon</button>
                     <button className={'hover:underline ' + (nftIndexSelect === 4 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(4)}>CM Hexa Cat Meaw JIB JIB</button>
+                    <button className={'hover:underline ' + (nftIndexSelect === 5 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(5)}>CM Cat Meaw Ory JIBJIB</button>
                     <button className={'hover:underline ' + (nftIndexSelect === 3 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(3)}>The Mythical Guardians</button>
+                    {/* add nftIndexSelect switch button here */}
                 </div>
                 <div className='w-3/4 h-[120px] mb-4 p-[20px] flex flex-row justify-around rounded-full bg-slate-800'>
                     <div className="flex flex-col justify-around">
@@ -494,7 +501,7 @@ export default function FieldCmdaoValley({
                     <div className="flex flex-col justify-around">
                         <div style={{marginBottom: "20px"}}>TOTAL POINT</div>
                         <div style={{fontSize: "24px", marginBottom: "20px", display: "flex", flexFlow: "row wrap", alignItems: "center", justifyContent: "center"}}>
-                            {nft !== undefined && nft.length > 0 && addr !== undefined ? totalPoint : 0}                                
+                            {nft !== undefined && nft.length > 0 && addr !== undefined ? Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(totalPoint) : 0}                                
                         </div>
                     </div>
                 </div>
