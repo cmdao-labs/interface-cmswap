@@ -24,7 +24,10 @@ export default function MiningHookTest() {
                 return { nonce, hash }
             }
         }
-        setConsoleMsg(`❌ Block not found | Hash: ${hash.slice(0, 10) + '...'}`)
+        const endTime = Date.now()
+        const elapsedTime = endTime - startTime
+        const hashRate = (Number(mineForLoop) * 1000000) / elapsedTime;
+        setConsoleMsg(`❌ Block not found | ⚡ Hash Rate: ${Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(hashRate)}H/s`)
     }
 
     const [blockchain, setBlockchain] = React.useState<{
