@@ -26,7 +26,7 @@ export default function MiningHookTest() {
         }
         const endTime = Date.now()
         const elapsedTime = endTime - startTime
-        const hashRate = (Number(mineForLoop) * 1000000) / elapsedTime;
+        const hashRate = (Number(mineForLoop) * 1000000) / (elapsedTime / 1000);
         setConsoleMsg(`❌ Block not found | ⚡ Hash Rate: ${Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(hashRate)}H/s`)
     }
 
