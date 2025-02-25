@@ -117,12 +117,18 @@ export default function MiningHookTest() {
             <div className='w-full h-[400px] gap-2 flex flex-row justify-center'>
                 <div className="w-1/4 bg-neutral-900 p-8 gap-1 flex flex-col items-start justify-start text-lg text-left overflow-scroll" style={{boxShadow: "6px 6px 0 #00000040"}}>
                     <span>Block solver</span>
+                    <div className='p-2 gap-2 flex flex-row text-sm'>
+                        <span className='w-[100px] text-gray-500'>Block</span>
+                        <span className='w-[150px] text-gray-500'>Miner Signature</span>
+                        <span className='w-[100px] text-gray-500'>Difficulty</span>
+                    </div>
                     {blockchain !== undefined && 
                         <>  
                             {blockchain.map((obj) => {
                                 return <div className='p-2 gap-2 flex flex-row text-sm'>
                                     <span className='w-[100px] text-gray-500'>Block-{String(obj.blockNumber)}</span>
-                                    <span className='w-[300px]'>{obj.miner?.slice(0, 6) + '...' + obj.miner?.slice(-4)}</span>
+                                    <span className='w-[150px]'>{obj.miner?.slice(0, 6) + '...' + obj.miner?.slice(-4)}</span>
+                                    <span className='w-[100px]'>{String(obj.difficulty)}</span>
                                 </div>
                             })}
                         </>
@@ -130,12 +136,17 @@ export default function MiningHookTest() {
                 </div>
                 <div className="w-1/4 bg-neutral-900 p-8 gap-1 flex flex-col items-start justify-start text-lg text-left overflow-scroll" style={{boxShadow: "6px 6px 0 #00000040"}}>
                     <span>Leaderboard</span>
+                    <div className='p-2 gap-2 flex flex-row text-sm'>
+                        <span className='w-[100px] text-gray-500'>Rank</span>
+                        <span className='w-[150px] text-gray-500'>Miner Signature</span>
+                        <span className='w-[100px] text-gray-500'>Block Creation</span>
+                    </div>
                     {leaderboard !== undefined && 
                         <>  
                             {leaderboard.map((obj, index) => {
                                 return <div className='p-2 gap-2 flex flex-row text-sm'>
                                     <span className='w-[100px] text-gray-500'>{String(index + 1)}</span>
-                                    <span className='w-[200px]'>{obj.minerSort?.slice(0, 6) + '...' + obj.minerSort?.slice(-4)}</span>
+                                    <span className='w-[150px]'>{obj.minerSort?.slice(0, 6) + '...' + obj.minerSort?.slice(-4)}</span>
                                     <span className='w-[100px]'>{obj.value}</span>
                                 </div>
                             })}
