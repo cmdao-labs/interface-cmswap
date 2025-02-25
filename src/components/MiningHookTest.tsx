@@ -132,7 +132,8 @@ export default function MiningHookTest() {
                             {leaderboard.map((obj, index) => {
                                 return <div className='p-2 gap-2 flex flex-row text-sm'>
                                     <span className='w-[100px] text-gray-500'>{String(index + 1)}</span>
-                                    <span className='w-[300px]'>{obj.minerSort?.slice(0, 6) + '...' + obj.minerSort?.slice(-4)}</span>
+                                    <span className='w-[200px]'>{obj.minerSort?.slice(0, 6) + '...' + obj.minerSort?.slice(-4)}</span>
+                                    <span className='w-[100px]'>{obj.value}</span>
                                 </div>
                             })}
                         </>
