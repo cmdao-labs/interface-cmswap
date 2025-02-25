@@ -1,5 +1,5 @@
 import React from 'react'
-import { ByteArray, sha256, stringToHex, hexToString, createPublicClient, http } from 'viem'
+import { ByteArray, sha256, keccak256, createPublicClient, http } from 'viem'
 import { jbc } from 'viem/chains'
 import { TestDaAbi } from './abi'
 
@@ -33,6 +33,7 @@ export default function MiningHookTest() {
         difficulty?: bigint | undefined;
         hashBlock?: string | undefined;
     }[]>()
+    const [leaderboard, setLeaderboard] = React.useState<{ minerSort: string; value: number; }[]>()
     const [myName, setMyName] = React.useState('anon')
     const [consoleMsg, setConsoleMsg] = React.useState('Click Mine Button to Start')
     const [currBlock, setCurrBlock] = React.useState('0')
@@ -64,6 +65,21 @@ export default function MiningHookTest() {
                 return obj.args
             }).reverse()
             setBlockchain(eventBlockchain)
+
+            const _leaderboard = Object.values(eventBlockchain.map((obj) => {
+                return {minerSort: obj.miner?.toUpperCase() as unknown as string, value: 1} 
+            }).reduce(
+                (a: Record<string, { minerSort: string; value: number }>, b) => {
+                    if (a[b.minerSort]) {
+                        a[b.minerSort].value += b.value;
+                    } else {
+                        a[b.minerSort] = { minerSort: b.minerSort, value: b.value };
+                    }
+                    return a;
+                },
+                {}
+            )).sort((a, b) => {return b.value - a.value})
+            setLeaderboard(_leaderboard)
         }
         thefetch()
         setInterval(thefetch, 12000)
@@ -92,26 +108,44 @@ export default function MiningHookTest() {
             }
         }
     }
-    console.log(blockchain)
         
     return (
         <div className="w-full h-[100vh] gap-4 flex flex-col items-center justify-center pixel">
-            <div className="w-1/2 h-1/3 bg-neutral-900 p-4 gap-1 flex flex-col items-start justify-start text-lg text-left overflow-scroll" style={{boxShadow: "6px 6px 0 #00000040"}}>
-                <span>Block solver</span>
-                {blockchain !== undefined && 
-                    <>  
-                        {blockchain.map((obj) => {
-                            return <div className='p-2 gap-2 flex flex-row text-xs'>
-                                <span className='w-[100px]'>Block-{String(obj.blockNumber)}</span>
-                                <span className='w-[300px]'>{obj.miner?.slice(0, 6) + '...' + obj.miner?.slice(-4)}</span>
-                            </div>
-                        })}
-                    </>
-                }
+            <div className='w-full h-[400px] gap-2 flex flex-row justify-center'>
+                <div className="w-1/4 bg-neutral-900 p-8 gap-1 flex flex-col items-start justify-start text-lg text-left overflow-scroll" style={{boxShadow: "6px 6px 0 #00000040"}}>
+                    <span>Block solver</span>
+                    {blockchain !== undefined && 
+                        <>  
+                            {blockchain.map((obj) => {
+                                return <div className='p-2 gap-2 flex flex-row text-sm'>
+                                    <span className='w-[100px] text-gray-500'>Block-{String(obj.blockNumber)}</span>
+                                    <span className='w-[300px]'>{obj.miner?.slice(0, 6) + '...' + obj.miner?.slice(-4)}</span>
+                                </div>
+                            })}
+                        </>
+                    }
+                </div>
+                <div className="w-1/4 bg-neutral-900 p-8 gap-1 flex flex-col items-start justify-start text-lg text-left overflow-scroll" style={{boxShadow: "6px 6px 0 #00000040"}}>
+                    <span>Leaderboard</span>
+                    {leaderboard !== undefined && 
+                        <>  
+                            {leaderboard.map((obj, index) => {
+                                return <div className='p-2 gap-2 flex flex-row text-sm'>
+                                    <span className='w-[100px] text-gray-500'>{String(index + 1)}</span>
+                                    <span className='w-[300px]'>{obj.minerSort?.slice(0, 6) + '...' + obj.minerSort?.slice(-4)}</span>
+                                </div>
+                            })}
+                        </>
+                    }
+                </div>
             </div>
             <div className="mt-5 text-2xl">Current Block: {currBlock}</div>
             <div className="text-2xl">Difficulty: {difficulty}</div>
-            <input className="mt-8 px-6 py-2 bg-neutral-800 text-white text-sm leading-tight focus:outline-none" value={myName} onChange={(e) => setMyName(e.target.value)} />
+            <div className='mt-5 w-full gap-3 flex flex-row items-center justify-center'>
+                <span>MINER</span>
+                <input className="px-6 py-2 bg-neutral-800 text-white text-sm leading-tight focus:outline-none" value={myName} onChange={(e) => setMyName(e.target.value)} />
+                <span className='text-sm'>HASH SIGNATURE: {keccak256(myName as '0xstring').slice(0, 6).toUpperCase() + '...' + keccak256(myName as '0xstring').slice(-4).toUpperCase()}</span>
+            </div>
             <div className='w-full gap-3 flex flex-row items-center justify-center'>
                 <button className="w-[150px] px-2 py-2 bg-slate-900 text-sm hover:font-bold hover:bg-emerald-300" onClick={mining}>MINE FOR</button>
                 <input className="w-[100px] px-6 py-2 bg-neutral-800 text-white text-sm leading-tight focus:outline-none" value={mineForLoop} onChange={(e) => setMineForLoop(e.target.value)} />
