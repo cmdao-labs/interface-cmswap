@@ -35,13 +35,14 @@ export default function MiningHook({
             if (BigInt(hash) < target) {
                 const endTime = Date.now()
                 const elapsedTime = endTime - startTime
-                setConsoleMsg(`✅ Block Mined! Nonce: ${nonce} \n Hash: ${hash} \n ⏳ Time Taken: ${(elapsedTime / 1000).toFixed(2)} seconds`)
+                const hashRate = (Number(mineForLoop) * 1000000) / (elapsedTime / 1000)
+                setConsoleMsg(`✅ Block Mined! Nonce: ${nonce} | ⏳ Time Taken: ${(elapsedTime / 1000).toFixed(2)} seconds | ⚡ Hash Rate: ${Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(hashRate)}H/s`)
                 return { nonce, hash }
             }
         }
         const endTime = Date.now()
         const elapsedTime = endTime - startTime
-        const hashRate = (Number(mineForLoop) * 1000000) / (elapsedTime / 1000);
+        const hashRate = (Number(mineForLoop) * 1000000) / (elapsedTime / 1000)
         setConsoleMsg(`❌ Block not found | ⚡ Hash Rate: ${Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(hashRate)}H/s`)
     }
 
