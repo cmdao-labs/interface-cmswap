@@ -130,7 +130,7 @@ export default function MiningHook({
     }
         
     return (
-        <div className="w-5/6 h-[100vh] rounded-lg gap-6 flex flex-col items-center justify-start pixel bg-neutral-900">
+        <div className="w-5/6 h-[100vh] rounded-lg gap-5 flex flex-col items-center justify-start pixel bg-neutral-900">
             <div className="w-full h-[500px] p-8 gap-6 flex flex-row justify-center bg-[url('https://gateway.commudao.xyz/ipfs/bafybeib5stifg5jcqqxsy4kbwwb6xovei5biyspuzhlwrsng4i62ppwpwy')] bg-cover">
                 <div className="w-full xl:w-1/3 bg-slate-900 p-8 gap-1 flex flex-col items-start justify-start text-lg text-left overflow-scroll" style={{boxShadow: "6px 6px 0 #00000040"}}>
                     <span>Block solver</span>
@@ -172,10 +172,11 @@ export default function MiningHook({
                 </div>
             </div>
             <div className="mt-5 text-2xl">Current Block: {currBlock}</div>
-            <div className="text-2xl">Difficulty: {difficulty}</div>
+            <div className="text-2xl text-gray-500">Base Difficulty: {difficulty}</div>
             {nftIdMiner !== undefined &&
                 <>
-                    <div className='mt-5 w-full gap-3 flex flex-row items-center justify-center text-lg'>
+                    <div className='text-2xl'>Miner difficulty: {Number(difficulty) > ((Number(nftIdMiner) % 100000) / 100) ? Number(difficulty) - ((Number(nftIdMiner) % 100000) / 100) : 1}</div>
+                    <div className='w-full gap-3 flex flex-row items-center justify-center text-lg text-gray-500'>
                         <span>MINER ID:</span>
                         <span>{String(nftIdMiner)}</span>
                     </div>
