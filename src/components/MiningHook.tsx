@@ -57,7 +57,7 @@ export default function MiningHook({
         blockReward?: bigint | undefined;
     }[]>()
     const [leaderboard, setLeaderboard] = React.useState<{ minerSort: string; value: number; }[]>()
-    const [consoleMsg, setConsoleMsg] = React.useState('Click Mine Button to Start')
+    const [consoleMsg, setConsoleMsg] = React.useState('Chosse NFT Miner Before Start Mining')
     const [currBlock, setCurrBlock] = React.useState('0')
     const [difficulty, setDifficulty] = React.useState('0')
     const [mineForLoop, setMineForLoop] = React.useState('1')
