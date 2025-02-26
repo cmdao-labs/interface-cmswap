@@ -116,7 +116,7 @@ export default function MiningHook({
             setWoodBalance(woodBal)
         }
         thefetch()
-        // setInterval(thefetch, 20000)
+        setInterval(thefetch, 20000)
     }, [addr])
     
     const mining = async () => {

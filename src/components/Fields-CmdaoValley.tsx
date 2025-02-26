@@ -607,7 +607,7 @@ export default function FieldCmdaoValley({
                                                                 {obj.isPeripheryAllow === '0' && obj.isStaked && <button className="w-[150px] p-3 rounded-xl bg-blue-500 hover:bg-blue-400 hover:font-bold hover:bg-blue-400" onClick={() => {allowPeriphery(obj.Id as bigint, 2)}}>ACTIVATE POINT</button>}
                                                                 {obj.isPeripheryAllow !== '0' && obj.isStaked && <button className="w-[150px] p-3 rounded-xl bg-red-500 hover:bg-red-400 hover:font-bold" onClick={() => {revokePeriphery(obj.Id as bigint)}}>DEACTIVATE POINT</button>}
                                                             </div>
-                                                            {nftIndexSelect === 2 && <button className={"w-[150px] p-3 rounded-xl " + (Number(nftIdMiner) === Number(obj.Id) ? "bg-emerald-300" : "bg-neutral-700 hover:bg-neutral-400 hover:font-bold")} onClick={async () => {if (await checkPeripheryAllowNftStaked_hook(obj.Id as bigint)) {allowPeriphery(obj.Id as bigint, 9);} setNftIdMiner(obj.Id as bigint);}}>CHOOSE MINER</button>}
+                                                            {nftIndexSelect === 2 && obj.isStaked && <button className={"w-[150px] p-3 rounded-xl " + (Number(nftIdMiner) === Number(obj.Id) ? "bg-emerald-300" : "bg-neutral-700 hover:bg-neutral-400 hover:font-bold")} onClick={async () => {if (await checkPeripheryAllowNftStaked_hook(obj.Id as bigint)) {allowPeriphery(obj.Id as bigint, 9);} setNftIdMiner(obj.Id as bigint);}}>CHOOSE MINER</button>}
                                                         </>
                                                     }
                                                 </>
