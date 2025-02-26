@@ -76,7 +76,7 @@ export default function Main() {
             {errMsg !== null &&
                 <div style={{zIndex: "999"}} className="centermodal">
                     <div className="wrapper">
-                        <div className="pixel w-1/2 h-1/2 bg-neutral-900 p-8 gap-10 flex flex-col items-center justify-center text-sm text-left" style={{boxShadow: "6px 6px 0 #00000040"}}>
+                        <div className="pixel w-3/4 xl:w-1/2 h-3/4 xl:h-1/2 bg-neutral-900 p-2 xl:p-8 gap-10 flex flex-col items-center justify-center text-sm text-left" style={{boxShadow: "6px 6px 0 #00000040"}}>
                             <div className='text-2xl text-red-500'>ERROR! [{'beta ' + v}]</div>
                             <div className='w-5/6 h-[350px] overflow-hidden ellipsis'>{errMsg}</div>
                             <button className='w-2/3 p-3 rounded-full bg-slate-700' onClick={() => setErrMsg(null)}>CLOSE</button>

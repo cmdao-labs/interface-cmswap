@@ -116,7 +116,7 @@ export default function MiningHook({
             setWoodBalance(woodBal)
         }
         thefetch()
-        setInterval(thefetch, 12000)
+        // setInterval(thefetch, 20000)
     }, [addr])
     
     const mining = async () => {
@@ -141,58 +141,58 @@ export default function MiningHook({
     }
         
     return (
-        <div className="w-5/6 h-[100vh] rounded-lg gap-5 flex flex-col items-center justify-start pixel bg-neutral-900">
-            <div className="w-full h-[500px] p-8 gap-6 flex flex-row justify-center bg-[url('https://gateway.commudao.xyz/ipfs/bafybeib5stifg5jcqqxsy4kbwwb6xovei5biyspuzhlwrsng4i62ppwpwy')] bg-cover">
-                <div className="w-full xl:w-1/3 bg-slate-900 p-8 gap-1 flex flex-col items-start justify-start text-lg text-left overflow-scroll" style={{boxShadow: "6px 6px 0 #00000040"}}>
+        <div className="w-5/6 h-[100vh] rounded-lg gap-5 flex flex-col items-center justify-start pixel bg-neutral-900 text:xs xl:text-lg">
+            <div className="w-full h-[500px] p-8 gap-6 flex flex-row flex-wrap justify-center bg-[url('https://gateway.commudao.xyz/ipfs/bafybeib5stifg5jcqqxsy4kbwwb6xovei5biyspuzhlwrsng4i62ppwpwy')] bg-cover overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-neutral-800 [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
+                <div className="w-full xl:w-1/3 h-full bg-slate-900 p-8 gap-1 flex flex-col items-start justify-start text-left overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-neutral-800 [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500" style={{boxShadow: "6px 6px 0 #00000040"}}>
                     <span>Block solver</span>
-                    <div className='p-2 gap-2 flex flex-row text-sm'>
-                        <span className='w-[100px] text-gray-500'>Block</span>
-                        <span className='w-[150px] text-gray-500'>Miner Owner</span>
-                        <span className='w-[100px] text-gray-500'>Difficulty</span>
+                    <div className='w-full p-1 xl:p-2 gap-3 flex flex-row text-xs xl:text-sm'>
+                        <span className='w-1/5 text-gray-500'>Block</span>
+                        <span className='w-1/3 text-gray-500'>Miner Owner</span>
+                        <span className='w-1/4 text-gray-500 text-right'>Difficulty</span>
                     </div>
                     {blockchain !== undefined && 
                         <>  
                             {blockchain.map((obj) => {
-                                return <div className='p-2 gap-2 flex flex-row text-sm'>
-                                    <span className='w-[100px] text-gray-500'>Block-{String(obj.solvedBlockNumber)}</span>
-                                    <span className='w-[150px]'>{obj.minerOwner?.slice(0, 6) + '...' + obj.minerOwner?.slice(-4)}</span>
-                                    <span className='w-[100px]'>{String(obj.solvedBaseDifficulty)}</span>
+                                return <div className='w-full p-1 xl:p-2 gap-3 flex flex-row text-xs xl:text-sm'>
+                                    <span className='w-1/5 text-gray-500'>{String(obj.solvedBlockNumber)}</span>
+                                    <span className='w-1/3'>{obj.minerOwner?.slice(0, 6) + '...' + obj.minerOwner?.slice(-4)}</span>
+                                    <span className='w-1/4 text-right'>{String(obj.solvedBaseDifficulty)}</span>
                                 </div>
                             })}
                         </>
                     }
                 </div>
-                <div className="w-full xl:w-1/3 bg-slate-900 p-8 gap-1 flex flex-col items-start justify-start text-lg text-left overflow-scroll" style={{boxShadow: "6px 6px 0 #00000040"}}>
+                <div className="w-full xl:w-1/3 h-full bg-slate-900 p-8 gap-1 flex flex-col items-start justify-start text-xs xl:text-lg text-left overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-neutral-800 [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500" style={{boxShadow: "6px 6px 0 #00000040"}}>
                     <span>Leaderboard</span>
-                    <div className='p-2 gap-2 flex flex-row text-sm'>
-                        <span className='w-[100px] text-gray-500'>Rank</span>
-                        <span className='w-[150px] text-gray-500'>Miner Owner</span>
-                        <span className='w-[100px] text-gray-500'>Block Creation</span>
+                    <div className='w-full p-1 xl:p-2 gap-3 flex flex-row text-xs xl:text-sm'>
+                        <span className='w-1/5 text-gray-500'>Rank</span>
+                        <span className='w-1/3 text-gray-500'>Miner Owner</span>
+                        <span className='w-1/4 text-gray-500 text-right'>Block Creation</span>
                     </div>
                     {leaderboard !== undefined && 
                         <>  
                             {leaderboard.map((obj, index) => {
-                                return <div className='p-2 gap-2 flex flex-row text-sm'>
-                                    <span className='w-[100px] text-gray-500'>{String(index + 1)}</span>
-                                    <span className='w-[150px]'>{obj.minerSort?.slice(0, 6) + '...' + obj.minerSort?.slice(-4)}</span>
-                                    <span className='w-[100px]'>{obj.value}</span>
+                                return <div className='w-full p-1 xl:p-2 gap-3 flex flex-row text-xs xl:text-sm'>
+                                    <span className='w-1/5 text-gray-500'>{String(index + 1)}</span>
+                                    <span className='w-1/3'>{obj.minerSort?.slice(0, 6) + '...' + obj.minerSort?.slice(-4)}</span>
+                                    <span className='w-1/4 text-right'>{obj.value}</span>
                                 </div>
                             })}
                         </>
                     }
                 </div>
             </div>
-            <div className="mt-3 text-xl gap-2 flex flex-row items-center">
+            <div className="gap-2 flex flex-row items-center">
                 <span>Reward Balance: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(woodBalance))}</span>
                 <img src="https://gateway.commudao.xyz/ipfs/bafkreidldk7skx44xwstwat2evjyp4u5oy5nmamnrhurqtjapnwqzwccd4" height={20} width={20} alt="$WOOD"/>
             </div>
-            <div className="mt-3 w-2/3 text-lg gap-10 flex flex-row items-center justify-center text-gray-500">
+            <div className="w-2/3 gap-4 xl:gap-10 flex flex-row flex-wrap items-center justify-center text-gray-500">
                 <span>Current Block: {currBlock}</span>
                 <span>Base Difficulty: {difficulty}</span>
             </div>
             {nftIdMiner !== undefined &&
                 <>
-                    <div className="my-3 w-2/3 text-lg gap-10 flex flex-row items-center justify-center text-gray-500">
+                    <div className="my-3 w-2/3 gap-4 xl:gap-10 flex flex-row flex-wrap items-center justify-center text-gray-500">
                         <div className='gap-3 flex flex-row items-center justify-center'>
                             <span>MINER ID:</span>
                             <span>{String(nftIdMiner)}</span>
@@ -206,7 +206,7 @@ export default function MiningHook({
                     </div>
                 </>
             }
-            <div className="w-full xl:w-1/3 h-[100px] p-8 flex items-center justify-center text-lg text-left bg-black" style={{boxShadow: "6px 6px 0 #00000040"}}>
+            <div className="w-3/4 xl:w-1/3 h-[100px] p-8 flex items-center justify-center text-left bg-black" style={{boxShadow: "6px 6px 0 #00000040"}}>
                 <div className='p-6 overflow-hidden ellipsis'>{consoleMsg}</div>
             </div>
         </div>

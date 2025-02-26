@@ -492,14 +492,14 @@ export default function FieldCmdaoValley({
             <div className="pixel w-full h-[300px] flex flex-col items-center justify-center bg-[url('https://gateway.commudao.xyz/ipfs/bafybeicyixoicb7ai6zads6t5k6qpyocoyelfbyoi73nmtobfjlv7fseiq')] bg-cover bg-center">
                 <span className='text-7xl p-3 rounded-xl inset-0 bg-black/50'>CMDAO Valley</span>
             </div>
-            <div className='pixel w-full mt-14 gap-10 flex flex-col items-center justify-center text-sm'>
-                <div className='w-full px-14 h-[50px] gap-4 flex flex-row items-start justify-start'>
+            <div className='pixel w-full mt-14 gap-10 flex flex-col items-center justify-center text-xs xl:text-sm'>
+                <div className='w-full px-14 gap-4 flex flex-row flex-wrap items-start justify-start'>
                     <button className='py-2 px-4 bg-slate-800 rounded-full hover:font-bold'>Non-committed point hook</button>
                     <button className='py-2 px-4 bg-slate-800 rounded-full hover:font-bold'>Mining hook</button>
                     <button className='py-2 px-4 bg-neutral-800 rounded-full text-gray-500 hover:font-bold cursor-not-allowed'>Fishing hook [Coming soon...]</button>
                 </div>
                 <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
-                <div className='w-full h-[50px] gap-6 flex flex-row items-center justify-center'>
+                <div className='w-full gap-6 flex flex-row flex-wrap items-center justify-center'>
                     <button className={'hover:underline ' + (nftIndexSelect === 2 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(2)}>CommuDAO Dungeon</button>
                     <button className={'hover:underline ' + (nftIndexSelect === 4 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(4)}>CM Hexa Cat Meaw JIB JIB</button>
                     <button className={'hover:underline ' + (nftIndexSelect === 5 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(5)}>CM Cat Meaw Ory JIBJIB</button>
@@ -513,7 +513,7 @@ export default function FieldCmdaoValley({
                     </>
                 }
                 <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
-                <div className='w-3/4 h-[120px] mb-4 p-[20px] flex flex-row justify-around rounded-full bg-slate-800'>
+                <div className='w-full xl:w-3/4 h-[120px] mb-4 p-[20px] flex flex-row justify-around rounded-full bg-slate-800'>
                     <div className="flex flex-col justify-around">
                         <div style={{marginBottom: "20px"}}>NFT COLLECTION HASHRATE</div>
                         <div style={{fontSize: "24px", marginBottom: "20px"}}>{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(nftIndexHashRate)}</div>
@@ -530,7 +530,7 @@ export default function FieldCmdaoValley({
                     </div>
                 </div>
                 <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
-                <div className='w-full px-14 h-[30px] gap-4 flex flex-row items-start justify-start'>
+                <div className='w-full px-14 gap-4 flex flex-row flex-wrap items-start justify-start'>
                     <button 
                         className={'py-2 px-4 rounded-xl hover:font-bold ' + ((nft?.filter((obj) => {return obj.isStaked === false}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === false})).length !== 0) ? 'bg-blue-500 hover:bg-blue-400' : 'bg-neutral-400 text-gray-500 cursor-not-allowed')}
                         onClick={() => {
