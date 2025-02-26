@@ -1,5 +1,5 @@
 import React from 'react'
-import { sha256, encodeAbiParameters, createPublicClient, http } from 'viem'
+import { sha256, encodeAbiParameters, createPublicClient, http, erc20Abi, formatEther } from 'viem'
 import { jbc } from 'viem/chains'
 import { type Config } from 'wagmi'
 import { simulateContract, waitForTransactionReceipt, writeContract } from '@wagmi/core'
@@ -11,12 +11,13 @@ const publicClient = createPublicClient({
 })
 
 export default function MiningHook({ 
-    config, setTxupdate, setErrMsg, nftIdMiner,
+    config, setTxupdate, setErrMsg, nftIdMiner, addr,
 }: {
     config: Config,
     setTxupdate: React.Dispatch<React.SetStateAction<String | null>>,
     setErrMsg: React.Dispatch<React.SetStateAction<String | null>>,
     nftIdMiner: bigint | undefined,
+    addr: `0x${string}` | undefined,
 }) {
     const mineBlock = (difficulty: number) => {
         const _nonce = (Math.random() * (100 - 1) + 100).toFixed(0)
@@ -62,6 +63,7 @@ export default function MiningHook({
     const [currBlock, setCurrBlock] = React.useState('0')
     const [difficulty, setDifficulty] = React.useState('0')
     const [mineForLoop, setMineForLoop] = React.useState('1')
+    const [woodBalance, setWoodBalance] = React.useState('0')
 
     React.useEffect(() => {
         const thefetch = async () => {
@@ -103,10 +105,19 @@ export default function MiningHook({
                 {}
             )).sort((a, b) => {return b.value - a.value})
             setLeaderboard(_leaderboard)
+            setDifficulty(String(difficulty))
+
+            const woodBal = formatEther(await publicClient.readContract({
+                address: '0x8652549D215E3c4e30fe33faa717a566E4f6f00C',
+                abi: erc20Abi,
+                functionName: 'balanceOf',
+                args: [addr as '0xstring']
+            }))
+            setWoodBalance(woodBal)
         }
         thefetch()
         setInterval(thefetch, 12000)
-    }, [])
+    }, [addr])
     
     const mining = async () => {
         const minerDiff =  Number(difficulty) > ((Number(nftIdMiner) % 100000) / 100) ? Number(difficulty) - ((Number(nftIdMiner) % 100000) / 100) : 1
@@ -171,19 +182,27 @@ export default function MiningHook({
                     }
                 </div>
             </div>
-            <div className="mt-5 text-2xl">Current Block: {currBlock}</div>
-            <div className="text-2xl text-gray-500">Base Difficulty: {difficulty}</div>
+            <div className="mt-3 text-xl gap-2 flex flex-row items-center">
+                <span>Reward Balance: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(woodBalance))}</span>
+                <img src="https://gateway.commudao.xyz/ipfs/bafkreidldk7skx44xwstwat2evjyp4u5oy5nmamnrhurqtjapnwqzwccd4" height={20} width={20} alt="$WOOD"/>
+            </div>
+            <div className="mt-3 w-2/3 text-lg gap-10 flex flex-row items-center justify-center text-gray-500">
+                <span>Current Block: {currBlock}</span>
+                <span>Base Difficulty: {difficulty}</span>
+            </div>
             {nftIdMiner !== undefined &&
                 <>
-                    <div className='text-2xl'>Miner Difficulty: {Number(difficulty) > ((Number(nftIdMiner) % 100000) / 100) ? Number(difficulty) - ((Number(nftIdMiner) % 100000) / 100) : 1}</div>
-                    <div className='w-full gap-3 flex flex-row items-center justify-center text-lg text-gray-500'>
-                        <span>MINER ID:</span>
-                        <span>{String(nftIdMiner)}</span>
+                    <div className="my-3 w-2/3 text-lg gap-10 flex flex-row items-center justify-center text-gray-500">
+                        <div className='gap-3 flex flex-row items-center justify-center'>
+                            <span>MINER ID:</span>
+                            <span>{String(nftIdMiner)}</span>
+                        </div>
+                        <span>Miner Difficulty: {Number(difficulty) > ((Number(nftIdMiner) % 100000) / 100) ? Number(difficulty) - ((Number(nftIdMiner) % 100000) / 100) : 1}</span>
                     </div>
                     <div className='w-full gap-3 flex flex-row items-center justify-center'>
                         <button className="w-[150px] px-2 py-2 bg-slate-800 text-sm hover:font-bold hover:bg-emerald-300" onClick={mining}>MINE FOR</button>
                         <input className="w-[100px] px-6 py-2 bg-neutral-800 text-white text-sm leading-tight focus:outline-none" value={mineForLoop} onChange={(e) => setMineForLoop(e.target.value)} />
-                        <span>M NONCE</span>
+                        <span className='text-gray-500'>M NONCE</span>
                     </div>
                 </>
             }

@@ -509,7 +509,7 @@ export default function FieldCmdaoValley({
                 {nftIndexSelect === 2 &&
                     <>
                         <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
-                        <MiningHook config={config} setTxupdate={setTxupdate} setErrMsg={setErrMsg} nftIdMiner={nftIdMiner} />
+                        <MiningHook config={config} setTxupdate={setTxupdate} setErrMsg={setErrMsg} nftIdMiner={nftIdMiner} addr={addr} />
                     </>
                 }
                 <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
