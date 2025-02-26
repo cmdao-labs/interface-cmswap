@@ -36,14 +36,14 @@ export default function MiningHook({
                 const endTime = Date.now()
                 const elapsedTime = endTime - startTime
                 const hashRate = (Number(mineForLoop) * 1000000) / (elapsedTime / 1000)
-                setConsoleMsg(`✅ Block Mined! Nonce: ${nonce} | ⏳ Time Taken: ${(elapsedTime / 1000).toFixed(2)} seconds | ⚡ Hash Rate: ${Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(hashRate)}H/s`)
+                setConsoleMsg(`✅ Block Mined! Nonce: ${nonce} | ⏳ Time Taken: ${(elapsedTime / 1000).toFixed(2)} seconds | ⚡ Hash Rate: ${Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(hashRate)}MH/s`)
                 return { nonce, hash }
             }
         }
         const endTime = Date.now()
         const elapsedTime = endTime - startTime
         const hashRate = (Number(mineForLoop) * 1000000) / (elapsedTime / 1000)
-        setConsoleMsg(`❌ Block not found | ⚡ Hash Rate: ${Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(hashRate)}H/s`)
+        setConsoleMsg(`❌ Block not found | ⚡ Hash Rate: ${Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(hashRate)}MH/s`)
     }
 
     const [blockchain, setBlockchain] = React.useState<{
@@ -175,7 +175,7 @@ export default function MiningHook({
             <div className="text-2xl text-gray-500">Base Difficulty: {difficulty}</div>
             {nftIdMiner !== undefined &&
                 <>
-                    <div className='text-2xl'>Miner difficulty: {Number(difficulty) > ((Number(nftIdMiner) % 100000) / 100) ? Number(difficulty) - ((Number(nftIdMiner) % 100000) / 100) : 1}</div>
+                    <div className='text-2xl'>Miner Difficulty: {Number(difficulty) > ((Number(nftIdMiner) % 100000) / 100) ? Number(difficulty) - ((Number(nftIdMiner) % 100000) / 100) : 1}</div>
                     <div className='w-full gap-3 flex flex-row items-center justify-center text-lg text-gray-500'>
                         <span>MINER ID:</span>
                         <span>{String(nftIdMiner)}</span>
