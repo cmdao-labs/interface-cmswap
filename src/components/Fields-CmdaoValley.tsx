@@ -489,8 +489,8 @@ export default function FieldCmdaoValley({
 
     return (
         <>
-            <div className="pixel w-full h-[300px] flex flex-col items-center justify-center bg-[url('https://gateway.commudao.xyz/ipfs/bafybeicyixoicb7ai6zads6t5k6qpyocoyelfbyoi73nmtobfjlv7fseiq')] text-black">
-                <span className='text-7xl'>CMDAO Valley</span>
+            <div className="pixel w-full h-[300px] flex flex-col items-center justify-center bg-[url('https://gateway.commudao.xyz/ipfs/bafybeicyixoicb7ai6zads6t5k6qpyocoyelfbyoi73nmtobfjlv7fseiq')] bg-cover bg-center">
+                <span className='text-7xl p-3 rounded-xl inset-0 bg-black/50'>CMDAO Valley</span>
             </div>
             <div className='pixel w-full mt-14 gap-10 flex flex-col items-center justify-center text-sm'>
                 <div className='w-full px-14 h-[50px] gap-4 flex flex-row items-start justify-start'>
@@ -506,7 +506,13 @@ export default function FieldCmdaoValley({
                     <button className={'hover:underline ' + (nftIndexSelect === 3 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(3)}>The Mythical Guardians</button>
                     {/* add nftIndexSelect switch button here */}
                 </div>
-                {nftIndexSelect === 2 && <MiningHook config={config} setTxupdate={setTxupdate} setErrMsg={setErrMsg} nftIdMiner={nftIdMiner} />}
+                {nftIndexSelect === 2 &&
+                    <>
+                        <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
+                        <MiningHook config={config} setTxupdate={setTxupdate} setErrMsg={setErrMsg} nftIdMiner={nftIdMiner} />
+                    </>
+                }
+                <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
                 <div className='w-3/4 h-[120px] mb-4 p-[20px] flex flex-row justify-around rounded-full bg-slate-800'>
                     <div className="flex flex-col justify-around">
                         <div style={{marginBottom: "20px"}}>NFT COLLECTION HASHRATE</div>
@@ -524,7 +530,7 @@ export default function FieldCmdaoValley({
                     </div>
                 </div>
                 <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
-                <div className='w-full px-14 my-2 h-[30px] gap-4 flex flex-row items-start justify-start'>
+                <div className='w-full px-14 h-[30px] gap-4 flex flex-row items-start justify-start'>
                     <button 
                         className={'py-2 px-4 rounded-xl hover:font-bold ' + ((nft?.filter((obj) => {return obj.isStaked === false}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === false})).length !== 0) ? 'bg-blue-500 hover:bg-blue-400' : 'bg-neutral-400 text-gray-500 cursor-not-allowed')}
                         onClick={() => {

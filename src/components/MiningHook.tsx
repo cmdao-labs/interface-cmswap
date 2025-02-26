@@ -58,7 +58,7 @@ export default function MiningHook({
         blockReward?: bigint | undefined;
     }[]>()
     const [leaderboard, setLeaderboard] = React.useState<{ minerSort: string; value: number; }[]>()
-    const [consoleMsg, setConsoleMsg] = React.useState('Chosse NFT Miner Before Start Mining')
+    const [consoleMsg, setConsoleMsg] = React.useState('Choose NFT Miner Before Start Mining')
     const [currBlock, setCurrBlock] = React.useState('0')
     const [difficulty, setDifficulty] = React.useState('0')
     const [mineForLoop, setMineForLoop] = React.useState('1')
@@ -130,10 +130,9 @@ export default function MiningHook({
     }
         
     return (
-        <div className="w-full h-[80vh] gap-4 flex flex-col items-center justify-center pixel">
-            <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
-            <div className='w-full h-[400px] gap-2 flex flex-row justify-center'>
-                <div className="w-full xl:w-1/4 bg-neutral-900 p-8 gap-1 flex flex-col items-start justify-start text-lg text-left overflow-scroll" style={{boxShadow: "6px 6px 0 #00000040"}}>
+        <div className="w-5/6 h-[100vh] rounded-lg gap-6 flex flex-col items-center justify-start pixel bg-neutral-900">
+            <div className="w-full h-[500px] p-8 gap-6 flex flex-row justify-center bg-[url('https://gateway.commudao.xyz/ipfs/bafybeib5stifg5jcqqxsy4kbwwb6xovei5biyspuzhlwrsng4i62ppwpwy')] bg-cover">
+                <div className="w-full xl:w-1/3 bg-slate-900 p-8 gap-1 flex flex-col items-start justify-start text-lg text-left overflow-scroll" style={{boxShadow: "6px 6px 0 #00000040"}}>
                     <span>Block solver</span>
                     <div className='p-2 gap-2 flex flex-row text-sm'>
                         <span className='w-[100px] text-gray-500'>Block</span>
@@ -152,7 +151,7 @@ export default function MiningHook({
                         </>
                     }
                 </div>
-                <div className="w-full xl:w-1/4 bg-neutral-900 p-8 gap-1 flex flex-col items-start justify-start text-lg text-left overflow-scroll" style={{boxShadow: "6px 6px 0 #00000040"}}>
+                <div className="w-full xl:w-1/3 bg-slate-900 p-8 gap-1 flex flex-col items-start justify-start text-lg text-left overflow-scroll" style={{boxShadow: "6px 6px 0 #00000040"}}>
                     <span>Leaderboard</span>
                     <div className='p-2 gap-2 flex flex-row text-sm'>
                         <span className='w-[100px] text-gray-500'>Rank</span>
@@ -181,16 +180,15 @@ export default function MiningHook({
                         <span>{String(nftIdMiner)}</span>
                     </div>
                     <div className='w-full gap-3 flex flex-row items-center justify-center'>
-                        <button className="w-[150px] px-2 py-2 bg-slate-900 text-sm hover:font-bold hover:bg-emerald-300" onClick={mining}>MINE FOR</button>
+                        <button className="w-[150px] px-2 py-2 bg-slate-800 text-sm hover:font-bold hover:bg-emerald-300" onClick={mining}>MINE FOR</button>
                         <input className="w-[100px] px-6 py-2 bg-neutral-800 text-white text-sm leading-tight focus:outline-none" value={mineForLoop} onChange={(e) => setMineForLoop(e.target.value)} />
                         <span>M NONCE</span>
                     </div>
                 </>
             }
-            <div className="w-full xl:w-1/3 h-[100px] p-8 flex items-center justify-center text-lg text-left" style={{boxShadow: "6px 6px 0 #00000040"}}>
+            <div className="w-full xl:w-1/3 h-[100px] p-8 flex items-center justify-center text-lg text-left bg-black" style={{boxShadow: "6px 6px 0 #00000040"}}>
                 <div className='p-6 overflow-hidden ellipsis'>{consoleMsg}</div>
             </div>
-            <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
         </div>
     )
 }
