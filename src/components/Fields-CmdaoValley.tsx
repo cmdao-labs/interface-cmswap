@@ -6,6 +6,7 @@ import { createPublicClient, http, erc721Abi, formatEther } from 'viem'
 import { jbc } from 'viem/chains'
 import { FieldsV2RouterAbi, FieldsHook001 } from './abi'
 import { readContracts, readContract, simulateContract, waitForTransactionReceipt, writeContract } from '@wagmi/core'
+import MiningHook from './MiningHook'
 
 const v2routerAddr = '0x4b958647b3D5240587843C16d4dfC13B19de2671'
 const v2routerCreatedAt = BigInt(4938709)
@@ -256,7 +257,7 @@ export default function FieldCmdaoValley({
             }))
 
             setTotalPoint(_totalPoint)
-            setNft(myNftStaked.concat(myNftHolding))
+            setNft(myNftStaked.concat(myNftHolding))            
         }
         if (addr !== undefined) {
             thefetch()
@@ -385,7 +386,7 @@ export default function FieldCmdaoValley({
         setIsLoading(false)
     }
 
-    const allowPeriphery = async (_nftId: bigint) => {
+    const allowPeriphery = async (_nftId: bigint, _periIndex: number) => {
         setIsLoading(true)
         try {
             let { request } = await simulateContract(config, {
@@ -393,12 +394,13 @@ export default function FieldCmdaoValley({
                 abi: FieldsV2RouterAbi,
                 address: v2routerAddr,
                 functionName: 'allowStakedUseByPeriphery',
-                args: [BigInt(2), BigInt(nftIndexSelect), _nftId],
+                args: [BigInt(_periIndex), BigInt(nftIndexSelect), _nftId],
             })
             let h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
         } catch (e) {
+            setNftIdMiner(undefined)
             setErrMsg(String(e))
         }
         setIsLoading(false)
@@ -471,6 +473,20 @@ export default function FieldCmdaoValley({
         setIsLoading(false)
     }
 
+    const [nftIdMiner, setNftIdMiner] = React.useState<bigint>()
+    const checkPeripheryAllowNftStaked_hook = async(_nftIdMiner: bigint) => {
+        const res = await readContracts(config, {
+            contracts: [{
+                chainId: 8899,
+                abi: FieldsV2RouterAbi,
+                address: v2routerAddr as '0xstring',
+                functionName: 'stakedUseByPeriphery',
+                args: [BigInt(9), BigInt(nftIndexSelect), _nftIdMiner],
+            }]
+        })
+        return Number(res[0].result) === 0
+    }
+
     return (
         <>
             <div className="pixel w-full h-[300px] flex flex-col items-center justify-center bg-[url('https://gateway.commudao.xyz/ipfs/bafybeicyixoicb7ai6zads6t5k6qpyocoyelfbyoi73nmtobfjlv7fseiq')] text-black">
@@ -479,6 +495,7 @@ export default function FieldCmdaoValley({
             <div className='pixel w-full mt-14 gap-10 flex flex-col items-center justify-center text-sm'>
                 <div className='w-full px-14 h-[50px] gap-4 flex flex-row items-start justify-start'>
                     <button className='py-2 px-4 bg-slate-800 rounded-full hover:font-bold'>Non-committed point hook</button>
+                    <button className='py-2 px-4 bg-slate-800 rounded-full hover:font-bold'>Mining hook</button>
                     <button className='py-2 px-4 bg-neutral-800 rounded-full text-gray-500 hover:font-bold cursor-not-allowed'>Fishing hook [Coming soon...]</button>
                 </div>
                 <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
@@ -489,6 +506,7 @@ export default function FieldCmdaoValley({
                     <button className={'hover:underline ' + (nftIndexSelect === 3 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(3)}>The Mythical Guardians</button>
                     {/* add nftIndexSelect switch button here */}
                 </div>
+                {nftIndexSelect === 2 && <MiningHook config={config} setTxupdate={setTxupdate} setErrMsg={setErrMsg} nftIdMiner={nftIdMiner} />}
                 <div className='w-3/4 h-[120px] mb-4 p-[20px] flex flex-row justify-around rounded-full bg-slate-800'>
                     <div className="flex flex-col justify-around">
                         <div style={{marginBottom: "20px"}}>NFT COLLECTION HASHRATE</div>
@@ -574,14 +592,17 @@ export default function FieldCmdaoValley({
                                             {address !== undefined && intrasubModetext !== undefined && 
                                                 <>
                                                     {address.toUpperCase() === intrasubModetext.toUpperCase() &&
-                                                        <div className='w-full flex flex-row gap-2 text-xs'>
-                                                            {obj.isStaked ?
-                                                                <button className="w-[150px] p-3 rounded-xl bg-red-500 hover:bg-red-400 hover:font-bold" onClick={() => {unstakeNft(obj.Id as bigint)}}>UNSTAKE</button> :
-                                                                <button className="w-[150px] p-3 rounded-xl bg-blue-500 hover:bg-blue-400 hover:font-bold" onClick={() => {stakeNft(obj.Id as bigint)}}>STAKE</button>
-                                                            }
-                                                            {obj.isPeripheryAllow === '0' && obj.isStaked && <button className="w-[150px] p-3 rounded-xl bg-blue-500 hover:bg-blue-400 hover:font-bold hover:bg-blue-400" onClick={() => {allowPeriphery(obj.Id as bigint)}}>ACTIVATE POINT</button>}
-                                                            {obj.isPeripheryAllow !== '0' && obj.isStaked && <button className="w-[150px] p-3 rounded-xl bg-red-500 hover:bg-red-400 hover:font-bold" onClick={() => {revokePeriphery(obj.Id as bigint)}}>DEACTIVATE POINT</button>}
-                                                        </div>
+                                                        <>
+                                                            <div className='w-full flex flex-row gap-2 text-xs'>
+                                                                {obj.isStaked ?
+                                                                    <button className="w-[150px] p-3 rounded-xl bg-red-500 hover:bg-red-400 hover:font-bold" onClick={() => {unstakeNft(obj.Id as bigint)}}>UNSTAKE</button> :
+                                                                    <button className="w-[150px] p-3 rounded-xl bg-blue-500 hover:bg-blue-400 hover:font-bold" onClick={() => {stakeNft(obj.Id as bigint)}}>STAKE</button>
+                                                                }
+                                                                {obj.isPeripheryAllow === '0' && obj.isStaked && <button className="w-[150px] p-3 rounded-xl bg-blue-500 hover:bg-blue-400 hover:font-bold hover:bg-blue-400" onClick={() => {allowPeriphery(obj.Id as bigint, 2)}}>ACTIVATE POINT</button>}
+                                                                {obj.isPeripheryAllow !== '0' && obj.isStaked && <button className="w-[150px] p-3 rounded-xl bg-red-500 hover:bg-red-400 hover:font-bold" onClick={() => {revokePeriphery(obj.Id as bigint)}}>DEACTIVATE POINT</button>}
+                                                            </div>
+                                                            {nftIndexSelect === 2 && <button className={"w-[150px] p-3 rounded-xl " + (Number(nftIdMiner) === Number(obj.Id) ? "bg-emerald-300" : "bg-neutral-700 hover:bg-neutral-400 hover:font-bold")} onClick={async () => {if (await checkPeripheryAllowNftStaked_hook(obj.Id as bigint)) {allowPeriphery(obj.Id as bigint, 9);} setNftIdMiner(obj.Id as bigint);}}>CHOOSE MINER</button>}
+                                                        </>
                                                     }
                                                 </>
                                             }
