@@ -768,8 +768,7 @@ export default function Gameswap({
         setTokenB({name: 'Choose Token', value: '' as '0xstring', logo: '/../favicon.png'})
         setFeeSelect(10000)
     }
-    console.log({address, tokenA})
-    // console.log({lowerTick, upperTick}) // for fetch monitoring
+    console.log({lowerTick, upperTick}) // for fetch monitoring
 
     return (
         <div className="h-[80vh] mt-[40px] w-full flex flex-col items-center justify-start text-xs">

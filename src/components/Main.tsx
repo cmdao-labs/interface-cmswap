@@ -10,7 +10,7 @@ import Headbar from './Headbar'
 import Home from './Home'
 import Gameswap from './Gameswap'
 
-const v = '0.0.1'
+const v = '0.0.2'
 const projectId = '7bc383f9e6957c93f54da557603631b4'
 const queryClient = new QueryClient()
 const wagmiAdapter = new WagmiAdapter({
