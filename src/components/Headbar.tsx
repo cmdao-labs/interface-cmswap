@@ -18,6 +18,7 @@ export default function Headbar({
                 {chain !== undefined && chain.id === 8899 &&
                     <> 
                         <button className="hover:bg-neutral-800 p-2 rounded-xl" onClick={() => {callMode(1); navigate('/fields');}}>Fields</button>
+                        <button className="hover:bg-neutral-800 p-2 rounded-xl" onClick={() => {callMode(2); navigate('/gameswap');}}>Swap</button>
                     </>
                 }
             </div>

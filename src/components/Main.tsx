@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import Headbar from './Headbar'
 import Home from './Home'
+import Gameswap from './Gameswap'
 
 const v = '0.0.1'
 const projectId = '7bc383f9e6957c93f54da557603631b4'
@@ -53,6 +54,9 @@ export default function Main() {
                 preset = 1
                 document.title = "Fields | CMDAO Dev Interface"
             }
+        } else if (modeText.toUpperCase() === "GAMESWAP") {
+            preset = 2
+            document.title = "GameSwap V2 | CMDAO Dev Interface"
         } else {
             preset = 404
             document.title = "404 | CMDAO Dev Interface"
@@ -91,6 +95,7 @@ export default function Main() {
                     <Suspense fallback={<div className="w-full h-[100vh] flex items-center justify-center" />}>
                         {mode === 1 && <Fields callMode={callMode} navigate={navigate} />}
                         {mode === 11 && <CmdaoValley config={wagmiAdapter.wagmiConfig} intrasubModetext={intrasubModetext} navigate={navigate} setIsLoading={setIsLoading} txupdate={txupdate} setTxupdate={setTxupdate} setErrMsg={setErrMsg} />}
+                        {mode === 2 && <Gameswap config={wagmiAdapter.wagmiConfig} setIsLoading={setIsLoading} txupdate={txupdate} setTxupdate={setTxupdate} setErrMsg={setErrMsg} />}
                     </Suspense>
                     {mode === 404 &&
                         <div className="w-full h-[100vh] flex items-center justify-center pixel">
