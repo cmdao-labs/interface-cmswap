@@ -8,7 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import Headbar from './Headbar'
 import Home from './Home'
-import Gameswap from './Gameswap'
+import Swap from './Swap'
 
 const v = '0.0.3'
 const projectId = '7bc383f9e6957c93f54da557603631b4'
@@ -48,21 +48,21 @@ export default function Main() {
             if (subModeText !== undefined) {
                 if (modeText.toUpperCase() === "FIELDS" && subModeText.toUpperCase() === "CMDAO-VALLEY") {
                     preset = 11
-                    document.title = "CMDAO Valley | CMDAO Dev Interface"
+                    document.title = "CMDAO Valley | OpenBBQ"
                 }
             } else {
                 preset = 1
-                document.title = "Fields | CMDAO Dev Interface"
+                document.title = "Fields | OpenBBQ"
             }
-        } else if (modeText.toUpperCase() === "GAMESWAP") {
+        } else if (modeText.toUpperCase() === "SWAP") {
             preset = 2
-            document.title = "GameSwap V2 | CMDAO Dev Interface"
+            document.title = "Swap | OpenBBQ"
         } else {
             preset = 404
-            document.title = "404 | CMDAO Dev Interface"
+            document.title = "404 | OpenBBQ"
         }
     } else {
-        document.title = "CMDAO Dev Interface"
+        document.title = "OpenBBQ"
     }
     const [mode, setMode] = React.useState(preset) 
     const callMode = (_mode: number) => { setMode(_mode) }
@@ -95,7 +95,7 @@ export default function Main() {
                     <Suspense fallback={<div className="w-full h-[100vh] flex items-center justify-center" />}>
                         {mode === 1 && <Fields callMode={callMode} navigate={navigate} />}
                         {mode === 11 && <CmdaoValley config={wagmiAdapter.wagmiConfig} intrasubModetext={intrasubModetext} navigate={navigate} setIsLoading={setIsLoading} txupdate={txupdate} setTxupdate={setTxupdate} setErrMsg={setErrMsg} />}
-                        {mode === 2 && <Gameswap config={wagmiAdapter.wagmiConfig} setIsLoading={setIsLoading} txupdate={txupdate} setTxupdate={setTxupdate} setErrMsg={setErrMsg} />}
+                        {mode === 2 && <Swap config={wagmiAdapter.wagmiConfig} setIsLoading={setIsLoading} txupdate={txupdate} setTxupdate={setTxupdate} setErrMsg={setErrMsg} />}
                     </Suspense>
                     {mode === 404 &&
                         <div className="w-full h-[100vh] flex items-center justify-center pixel">
@@ -104,14 +104,13 @@ export default function Main() {
                     }
                 </QueryClientProvider>
             </WagmiProvider>                
-            <footer className='mt-10 w-full p-8 flex flex-row justify-between'>
+            <footer className='mt-4 w-full p-8 flex flex-row justify-between'>
                 <div className="gap-3 flex flex-col text-xs text-left">
-                    <div>{'CommuDAO dev by second labs ' + v}</div>
-                    <a style={{color: "#fff", textDecoration: "none"}} href="https://github.com/coshi190/cmdao-dev-interface" target="_blank" rel="noreferrer">Github</a>
+                    <div>{'OpenBBQ ' + v}</div>
+                    <a style={{color: "#fff", textDecoration: "none"}} href="https://github.com/coshi190/openbbq" target="_blank" rel="noreferrer">Github</a>
                 </div>
                 <div className="gap-3 flex flex-col text-xs text-right">
-                    <a style={{color: "#fff", textDecoration: "none"}} href="https://vote.commudao.xyz" target="_blank" rel="noreferrer">Governance on Snapshot</a>
-                    <a style={{color: "#fff", textDecoration: "none"}} href="https://discord.gg/k92ReT5EYy" target="_blank" rel="noreferrer">Discord</a>
+                    <a style={{color: "#fff", textDecoration: "none"}} href="https://discord.gg/k92ReT5EYy" target="_blank" rel="noreferrer">Chat</a>
                 </div>
             </footer>
         </>

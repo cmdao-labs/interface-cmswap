@@ -47,7 +47,7 @@ type MyPosition = {
     Fee1: number;
 }
 
-export default function Gameswap({ 
+export default function Swap({ 
     config, setIsLoading, txupdate, setTxupdate, setErrMsg, 
 }: {
     config: Config,
@@ -769,7 +769,7 @@ export default function Gameswap({
     console.log({lowerTick, upperTick}) // for fetch monitoring
 
     return (
-        <div className="h-[80vh] mt-[40px] w-full flex flex-col items-center justify-start text-xs">
+        <div className="h-[83vh] mt-10 w-full flex flex-col items-center justify-start text-xs">
             {isAddPositionModal &&
                 <div style={{zIndex: "998"}} className="centermodal">
                     <div className="wrapper">

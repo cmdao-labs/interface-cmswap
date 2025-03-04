@@ -67,20 +67,3 @@ body::-webkit-scrollbar { display: none; }
 .typed-out{
   animation: blinking 3s linear infinite;
 }
-
-.welcome {
-  background-image: url('../public/home.webp');
-  background-repeat: round;
-}
-@media (max-width: 480px) {
-  .welcome {
-    background-size: 1500px;
-    background-repeat: unset;
-  }
-}
-@media (min-width: 481px) and (max-width: 1024px) {
-  .welcome {
-    background-size: 2500px;
-    background-repeat: unset;
-  }
-}
