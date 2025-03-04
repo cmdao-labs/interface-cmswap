@@ -750,8 +750,6 @@ export default function Gameswap({
 
         setAmountA("")
         setAmountB("")
-        setLowerTick("") 
-        setUpperTick("")
         setLowerPrice("") 
         setUpperPrice("")
         address !== undefined && mode === 0 && fetchStateMode0()
@@ -762,6 +760,8 @@ export default function Gameswap({
         setTokenA(tokens[0])
         setTokenB({name: 'Choose Token', value: '' as '0xstring', logo: '/../favicon.png'})
         setFeeSelect(10000)
+        setLowerTick("") 
+        setUpperTick("")
     }
     console.log({lowerTick, upperTick}) // for fetch monitoring
 
