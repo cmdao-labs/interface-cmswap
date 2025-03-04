@@ -11,7 +11,7 @@ import Home from './Home'
 import Swap from './Swap'
 
 const v = '0.0.3'
-const projectId = '7bc383f9e6957c93f54da557603631b4'
+const projectId = '1387f8ef666a56825e503ca148275bcb'
 const queryClient = new QueryClient()
 const wagmiAdapter = new WagmiAdapter({
     networks: [jbc],
