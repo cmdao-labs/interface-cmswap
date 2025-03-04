@@ -666,12 +666,12 @@ export default function Gameswap({
                 })
                 const liquidity = pos[7] as string
                 const _currPrice = (Number(slot0[0]) / (2 ** 96)) ** 2
-                const _lowerTick = Number(pos[5])
-                const _upperTick = Number(pos[6])
-                const _lowerPrice = Math.pow(1.0001, _lowerTick)
-                const _upperPrice = Math.pow(1.0001, _upperTick)
-                const _amount0 = calcAmount0(Number(liquidity), _currPrice, _lowerPrice, _upperPrice, 18, 18)
-                const _amount1 = calcAmount1(Number(liquidity), _currPrice, _lowerPrice, _upperPrice, 18, 18)
+                const lowerTick = Number(pos[5])
+                const upperTick = Number(pos[6])
+                const lowerPrice = Math.pow(1.0001, lowerTick)
+                const upperPrice = Math.pow(1.0001, upperTick)
+                const _amount0 = calcAmount0(Number(liquidity), _currPrice, lowerPrice, upperPrice, 18, 18)
+                const _amount1 = calcAmount1(Number(liquidity), _currPrice, lowerPrice, upperPrice, 18, 18)
                 const _token0name = tokenName[0].status === 'success' ? String(tokenName[0].result) : ''
                 const _token1name = tokenName[1].status === 'success' ? String(tokenName[1].result) : ''
                 const _fee0 = qouteFee.result[0]
@@ -682,11 +682,10 @@ export default function Gameswap({
                 let token1name
                 let amount0
                 let amount1
-                let minPrice
-                let maxPrice
                 let currPrice
                 let fee0
                 let fee1
+
                 if (_token0name === 'WJBC') {
                     token0addr = pos[3]
                     token1addr = pos[2]
@@ -694,20 +693,16 @@ export default function Gameswap({
                     token1name = _token0name
                     amount0 = _amount1 / 1e18
                     amount1 = _amount0 / 1e18
-                    minPrice = 1 / _lowerPrice
-                    maxPrice = 1 / _upperPrice
                     currPrice = 1 / _currPrice
                     fee0 = _fee1
                     fee1 = _fee0
-                } else if (_token0name === 'CMJ') {
+                } else if (_token0name === 'CMJ' && _token1name !== 'WJBC') {
                     token0addr = pos[3]
                     token1addr = pos[2]
                     token0name = _token1name
                     token1name = _token0name
                     amount0 = _amount1 / 1e18
                     amount1 = _amount0 / 1e18
-                    minPrice = 1 / _lowerPrice
-                    maxPrice = 1 / _upperPrice
                     currPrice = 1 / _currPrice
                     fee0 = _fee1
                     fee1 = _fee0
@@ -718,8 +713,6 @@ export default function Gameswap({
                     token1name = _token1name
                     amount0 = _amount0 / 1e18
                     amount1 = _amount1 / 1e18
-                    minPrice = _lowerPrice
-                    maxPrice = _upperPrice
                     currPrice = _currPrice
                     fee0 = _fee0
                     fee1 = _fee1
@@ -737,11 +730,11 @@ export default function Gameswap({
                     Token1: token1name,
                     Amount0: amount0,
                     Amount1: amount1,
-                    MinPrice: minPrice,
-                    MaxPrice: maxPrice,
+                    MinPrice: lowerPrice,
+                    MaxPrice: upperPrice,
                     CurrPrice: currPrice,
-                    LowerTick: _lowerTick,
-                    UpperTick: _upperTick,
+                    LowerTick: lowerTick,
+                    UpperTick: upperTick,
                     Liquidity: liquidity,
                     Fee0: Number(fee0) / 1e18,
                     Fee1: Number(fee1) / 1e18
