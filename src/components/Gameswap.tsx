@@ -183,21 +183,16 @@ export default function Gameswap({
     const setAlignedLowerTick = useDebouncedCallback((_lowerPrice: string) => {
         setAmountA("")
         setAmountB("")
-        if (Number(_lowerPrice) > Number(upperPrice)) {
-            setLowerPrice("")
-            setLowerPercentage("")
+        const _lowerTick = Math.floor(Math.log(Number(_lowerPrice)) / Math.log(1.0001))
+        let alignedLowerTick
+        if (Number(_lowerPrice) === 0) {
+            alignedLowerTick = Math.ceil(TickMath.MIN_TICK / Number(currTickSpacing)) * Number(currTickSpacing)
         } else {
-            const _lowerTick = Math.floor(Math.log(Number(_lowerPrice)) / Math.log(1.0001))
-            let alignedLowerTick
-            if (Number(_lowerPrice) === 0) {
-                alignedLowerTick = Math.ceil(TickMath.MIN_TICK / Number(currTickSpacing)) * Number(currTickSpacing)
-            } else {
-                alignedLowerTick = Math.floor(_lowerTick / Number(currTickSpacing)) * Number(currTickSpacing)
-                setLowerPrice(Math.pow(1.0001, alignedLowerTick).toString())
-            }
-            setLowerPercentage((((Math.pow(1.0001, alignedLowerTick) / Number(currPrice)) - 1) * 100).toString())
-            setLowerTick(alignedLowerTick.toString())
+            alignedLowerTick = Math.floor(_lowerTick / Number(currTickSpacing)) * Number(currTickSpacing)
+            setLowerPrice(Math.pow(1.0001, alignedLowerTick).toString())
         }
+        setLowerPercentage((((Math.pow(1.0001, alignedLowerTick) / Number(currPrice)) - 1) * 100).toString())
+        setLowerTick(alignedLowerTick.toString())
     }, 700)
 
     const setAlignedUpperTick = useDebouncedCallback((_upperPrice: string) => {
@@ -1007,11 +1002,11 @@ export default function Gameswap({
                             </button>
                         </div>
                         <div className="w-full gap-1 flex flex-row items-center">
-                            <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="Lower Price" value={lowerPrice} onChange={e => {setLowerPrice(e.target.value); setAlignedLowerTick(e.target.value); setRangePercentage(999);}} />
+                            <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="Lower Price" value={lowerPrice} onChange={e => {setLowerPrice(e.target.value); setAlignedLowerTick(e.target.value); setRangePercentage(999);}} />
                             <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenB.name + '/' + tokenA.name + ' (' + Number(lowerPercentage).toFixed(2) + '%)'}</span>
                         </div>
                         <div className="w-full gap-1 flex flex-row items-center">
-                            <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="Upper Price" value={upperPrice} onChange={e => {setUpperPrice(e.target.value); setAlignedUpperTick(e.target.value); setRangePercentage(999);}} />
+                            <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="Upper Price" value={upperPrice} onChange={e => {setUpperPrice(e.target.value); setAlignedUpperTick(e.target.value); setRangePercentage(999);}} />
                             <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenB.name + '/' + tokenA.name + ' (+' + Number(upperPercentage).toFixed(2) + '%)'}</span>
                         </div>
                         {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && Number(amountA) !== 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) !== 0 && Number(amountB) <= Number(tokenBBalance) ?
