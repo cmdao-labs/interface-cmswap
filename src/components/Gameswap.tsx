@@ -693,8 +693,8 @@ export default function Gameswap({
                 if (_token1name === 'WJBC') {
                     token0addr = pos[3]
                     token1addr = pos[2]
-                    token0name = _token1name
-                    token1name = _token0name
+                    token0name = _token0name
+                    token1name = _token1name
                     amount0 = _amount1 / 1e18
                     amount1 = _amount0 / 1e18
                     lowerPrice = 1 / _upperPrice
@@ -705,8 +705,8 @@ export default function Gameswap({
                 } else if (_token1name === 'CMJ' && _token0name !== 'WJBC') {
                     token0addr = pos[3]
                     token1addr = pos[2]
-                    token0name = _token1name
-                    token1name = _token0name
+                    token0name = _token0name
+                    token1name = _token1name
                     amount0 = _amount1 / 1e18
                     amount1 = _amount0 / 1e18
                     lowerPrice = 1 / _upperPrice
@@ -717,8 +717,8 @@ export default function Gameswap({
                 } else {
                     token0addr = pos[2]
                     token1addr = pos[3]
-                    token0name = _token0name
-                    token1name = _token1name
+                    token0name = _token1name
+                    token1name = _token0name
                     amount0 = _amount0 / 1e18
                     amount1 = _amount1 / 1e18
                     lowerPrice = _lowerPrice
