@@ -16,7 +16,7 @@ export default function Headbar({
                     <img alt="" src="/../favicon.png" height="25" width="25" />
                 </div>
                 <button className="hover:bg-neutral-800 p-2 rounded-xl" onClick={() => {callMode(1); navigate('/fields');}}>Fields</button>
-                <button className="hover:bg-neutral-800 p-2 rounded-xl" onClick={() => {callMode(2); navigate('/gameswap');}}>Swap</button>
+                <button className="hover:bg-neutral-800 p-2 rounded-xl" onClick={() => {callMode(2); navigate('/swap');}}>Swap</button>
             </div>
             <div className="flex align-center justify-end mr-8 text-sm">
                 {/* @ts-expect-error msg */}
