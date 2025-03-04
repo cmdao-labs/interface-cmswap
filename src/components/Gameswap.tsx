@@ -695,8 +695,8 @@ export default function Gameswap({
                     lowerPrice = 1 / _upperPrice
                     upperPrice = 1 / _lowerPrice
                     currPrice = 1 / _currPrice
-                    fee0 = _fee1
-                    fee1 = _fee0
+                    fee0 = _fee0
+                    fee1 = _fee1
                 } else if (_token1name === 'CMJ' && _token0name !== 'WJBC') {
                     token0addr = pos[3]
                     token1addr = pos[2]
@@ -707,8 +707,8 @@ export default function Gameswap({
                     lowerPrice = 1 / _upperPrice
                     upperPrice = 1 / _lowerPrice
                     currPrice = 1 / _currPrice
-                    fee0 = _fee1
-                    fee1 = _fee0
+                    fee0 = _fee0
+                    fee1 = _fee1
                 } else {
                     token0addr = pos[2]
                     token1addr = pos[3]
@@ -719,8 +719,8 @@ export default function Gameswap({
                     lowerPrice = _lowerPrice
                     upperPrice = _upperPrice
                     currPrice = _currPrice
-                    fee0 = _fee0
-                    fee1 = _fee1
+                    fee0 = _fee1
+                    fee1 = _fee0
                 }
 
                 return {
