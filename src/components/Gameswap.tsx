@@ -211,7 +211,7 @@ export default function Gameswap({
             let alignedUpperTick
             if (Number(_upperPrice) === Infinity) {
                 alignedUpperTick = Math.floor(TickMath.MAX_TICK / Number(currTickSpacing)) * Number(currTickSpacing)
-                setUpperPercentage('+Infinity')
+                setUpperPercentage('+♾️')
             } else {
                 alignedUpperTick = Math.ceil(_upperTick / Number(currTickSpacing)) * Number(currTickSpacing)
                 setUpperPercentage((((Math.pow(1.0001, alignedUpperTick) / Number(currPrice)) - 1) * 100).toString())
@@ -617,7 +617,7 @@ export default function Gameswap({
                 rangePercentage !== 1 ? setLowerPrice(_lowerPriceShow.toString()) : setLowerPrice(_lowerPrice.toString())
                 rangePercentage !== 1 ? setUpperPrice(_upperPriceShow.toString()) : setUpperPrice(_upperPrice.toString())
                 rangePercentage !== 1 ? setLowerPercentage((((_lowerPriceShow / _currPrice) - 1) * 100).toString()) : setLowerPercentage('-100')
-                rangePercentage !== 1 ? setUpperPercentage((((_upperPriceShow / _currPrice) - 1) * 100).toString()) : setUpperPercentage('+Infinity')
+                rangePercentage !== 1 ? setUpperPercentage((((_upperPriceShow / _currPrice) - 1) * 100).toString()) : setUpperPercentage('+♾️')
             } else {
                 setCurrPrice("")
             }
@@ -670,10 +670,10 @@ export default function Gameswap({
                 const _currPrice = (Number(slot0[0]) / (2 ** 96)) ** 2
                 const lowerTick = Number(pos[5])
                 const upperTick = Number(pos[6])
-                const lowerPrice = Math.pow(1.0001, lowerTick)
-                const upperPrice = Math.pow(1.0001, upperTick)
-                const _amount0 = calcAmount0(Number(liquidity), _currPrice, lowerPrice, upperPrice, 18, 18)
-                const _amount1 = calcAmount1(Number(liquidity), _currPrice, lowerPrice, upperPrice, 18, 18)
+                const _lowerPrice = Math.pow(1.0001, lowerTick)
+                const _upperPrice = Math.pow(1.0001, upperTick)
+                const _amount0 = calcAmount0(Number(liquidity), _currPrice, _lowerPrice, _upperPrice, 18, 18)
+                const _amount1 = calcAmount1(Number(liquidity), _currPrice, _lowerPrice, _upperPrice, 18, 18)
                 const _token0name = tokenName[0].status === 'success' ? String(tokenName[0].result) : ''
                 const _token1name = tokenName[1].status === 'success' ? String(tokenName[1].result) : ''
                 const _fee0 = qouteFee.result[0]
@@ -684,27 +684,33 @@ export default function Gameswap({
                 let token1name
                 let amount0
                 let amount1
+                let lowerPrice
+                let upperPrice
                 let currPrice
                 let fee0
                 let fee1
 
-                if (_token0name === 'WJBC') {
+                if (_token1name === 'WJBC') {
                     token0addr = pos[3]
                     token1addr = pos[2]
                     token0name = _token1name
                     token1name = _token0name
                     amount0 = _amount1 / 1e18
                     amount1 = _amount0 / 1e18
+                    lowerPrice = 1 / _upperPrice
+                    upperPrice = 1 / _lowerPrice
                     currPrice = 1 / _currPrice
                     fee0 = _fee1
                     fee1 = _fee0
-                } else if (_token0name === 'CMJ' && _token1name !== 'WJBC') {
+                } else if (_token1name === 'CMJ' && _token0name !== 'WJBC') {
                     token0addr = pos[3]
                     token1addr = pos[2]
                     token0name = _token1name
                     token1name = _token0name
                     amount0 = _amount1 / 1e18
                     amount1 = _amount0 / 1e18
+                    lowerPrice = 1 / _upperPrice
+                    upperPrice = 1 / _lowerPrice
                     currPrice = 1 / _currPrice
                     fee0 = _fee1
                     fee1 = _fee0
@@ -715,6 +721,8 @@ export default function Gameswap({
                     token1name = _token1name
                     amount0 = _amount0 / 1e18
                     amount1 = _amount1 / 1e18
+                    lowerPrice = _lowerPrice
+                    upperPrice = _upperPrice
                     currPrice = _currPrice
                     fee0 = _fee0
                     fee1 = _fee1
@@ -773,11 +781,11 @@ export default function Gameswap({
                         <div className="pixel w-2/3 xl:w-1/3 h-3/4 xl:h-1/2 bg-neutral-900 p-10 gap-5 flex flex-col items-center justify-center text-sm text-left" style={{boxShadow: "6px 6px 0 #00000040"}}>
                             <span className='text-2xl'>Position #{positionSelected !== undefined ? positionSelected.Id : '...'} - Add Liquidity</span>
                             <div className="w-full gap-1 flex flex-row items-center">
-                                <input className="p-4 bg-neutral-800 rounded-lg w-4/6 focus:outline-none" placeholder="0" value={amountA} onChange={e => {setAmountA(e.target.value); setAlignedAmountB(e.target.value)}} />
+                                <input className="p-4 bg-neutral-800 rounded-lg w-4/6 focus:outline-none" placeholder="0" value={amountA} onChange={e => {setAmountA(e.target.value); setAlignedAmountB(e.target.value);}} />
                                 <span className="w-2/6 font-semibold text-right text-gray-400">{Number(tokenABalance).toFixed(4)} {positionSelected !== undefined ? positionSelected.Token0 : '...'}</span>
                             </div>
                             <div className="w-full gap-1 flex flex-row items-center">
-                                <input className="p-4 bg-neutral-800 rounded-lg w-4/6 focus:outline-none" placeholder="0" value={amountB} onChange={e => {setAmountB(e.target.value); setAlignedAmountA(e.target.value)}} />
+                                <input className="p-4 bg-neutral-800 rounded-lg w-4/6 focus:outline-none" placeholder="0" value={amountB} onChange={e => {setAmountB(e.target.value); setAlignedAmountA(e.target.value);}} />
                                 <span className="w-2/6 font-semibold text-right text-gray-400">{Number(tokenBBalance).toFixed(4)} {positionSelected !== undefined ? positionSelected.Token1 : '...'}</span>
                             </div>
                             <button className="mt-2 p-4 bg-blue-500 rounded-full w-full bg-blue-500 text-lg font-bold" onClick={() => positionSelected !== undefined && increaseLiquidity(BigInt(positionSelected.Id))}>Increase Liquidity</button>
@@ -958,7 +966,7 @@ export default function Gameswap({
                             </div>
                         </div>
                         <div className="w-full gap-1 flex flex-row items-center">
-                            <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="0" value={amountB} onChange={(e) => {setAmountB(e.target.value); setAlignedAmountA(e.target.value)}} />
+                            <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="0" value={amountB} onChange={(e) => setAmountB(e.target.value)} />
                             {tokenB.value !== '' as '0xstring' && <button className="w-2/6 font-semibold text-right text-gray-400" onClick={() => setAmountB(tokenBBalance)}>{Number(tokenBBalance).toFixed(4)} {tokenB.name}</button>}
                         </div>
                         <div className="w-full h-[100px] gap-2 flex flex-row">
@@ -983,7 +991,7 @@ export default function Gameswap({
                         <div className="w-full h-[100px] gap-2 flex flex-row">
                             <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border-2 border-gray-800 " + (rangePercentage === 1 ? "bg-neutral-800" : "")} onClick={() => setRangePercentage(1)}>
                                 <span>Full Range</span>
-                                <span className="text-gray-500">[-100%, Infinity]</span>
+                                <span className="text-gray-500">[-100%, ♾️]</span>
                             </button>
                             <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border-2 border-gray-800 " + (rangePercentage === 0.15 ? "bg-neutral-800" : "")} onClick={() => setRangePercentage(0.15)}>
                                 <span>Wide</span>
@@ -1031,7 +1039,7 @@ export default function Gameswap({
                                 </div>
                                 <div className="w-full h-[20px] py-2 px-6 flex flex-row justify-between">
                                     <span className="text-gray-500">Current : Min : Max</span>
-                                    <span>{obj.CurrPrice.toFixed(4)} : {obj.MinPrice.toFixed(4)} : {obj.MaxPrice.toFixed(4)} {obj.Token0}/{obj.Token1}</span>
+                                    <span>{obj.CurrPrice.toFixed(4)} : {obj.MinPrice.toFixed(4)} : {obj.MaxPrice > 1e18 ? '♾️' : obj.MaxPrice.toFixed(4)} {obj.Token0}/{obj.Token1}</span>
                                 </div>
                                 <div className="w-full h-[50px] py-2 px-6 gap-2 flex flex-row items-start justify-start font-semibold">
                                     <button className="p-1 w-1/5 rounded-full bg-gray-500" onClick={() => {setPositionSelected(obj); setTokenA({name: "", logo: "", value: obj.Token0Addr as '0xstring'}); setTokenB({name: "", logo: "", value: obj.Token1Addr as '0xstring'}); getBalanceOfAB(obj.Token0Addr as '0xstring', obj.Token1Addr as '0xstring'); setPairDetect(obj.Pair); setFeeSelect(obj.FeeTier); setLowerTick(obj.LowerTick.toString()); setUpperTick(obj.UpperTick.toString()); setIsAddPositionModal(true);}}>Add Liquidity</button>
