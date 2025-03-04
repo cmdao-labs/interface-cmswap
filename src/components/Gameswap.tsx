@@ -9,9 +9,9 @@ import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headless
 import { ChevronDownIcon } from "@heroicons/react/20/solid"
 import { useDebouncedCallback } from "use-debounce"
 
-const tokens = [
-    { name: 'WJBC', value: '0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747', logo: 'https://gateway.commudao.xyz/ipfs/bafkreih6o2px5oqockhsuer7wktcvoky36gpdhv7qjwn76enblpce6uokq' },
-    { name: 'CMJ', value: '0xE67E280f5a354B4AcA15fA7f0ccbF667CF74F97b', logo: 'https://gateway.commudao.xyz/ipfs/bafkreiabbtn5pc6di4nwfgpqkk3ss6njgzkt2evilc5i2r754pgiru5x4u' },
+const tokens: {name: string, value: '0xstring', logo: string}[] = [
+    { name: 'WJBC', value: '0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreih6o2px5oqockhsuer7wktcvoky36gpdhv7qjwn76enblpce6uokq' },
+    { name: 'CMJ', value: '0xE67E280f5a354B4AcA15fA7f0ccbF667CF74F97b' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreiabbtn5pc6di4nwfgpqkk3ss6njgzkt2evilc5i2r754pgiru5x4u' },
     // can PR listing here
 ]
 const V3_FACTORY = '0x5835f123bDF137864263bf204Cf4450aAD1Ba3a7' as '0xstring'
@@ -28,7 +28,6 @@ const v3PoolABI = { chainId: 8899, abi: v3Pool } as const
 type MyPosition = {
     Id: number;
     Name: string;
-    Description: string;
     Image: string;
     FeeTier: number;
     Pair: string;
@@ -60,10 +59,10 @@ export default function Gameswap({
     const [mode, setMode] = React.useState(0)
     const { address } = useAccount()
     const [exchangeRate, setExchangeRate] = React.useState("")
-    const [tokenA, setTokenA] = React.useState(tokens[0])
+    const [tokenA, setTokenA] = React.useState<{name: string, value: '0xstring', logo: string}>(tokens[0])
     const [tokenABalance, setTokenABalance] = React.useState("")
     const [amountA, setAmountA] = React.useState("")
-    const [tokenB, setTokenB] = React.useState({name: 'Choose Token', value: '', logo: '/../favicon.png'})
+    const [tokenB, setTokenB] = React.useState<{name: string, value: '0xstring', logo: string}>({name: 'Choose Token', value: '' as '0xstring', logo: '/../favicon.png'})
     const [tokenBBalance, setTokenBBalance] = React.useState("")
     const [amountB, setAmountB] = React.useState("")
     const [feeSelect, setFeeSelect] = React.useState(10000)
@@ -84,30 +83,32 @@ export default function Gameswap({
     const [amountRemove, setAmountRemove] = React.useState("")
 
     const getQoute = useDebouncedCallback(async (_amount: string) => {
-        if (Number(_amount) !== 0) {
-            const qouteOutput = await simulateContract(config, {
-                ...qouterV2Contract,
-                functionName: 'quoteExactInputSingle',
-                args: [{
-                    tokenIn: tokenA.value as '0xstring',
-                    tokenOut: tokenB.value as '0xstring',
-                    amountIn: parseEther(_amount),
-                    fee: feeSelect,
-                    sqrtPriceLimitX96: BigInt(0),
-                }]
-            })
-            setAmountB(formatEther(qouteOutput.result[0]))
-        } else {
-            setAmountB("")
-        }
+        try {
+            if (Number(_amount) !== 0) {
+                const qouteOutput = await simulateContract(config, {
+                    ...qouterV2Contract,
+                    functionName: 'quoteExactInputSingle',
+                    args: [{
+                        tokenIn: tokenA.value as '0xstring',
+                        tokenOut: tokenB.value as '0xstring',
+                        amountIn: parseEther(_amount),
+                        fee: feeSelect,
+                        sqrtPriceLimitX96: BigInt(0),
+                    }]
+                })
+                setAmountB(formatEther(qouteOutput.result[0]))
+            } else {
+                setAmountB("")
+            }
+        } catch {}
     }, 700)
 
     const swap = async () => {
         setIsLoading(true)
         try {
             const allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', ROUTER02] })
-            if (allowanceA < BigInt(parseEther(amountA))) {
-                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [ROUTER02, BigInt(parseEther(amountA))] })
+            if (allowanceA < parseEther(amountA)) {
+                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [ROUTER02, parseEther(amountA)] })
                 const h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
@@ -224,18 +225,8 @@ export default function Gameswap({
         const poolState = await readContracts(config, {
             contracts: [
                 { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'token0' },
-                {
-                    chainId: 8899,
-                    abi: v3Pool,
-                    address: pairDetect as '0xstring',
-                    functionName: 'slot0',
-                },
-                {
-                    chainId: 8899,
-                    abi: v3Pool,
-                    address: pairDetect as '0xstring',
-                    functionName: 'liquidity',
-                }
+                { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'slot0' },
+                { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'liquidity' }
             ]
         })
         const token0 = poolState[0].result !== undefined ? poolState[0].result : "" as '0xstring'
@@ -252,7 +243,6 @@ export default function Gameswap({
             liquidity.toString(),
             tick
         )
-
         if (String(token0).toUpperCase() === tokenA.value.toUpperCase()) {
             const singleSidePositionToken1 = Position.fromAmount1({
                 pool, 
@@ -276,24 +266,9 @@ export default function Gameswap({
     const setAlignedAmountB = useDebouncedCallback(async (_amountA: string) => {
         const poolState = await readContracts(config, {
             contracts: [
-                {
-                    chainId: 8899,
-                    abi: v3Pool,
-                    address: pairDetect as '0xstring',
-                    functionName: 'token0',
-                },
-                {
-                    chainId: 8899,
-                    abi: v3Pool,
-                    address: pairDetect as '0xstring',
-                    functionName: 'slot0',
-                },
-                {
-                    chainId: 8899,
-                    abi: v3Pool,
-                    address: pairDetect as '0xstring',
-                    functionName: 'liquidity',
-                },
+                { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'token0' },
+                { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'slot0' },
+                { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'liquidity' },
             ]
         })
         const token0 = poolState[0].result !== undefined ? poolState[0].result : "" as '0xstring'
@@ -310,7 +285,6 @@ export default function Gameswap({
             liquidity.toString(),
             tick
         )
-
         if (String(token0).toUpperCase() === tokenA.value.toUpperCase()) {
             const singleSidePositionToken0 = Position.fromAmount0({
                 pool, 
@@ -334,18 +308,8 @@ export default function Gameswap({
     const getBalanceOfAB = async (_tokenAvalue: '0xstring', _tokenBvalue: '0xstring') => {
         const bal = await readContracts(config, {
             contracts: [
-                {
-                    ...erc20ABI,
-                    address: _tokenAvalue,
-                    functionName: 'balanceOf',
-                    args: [address as '0xstring'],
-                },
-                {
-                    ...erc20ABI,
-                    address: _tokenBvalue,
-                    functionName: 'balanceOf',
-                    args: [address as '0xstring'],
-                },
+                { ...erc20ABI, address: _tokenAvalue, functionName: 'balanceOf', args: [address as '0xstring'] },
+                { ...erc20ABI, address: _tokenBvalue, functionName: 'balanceOf', args: [address as '0xstring'] },
             ]
         })
         bal[0].result !== undefined && setTokenABalance(formatEther(bal[0].result as bigint))
@@ -355,40 +319,19 @@ export default function Gameswap({
     const increaseLiquidity = async (_tokenId: bigint) => {
         setIsLoading(true)
         try {
-            let h
-            const allowanceA = await readContract(config, {
-                ...erc20ABI,
-                address: tokenA.value as '0xstring',
-                functionName: 'allowance',
-                args: [address as '0xstring', POSITION_MANAGER],
-            })
-            if (allowanceA < BigInt(parseEther(amountA))) {
-                let { request: requestA1 } = await simulateContract(config, {
-                    ...erc20ABI,
-                    address: tokenA.value as '0xstring',
-                    functionName: 'approve',
-                    args: [POSITION_MANAGER, BigInt(parseEther(amountA))]
-                })
-                h = await writeContract(config, requestA1)
+            const allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+            if (allowanceA < parseEther(amountA)) {
+                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountA)] })
+                const h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
-            const allowanceB = await readContract(config, {
-                ...erc20ABI,
-                address: tokenB.value as '0xstring',
-                functionName: 'allowance',
-                args: [address as '0xstring', POSITION_MANAGER],
-            })
-            if (allowanceB < BigInt(parseEther(amountB))) {
-                let { request: requestA2 } = await simulateContract(config, {
-                    ...erc20ABI,
-                    address: tokenB.value as '0xstring',
-                    functionName: 'approve',
-                    args: [POSITION_MANAGER, BigInt(parseEther(amountB))]
-                })
-                h = await writeContract(config, requestA2)
+            const allowanceB = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+            if (allowanceB < parseEther(amountB)) {
+                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountB)] })
+                const h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
-            let { request: request2 } = await simulateContract(config, {
+            const { request } = await simulateContract(config, {
                 ...positionManagerContract,
                 functionName: 'increaseLiquidity',
                 args: [{
@@ -400,12 +343,14 @@ export default function Gameswap({
                     deadline: BigInt(Math.floor(Date.now() / 1000) + 60 * 10),
                 }]
             })
-            h = await writeContract(config, request2)
+            const h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
         } catch (e) {
             setErrMsg(String(e))
         }
+        clearState()
+        setIsAddPositionModal(false)
         setIsLoading(false)
     }
 
@@ -463,39 +408,33 @@ export default function Gameswap({
         } catch (e) {
             setErrMsg(String(e))
         }
+        setAmountRemove('')
+        setIsRemPositionModal(false)
         setIsLoading(false)
     }
 
     const placeLiquidity = async () => {
         setIsLoading(true)
         try {
-            let h
-            let checkToken0 = ''
+            let getToken0 = pairDetect !== '0x0000000000000000000000000000000000000000' ? 
+                await readContract(config, { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'token0' }) :
+                ''
             if (pairDetect === '0x0000000000000000000000000000000000000000') {
-                let { request: request0 } = await simulateContract(config, {
+                const { request: request0 } = await simulateContract(config, {
                     ...v3FactoryContract,
                     functionName: 'createPool',
-                    args: [tokenA.value as '0xstring', tokenB.value as '0xstring', feeSelect]
+                    args: [tokenA.value, tokenB.value, feeSelect]
                 })
-                h = await writeContract(config, request0)
+                let h = await writeContract(config, request0)
                 await waitForTransactionReceipt(config, { hash: h })
-                const newPair = await readContract(config, {
-                    ...v3FactoryContract,
-                    functionName: 'getPool',
-                    args: [tokenA.value as '0xstring', tokenB.value as '0xstring', feeSelect],
-                })
-                checkToken0 = await readContract(config, {
-                    chainId: 8899,
+
+                const newPair = await readContract(config, {...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, feeSelect] })
+                getToken0 = await readContract(config, { ...v3PoolABI, address: newPair as '0xstring', functionName: 'token0'})
+                const amount0 = getToken0.toUpperCase() === tokenA.value.toUpperCase() ? amountA : amountB
+                const amount1 = getToken0.toUpperCase() === tokenA.value.toUpperCase() ? amountB : amountA
+                const { request: request1 } = await simulateContract(config, {
+                    ...v3PoolABI,
                     address: newPair as '0xstring',
-                    abi: v3Pool,
-                    functionName: 'token0'
-                })
-                const amount0 = checkToken0.toUpperCase() === tokenA.value.toUpperCase() ? amountA : amountB
-                const amount1 = checkToken0.toUpperCase() === tokenA.value.toUpperCase() ? amountB : amountA
-                let { request: request1 } = await simulateContract(config, {
-                    chainId: 8899,
-                    address: newPair as '0xstring',
-                    abi: v3Pool,
                     functionName: 'initialize',
                     args: [BigInt(encodeSqrtRatioX96(parseEther(amount1).toString(), parseEther(amount0).toString()).toString())]
                 })
@@ -503,51 +442,25 @@ export default function Gameswap({
                 await waitForTransactionReceipt(config, { hash: h })
                 setTxupdate(h)
             }
-            const allowanceA = await readContract(config, {
-                ...erc20ABI,
-                address: tokenA.value as '0xstring',
-                functionName: 'allowance',
-                args: [address as '0xstring', POSITION_MANAGER],
-            })
-            if (allowanceA < BigInt(parseEther(amountA))) {
-                let { request: requestA1 } = await simulateContract(config, {
-                    ...erc20ABI,
-                    address: tokenA.value as '0xstring',
-                    functionName: 'approve',
-                    args: [POSITION_MANAGER, BigInt(parseEther(amountA))]
-                })
-                h = await writeContract(config, requestA1)
+            
+            const allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+            if (allowanceA < parseEther(amountA)) {
+                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountA)] })
+                const h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
-            const allowanceB = await readContract(config, {
-                ...erc20ABI,
-                address: tokenB.value as '0xstring',
-                functionName: 'allowance',
-                args: [address as '0xstring', POSITION_MANAGER],
-            })
-            if (allowanceB < BigInt(parseEther(amountB))) {
-                let { request: requestA2 } = await simulateContract(config, {
-                    ...erc20ABI,
-                    address: tokenB.value as '0xstring',
-                    functionName: 'approve',
-                    args: [POSITION_MANAGER, BigInt(parseEther(amountB))]
-                })
-                h = await writeContract(config, requestA2)
+            const allowanceB = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+            if (allowanceB < parseEther(amountB)) {
+                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountB)] })
+                const h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
-            if (pairDetect !== '0x0000000000000000000000000000000000000000') {
-                checkToken0 = await readContract(config, {
-                    chainId: 8899,
-                    address: pairDetect as '0xstring',
-                    abi: v3Pool,
-                    functionName: 'token0'
-                })
-            }
-            const token0 = checkToken0.toUpperCase() === tokenA.value.toUpperCase() ? tokenA : tokenB
-            const token1 = checkToken0.toUpperCase() === tokenA.value.toUpperCase() ? tokenB : tokenA
-            const amount0 = checkToken0.toUpperCase() === tokenA.value.toUpperCase() ? amountA : amountB
-            const amount1 = checkToken0.toUpperCase() === tokenA.value.toUpperCase() ? amountB : amountA
-            let { request: request2 } = await simulateContract(config, {
+            
+            const token0 = getToken0.toUpperCase() === tokenA.value.toUpperCase() ? tokenA : tokenB
+            const token1 = getToken0.toUpperCase() === tokenA.value.toUpperCase() ? tokenB : tokenA
+            const amount0 = getToken0.toUpperCase() === tokenA.value.toUpperCase() ? amountA : amountB
+            const amount1 = getToken0.toUpperCase() === tokenA.value.toUpperCase() ? amountB : amountA
+            const { request } = await simulateContract(config, {
                 ...positionManagerContract,
                 functionName: 'mint',
                 args: [{
@@ -564,7 +477,7 @@ export default function Gameswap({
                     deadline: BigInt(Math.floor(Date.now() / 1000) + 60 * 10),
                 }]
             })
-            h = await writeContract(config, request2)
+            const h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
         } catch (e) {
@@ -574,33 +487,38 @@ export default function Gameswap({
     }
 
     React.useEffect(() => {
-        const checkStateMode0 = async () => {
-            if (tokenA.value.toUpperCase() === tokenB.value.toUpperCase()) {setTokenB({name: 'Choose Token', value: '', logo: '/../favicon.png'})}
+        const fetchStateMode0 = async () => {
+            tokenA.value.toUpperCase() === tokenB.value.toUpperCase() && setTokenB({name: 'Choose Token', value: '' as '0xstring', logo: '/../favicon.png'})
+
             const stateA = await readContracts(config, {
                 contracts: [
-                    { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'symbol' },
-                    { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'balanceOf', args: [address as '0xstring'] }
+                    { ...erc20ABI, address: tokenA.value, functionName: 'symbol' },
+                    { ...erc20ABI, address: tokenA.value, functionName: 'balanceOf', args: [address as '0xstring'] }
                 ]
             })
             const stateB = await readContracts(config, {
                 contracts: [
-                    {
-                        ...erc20ABI,
-                        address: tokenB.value as '0xstring',
-                        functionName: 'symbol',
-                    },
-                    {
-                        ...erc20ABI,
-                        address: tokenB.value as '0xstring',
-                        functionName: 'balanceOf',
-                        args: [address as '0xstring'],
-                    }
+                    { ...erc20ABI, address: tokenB.value, functionName: 'symbol' },
+                    { ...erc20ABI, address: tokenB.value, functionName: 'balanceOf', args: [address as '0xstring'] }
                 ]
             })
-            stateA[0].result !== undefined && tokenA.name === "Choose Token" && setTokenA({name: stateA[0].result, value: tokenA.value, logo: tokens.map(obj => obj.value).indexOf(tokenA.value) !== -1 ? tokens[tokens.map(obj => obj.value).indexOf(tokenA.value)].logo : "/../favicon.png"})
-            stateB[0].result !== undefined && tokenB.name === "Choose Token" && setTokenB({name: stateB[0].result, value: tokenB.value, logo: tokens.map(obj => obj.value).indexOf(tokenB.value) !== -1 ? tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].logo : "/../favicon.png"})
-            stateA[1].result !== undefined && setTokenABalance(formatEther(stateA[1].result as bigint))
-            stateB[1].result !== undefined && setTokenBBalance(formatEther(stateB[1].result as bigint))
+            stateA[0].result !== undefined && tokenA.name === "Choose Token" && setTokenA({
+                name: stateA[0].result,
+                value: tokenA.value,
+                logo: tokens.map(obj => obj.value).indexOf(tokenA.value) !== -1 ? 
+                    tokens[tokens.map(obj => obj.value).indexOf(tokenA.value)].logo : 
+                    "/../favicon.png"
+            })
+            stateB[0].result !== undefined && tokenB.name === "Choose Token" && setTokenB({
+                name: stateB[0].result, 
+                value: tokenB.value, 
+                logo: tokens.map(obj => obj.value).indexOf(tokenB.value) !== -1 ? 
+                    tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].logo : 
+                    "/../favicon.png"
+            })
+            stateA[1].result !== undefined && setTokenABalance(formatEther(stateA[1].result))
+            stateB[1].result !== undefined && setTokenBBalance(formatEther(stateB[1].result))
+
             if (tokenA.name !== 'Choose Token' && tokenB.name !== 'Choose Token') {
                 try {
                     const qoutePrice = await simulateContract(config, {
@@ -615,124 +533,95 @@ export default function Gameswap({
                         }]
                     })
                     setExchangeRate((Number(formatEther(qoutePrice.result[0])) * 100).toString())
-                } catch (e) {
+                } catch {
                     setExchangeRate("0")
                 }
             }
         }
 
-        if (mode === 0) {
-            checkStateMode0()
-        }
+        const fetchStateMode1 = async () => {
+            tokenA.value.toUpperCase() === tokenB.value.toUpperCase() && setTokenB({name: 'Choose Token', value: '' as '0xstring', logo: '/../favicon.png'})
 
-        const checkStateMode1 = async () => {
-            if (tokenA.value.toUpperCase() === tokenB.value.toUpperCase()) {setTokenB({name: 'Choose Token', value: '', logo: '/../favicon.png'})}
             const stateA = await readContracts(config, {
                 contracts: [
-                    {
-                        ...erc20ABI,
-                        address: tokenA.value as '0xstring',
-                        functionName: 'symbol',
-                    },
-                    {
-                        ...erc20ABI,
-                        address: tokenA.value as '0xstring',
-                        functionName: 'balanceOf',
-                        args: [address as '0xstring'],
-                    }
+                    { ...erc20ABI, address: tokenA.value, functionName: 'symbol' },
+                    { ...erc20ABI, address: tokenA.value, functionName: 'balanceOf', args: [address as '0xstring'] }
                 ]
             })
             const stateB = await readContracts(config, {
                 contracts: [
-                    {
-                        ...erc20ABI,
-                        address: tokenB.value as '0xstring',
-                        functionName: 'symbol',
-                    },
-                    {
-                        ...erc20ABI,
-                        address: tokenB.value as '0xstring',
-                        functionName: 'balanceOf',
-                        args: [address as '0xstring'],
-                    },
-                    {
-                        ...v3FactoryContract,
-                        functionName: 'getPool',
-                        args: [tokenA.value as '0xstring', tokenB.value as '0xstring', feeSelect],
-                    },
+                    { ...erc20ABI, address: tokenB.value, functionName: 'symbol' },
+                    { ...erc20ABI, address: tokenB.value, functionName: 'balanceOf', args: [address as '0xstring'] },
+                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, feeSelect] },
                 ]
             })
-            stateA[0].result !== undefined && tokenA.name === "Choose Token" && setTokenA({name: stateA[0].result, value: tokenA.value, logo: tokens.map(obj => obj.value).indexOf(tokenA.value) !== -1 ? tokens[tokens.map(obj => obj.value).indexOf(tokenA.value)].logo : "/../favicon.png"})
-            stateB[0].result !== undefined && tokenB.name === "Choose Token" && setTokenB({name: stateB[0].result, value: tokenB.value, logo: tokens.map(obj => obj.value).indexOf(tokenB.value) !== -1 ? tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].logo : "/../favicon.png"})
-            stateA[1].result !== undefined && setTokenABalance(formatEther(stateA[1].result as bigint))
-            stateB[1].result !== undefined && setTokenBBalance(formatEther(stateB[1].result as bigint))
+            stateA[0].result !== undefined && tokenA.name === "Choose Token" && setTokenA({
+                name: stateA[0].result,
+                value: tokenA.value, 
+                logo: tokens.map(obj => obj.value).indexOf(tokenA.value) !== -1 ? 
+                    tokens[tokens.map(obj => obj.value).indexOf(tokenA.value)].logo : 
+                    "/../favicon.png"
+            })
+            stateB[0].result !== undefined && tokenB.name === "Choose Token" && setTokenB({
+                name: stateB[0].result, 
+                value: tokenB.value, 
+                logo: tokens.map(obj => obj.value).indexOf(tokenB.value) !== -1 ? 
+                    tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].logo : 
+                    "/../favicon.png"
+            })
+            stateA[1].result !== undefined && setTokenABalance(formatEther(stateA[1].result))
+            stateB[1].result !== undefined && setTokenBBalance(formatEther(stateB[1].result))
             stateB[2].result !== undefined && setPairDetect(stateB[2].result)
             
             if (stateB[2].result !== undefined && stateB[2].result !== '0x0000000000000000000000000000000000000000') {
                 const poolState = await readContracts(config, {
                     contracts: [
-                        {
-                            chainId: 8899,
-                            abi: v3Pool,
-                            address: stateB[2].result as '0xstring',
-                            functionName: 'token0',
-                        },
-                        {
-                            chainId: 8899,
-                            abi: v3Pool,
-                            address: stateB[2].result as '0xstring',
-                            functionName: 'slot0',
-                        },
-                        {
-                            chainId: 8899,
-                            abi: v3Pool,
-                            address: stateB[2].result as '0xstring',
-                            functionName: 'tickSpacing',
-                        },
+                        { ...v3PoolABI, address: stateB[2].result as '0xstring', functionName: 'token0' },
+                        { ...v3PoolABI, address: stateB[2].result as '0xstring', functionName: 'slot0' },
+                        { ...v3PoolABI, address: stateB[2].result as '0xstring', functionName: 'tickSpacing' }
                     ]
                 })
                 const token0 = poolState[0].result !== undefined ? poolState[0].result : "" as '0xstring'
                 const sqrtPriceX96 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
-                const _currPrice = String(token0).toUpperCase() === tokenA.value.toUpperCase() ? (Number(sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96) / (2 ** 96)) ** 2))
+                const _currPrice = token0.toUpperCase() === tokenA.value.toUpperCase() ? 
+                    (Number(sqrtPriceX96) / (2 ** 96)) ** 2 : 
+                    (1 / ((Number(sqrtPriceX96) / (2 ** 96)) ** 2));
                 poolState[1].result !== undefined && setCurrPrice(_currPrice.toString())
                 poolState[2].result !== undefined && setCurrTickSpacing(poolState[2].result.toString())
+                
                 let _lowerPrice = 0
-                let _upperPrice = 0
+                let _upperPrice = Infinity
                 let alignedLowerTick = 0
                 let alignedUpperTick = 0
                 if (rangePercentage !== 1) {
-                    _lowerPrice = Number((Number(sqrtPriceX96) / (2 ** 96)) ** 2) * (1 - rangePercentage)
-                    _upperPrice = Number((Number(sqrtPriceX96) / (2 ** 96)) ** 2) * (1 + rangePercentage)
+                    _lowerPrice = ((Number(sqrtPriceX96) / (2 ** 96)) ** 2) * (1 - rangePercentage)
+                    _upperPrice = ((Number(sqrtPriceX96) / (2 ** 96)) ** 2) * (1 + rangePercentage)
                     const _lowerTick = Math.floor(Math.log(_lowerPrice) / Math.log(1.0001))
                     const _upperTick = Math.ceil(Math.log(_upperPrice) / Math.log(1.0001))
                     alignedLowerTick = poolState[2].result !== undefined ? Math.floor(_lowerTick / poolState[2].result) * poolState[2].result : 0
                     alignedUpperTick = poolState[2].result !== undefined ? Math.ceil(_upperTick / poolState[2].result) * poolState[2].result : 0
                 } else {
-                    _lowerPrice = 0
-                    _upperPrice = Infinity
                     alignedLowerTick = poolState[2].result !== undefined ? Math.ceil(TickMath.MIN_TICK / poolState[2].result) * poolState[2].result : 0
                     alignedUpperTick = poolState[2].result !== undefined ? Math.floor(TickMath.MAX_TICK / poolState[2].result) * poolState[2].result : 0
                 }
-                const _lowerPriceShow = String(token0).toUpperCase() === tokenA.value.toUpperCase() ? Math.pow(1.0001, Number(alignedLowerTick)) : 1 / Math.pow(1.0001, Number(alignedUpperTick))
-                const _upperPriceShow = String(token0).toUpperCase() === tokenA.value.toUpperCase() ? Math.pow(1.0001, Number(alignedUpperTick)) : 1 / Math.pow(1.0001, Number(alignedLowerTick))
-                rangePercentage !== 1 ? setLowerPrice(_lowerPriceShow.toString()) : setLowerPrice(_lowerPrice.toString())
-                rangePercentage !== 1 ? setUpperPrice(_upperPriceShow.toString()) : setUpperPrice(_upperPrice.toString())
+                const _lowerPriceShow = token0.toUpperCase() === tokenA.value.toUpperCase() ? 
+                    Math.pow(1.0001, alignedLowerTick) : 
+                    1 / Math.pow(1.0001, alignedUpperTick);
+                const _upperPriceShow = token0.toUpperCase() === tokenA.value.toUpperCase() ? 
+                    Math.pow(1.0001, alignedUpperTick) : 
+                    1 / Math.pow(1.0001, alignedLowerTick);
                 setLowerTick(alignedLowerTick.toString())
                 setUpperTick(alignedUpperTick.toString())
-                rangePercentage !== 1 ? setLowerPercentage((((_lowerPriceShow / Number(_currPrice)) - 1) * 100).toString()) : setLowerPercentage('-100')
-                rangePercentage !== 1 ? setUpperPercentage((((_upperPriceShow / Number(_currPrice)) - 1) * 100).toString()) : setUpperPercentage('+Infinity')
+                rangePercentage !== 1 ? setLowerPrice(_lowerPriceShow.toString()) : setLowerPrice(_lowerPrice.toString())
+                rangePercentage !== 1 ? setUpperPrice(_upperPriceShow.toString()) : setUpperPrice(_upperPrice.toString())
+                rangePercentage !== 1 ? setLowerPercentage((((_lowerPriceShow / _currPrice) - 1) * 100).toString()) : setLowerPercentage('-100')
+                rangePercentage !== 1 ? setUpperPercentage((((_upperPriceShow / _currPrice) - 1) * 100).toString()) : setUpperPercentage('+Infinity')
             } else {
                 setCurrPrice("")
             }
         }
 
-        setAmountA("")
-        setAmountB("")
-        if (mode === 1 && rangePercentage !== 999) {
-            checkStateMode1()
-        }
-
-        const checkStateMode2 = async () => {
+        const fetchStateMode2 = async () => {
             const balanceOfMyPosition = await readContract(config, { ...positionManagerContract, functionName: 'balanceOf', args: [address as '0xstring'] })
             const init: any = {contracts: []}
             for (let i = 0; i <= Number(balanceOfMyPosition) - 1; i++) {
@@ -748,41 +637,21 @@ export default function Gameswap({
             })
             const posMyPosition = await readContracts(config, {
                 contracts: tokenIdMyPosition.map((obj) => (
-                    {
-                        ...positionManagerContract,
-                        functionName: 'positions',
-                        args: [obj.result],
-                    }
+                    { ...positionManagerContract, functionName: 'positions', args: [obj.result] }
                 ))
             })
 
-            const myPosition = (await Promise.all(tokenIdMyPosition.map(async (obj, index) => {
+            const myPosition : MyPosition[] = (await Promise.all(tokenIdMyPosition.map(async (obj, index) => {
                 const metadataFetch = await fetch(tokenUriMyPosition[index].result as string)
                 const metadata = await metadataFetch.json()
                 const pos = posMyPosition[index].result !== undefined ? posMyPosition[index].result as unknown as (bigint | string)[] : []
-                const pairAddr = await readContract(config, {
-                    ...v3FactoryContract,
-                    functionName: 'getPool',
-                    args: [pos[2] as '0xstring', pos[3] as '0xstring', Number(pos[4])],
-                })
-                const slot0 = await readContract(config, {
-                    chainId: 8899,
-                    abi: v3Pool,
-                    address: pairAddr,
-                    functionName: 'slot0'
-                })
+
+                const pairAddr = await readContract(config, { ...v3FactoryContract, functionName: 'getPool', args: [pos[2] as '0xstring', pos[3] as '0xstring', Number(pos[4])] })
+                const slot0 = await readContract(config, { ...v3PoolABI, address: pairAddr, functionName: 'slot0' })
                 const tokenName = await readContracts(config, {
                     contracts: [
-                        {
-                            ...erc20ABI,
-                            address: pos[2] as '0xstring',
-                            functionName: 'symbol',
-                        },
-                        {
-                            ...erc20ABI,
-                            address: pos[3] as '0xstring',
-                            functionName: 'symbol',
-                        }
+                        { ...erc20ABI, address: pos[2] as '0xstring', functionName: 'symbol' },
+                        { ...erc20ABI, address: pos[3] as '0xstring', functionName: 'symbol' }
                     ]
                 })
                 const qouteFee = await simulateContract(config, {
@@ -795,19 +664,18 @@ export default function Gameswap({
                         amount1Max: BigInt("340282366920938463463374607431768211455"),
                     }]
                 })
-                const _liquidity = pos[7]
+                const liquidity = pos[7] as string
                 const _currPrice = (Number(slot0[0]) / (2 ** 96)) ** 2
-                const _lowerTick = pos[5]
-                const _upperTick = pos[6]
-                const _lowerPrice = Math.pow(1.0001, Number(_lowerTick))
-                const _upperPrice = Math.pow(1.0001, Number(_upperTick))
-                const _amount0 = calcAmount0(Number(_liquidity), _currPrice, _lowerPrice, _upperPrice, 18, 18)
-                const _amount1 = calcAmount1(Number(_liquidity), _currPrice, _lowerPrice, _upperPrice, 18, 18)
+                const _lowerTick = Number(pos[5])
+                const _upperTick = Number(pos[6])
+                const _lowerPrice = Math.pow(1.0001, _lowerTick)
+                const _upperPrice = Math.pow(1.0001, _upperTick)
+                const _amount0 = calcAmount0(Number(liquidity), _currPrice, _lowerPrice, _upperPrice, 18, 18)
+                const _amount1 = calcAmount1(Number(liquidity), _currPrice, _lowerPrice, _upperPrice, 18, 18)
                 const _token0name = tokenName[0].status === 'success' ? String(tokenName[0].result) : ''
                 const _token1name = tokenName[1].status === 'success' ? String(tokenName[1].result) : ''
                 const _fee0 = qouteFee.result[0]
                 const _fee1 = qouteFee.result[1]
-
                 let token0addr
                 let token1addr
                 let token0name
@@ -860,12 +728,11 @@ export default function Gameswap({
                 return {
                     Id: Number(obj.result),
                     Name: String(metadata.name),
-                    Description: String(metadata.description),
                     Image: String(metadata.image),
-                    FeeTier: String(pos[4]),
-                    Pair: pairAddr,
-                    Token0Addr: token0addr,
-                    Token1Addr: token1addr,
+                    FeeTier: Number(pos[4]),
+                    Pair: pairAddr as string,
+                    Token0Addr: token0addr as string,
+                    Token1Addr: token1addr as string,
                     Token0: token0name,
                     Token1: token1name,
                     Amount0: amount0,
@@ -875,21 +742,34 @@ export default function Gameswap({
                     CurrPrice: currPrice,
                     LowerTick: _lowerTick,
                     UpperTick: _upperTick,
-                    Liquidity: _liquidity,
+                    Liquidity: liquidity,
                     Fee0: Number(fee0) / 1e18,
                     Fee1: Number(fee1) / 1e18
                 }
             }))).filter((obj) => {
                 return Number(obj.Liquidity) !== 0
             }).reverse()
-            setPosition(myPosition as unknown as MyPosition[])
+
+            setPosition(myPosition)
         }
 
-        if (mode === 2) {
-            checkStateMode2()
-        }
-
+        setAmountA("")
+        setAmountB("")
+        setLowerTick("") 
+        setUpperTick("")
+        setLowerPrice("") 
+        setUpperPrice("")
+        address !== undefined && mode === 0 && fetchStateMode0()
+        address !== undefined && mode === 1 && rangePercentage !== 999 && fetchStateMode1()
+        address !== undefined &&  mode === 2 && fetchStateMode2()
     }, [config, address, mode, tokenA, tokenB, feeSelect, rangePercentage, txupdate])
+    const clearState = () => {
+        setTokenA(tokens[0])
+        setTokenB({name: 'Choose Token', value: '' as '0xstring', logo: '/../favicon.png'})
+        setFeeSelect(10000)
+    }
+    console.log({address, tokenA})
+    // console.log({lowerTick, upperTick}) // for fetch monitoring
 
     return (
         <div className="h-[80vh] mt-[40px] w-full flex flex-col items-center justify-start text-xs">
@@ -899,15 +779,15 @@ export default function Gameswap({
                         <div className="pixel w-2/3 xl:w-1/3 h-3/4 xl:h-1/2 bg-neutral-900 p-10 gap-5 flex flex-col items-center justify-center text-sm text-left" style={{boxShadow: "6px 6px 0 #00000040"}}>
                             <span className='text-2xl'>Position #{positionSelected !== undefined ? positionSelected.Id : '...'} - Add Liquidity</span>
                             <div className="w-full gap-1 flex flex-row items-center">
-                                <input className="p-4 bg-neutral-800 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="0" value={amountA} onChange={(e) => {setAmountA(e.target.value); setAlignedAmountB(e.target.value)}} />
+                                <input className="p-4 bg-neutral-800 rounded-lg w-4/6 focus:outline-none" placeholder="0" value={amountA} onChange={e => {setAmountA(e.target.value); setAlignedAmountB(e.target.value)}} />
                                 <span className="w-2/6 font-semibold text-right text-gray-400">{Number(tokenABalance).toFixed(4)} {positionSelected !== undefined ? positionSelected.Token0 : '...'}</span>
                             </div>
                             <div className="w-full gap-1 flex flex-row items-center">
-                                <input className="p-4 bg-neutral-800 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="0" value={amountB} onChange={(e) => {setAmountB(e.target.value); setAlignedAmountA(e.target.value)}} />
+                                <input className="p-4 bg-neutral-800 rounded-lg w-4/6 focus:outline-none" placeholder="0" value={amountB} onChange={e => {setAmountB(e.target.value); setAlignedAmountA(e.target.value)}} />
                                 <span className="w-2/6 font-semibold text-right text-gray-400">{Number(tokenBBalance).toFixed(4)} {positionSelected !== undefined ? positionSelected.Token1 : '...'}</span>
                             </div>
-                            <button className="mt-2 p-4 bg-blue-500 rounded-full w-full bg-blue-500 text-lg font-bold" onClick={() => {if (positionSelected !== undefined) {increaseLiquidity(BigInt(positionSelected.Id))}}}>Increase Liquidity</button>
-                            <button className="p-4 bg-blue-500 rounded-full w-full bg-red-500 text-lg font-bold" onClick={() => {setIsAddPositionModal(false); setTokenA(tokens[0]); setTokenB({name: 'Choose Token', value: '', logo: '/../favicon.png'}); setFeeSelect(10000); setLowerTick(""); setUpperTick("");}}>Close</button>
+                            <button className="mt-2 p-4 bg-blue-500 rounded-full w-full bg-blue-500 text-lg font-bold" onClick={() => positionSelected !== undefined && increaseLiquidity(BigInt(positionSelected.Id))}>Increase Liquidity</button>
+                            <button className="p-4 bg-blue-500 rounded-full w-full bg-slate-700 text-lg font-bold" onClick={() => {clearState(); setIsAddPositionModal(false);}}>Close</button>
                         </div>
                     </div>
                 </div>
@@ -918,7 +798,7 @@ export default function Gameswap({
                         <div className="pixel w-2/3 xl:w-1/3 h-3/4 xl:h-1/2 bg-neutral-900 p-10 gap-5 flex flex-col items-center justify-center text-lg text-left" style={{boxShadow: "6px 6px 0 #00000040"}}>
                             <span className='text-2xl'>Position #{positionSelected !== undefined ? positionSelected.Id : '...'} - Remove Liquidity</span>
                             <div className="w-full gap-1 flex flex-row items-center">
-                                <input className="p-4 bg-neutral-800 rounded-lg w-full focus:outline-none" type="text" placeholder="0" value={amountRemove} onChange={(e) => {setAmountRemove(e.target.value);}} />
+                                <input className="p-4 bg-neutral-800 rounded-lg w-full focus:outline-none" type="text" placeholder="0" value={amountRemove} onChange={e => {setAmountRemove(e.target.value);}} />
                                 <span className="w-2/6 font-semibold text-right text-gray-400">%</span>
                             </div>
                             <div className="w-full h-[100px] gap-2 flex flex-row">
@@ -927,12 +807,26 @@ export default function Gameswap({
                                 <button className={"w-1/4 h-full p-3 rounded-lg border-2 border-gray-800 " + (amountRemove === '75' ? "bg-neutral-800" : "")} onClick={() => setAmountRemove('75')}>75%</button>
                                 <button className={"w-1/4 h-full p-3 rounded-lg border-2 border-gray-800 " + (amountRemove === '100' ? "bg-neutral-800" : "")} onClick={() => setAmountRemove('100')}>100%</button>
                             </div>
-                            <button className="mt-2 p-4 bg-blue-500 rounded-full w-full bg-blue-500 text-lg font-bold" onClick={() => {if (positionSelected !== undefined) {decreaseLiquidity(BigInt(positionSelected.Id), amountRemove === '100' ? BigInt(positionSelected.Liquidity) : BigInt(Number(positionSelected.Liquidity) * (Number(amountRemove)) / 100))}}}>Decrease Liquidity</button>
-                            <button className="p-4 bg-blue-500 rounded-full w-full bg-red-500 text-lg font-bold" onClick={() => {setIsRemPositionModal(false); setAmountRemove('');}}>Close</button>
+                            <button 
+                                className="mt-2 p-4 bg-blue-500 rounded-full w-full bg-blue-500 text-lg font-bold" 
+                                onClick={() => 
+                                    positionSelected !== undefined && 
+                                        decreaseLiquidity(
+                                            BigInt(positionSelected.Id), 
+                                            amountRemove === '100' ? 
+                                                BigInt(positionSelected.Liquidity) :
+                                                BigInt(Number(positionSelected.Liquidity) * (Number(amountRemove)) / 100)
+                                        )
+                                }
+                            >
+                                Decrease Liquidity
+                            </button>
+                            <button className="p-4 bg-blue-500 rounded-full w-full bg-skate-700 text-lg font-bold" onClick={() => {setAmountRemove(''); setIsRemPositionModal(false);}}>Close</button>
                         </div>
                     </div>
                 </div>
             }
+            
             <div className="p-6 w-3/4 xl:w-1/3 gap-2 flex flex-col items-start justify-center">
                 <div className="w-full gap-2 flex flex-row items-start justify-start">
                     <button className={"p-2 w-1/5 rounded-full " + (mode === 0 ? "bg-slate-700 font-bold" : "text-gray-500")} onClick={() => setMode(0)}>Instant Swap</button>
@@ -944,7 +838,7 @@ export default function Gameswap({
                         <div className="p-6 w-full h-[180px] rounded-xl border-2 border-solid border-gray-500 gap-2 flex flex-col">
                             <span className="w-full text-left">From</span>
                             <div className="w-full gap-1 flex flex-row">
-                                <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="Token A" value={tokenA.value} onChange={e => setTokenA({name: 'Choose Token', value: e.target.value, logo: '/../favicon.png'})} />
+                                <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="Token A" value={tokenA.value} onChange={e => setTokenA({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
                                 <div className="w-2/6">
                                     <Listbox value={tokenA} onChange={setTokenA}>
                                         <ListboxButton className="relative w-full h-full p-3 rounded-lg bg-white/5 text-left font-semibold gap-2 flex flex-row items-center focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25">
@@ -966,14 +860,16 @@ export default function Gameswap({
                                 </div>
                             </div>
                             <div className="w-full gap-1 flex flex-row items-center">
-                                <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="0" value={amountA} onChange={(e) => {setAmountA(e.target.value); getQoute(e.target.value);}} />
-                                {tokenA.value !== '' && <button className="w-2/6 font-semibold text-right text-gray-400" onClick={() => {setAmountA(tokenABalance); getQoute(tokenABalance);}}>{Number(tokenABalance).toFixed(4)} {tokenA.name}</button>}
+                                <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="0" value={amountA} onChange={e => {setAmountA(e.target.value); getQoute(e.target.value);}} />
+                                {tokenA.name !== 'Choose Token' && 
+                                    <button className="w-2/6 font-semibold text-right text-gray-400" onClick={() => {setAmountA(tokenABalance); getQoute(tokenABalance);}}>{Number(tokenABalance).toFixed(4)} {tokenA.name}</button>
+                                }
                             </div>
                         </div>
                         <div className="p-6 w-full h-[180px] bg-neutral-900 gap-2 flex flex-col">
                             <span className="w-full text-left">To</span>
                             <div className="w-full gap-1 flex flex-row">
-                                <input className="p-4 bg-neutral-950 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="Token B" value={tokenB.value} onChange={e => setTokenB({name: 'Choose Token', value: e.target.value, logo: '/../favicon.png'})} />
+                                <input className="p-4 bg-neutral-950 rounded-lg w-4/6 focus:outline-none" placeholder="Token B" value={tokenB.value} onChange={e => setTokenB({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
                                 <div className="w-2/6">
                                     <Listbox value={tokenB} onChange={setTokenB}>
                                         <ListboxButton className="relative w-full h-full p-3 rounded-lg bg-white/5 text-left font-semibold gap-2 flex flex-row items-center focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25">
@@ -995,11 +891,11 @@ export default function Gameswap({
                                 </div>
                             </div>
                             <div className="w-full gap-1 flex flex-row items-center">
-                                <input className="p-4 bg-neutral-950 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="0" value={amountB} />
-                                {tokenB.value !== '' && <span className="w-2/6 font-semibold text-right text-gray-400">{Number(tokenBBalance).toFixed(4)} {tokenB.name}</span>}
+                                <input className="p-4 bg-neutral-950 rounded-lg w-4/6 focus:outline-none" placeholder="0" value={amountB} readOnly />
+                                {tokenB.value !== '' as '0xstring' && <span className="w-2/6 font-semibold text-right text-gray-400">{Number(tokenBBalance).toFixed(4)} {tokenB.name}</span>}
                             </div>
                         </div>
-                        {tokenA.value !== '' && tokenB.value !== '' &&
+                        {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' &&
                             <>
                                 {exchangeRate !== '0' ? <span className="font-bold my-4 text-gray-500">1 {tokenB.name} = {Number(exchangeRate).toFixed(4)} {tokenA.name}</span> : <span className="font-bold my-4 text-red-500">Insufficient Liquidity!</span>}
                             </>
@@ -1011,7 +907,7 @@ export default function Gameswap({
                             <button className={"w-1/4 h-full p-3 rounded-lg gap-3 border-2 border-gray-800 " + (feeSelect === 3000 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(3000)}>0.3%</button>
                             <button className={"w-1/4 h-full p-3 rounded-lg gap-3 border-2 border-gray-800 " + (feeSelect === 10000 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(10000)}>1%</button>
                         </div>
-                        {tokenA.value !== '' && tokenB.value !== '' && Number(amountA) !== 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) !== 0 ?
+                        {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && Number(amountA) !== 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) !== 0 ?
                             <button className="p-2 w-full h-[50px] rounded-full bg-blue-500 text-lg font-bold" onClick={swap}>Swap</button> :
                             <button className="p-2 w-full h-[50px] rounded-full bg-gray-500 text-lg font-bold inactive">Swap</button>
                         }
@@ -1020,7 +916,7 @@ export default function Gameswap({
                 {mode === 1 &&
                     <>
                         <div className="w-full gap-1 flex flex-row">
-                            <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="Token A" value={tokenA.value} onChange={e => setTokenA({name: 'Choose Token', value: e.target.value, logo: '/../favicon.png'})} />
+                            <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="Token A" value={tokenA.value} onChange={e => setTokenA({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
                             <div className="w-2/6">
                                 <Listbox value={tokenA} onChange={setTokenA}>
                                     <ListboxButton className="relative w-full h-full p-3 rounded-lg bg-white/5 text-left font-semibold gap-2 flex flex-row items-center focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25">
@@ -1043,10 +939,10 @@ export default function Gameswap({
                         </div>
                         <div className="w-full gap-1 flex flex-row items-center">
                             <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="0" value={amountA} onChange={(e) => {setAmountA(e.target.value); setAlignedAmountB(e.target.value)}} />
-                            {tokenA.value !== '' && <button className="w-2/6 font-semibold text-right text-gray-400" onClick={() => setAmountA(tokenABalance)}>{Number(tokenABalance).toFixed(4)} {tokenA.name}</button>}
+                            {tokenA.value !== '' as '0xstring' && <button className="w-2/6 font-semibold text-right text-gray-400" onClick={() => setAmountA(tokenABalance)}>{Number(tokenABalance).toFixed(4)} {tokenA.name}</button>}
                         </div>
                         <div className="w-full gap-1 flex flex-row">
-                            <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="Token B" value={tokenB.value} onChange={e => setTokenB({name: 'Choose Token', value: e.target.value, logo: '/../favicon.png'})} />
+                            <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="Token B" value={tokenB.value} onChange={e => setTokenB({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
                             <div className="w-2/6">
                                 <Listbox value={tokenB} onChange={setTokenB}>
                                     <ListboxButton className="relative w-full h-full p-3 rounded-lg bg-white/5 text-left font-semibold gap-2 flex flex-row items-center focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25">
@@ -1069,7 +965,7 @@ export default function Gameswap({
                         </div>
                         <div className="w-full gap-1 flex flex-row items-center">
                             <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="0" value={amountB} onChange={(e) => {setAmountB(e.target.value); setAlignedAmountA(e.target.value)}} />
-                            {tokenB.value !== '' && <button className="w-2/6 font-semibold text-right text-gray-400" onClick={() => setAmountB(tokenBBalance)}>{Number(tokenBBalance).toFixed(4)} {tokenB.name}</button>}
+                            {tokenB.value !== '' as '0xstring' && <button className="w-2/6 font-semibold text-right text-gray-400" onClick={() => setAmountB(tokenBBalance)}>{Number(tokenBBalance).toFixed(4)} {tokenB.name}</button>}
                         </div>
                         <div className="w-full h-[100px] gap-2 flex flex-row">
                             <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border-2 border-gray-800 " + (feeSelect === 100 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(100)}>
@@ -1089,7 +985,7 @@ export default function Gameswap({
                                 <span className="text-gray-500">Best for exotic pairs</span>
                             </button>
                         </div>
-                        <span className="m-2 font-semibold">Current price: {Number(currPrice).toFixed(4)} {tokenA.value !== '' && tokenB.value !== '' && tokenB.name + '/' + tokenA.name}</span>
+                        <span className="m-2 font-semibold">Current price: {Number(currPrice).toFixed(4)} {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenB.name + '/' + tokenA.name}</span>
                         <div className="w-full h-[100px] gap-2 flex flex-row">
                             <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border-2 border-gray-800 " + (rangePercentage === 1 ? "bg-neutral-800" : "")} onClick={() => setRangePercentage(1)}>
                                 <span>Full Range</span>
@@ -1110,13 +1006,13 @@ export default function Gameswap({
                         </div>
                         <div className="w-full gap-1 flex flex-row items-center">
                             <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="Lower Price" value={lowerPrice} onChange={e => {setLowerPrice(e.target.value); setAlignedLowerTick(e.target.value); setRangePercentage(999);}} />
-                            <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' && tokenB.value !== '' && tokenB.name + '/' + tokenA.name + ' (' + Number(lowerPercentage).toFixed(2) + '%)'}</span>
+                            <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenB.name + '/' + tokenA.name + ' (' + Number(lowerPercentage).toFixed(2) + '%)'}</span>
                         </div>
                         <div className="w-full gap-1 flex flex-row items-center">
                             <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="Upper Price" value={upperPrice} onChange={e => {setUpperPrice(e.target.value); setAlignedUpperTick(e.target.value); setRangePercentage(999);}} />
-                            <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' && tokenB.value !== '' && tokenB.name + '/' + tokenA.name + ' (+' + Number(upperPercentage).toFixed(2) + '%)'}</span>
+                            <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenB.name + '/' + tokenA.name + ' (+' + Number(upperPercentage).toFixed(2) + '%)'}</span>
                         </div>
-                        {tokenA.value !== '' && tokenB.value !== '' && Number(amountA) !== 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) !== 0 && Number(amountB) <= Number(tokenBBalance) ?
+                        {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && Number(amountA) !== 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) !== 0 && Number(amountB) <= Number(tokenBBalance) ?
                             <button className="mt-2 p-4 rounded-full w-full bg-blue-500 text-lg font-bold" onClick={placeLiquidity}>Add Liquidity</button> :
                             <button className="mt-2 p-4 rounded-full w-full bg-gray-600 text-lg font-bold inactive">Add Liquidity</button>
                         }
@@ -1144,7 +1040,7 @@ export default function Gameswap({
                                     <span>{obj.CurrPrice.toFixed(4)} : {obj.MinPrice.toFixed(4)} : {obj.MaxPrice.toFixed(4)} {obj.Token0}/{obj.Token1}</span>
                                 </div>
                                 <div className="w-full h-[50px] py-2 px-6 gap-2 flex flex-row items-start justify-start font-semibold">
-                                    <button className="p-1 w-1/5 rounded-full bg-gray-500" onClick={() => {setPositionSelected(obj); setTokenA({name: "", logo: "", value: obj.Token0Addr}); setTokenB({name: "", logo: "", value: obj.Token1Addr}); getBalanceOfAB(obj.Token0Addr as '0xstring', obj.Token1Addr as '0xstring'); setPairDetect(obj.Pair); setFeeSelect(obj.FeeTier); setLowerTick(obj.LowerTick.toString()); setUpperTick(obj.UpperTick.toString()); setIsAddPositionModal(true);}}>Add Liquidity</button>
+                                    <button className="p-1 w-1/5 rounded-full bg-gray-500" onClick={() => {setPositionSelected(obj); setTokenA({name: "", logo: "", value: obj.Token0Addr as '0xstring'}); setTokenB({name: "", logo: "", value: obj.Token1Addr as '0xstring'}); getBalanceOfAB(obj.Token0Addr as '0xstring', obj.Token1Addr as '0xstring'); setPairDetect(obj.Pair); setFeeSelect(obj.FeeTier); setLowerTick(obj.LowerTick.toString()); setUpperTick(obj.UpperTick.toString()); setIsAddPositionModal(true);}}>Add Liquidity</button>
                                     <button className="p-1 w-1/4 rounded-full bg-gray-500" onClick={() => {setPositionSelected(obj); setIsRemPositionModal(true);}}>Remove Liquidity</button>
                                     <button className="p-1 w-1/5 rounded-full bg-gray-500" onClick={() => collectFee(BigInt(obj.Id))}>Collect fee</button>
                                 </div>
