@@ -386,6 +386,8 @@ export default function Gameswap({
         } catch (e) {
             setErrMsg(String(e))
         }
+        setAmountRemove('')
+        setIsRemPositionModal(false)
         setIsLoading(false)
     }
 
@@ -813,7 +815,7 @@ export default function Gameswap({
                             >
                                 Decrease Liquidity
                             </button>
-                            <button className="p-4 bg-blue-500 rounded-full w-full bg-skate-700 text-lg font-bold" onClick={() => {setAmountRemove(''); setIsRemPositionModal(false);}}>Close</button>
+                            <button className="p-4 bg-blue-500 rounded-full w-full bg-slate-700 text-lg font-bold" onClick={() => {setAmountRemove(''); setIsRemPositionModal(false);}}>Close</button>
                         </div>
                     </div>
                 </div>
