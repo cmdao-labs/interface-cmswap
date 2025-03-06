@@ -11,6 +11,7 @@ import { useDebouncedCallback } from "use-debounce"
 
 const tokens: {name: string, value: '0xstring', logo: string}[] = [
     { name: 'WJBC', value: '0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreih6o2px5oqockhsuer7wktcvoky36gpdhv7qjwn76enblpce6uokq' },
+    { name: 'JUSDT', value: '0x24599b658b57f91E7643f4F154B16bcd2884f9ac' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreif3vllg6mwswlqypqgtsh7i7wwap7zgrkvtlhdjoc63zjm7uv6vvi' },
     { name: 'CMJ', value: '0xE67E280f5a354B4AcA15fA7f0ccbF667CF74F97b' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreiabbtn5pc6di4nwfgpqkk3ss6njgzkt2evilc5i2r754pgiru5x4u' },
     { name: 'CMD-WOOD', value: '0x8652549D215E3c4e30fe33faa717a566E4f6f00C' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreidldk7skx44xwstwat2evjyp4u5oy5nmamnrhurqtjapnwqzwccd4' },
     // can PR listing here
@@ -671,10 +672,10 @@ export default function Swap({
                     alignedLowerTick = poolState[2].result !== undefined ? Math.ceil(TickMath.MIN_TICK / poolState[2].result) * poolState[2].result : 0
                     alignedUpperTick = poolState[2].result !== undefined ? Math.floor(TickMath.MAX_TICK / poolState[2].result) * poolState[2].result : 0
                 }
-                const _lowerPriceShow = token0.toUpperCase() === tokenA.value.toUpperCase() ? 
+                const _lowerPriceShow = token0.toUpperCase() === tokenB.value.toUpperCase() ? 
                     Math.pow(1.0001, alignedLowerTick) : 
                     1 / Math.pow(1.0001, alignedUpperTick);
-                const _upperPriceShow = token0.toUpperCase() === tokenA.value.toUpperCase() ? 
+                const _upperPriceShow = token0.toUpperCase() === tokenB.value.toUpperCase() ? 
                     Math.pow(1.0001, alignedUpperTick) : 
                     1 / Math.pow(1.0001, alignedLowerTick);
                 setLowerTick(alignedLowerTick.toString())
@@ -760,8 +761,8 @@ export default function Swap({
                     token1addr = pos[2]
                     token0name = _token0name
                     token1name = _token1name
-                    amount0 = _amount1 / 1e18
-                    amount1 = _amount0 / 1e18
+                    amount0 = _amount0 / 1e18
+                    amount1 = _amount1 / 1e18
                     lowerPrice = 1 / _upperPrice
                     upperPrice = 1 / _lowerPrice
                     currPrice = 1 / _currPrice
@@ -772,8 +773,8 @@ export default function Swap({
                     token1addr = pos[2]
                     token0name = _token0name
                     token1name = _token1name
-                    amount0 = _amount1 / 1e18
-                    amount1 = _amount0 / 1e18
+                    amount0 = _amount0 / 1e18
+                    amount1 = _amount1 / 1e18
                     lowerPrice = 1 / _upperPrice
                     upperPrice = 1 / _lowerPrice
                     currPrice = 1 / _currPrice
@@ -784,8 +785,8 @@ export default function Swap({
                     token1addr = pos[3]
                     token0name = _token1name
                     token1name = _token0name
-                    amount0 = _amount0 / 1e18
-                    amount1 = _amount1 / 1e18
+                    amount0 = _amount1 / 1e18
+                    amount1 = _amount0 / 1e18
                     lowerPrice = _lowerPrice
                     upperPrice = _upperPrice
                     currPrice = _currPrice
@@ -1001,9 +1002,9 @@ export default function Swap({
                     </>
                 }
                 {mode === 1 &&
-                    <>
+                    <>  
                         <div className="w-full gap-1 flex flex-row">
-                            <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="Token A" value={tokenA.value} onChange={e => setTokenA({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
+                            <input className="p-4 bg-transparent border border-gray-800 rounded-lg w-4/6 text-gray-500 text-[10px] focus:outline-none" type="text" placeholder="Token A" value={tokenA.value} onChange={e => setTokenA({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
                             <div className="w-2/6">
                                 <Listbox value={tokenA} onChange={setTokenA}>
                                     <ListboxButton className="relative w-full h-full p-3 rounded-lg bg-white/5 text-left font-semibold gap-2 flex flex-row items-center focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25">
@@ -1024,12 +1025,14 @@ export default function Swap({
                                 </Listbox>
                             </div>
                         </div>
-                        <div className="w-full gap-1 flex flex-row items-center">
-                            <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="0" value={amountA} onChange={(e) => {setAmountA(e.target.value); setAlignedAmountB(e.target.value)}} />
-                            {tokenA.value !== '' as '0xstring' && <button className="w-2/6 font-semibold text-right text-gray-400" onClick={() => setAmountA(tokenABalance)}>{Number(tokenABalance).toFixed(4)} {tokenA.name}</button>}
-                        </div>
+                        {lowerPrice === '' || Number(lowerPrice) < Number(currPrice) &&
+                            <div className="w-full gap-1 flex flex-row items-center">
+                                <input className="p-4 rounded-lg bg-transparent w-4/6 font-bold focus:outline-none" type="text" placeholder="0" value={amountA} onChange={(e) => {setAmountA(e.target.value); Number(upperPrice) > Number(currPrice) && setAlignedAmountB(e.target.value)}} />
+                                {tokenA.value !== '' as '0xstring' && <button className="w-2/6 font-semibold text-right text-gray-400" onClick={() => setAmountA(tokenABalance)}>{Number(tokenABalance).toFixed(4)} {tokenA.name}</button>}
+                            </div>
+                        }
                         <div className="w-full gap-1 flex flex-row">
-                            <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="Token B" value={tokenB.value} onChange={e => setTokenB({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
+                            <input className="p-4 bg-transparent border border-gray-800 rounded-lg w-4/6 text-gray-500 text-[10px] focus:outline-none" type="text" placeholder="Token B" value={tokenB.value} onChange={e => setTokenB({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
                             <div className="w-2/6">
                                 <Listbox value={tokenB} onChange={setTokenB}>
                                     <ListboxButton className="relative w-full h-full p-3 rounded-lg bg-white/5 text-left font-semibold gap-2 flex flex-row items-center focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25">
@@ -1050,57 +1053,59 @@ export default function Swap({
                                 </Listbox>
                             </div>
                         </div>
-                        <div className="w-full gap-1 flex flex-row items-center">
-                            <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" type="text" placeholder="0" value={amountB} onChange={(e) => setAmountB(e.target.value)} />
-                            {tokenB.value !== '' as '0xstring' && <button className="w-2/6 font-semibold text-right text-gray-400" onClick={() => setAmountB(tokenBBalance)}>{Number(tokenBBalance).toFixed(4)} {tokenB.name}</button>}
-                        </div>
-                        <div className="w-full h-[100px] gap-2 flex flex-row">
-                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border-2 border-gray-800 " + (feeSelect === 100 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(100)}>
+                        {upperPrice === '' || Number(upperPrice) > Number(currPrice) &&
+                            <div className="w-full gap-1 flex flex-row items-center">
+                                <input className="p-4 rounded-lg bg-transparent w-4/6 font-bold focus:outline-none" type="text" placeholder="0" value={amountB} onChange={(e) => setAmountB(e.target.value)} />
+                                {tokenB.value !== '' as '0xstring' && <button className="w-2/6 font-semibold text-right text-gray-400" onClick={() => setAmountB(tokenBBalance)}>{Number(tokenBBalance).toFixed(4)} {tokenB.name}</button>}
+                            </div>
+                        }
+                        <div className="w-full h-[100px] gap-2 flex flex-row text-gray-400">
+                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border border-gray-800 hover:text-white hover:bg-neutral-800 " + (feeSelect === 100 ? "bg-white/5 text-white border-slate-500" : "")} onClick={() => setFeeSelect(100)}>
                                 <span>0.01%</span>
                                 <span className="text-gray-500">Best for very stable pairs</span>
                             </button>
-                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border-2 border-gray-800 " + (feeSelect === 500 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(500)}>
+                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border border-gray-800 hover:text-white hover:bg-neutral-800 " + (feeSelect === 500 ? "bg-white/5 text-white border-slate-500" : "")} onClick={() => setFeeSelect(500)}>
                                 <span>0.05%</span>
                                 <span className="text-gray-500">Best for stable pairs</span>
                             </button>
-                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border-2 border-gray-800 " + (feeSelect === 3000 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(3000)}>
+                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border border-gray-800 hover:text-white hover:bg-neutral-800 " + (feeSelect === 3000 ? "bg-white/5 text-white border-slate-500" : "")} onClick={() => setFeeSelect(3000)}>
                                 <span>0.3%</span>
                                 <span className="text-gray-500">Best for most pairs</span>
                             </button>
-                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border-2 border-gray-800 " + (feeSelect === 10000 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(10000)}>
+                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border border-gray-800 hover:text-white hover:bg-neutral-800 " + (feeSelect === 10000 ? "bg-white/5 text-white border-slate-500" : "")} onClick={() => setFeeSelect(10000)}>
                                 <span>1%</span>
                                 <span className="text-gray-500">Best for exotic pairs</span>
                             </button>
                         </div>
                         <span className="m-2 font-semibold">Current price: {Number(currPrice).toFixed(4)} {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenA.name + '/' + tokenB.name}</span>
-                        <div className="w-full h-[100px] gap-2 flex flex-row">
-                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border-2 border-gray-800 " + (rangePercentage === 1 ? "bg-neutral-800" : "")} onClick={() => setRangePercentage(1)}>
+                        <div className="w-full h-[100px] gap-2 flex flex-row text-gray-400">
+                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border border-gray-800 hover:text-white hover:bg-neutral-800 " + (rangePercentage === 1 ? "bg-white/5 text-white border-slate-500" : "")} onClick={() => setRangePercentage(1)}>
                                 <span>Full Range</span>
                                 <span className="text-gray-500">[-100%, ♾️]</span>
                             </button>
-                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border-2 border-gray-800 " + (rangePercentage === 0.15 ? "bg-neutral-800" : "")} onClick={() => setRangePercentage(0.15)}>
+                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border border-gray-800 hover:text-white hover:bg-neutral-800 " + (rangePercentage === 0.15 ? "bg-white/5 text-white border-slate-500" : "")} onClick={() => setRangePercentage(0.15)}>
                                 <span>Wide</span>
                                 <span className="text-gray-500">[-15%, +15%]</span>
                             </button>
-                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border-2 border-gray-800 " + (rangePercentage === 0.075 ? "bg-neutral-800" : "")} onClick={() => setRangePercentage(0.075)}>
+                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border border-gray-800 hover:text-white hover:bg-neutral-800 " + (rangePercentage === 0.075 ? "bg-white/5 text-white border-slate-500" : "")} onClick={() => setRangePercentage(0.075)}>
                                 <span>Narrow</span>
                                 <span className="text-gray-500">[-7.5%, +7.5%]</span>
                             </button>
-                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border-2 border-gray-800 " + (rangePercentage === 0.02 ? "bg-neutral-800" : "")} onClick={() => setRangePercentage(0.02)}>
+                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border border-gray-800 hover:text-white hover:bg-neutral-800 " + (rangePercentage === 0.02 ? "bg-white/5 text-white border-slate-500" : "")} onClick={() => setRangePercentage(0.02)}>
                                 <span>Degen</span>
                                 <span className="text-gray-500">[-2%, +2%]</span>
                             </button>
                         </div>
                         <div className="w-full gap-1 flex flex-row items-center">
                             <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="Lower Price" value={lowerPrice} onChange={e => {setLowerPrice(e.target.value); setAlignedLowerTick(e.target.value); setRangePercentage(999);}} />
-                            <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenB.name + '/' + tokenA.name + ' (' + Number(lowerPercentage).toFixed(2) + '%)'}</span>
+                            <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenA.name + '/' + tokenB.name + ' (' + Number(lowerPercentage).toFixed(2) + '%)'}</span>
                         </div>
                         <div className="w-full gap-1 flex flex-row items-center">
                             <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="Upper Price" value={upperPrice} onChange={e => {setUpperPrice(e.target.value); setAlignedUpperTick(e.target.value); setRangePercentage(999);}} />
-                            <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenB.name + '/' + tokenA.name + ' (+' + Number(upperPercentage).toFixed(2) + '%)'}</span>
+                            <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenA.name + '/' + tokenB.name + ' (+' + Number(upperPercentage).toFixed(2) + '%)'}</span>
                         </div>
-                        {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && Number(amountA) !== 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) !== 0 && Number(amountB) <= Number(tokenBBalance) ?
-                            <button className="mt-2 p-4 rounded-full w-full bg-blue-500 text-lg font-bold" onClick={placeLiquidity}>Add Liquidity</button> :
+                        {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && Number(amountA) <= Number(tokenABalance) && Number(amountB) <= Number(tokenBBalance) ?
+                            <button className="mt-2 p-4 rounded-full w-full bg-blue-500 text-lg font-bold hover:bg-blue-400" onClick={placeLiquidity}>Add Liquidity</button> :
                             <button className="mt-2 p-4 rounded-full w-full bg-gray-600 text-lg font-bold inactive">Add Liquidity</button>
                         }
                     </>
