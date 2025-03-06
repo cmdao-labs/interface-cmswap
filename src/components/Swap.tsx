@@ -824,8 +824,6 @@ export default function Swap({
 
         setAmountA("")
         setAmountB("")
-        setLowerPrice("") 
-        setUpperPrice("")
         address !== undefined && mode === 0 && fetchStateMode0()
         address !== undefined && mode === 1 && rangePercentage !== 999 && fetchStateMode1()
         address !== undefined &&  mode === 2 && fetchStateMode2()
@@ -836,6 +834,8 @@ export default function Swap({
         setFeeSelect(10000)
         setLowerTick("") 
         setUpperTick("")
+        setLowerPrice("") 
+        setUpperPrice("")
     }
     console.log({lowerTick, upperTick}) // for fetch monitoring
 
@@ -846,16 +846,20 @@ export default function Swap({
                     <div className="wrapper">
                         <div className="pixel w-2/3 xl:w-1/3 h-3/4 xl:h-1/2 bg-neutral-900 p-10 gap-5 flex flex-col items-center justify-center text-sm text-left" style={{boxShadow: "6px 6px 0 #00000040"}}>
                             <span className='text-2xl'>Position #{positionSelected !== undefined ? positionSelected.Id : '...'} - Add Liquidity</span>
-                            <div className="w-full gap-1 flex flex-row items-center">
-                                <input className="p-4 bg-neutral-800 rounded-lg w-4/6 focus:outline-none" placeholder="0" value={amountA} onChange={e => {setAmountA(e.target.value); setAlignedAmountB(e.target.value);}} />
-                                <span className="w-2/6 font-semibold text-right text-gray-400">{Number(tokenABalance).toFixed(4)} {positionSelected !== undefined ? positionSelected.Token0 : '...'}</span>
-                            </div>
-                            <div className="w-full gap-1 flex flex-row items-center">
-                                <input className="p-4 bg-neutral-800 rounded-lg w-4/6 focus:outline-none" placeholder="0" value={amountB} onChange={e => {setAmountB(e.target.value); setAlignedAmountA(e.target.value);}} />
-                                <span className="w-2/6 font-semibold text-right text-gray-400">{Number(tokenBBalance).toFixed(4)} {positionSelected !== undefined ? positionSelected.Token1 : '...'}</span>
-                            </div>
-                            <button className="mt-2 p-4 bg-blue-500 rounded-full w-full bg-blue-500 text-lg font-bold" onClick={() => positionSelected !== undefined && increaseLiquidity(BigInt(positionSelected.Id))}>Increase Liquidity</button>
-                            <button className="p-4 bg-blue-500 rounded-full w-full bg-slate-700 text-lg font-bold" onClick={() => {clearState(); setIsAddPositionModal(false);}}>Close</button>
+                            {Number(lowerPrice) < Number(currPrice) &&
+                                <div className="w-full gap-1 flex flex-row items-center">
+                                    <input className="p-4 bg-neutral-800 rounded-lg w-4/6 focus:outline-none" placeholder="0" value={amountA} onChange={e => {setAmountA(e.target.value); setAlignedAmountB(e.target.value);}} />
+                                    <span className="w-2/6 font-semibold text-right text-gray-400">{Number(tokenABalance).toFixed(4)} {positionSelected !== undefined ? positionSelected.Token0 : '...'}</span>
+                                </div>
+                            }
+                            {Number(upperPrice) > Number(currPrice) &&
+                                <div className="w-full gap-1 flex flex-row items-center">
+                                    <input className="p-4 bg-neutral-800 rounded-lg w-4/6 focus:outline-none" placeholder="0" value={amountB} onChange={e => {setAmountB(e.target.value); setAlignedAmountA(e.target.value);}} />
+                                    <span className="w-2/6 font-semibold text-right text-gray-400">{Number(tokenBBalance).toFixed(4)} {positionSelected !== undefined ? positionSelected.Token1 : '...'}</span>
+                                </div>
+                            }
+                            <button className="mt-2 p-4 bg-blue-500 rounded-full w-full bg-blue-500 text-lg font-bold hover:bg-blue-400" onClick={() => positionSelected !== undefined && increaseLiquidity(BigInt(positionSelected.Id))}>Increase Liquidity</button>
+                            <button className="p-4 bg-blue-500 rounded-full w-full bg-slate-700 text-lg font-bold hover:bg-slate-600" onClick={() => {clearState(); setIsAddPositionModal(false);}}>Close</button>
                         </div>
                     </div>
                 </div>
@@ -876,7 +880,7 @@ export default function Swap({
                                 <button className={"w-1/4 h-full p-3 rounded-lg border-2 border-gray-800 " + (amountRemove === '100' ? "bg-neutral-800" : "")} onClick={() => setAmountRemove('100')}>100%</button>
                             </div>
                             <button 
-                                className="mt-2 p-4 bg-blue-500 rounded-full w-full bg-blue-500 text-lg font-bold" 
+                                className="mt-2 p-4 bg-blue-500 rounded-full w-full bg-blue-500 text-lg font-bold hover:bg-blue-400" 
                                 onClick={() => 
                                     positionSelected !== undefined && 
                                         decreaseLiquidity(
@@ -889,7 +893,7 @@ export default function Swap({
                             >
                                 Decrease Liquidity
                             </button>
-                            <button className="p-4 bg-blue-500 rounded-full w-full bg-slate-700 text-lg font-bold" onClick={() => {setAmountRemove(''); setIsRemPositionModal(false);}}>Close</button>
+                            <button className="p-4 bg-blue-500 rounded-full w-full bg-slate-700 text-lg font-bold hover:bg-slate-600" onClick={() => {setAmountRemove(''); setIsRemPositionModal(false);}}>Close</button>
                         </div>
                     </div>
                 </div>
@@ -1111,7 +1115,7 @@ export default function Swap({
                     </>
                 }
                 {mode === 2 && position[0] !== undefined &&
-                    <div className="w-full h-[80vh] gap-5 flex flex-col overflow-y-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-neutral-950 [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-700">
+                    <div className="w-full h-[80vh] gap-5 flex flex-col overflow-y-scroll pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-lg [&::-webkit-scrollbar-track]:bg-neutral-900 [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-zinc-800">
                         {position.map(obj => 
                             <div key={Number(obj.Id)} className="w-full h-[342px] bg-neutral-900 gap-2 flex flex-col items-start">
                                 <div className="w-full py-4 h-[200px] bg-neutral-950 flex items-center justify-center relative">
@@ -1132,9 +1136,9 @@ export default function Swap({
                                     <span>{obj.CurrPrice.toFixed(4)} : {obj.MinPrice.toFixed(4)} : {obj.MaxPrice > 1e18 ? '♾️' : obj.MaxPrice.toFixed(4)} {obj.Token0}/{obj.Token1}</span>
                                 </div>
                                 <div className="w-full h-[50px] py-2 px-6 gap-2 flex flex-row items-start justify-start font-semibold">
-                                    <button className="p-1 w-1/5 rounded-full bg-gray-500" onClick={() => {setPositionSelected(obj); setTokenA({name: "", logo: "", value: obj.Token0Addr as '0xstring'}); setTokenB({name: "", logo: "", value: obj.Token1Addr as '0xstring'}); getBalanceOfAB(obj.Token0Addr as '0xstring', obj.Token1Addr as '0xstring'); setPairDetect(obj.Pair); setFeeSelect(obj.FeeTier); setLowerTick(obj.LowerTick.toString()); setUpperTick(obj.UpperTick.toString()); setIsAddPositionModal(true);}}>Add Liquidity</button>
-                                    <button className="p-1 w-1/4 rounded-full bg-gray-500" onClick={() => {setPositionSelected(obj); setIsRemPositionModal(true);}}>Remove Liquidity</button>
-                                    <button className="p-1 w-1/5 rounded-full bg-gray-500" onClick={() => collectFee(BigInt(obj.Id))}>Collect fee</button>
+                                    <button className="p-1 w-1/5 rounded-full bg-gray-500 hover:bg-gray-400" onClick={() => {setPositionSelected(obj); setTokenA({name: "", logo: "", value: obj.Token0Addr as '0xstring'}); setTokenB({name: "", logo: "", value: obj.Token1Addr as '0xstring'}); getBalanceOfAB(obj.Token0Addr as '0xstring', obj.Token1Addr as '0xstring'); setPairDetect(obj.Pair); setFeeSelect(obj.FeeTier); setLowerTick(obj.LowerTick.toString()); setUpperTick(obj.UpperTick.toString()); setCurrPrice(obj.CurrPrice.toString()); setLowerPrice(obj.MinPrice.toString()); setUpperPrice(obj.MaxPrice.toString()); setIsAddPositionModal(true);}}>Add Liquidity</button>
+                                    <button className="p-1 w-1/4 rounded-full bg-gray-500 hover:bg-gray-400" onClick={() => {setPositionSelected(obj); setIsRemPositionModal(true);}}>Remove Liquidity</button>
+                                    {Number(obj.Fee0) > 0 && Number(obj.Fee1) > 0 && <button className="p-1 w-1/5 rounded-full bg-gray-500 hover:bg-gray-400" onClick={() => collectFee(BigInt(obj.Id))}>Collect fee</button>}
                                 </div>
                             </div>
                         )}
