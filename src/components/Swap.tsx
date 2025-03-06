@@ -6,7 +6,7 @@ import { Token, BigintIsh } from "@uniswap/sdk-core"
 import { TickMath, encodeSqrtRatioX96, Pool, Position } from "@uniswap/v3-sdk"
 import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02 } from "./abi"
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react"
-import { ChevronDownIcon } from "@heroicons/react/20/solid"
+import { ChevronDownIcon, ArrowDownIcon } from "@heroicons/react/20/solid"
 import { useDebouncedCallback } from "use-debounce"
 
 const tokens: {name: string, value: '0xstring', logo: string}[] = [
@@ -110,6 +110,13 @@ export default function Swap({
             }
         } catch {}
     }, 700)
+
+    const switchToken = () => {
+        const _tokenA = tokenB
+        const _tokenB = tokenA
+        setTokenA(_tokenA)
+        setTokenB(_tokenB)
+    }
 
     const swap = async () => {
         setIsLoading(true)
@@ -887,18 +894,18 @@ export default function Swap({
                 </div>
             }
             
-            <div className="p-6 w-3/4 xl:w-1/3 gap-2 flex flex-col items-start justify-center">
+            <div className="pt-4 pb-6 px-6 w-full xl:w-1/3 gap-2 flex flex-col items-start justify-center bg-neutral-950 rounded-3xl mt-6">
                 <div className="w-full gap-2 flex flex-row items-start justify-start">
-                    <button className={"p-2 w-1/5 rounded-full " + (mode === 0 ? "bg-slate-700 font-bold" : "text-gray-500")} onClick={() => setMode(0)}>Instant Swap</button>
-                    <button className={"p-2 w-1/4 rounded-full " + (mode === 1 ? "bg-slate-700 font-bold" : "text-gray-500")} onClick={() => setMode(1)}>Add Liquidity</button>
-                    <button className={"p-2 w-1/5 rounded-full " + (mode === 2 ? "bg-slate-700 font-bold" : "text-gray-500")} onClick={() => setMode(2)}>My Position</button>
+                    <button className={"p-2 w-1/5 rounded-full hover:text-white hover:font-semibold " + (mode === 0 ? "bg-slate-700 font-bold" : "text-gray-500")} onClick={() => setMode(0)}>Instant Swap</button>
+                    <button className={"p-2 w-1/4 rounded-full hover:text-white hover:font-semibold " + (mode === 1 ? "bg-slate-700 font-bold" : "text-gray-500")} onClick={() => setMode(1)}>Add Liquidity</button>
+                    <button className={"p-2 w-1/5 rounded-full hover:text-white hover:font-semibold " + (mode === 2 ? "bg-slate-700 font-bold" : "text-gray-500")} onClick={() => setMode(2)}>My Position</button>
                 </div>
                 {mode === 0 &&
                     <>
-                        <div className="p-6 w-full h-[180px] rounded-xl border-2 border-solid border-gray-500 gap-2 flex flex-col">
+                        <div className="p-6 w-full h-[180px] rounded-xl border border-solid border-gray-700 gap-2 flex flex-col relative">
                             <span className="w-full text-left">From</span>
                             <div className="w-full gap-1 flex flex-row">
-                                <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="Token A" value={tokenA.value} onChange={e => setTokenA({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
+                                <input className="p-4 bg-transparent border border-gray-800 rounded-lg w-4/6 text-gray-500 text-[10px] focus:outline-none" placeholder="Token A" value={tokenA.value} onChange={e => setTokenA({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
                                 <div className="w-2/6">
                                     <Listbox value={tokenA} onChange={setTokenA}>
                                         <ListboxButton className="relative w-full h-full p-3 rounded-lg bg-white/5 text-left font-semibold gap-2 flex flex-row items-center focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25">
@@ -920,16 +927,19 @@ export default function Swap({
                                 </div>
                             </div>
                             <div className="w-full gap-1 flex flex-row items-center">
-                                <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="0" value={amountA} onChange={e => {setAmountA(e.target.value); getQoute(e.target.value);}} />
+                                <input className="p-4 rounded-lg bg-transparent w-4/6 font-bold focus:outline-none" autoFocus placeholder="0" value={amountA} onChange={e => {setAmountA(e.target.value); getQoute(e.target.value);}} />
                                 {tokenA.name !== 'Choose Token' && 
                                     <button className="w-2/6 font-semibold text-right text-gray-400" onClick={() => {setAmountA(tokenABalance); getQoute(tokenABalance);}}>{Number(tokenABalance).toFixed(4)} {tokenA.name}</button>
                                 }
                             </div>
+                            <button className="self-center h-12 w-14 bg-black rounded-xl border-2 border-gray-500 absolute -bottom-7 hover:bg-neutral-800" onClick={switchToken}>
+                                <ArrowDownIcon className="pointer-events-none absolute top-3 left-4 size-5 fill-white/60" aria-hidden="true"/>
+                            </button>
                         </div>
-                        <div className="p-6 w-full h-[180px] bg-neutral-900 gap-2 flex flex-col">
+                        <div className="p-6 mb-2 w-full h-[180px] rounded-xl bg-white/5 gap-2 flex flex-col">
                             <span className="w-full text-left">To</span>
                             <div className="w-full gap-1 flex flex-row">
-                                <input className="p-4 bg-neutral-950 rounded-lg w-4/6 focus:outline-none" placeholder="Token B" value={tokenB.value} onChange={e => setTokenB({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
+                                <input className="p-4 bg-transparent border border-gray-800 rounded-lg w-4/6 text-gray-500 text-[10px] focus:outline-none" placeholder="Token B" value={tokenB.value} onChange={e => setTokenB({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
                                 <div className="w-2/6">
                                     <Listbox value={tokenB} onChange={setTokenB}>
                                         <ListboxButton className="relative w-full h-full p-3 rounded-lg bg-white/5 text-left font-semibold gap-2 flex flex-row items-center focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25">
@@ -951,41 +961,41 @@ export default function Swap({
                                 </div>
                             </div>
                             <div className="w-full gap-1 flex flex-row items-center">
-                                <input className="p-4 bg-neutral-950 rounded-lg w-4/6 focus:outline-none" placeholder="0" value={amountB} readOnly />
+                                <input className="p-4 rounded-lg bg-transparent w-4/6 font-bold focus:outline-none" placeholder="0" value={amountB} readOnly />
                                 {tokenB.value !== '' as '0xstring' && <span className="w-2/6 font-semibold text-right text-gray-400">{Number(tokenBBalance).toFixed(4)} {tokenB.name}</span>}
                             </div>
                         </div>
                         {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' &&
-                            <div className="my-4 gap-2 flex flex-row">
+                            <div className="gap-2 flex flex-row">
                                 {exchangeRate !== '0' ? <span className="text-gray-500 font-bold">1 {tokenB.name} = {Number(exchangeRate).toFixed(4)} {tokenA.name}</span> : <span className="font-bold text-red-500">Insufficient Liquidity!</span>}
                                 {Number(amountB) > 0 && 
                                     <span>[PI: {((Number(newPrice) * 100) / Number(exchangeRate)) - 100 <= 100 ? (((Number(newPrice) * 100) / Number(exchangeRate)) - 100).toFixed(4) : ">100"}%]</span>
                                 } 
                             </div>
                         }
-                        <span className="w-full text-left">Swap fee tier</span>
+                        <span className="mt-2 w-full text-left">Swap fee tier</span>
                         <div className="w-full h-[70px] gap-2 flex flex-row text-gray-400">
-                            <button className={"w-1/2 h-full p-3 rounded-lg gap-3 flex flex-col items-center justify-center border-2 border-gray-800 " + (feeSelect === 100 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(100)}>
+                            <button className={"w-1/2 h-full p-3 rounded-lg gap-3 flex flex-col items-center justify-center border border-gray-800 hover:text-white hover:bg-neutral-800 " + (feeSelect === 100 ? "bg-white/5 text-white border-slate-500" : "")} onClick={() => setFeeSelect(100)}>
                                 <span>0.01%</span>
                                 {tokenB.value !== '' as '0xstring' && <span className={(Number(tvl100) > 0 ? 'text-emerald-300 font-bold' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl100))} {tokenB.name}</span>}
                             </button>
-                            <button className={"w-1/2 h-full p-3 rounded-lg gap-3 flex flex-col items-center justify-center border-2 border-gray-800 " + (feeSelect === 500 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(500)}>
+                            <button className={"w-1/2 h-full p-3 rounded-lg gap-3 flex flex-col items-center justify-center border border-gray-800 hover:text-white hover:bg-neutral-800 " + (feeSelect === 500 ? "bg-white/5 text-white border-slate-500" : "")} onClick={() => setFeeSelect(500)}>
                                 <span>0.05%</span>
                                 {tokenB.value !== '' as '0xstring' && <span className={(Number(tvl500) > 0 ? 'text-emerald-300 font-bold' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl500))} {tokenB.name}</span>}
                             </button>
                         </div>
                         <div className="w-full mb-2 h-[70px] gap-2 flex flex-row text-gray-500">
-                            <button className={"w-1/2 h-full p-3 rounded-lg gap-3 flex flex-col items-center justify-center border-2 border-gray-800 " + (feeSelect === 3000 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(3000)}>
+                            <button className={"w-1/2 h-full p-3 rounded-lg gap-3 flex flex-col items-center justify-center border border-gray-800 hover:text-white hover:bg-neutral-800 " + (feeSelect === 3000 ? "bg-white/5 text-white border-slate-500" : "")} onClick={() => setFeeSelect(3000)}>
                                 <span>0.3%</span>
                                 {tokenB.value !== '' as '0xstring' && <span className={(Number(tvl3000) > 0 ? 'text-emerald-300 font-bold' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl3000))} {tokenB.name}</span>}
                             </button>
-                            <button className={"w-1/2 h-full p-3 rounded-lg gap-3 flex flex-col items-center justify-center border-2 border-gray-800 " + (feeSelect === 10000 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(10000)}>
+                            <button className={"w-1/2 h-full p-3 rounded-lg gap-3 flex flex-col items-center justify-center border border-gray-800 hover:text-white hover:bg-neutral-800 " + (feeSelect === 10000 ? "bg-white/5 text-white border-slate-500" : "")} onClick={() => setFeeSelect(10000)}>
                                 <span>1%</span>
                                 {tokenB.value !== '' as '0xstring' && <span className={(Number(tvl10000) > 0 ? 'text-emerald-300 font-bold' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl10000))} {tokenB.name}</span>}
                             </button>
                         </div>
                         {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && Number(amountA) !== 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) !== 0 ?
-                            <button className="p-2 w-full h-[50px] rounded-full bg-blue-500 text-lg font-bold" onClick={swap}>Swap</button> :
+                            <button className="p-2 w-full h-[50px] rounded-full bg-blue-500 text-lg font-bold hover:bg-blue-400 " onClick={swap}>Swap</button> :
                             <button className="p-2 w-full h-[50px] rounded-full bg-gray-500 text-lg font-bold inactive">Swap</button>
                         }
                     </>
@@ -1098,7 +1108,7 @@ export default function Swap({
                 {mode === 2 && position[0] !== undefined &&
                     <div className="w-full h-[80vh] gap-5 flex flex-col overflow-y-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-neutral-950 [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-700">
                         {position.map(obj => 
-                            <div key={Number(obj.Id)} className="w-full h-[400px] bg-neutral-900 gap-2 flex flex-col items-start">
+                            <div key={Number(obj.Id)} className="w-full h-[342px] bg-neutral-900 gap-2 flex flex-col items-start">
                                 <div className="w-full py-4 h-[200px] bg-neutral-950 flex items-center justify-center relative">
                                     <img alt="" src={obj.Image} height={100} width={100}/>
                                     <span className="absolute bottom-5 left-5">{obj.CurrPrice > obj.MinPrice && obj.CurrPrice < obj.MaxPrice ? 'In range' : 'Out of range'}</span>
