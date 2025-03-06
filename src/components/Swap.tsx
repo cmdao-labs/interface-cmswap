@@ -1115,13 +1115,10 @@ export default function Swap({
                             </button>
                         </div>
                         {pairDetect === '0x0000000000000000000000000000000000000000' &&
-                            <>
-                                <span>Initial Price</span>
-                                <div className="w-full gap-1 flex flex-row items-center">
-                                    <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="Lower Price" value={currPrice} onChange={e => setCurrPrice(e.target.value)} />
-                                    <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenA.name + '/' + tokenB.name}</span>
-                                </div>
-                            </>
+                            <div className="w-full gap-1 flex flex-row items-center">
+                                <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="Initial Price" value={currPrice} onChange={e => setCurrPrice(e.target.value)} />
+                                <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenA.name + '/' + tokenB.name}</span>
+                            </div>
                         }
                         <div className="w-full gap-1 flex flex-row items-center">
                             <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="Lower Price" value={lowerPrice} onChange={e => {setLowerPrice(e.target.value); setAlignedLowerTick(e.target.value); setRangePercentage(999);}} />
