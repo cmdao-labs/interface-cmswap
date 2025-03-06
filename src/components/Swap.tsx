@@ -12,6 +12,7 @@ import { useDebouncedCallback } from "use-debounce"
 const tokens: {name: string, value: '0xstring', logo: string}[] = [
     { name: 'WJBC', value: '0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreih6o2px5oqockhsuer7wktcvoky36gpdhv7qjwn76enblpce6uokq' },
     { name: 'CMJ', value: '0xE67E280f5a354B4AcA15fA7f0ccbF667CF74F97b' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreiabbtn5pc6di4nwfgpqkk3ss6njgzkt2evilc5i2r754pgiru5x4u' },
+    { name: 'CMD-WOOD', value: '0x8652549D215E3c4e30fe33faa717a566E4f6f00C' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreidldk7skx44xwstwat2evjyp4u5oy5nmamnrhurqtjapnwqzwccd4' },
     // can PR listing here
 ]
 const V3_FACTORY = '0x5835f123bDF137864263bf204Cf4450aAD1Ba3a7' as '0xstring'
@@ -59,6 +60,11 @@ export default function Swap({
     const [mode, setMode] = React.useState(0)
     const { address } = useAccount()
     const [exchangeRate, setExchangeRate] = React.useState("")
+    const [tvl10000, setTvl10000] = React.useState("")
+    const [tvl3000, setTvl3000] = React.useState("")
+    const [tvl500, setTvl500] = React.useState("")
+    const [tvl100, setTvl100] = React.useState("")
+    const [newPrice, setNewPrice] = React.useState("")
     const [tokenA, setTokenA] = React.useState<{name: string, value: '0xstring', logo: string}>(tokens[0])
     const [tokenABalance, setTokenABalance] = React.useState("")
     const [amountA, setAmountA] = React.useState("")
@@ -97,6 +103,8 @@ export default function Swap({
                     }]
                 })
                 setAmountB(formatEther(qouteOutput.result[0]))
+                let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
+                setNewPrice(newPrice.toString())
             } else {
                 setAmountB("")
             }
@@ -496,7 +504,11 @@ export default function Swap({
             const stateB = await readContracts(config, {
                 contracts: [
                     { ...erc20ABI, address: tokenB.value, functionName: 'symbol' },
-                    { ...erc20ABI, address: tokenB.value, functionName: 'balanceOf', args: [address as '0xstring'] }
+                    { ...erc20ABI, address: tokenB.value, functionName: 'balanceOf', args: [address as '0xstring'] },
+                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 10000] },
+                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 3000] },
+                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 500] },
+                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 100] },
                 ]
             })
             stateA[0].result !== undefined && tokenA.name === "Choose Token" && setTokenA({
@@ -515,21 +527,72 @@ export default function Swap({
             })
             stateA[1].result !== undefined && setTokenABalance(formatEther(stateA[1].result))
             stateB[1].result !== undefined && setTokenBBalance(formatEther(stateB[1].result))
+            const pair10000 = stateB[2].result !== undefined ? stateB[2].result  as '0xstring' : '' as '0xstring'
+            const pair3000 = stateB[3].result !== undefined ? stateB[3].result  as '0xstring' : '' as '0xstring'
+            const pair500 = stateB[4].result !== undefined ? stateB[4].result  as '0xstring' : '' as '0xstring'
+            const pair100 = stateB[5].result !== undefined ? stateB[5].result  as '0xstring' : '' as '0xstring'
 
             if (tokenA.name !== 'Choose Token' && tokenB.name !== 'Choose Token') {
                 try {
-                    const qoutePrice = await simulateContract(config, {
-                        ...qouterV2Contract,
-                        functionName: 'quoteExactOutputSingle',
-                        args: [{
-                            tokenIn: tokenA.value as '0xstring',
-                            tokenOut: tokenB.value as '0xstring',
-                            amount: parseEther('0.01'),
-                            fee: feeSelect,
-                            sqrtPriceLimitX96: BigInt(0),
-                        }]
+                    const poolState = await readContracts(config, {
+                        contracts: [
+                            { ...v3PoolABI, address: pair10000, functionName: 'token0' },
+                            { ...v3PoolABI, address: pair10000, functionName: 'slot0' },
+                            { ...erc20ABI, address: tokenA.value, functionName: 'balanceOf', args: [pair10000] },
+                            { ...erc20ABI, address: tokenB.value, functionName: 'balanceOf', args: [pair10000] },
+                            { ...v3PoolABI, address: pair3000, functionName: 'token0' },
+                            { ...v3PoolABI, address: pair3000, functionName: 'slot0' },
+                            { ...erc20ABI, address: tokenA.value, functionName: 'balanceOf', args: [pair3000] },
+                            { ...erc20ABI, address: tokenB.value, functionName: 'balanceOf', args: [pair3000] },
+                            { ...v3PoolABI, address: pair500, functionName: 'token0' },
+                            { ...v3PoolABI, address: pair500, functionName: 'slot0' },
+                            { ...erc20ABI, address: tokenA.value, functionName: 'balanceOf', args: [pair500] },
+                            { ...erc20ABI, address: tokenB.value, functionName: 'balanceOf', args: [pair500] },
+                            { ...v3PoolABI, address: pair100, functionName: 'token0' },
+                            { ...v3PoolABI, address: pair100, functionName: 'slot0' },
+                            { ...erc20ABI, address: tokenA.value, functionName: 'balanceOf', args: [pair100] },
+                            { ...erc20ABI, address: tokenB.value, functionName: 'balanceOf', args: [pair100] },
+                        ]
                     })
-                    setExchangeRate((Number(formatEther(qoutePrice.result[0])) * 100).toString())
+                    const token0_10000 = poolState[0].result !== undefined ? poolState[0].result : "" as '0xstring'
+                    const sqrtPriceX96_10000 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
+                    const tokenAamount_10000 = poolState[2].result !== undefined ? poolState[2].result : BigInt(0)
+                    const tokenBamount_10000 = poolState[3].result !== undefined ? poolState[3].result : BigInt(0)
+                    const currPrice_10000 = token0_10000.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2))
+                    const tvl_10000 = (Number(formatEther(tokenAamount_10000)) * (1 / currPrice_10000)) + Number(formatEther(tokenBamount_10000))
+                    feeSelect === 10000 && setExchangeRate(currPrice_10000.toString())
+                    feeSelect === 10000 && tvl_10000 < 1e-9 && setExchangeRate('0')
+                    tvl_10000 >= 1e-9 ? setTvl10000(tvl_10000.toString()) : setTvl10000('0')
+
+                    const token0_3000 = poolState[4].result !== undefined ? poolState[4].result : "" as '0xstring'
+                    const sqrtPriceX96_3000 = poolState[5].result !== undefined ? poolState[5].result[0] : BigInt(0)
+                    const tokenAamount_3000 = poolState[6].result !== undefined ? poolState[6].result : BigInt(0)
+                    const tokenBamount_3000 = poolState[7].result !== undefined ? poolState[7].result : BigInt(0)
+                    const currPrice_3000 = token0_3000.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2))
+                    const tvl_3000 = (Number(formatEther(tokenAamount_3000)) * (1 / currPrice_3000)) + Number(formatEther(tokenBamount_3000));
+                    feeSelect === 3000 && setExchangeRate(currPrice_3000.toString())
+                    feeSelect === 3000 && tvl_3000 < 1e-9 && setExchangeRate('0')
+                    tvl_3000 >= 1e-9 ? setTvl3000(tvl_3000.toString()) : setTvl3000('0')
+                    
+                    const token0_500 = poolState[8].result !== undefined ? poolState[8].result : "" as '0xstring'
+                    const sqrtPriceX96_500 = poolState[9].result !== undefined ? poolState[9].result[0] : BigInt(0)
+                    const tokenAamount_500 = poolState[10].result !== undefined ? poolState[10].result : BigInt(0)
+                    const tokenBamount_500 = poolState[11].result !== undefined ? poolState[11].result : BigInt(0)
+                    const currPrice_500 = token0_500.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_500) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2))
+                    const tvl_500 = (Number(formatEther(tokenAamount_500)) * (1 / currPrice_500)) + Number(formatEther(tokenBamount_500));
+                    feeSelect === 500 && setExchangeRate(currPrice_500.toString())
+                    feeSelect === 500 && tvl_500 < 1e-9 && setExchangeRate('0')
+                    tvl_500 >= 1e-9 ? setTvl500(tvl_500.toString()) : setTvl500('0')
+
+                    const token0_100 = poolState[12].result !== undefined ? poolState[12].result : "" as '0xstring'
+                    const sqrtPriceX96_100 = poolState[13].result !== undefined ? poolState[13].result[0] : BigInt(0)
+                    const tokenAamount_100 = poolState[14].result !== undefined ? poolState[14].result : BigInt(0)
+                    const tokenBamount_100 = poolState[15].result !== undefined ? poolState[15].result : BigInt(0)
+                    const currPrice_100 = token0_100.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_100) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_100) / (2 ** 96)) ** 2))
+                    const tvl_100 = (Number(formatEther(tokenAamount_100)) * (1 / currPrice_100)) + Number(formatEther(tokenBamount_100));
+                    feeSelect === 100 && setExchangeRate(currPrice_100.toString())
+                    feeSelect === 100 && tvl_100 < 1e-9 && setExchangeRate('0')
+                    tvl_100 >= 1e-9 ? setTvl100(tvl_100.toString()) : setTvl100('0')
                 } catch {
                     setExchangeRate("0")
                 }
@@ -549,7 +612,7 @@ export default function Swap({
                 contracts: [
                     { ...erc20ABI, address: tokenB.value, functionName: 'symbol' },
                     { ...erc20ABI, address: tokenB.value, functionName: 'balanceOf', args: [address as '0xstring'] },
-                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, feeSelect] },
+                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, feeSelect] }
                 ]
             })
             stateA[0].result !== undefined && tokenA.name === "Choose Token" && setTokenA({
@@ -580,7 +643,7 @@ export default function Swap({
                 })
                 const token0 = poolState[0].result !== undefined ? poolState[0].result : "" as '0xstring'
                 const sqrtPriceX96 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
-                const _currPrice = token0.toUpperCase() === tokenA.value.toUpperCase() ? 
+                const _currPrice = token0.toUpperCase() === tokenB.value.toUpperCase() ? 
                     (Number(sqrtPriceX96) / (2 ** 96)) ** 2 : 
                     (1 / ((Number(sqrtPriceX96) / (2 ** 96)) ** 2));
                 poolState[1].result !== undefined && setCurrPrice(_currPrice.toString())
@@ -893,16 +956,33 @@ export default function Swap({
                             </div>
                         </div>
                         {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' &&
-                            <>
-                                {exchangeRate !== '0' ? <span className="font-bold my-4 text-gray-500">1 {tokenB.name} = {Number(exchangeRate).toFixed(4)} {tokenA.name}</span> : <span className="font-bold my-4 text-red-500">Insufficient Liquidity!</span>}
-                            </>
+                            <div className="my-4 gap-2 flex flex-row">
+                                {exchangeRate !== '0' ? <span className="text-gray-500 font-bold">1 {tokenB.name} = {Number(exchangeRate).toFixed(4)} {tokenA.name}</span> : <span className="font-bold text-red-500">Insufficient Liquidity!</span>}
+                                {Number(amountB) > 0 && 
+                                    <span>[PI: {((Number(newPrice) * 100) / Number(exchangeRate)) - 100 <= 100 ? (((Number(newPrice) * 100) / Number(exchangeRate)) - 100).toFixed(4) : ">100"}%]</span>
+                                } 
+                            </div>
                         }
                         <span className="w-full text-left">Swap fee tier</span>
-                        <div className="w-full mb-2 h-[100px] gap-2 flex flex-row text-gray-400">
-                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 border-2 border-gray-800 " + (feeSelect === 100 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(100)}>0.01%</button>
-                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 border-2 border-gray-800 " + (feeSelect === 500 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(500)}>0.05%</button>
-                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 border-2 border-gray-800 " + (feeSelect === 3000 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(3000)}>0.3%</button>
-                            <button className={"w-1/4 h-full p-3 rounded-lg gap-3 border-2 border-gray-800 " + (feeSelect === 10000 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(10000)}>1%</button>
+                        <div className="w-full h-[70px] gap-2 flex flex-row text-gray-400">
+                            <button className={"w-1/2 h-full p-3 rounded-lg gap-3 flex flex-col items-center justify-center border-2 border-gray-800 " + (feeSelect === 100 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(100)}>
+                                <span>0.01%</span>
+                                {tokenB.value !== '' as '0xstring' && <span className={(Number(tvl100) > 0 ? 'text-emerald-300 font-bold' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl100))} {tokenB.name}</span>}
+                            </button>
+                            <button className={"w-1/2 h-full p-3 rounded-lg gap-3 flex flex-col items-center justify-center border-2 border-gray-800 " + (feeSelect === 500 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(500)}>
+                                <span>0.05%</span>
+                                {tokenB.value !== '' as '0xstring' && <span className={(Number(tvl500) > 0 ? 'text-emerald-300 font-bold' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl500))} {tokenB.name}</span>}
+                            </button>
+                        </div>
+                        <div className="w-full mb-2 h-[70px] gap-2 flex flex-row text-gray-500">
+                            <button className={"w-1/2 h-full p-3 rounded-lg gap-3 flex flex-col items-center justify-center border-2 border-gray-800 " + (feeSelect === 3000 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(3000)}>
+                                <span>0.3%</span>
+                                {tokenB.value !== '' as '0xstring' && <span className={(Number(tvl3000) > 0 ? 'text-emerald-300 font-bold' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl3000))} {tokenB.name}</span>}
+                            </button>
+                            <button className={"w-1/2 h-full p-3 rounded-lg gap-3 flex flex-col items-center justify-center border-2 border-gray-800 " + (feeSelect === 10000 ? "bg-neutral-800" : "")} onClick={() => setFeeSelect(10000)}>
+                                <span>1%</span>
+                                {tokenB.value !== '' as '0xstring' && <span className={(Number(tvl10000) > 0 ? 'text-emerald-300 font-bold' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl10000))} {tokenB.name}</span>}
+                            </button>
                         </div>
                         {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && Number(amountA) !== 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) !== 0 ?
                             <button className="p-2 w-full h-[50px] rounded-full bg-blue-500 text-lg font-bold" onClick={swap}>Swap</button> :
@@ -982,7 +1062,7 @@ export default function Swap({
                                 <span className="text-gray-500">Best for exotic pairs</span>
                             </button>
                         </div>
-                        <span className="m-2 font-semibold">Current price: {Number(currPrice).toFixed(4)} {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenB.name + '/' + tokenA.name}</span>
+                        <span className="m-2 font-semibold">Current price: {Number(currPrice).toFixed(4)} {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenA.name + '/' + tokenB.name}</span>
                         <div className="w-full h-[100px] gap-2 flex flex-row">
                             <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border-2 border-gray-800 " + (rangePercentage === 1 ? "bg-neutral-800" : "")} onClick={() => setRangePercentage(1)}>
                                 <span>Full Range</span>
