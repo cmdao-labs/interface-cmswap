@@ -569,7 +569,7 @@ export default function Swap({
                     const tokenAamount_10000 = poolState[2].result !== undefined ? poolState[2].result : BigInt(0)
                     const tokenBamount_10000 = poolState[3].result !== undefined ? poolState[3].result : BigInt(0)
                     const currPrice_10000 = token0_10000.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2))
-                    const tvl_10000 = (Number(formatEther(tokenAamount_10000)) * (1 / currPrice_10000)) + Number(formatEther(tokenBamount_10000))
+                    const tvl_10000 = currPrice_10000 !== 0 ?  (Number(formatEther(tokenAamount_10000)) * (1 / currPrice_10000)) + Number(formatEther(tokenBamount_10000)) : 0
                     feeSelect === 10000 && setExchangeRate(currPrice_10000.toString())
                     feeSelect === 10000 && tvl_10000 < 1e-9 && setExchangeRate('0')
                     tvl_10000 >= 1e-9 ? setTvl10000(tvl_10000.toString()) : setTvl10000('0')
@@ -688,6 +688,18 @@ export default function Swap({
                 rangePercentage !== 1 ? setUpperPercentage((((_upperPriceShow / _currPrice) - 1) * 100).toString()) : setUpperPercentage('+♾️')
             } else {
                 setCurrPrice("")
+                const getTickSpacing = await readContracts(config, {
+                    contracts: [
+                        { ...v3FactoryContract, functionName: 'feeAmountTickSpacing', args: [10000] },
+                        { ...v3FactoryContract, functionName: 'feeAmountTickSpacing', args: [3000] },
+                        { ...v3FactoryContract, functionName: 'feeAmountTickSpacing', args: [500] },
+                        { ...v3FactoryContract, functionName: 'feeAmountTickSpacing', args: [100] },
+                    ]
+                })
+                getTickSpacing[0].status === 'success' && feeSelect === 10000 && setCurrTickSpacing(getTickSpacing[0].result.toString())
+                getTickSpacing[1].status === 'success' && feeSelect === 3000 && setCurrTickSpacing(getTickSpacing[1].result.toString())
+                getTickSpacing[2].status === 'success' && feeSelect === 500 && setCurrTickSpacing(getTickSpacing[2].result.toString())
+                getTickSpacing[3].status === 'success' && feeSelect === 100 && setCurrTickSpacing(getTickSpacing[3].result.toString())
             }
         }
 
@@ -1102,6 +1114,15 @@ export default function Swap({
                                 <span className="text-gray-500">[-2%, +2%]</span>
                             </button>
                         </div>
+                        {pairDetect === '0x0000000000000000000000000000000000000000' &&
+                            <>
+                                <span>Initial Price</span>
+                                <div className="w-full gap-1 flex flex-row items-center">
+                                    <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="Lower Price" value={currPrice} onChange={e => setCurrPrice(e.target.value)} />
+                                    <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenA.name + '/' + tokenB.name}</span>
+                                </div>
+                            </>
+                        }
                         <div className="w-full gap-1 flex flex-row items-center">
                             <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="Lower Price" value={lowerPrice} onChange={e => {setLowerPrice(e.target.value); setAlignedLowerTick(e.target.value); setRangePercentage(999);}} />
                             <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenA.name + '/' + tokenB.name + ' (' + Number(lowerPercentage).toFixed(2) + '%)'}</span>
@@ -1138,7 +1159,24 @@ export default function Swap({
                                     <span>{obj.CurrPrice.toFixed(4)} : {obj.MinPrice.toFixed(4)} : {obj.MaxPrice > 1e18 ? '♾️' : obj.MaxPrice.toFixed(4)} {obj.Token0}/{obj.Token1}</span>
                                 </div>
                                 <div className="w-full h-[50px] py-2 px-6 gap-2 flex flex-row items-start justify-start font-semibold">
-                                    <button className="p-1 w-1/5 rounded-full bg-gray-500 hover:bg-gray-400" onClick={() => {setPositionSelected(obj); setTokenA({name: "", logo: "", value: obj.Token0Addr as '0xstring'}); setTokenB({name: "", logo: "", value: obj.Token1Addr as '0xstring'}); getBalanceOfAB(obj.Token0Addr as '0xstring', obj.Token1Addr as '0xstring'); setPairDetect(obj.Pair); setFeeSelect(obj.FeeTier); setLowerTick(obj.LowerTick.toString()); setUpperTick(obj.UpperTick.toString()); setCurrPrice(obj.CurrPrice.toString()); setLowerPrice(obj.MinPrice.toString()); setUpperPrice(obj.MaxPrice.toString()); setIsAddPositionModal(true);}}>Add Liquidity</button>
+                                    <button 
+                                        className="p-1 w-1/5 rounded-full bg-gray-500 hover:bg-gray-400" 
+                                        onClick={() => {
+                                            setPositionSelected(obj)
+                                            setTokenA({name: "", logo: "", value: obj.Token0Addr as '0xstring'})
+                                            setTokenB({name: "", logo: "", value: obj.Token1Addr as '0xstring'})
+                                            getBalanceOfAB(obj.Token0Addr as '0xstring', obj.Token1Addr as '0xstring')
+                                            setPairDetect(obj.Pair); setFeeSelect(obj.FeeTier)
+                                            setLowerTick(obj.LowerTick.toString())
+                                            setUpperTick(obj.UpperTick.toString())
+                                            setCurrPrice(obj.CurrPrice.toString())
+                                            setLowerPrice(obj.MinPrice.toString())
+                                            setUpperPrice(obj.MaxPrice.toString())
+                                            setIsAddPositionModal(true)
+                                        }}
+                                    >
+                                        Add Liquidity
+                                    </button>
                                     <button className="p-1 w-1/4 rounded-full bg-gray-500 hover:bg-gray-400" onClick={() => {setPositionSelected(obj); setIsRemPositionModal(true);}}>Remove Liquidity</button>
                                     {Number(obj.Fee0) > 0 && Number(obj.Fee1) > 0 && <button className="p-1 w-1/5 rounded-full bg-gray-500 hover:bg-gray-400" onClick={() => collectFee(BigInt(obj.Id))}>Collect fee</button>}
                                 </div>
