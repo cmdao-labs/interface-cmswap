@@ -583,6 +583,7 @@ export default function Swap({
 
             if (tokenA.name !== 'Choose Token' && tokenB.name !== 'Choose Token') {
                 try {
+                    setAltRoute(undefined)
                     const poolState = await readContracts(config, {
                         contracts: [
                             { ...v3PoolABI, address: pair10000, functionName: 'token0' },
@@ -612,8 +613,7 @@ export default function Swap({
                     feeSelect === 10000 && currPrice_10000 !== Infinity && setExchangeRate(currPrice_10000.toString())
                     feeSelect === 10000 && tvl_10000 < 1e-9 && setExchangeRate('0')
                     tvl_10000 >= 1e-9 ? setTvl10000(tvl_10000.toString()) : setTvl10000('0')
-                    setAltRoute(undefined)
-                    if (tvl_10000 < 1e-9) {
+                    if (feeSelect === 10000 && tvl_10000 < 1e-9) {
                         const init: any = {contracts: []}
                         for (let i = 0; i <= tokens.length - 1; i++) {
                             init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokens[i].value, 10000] })
@@ -647,7 +647,7 @@ export default function Swap({
                             const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
                             const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
                             const altPrice1 = altToken1.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
-                            feeSelect === 10000 && setExchangeRate((altPrice1 / altPrice0).toString())
+                            setExchangeRate((altPrice1 / altPrice0).toString())
                         }
                     }
 
@@ -660,6 +660,43 @@ export default function Swap({
                     feeSelect === 3000 && setExchangeRate(currPrice_3000.toString())
                     feeSelect === 3000 && tvl_3000 < 1e-9 && setExchangeRate('0')
                     tvl_3000 >= 1e-9 ? setTvl3000(tvl_3000.toString()) : setTvl3000('0')
+                    if (feeSelect === 3000 && tvl_3000 < 1e-9) {
+                        const init: any = {contracts: []}
+                        for (let i = 0; i <= tokens.length - 1; i++) {
+                            init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokens[i].value, 3000] })
+                            init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokens[i].value, tokenB.value, 3000] })
+                        }
+                        const findAltRoute = await readContracts(config, init)
+                        let altIntermediate
+                        let altPair0
+                        let altPair1
+                        for (let i = 0; i <= findAltRoute.length - 1; i+=2) {
+                            if (findAltRoute[i].result !== '0x0000000000000000000000000000000000000000' && findAltRoute[i+1].result !== '0x0000000000000000000000000000000000000000') {
+                                altIntermediate = tokens[0]
+                                altPair0 = findAltRoute[i].result 
+                                altPair1 = findAltRoute[i+1].result
+                                break
+                            }
+                        }
+                        if (altIntermediate !== undefined) {
+                            setAltRoute({a: tokenA.value, b: altIntermediate.value, c: tokenB.value})
+                            const altPoolState = await readContracts(config, {
+                                contracts: [
+                                    { ...v3PoolABI, address: altPair0 as '0xstring', functionName: 'token0' },
+                                    { ...v3PoolABI, address: altPair0 as '0xstring', functionName: 'slot0' },
+                                    { ...v3PoolABI, address: altPair1 as '0xstring', functionName: 'token0' },
+                                    { ...v3PoolABI, address: altPair1 as '0xstring', functionName: 'slot0' },
+                                ]
+                            })
+                            const altToken0 = altPoolState[0].result !== undefined ? altPoolState[0].result : "" as '0xstring'
+                            const alt0sqrtPriceX96 = altPoolState[1].result !== undefined ? altPoolState[1].result[0] : BigInt(0)
+                            const altPrice0 = altToken0.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2))
+                            const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
+                            const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
+                            const altPrice1 = altToken1.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
+                            feeSelect === 3000 && setExchangeRate((altPrice1 / altPrice0).toString())
+                        }
+                    }
                     
                     const token0_500 = poolState[8].result !== undefined ? poolState[8].result : "" as '0xstring'
                     const sqrtPriceX96_500 = poolState[9].result !== undefined ? poolState[9].result[0] : BigInt(0)
@@ -670,6 +707,43 @@ export default function Swap({
                     feeSelect === 500 && setExchangeRate(currPrice_500.toString())
                     feeSelect === 500 && tvl_500 < 1e-9 && setExchangeRate('0')
                     tvl_500 >= 1e-9 ? setTvl500(tvl_500.toString()) : setTvl500('0')
+                    if (feeSelect === 500 && tvl_500 < 1e-9) {
+                        const init: any = {contracts: []}
+                        for (let i = 0; i <= tokens.length - 1; i++) {
+                            init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokens[i].value, 500] })
+                            init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokens[i].value, tokenB.value, 500] })
+                        }
+                        const findAltRoute = await readContracts(config, init)
+                        let altIntermediate
+                        let altPair0
+                        let altPair1
+                        for (let i = 0; i <= findAltRoute.length - 1; i+=2) {
+                            if (findAltRoute[i].result !== '0x0000000000000000000000000000000000000000' && findAltRoute[i+1].result !== '0x0000000000000000000000000000000000000000') {
+                                altIntermediate = tokens[0]
+                                altPair0 = findAltRoute[i].result 
+                                altPair1 = findAltRoute[i+1].result
+                                break
+                            }
+                        }
+                        if (altIntermediate !== undefined) {
+                            setAltRoute({a: tokenA.value, b: altIntermediate.value, c: tokenB.value})
+                            const altPoolState = await readContracts(config, {
+                                contracts: [
+                                    { ...v3PoolABI, address: altPair0 as '0xstring', functionName: 'token0' },
+                                    { ...v3PoolABI, address: altPair0 as '0xstring', functionName: 'slot0' },
+                                    { ...v3PoolABI, address: altPair1 as '0xstring', functionName: 'token0' },
+                                    { ...v3PoolABI, address: altPair1 as '0xstring', functionName: 'slot0' },
+                                ]
+                            })
+                            const altToken0 = altPoolState[0].result !== undefined ? altPoolState[0].result : "" as '0xstring'
+                            const alt0sqrtPriceX96 = altPoolState[1].result !== undefined ? altPoolState[1].result[0] : BigInt(0)
+                            const altPrice0 = altToken0.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2))
+                            const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
+                            const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
+                            const altPrice1 = altToken1.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
+                            feeSelect === 500 && setExchangeRate((altPrice1 / altPrice0).toString())
+                        }
+                    }
 
                     const token0_100 = poolState[12].result !== undefined ? poolState[12].result : "" as '0xstring'
                     const sqrtPriceX96_100 = poolState[13].result !== undefined ? poolState[13].result[0] : BigInt(0)
@@ -680,6 +754,43 @@ export default function Swap({
                     feeSelect === 100 && setExchangeRate(currPrice_100.toString())
                     feeSelect === 100 && tvl_100 < 1e-9 && setExchangeRate('0')
                     tvl_100 >= 1e-9 ? setTvl100(tvl_100.toString()) : setTvl100('0')
+                    if (feeSelect === 100 && tvl_100 < 1e-9) {
+                        const init: any = {contracts: []}
+                        for (let i = 0; i <= tokens.length - 1; i++) {
+                            init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokens[i].value, 100] })
+                            init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokens[i].value, tokenB.value, 100] })
+                        }
+                        const findAltRoute = await readContracts(config, init)
+                        let altIntermediate
+                        let altPair0
+                        let altPair1
+                        for (let i = 0; i <= findAltRoute.length - 1; i+=2) {
+                            if (findAltRoute[i].result !== '0x0000000000000000000000000000000000000000' && findAltRoute[i+1].result !== '0x0000000000000000000000000000000000000000') {
+                                altIntermediate = tokens[0]
+                                altPair0 = findAltRoute[i].result 
+                                altPair1 = findAltRoute[i+1].result
+                                break
+                            }
+                        }
+                        if (altIntermediate !== undefined) {
+                            setAltRoute({a: tokenA.value, b: altIntermediate.value, c: tokenB.value})
+                            const altPoolState = await readContracts(config, {
+                                contracts: [
+                                    { ...v3PoolABI, address: altPair0 as '0xstring', functionName: 'token0' },
+                                    { ...v3PoolABI, address: altPair0 as '0xstring', functionName: 'slot0' },
+                                    { ...v3PoolABI, address: altPair1 as '0xstring', functionName: 'token0' },
+                                    { ...v3PoolABI, address: altPair1 as '0xstring', functionName: 'slot0' },
+                                ]
+                            })
+                            const altToken0 = altPoolState[0].result !== undefined ? altPoolState[0].result : "" as '0xstring'
+                            const alt0sqrtPriceX96 = altPoolState[1].result !== undefined ? altPoolState[1].result[0] : BigInt(0)
+                            const altPrice0 = altToken0.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2))
+                            const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
+                            const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
+                            const altPrice1 = altToken1.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
+                            feeSelect === 100 && setExchangeRate((altPrice1 / altPrice0).toString())
+                        }
+                    }
                 } catch {
                     setExchangeRate("0")
                 }
