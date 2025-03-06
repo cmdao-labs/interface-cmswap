@@ -3,7 +3,7 @@ import { useAccount, type Config } from "wagmi"
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts } from '@wagmi/core'
 import { erc20Abi, formatEther, parseEther } from "viem"
 import { Token, BigintIsh } from "@uniswap/sdk-core"
-import { TickMath, encodeSqrtRatioX96, Pool, Position } from "@uniswap/v3-sdk"
+import { TickMath, encodeSqrtRatioX96, Pool, Position, Route } from "@uniswap/v3-sdk"
 import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02 } from "./abi"
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react"
 import { ChevronDownIcon, ArrowDownIcon } from "@heroicons/react/20/solid"
@@ -63,6 +63,7 @@ export default function Swap({
     const [mode, setMode] = React.useState(0)
     const { address } = useAccount()
     const [exchangeRate, setExchangeRate] = React.useState("")
+    const [altRoute, setAltRoute] = React.useState<{a: '0xstring', b: '0xstring', c: '0xstring'}>()
     const [tvl10000, setTvl10000] = React.useState("")
     const [tvl3000, setTvl3000] = React.useState("")
     const [tvl500, setTvl500] = React.useState("")
@@ -91,23 +92,45 @@ export default function Swap({
     const [isRemPositionModal, setIsRemPositionModal] = React.useState(false)
     const [amountRemove, setAmountRemove] = React.useState("")
 
+    function encodePath(tokens: string[], fees: number[]): string {
+        let path = "0x"
+        for (let i = 0; i < fees.length; i++) {
+            path += tokens[i].slice(2)
+            path += fees[i].toString(16).padStart(6, "0")
+        }
+        path += tokens[tokens.length - 1].slice(2)
+        return path
+    }
+
     const getQoute = useDebouncedCallback(async (_amount: string) => {
         try {
             if (Number(_amount) !== 0) {
-                const qouteOutput = await simulateContract(config, {
-                    ...qouterV2Contract,
-                    functionName: 'quoteExactInputSingle',
-                    args: [{
-                        tokenIn: tokenA.value as '0xstring',
-                        tokenOut: tokenB.value as '0xstring',
-                        amountIn: parseEther(_amount),
-                        fee: feeSelect,
-                        sqrtPriceLimitX96: BigInt(0),
-                    }]
-                })
-                setAmountB(formatEther(qouteOutput.result[0]))
-                let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
-                setNewPrice(newPrice.toString())
+                if (altRoute === undefined) {
+                    const qouteOutput = await simulateContract(config, {
+                        ...qouterV2Contract,
+                        functionName: 'quoteExactInputSingle',
+                        args: [{
+                            tokenIn: tokenA.value as '0xstring',
+                            tokenOut: tokenB.value as '0xstring',
+                            amountIn: parseEther(_amount),
+                            fee: feeSelect,
+                            sqrtPriceLimitX96: BigInt(0),
+                        }]
+                    })
+                    setAmountB(formatEther(qouteOutput.result[0]))
+                    let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
+                    setNewPrice(newPrice.toString())
+                } else {
+                    const route = encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect])
+                    const qouteOutput = await simulateContract(config, {
+                        ...qouterV2Contract,
+                        functionName: 'quoteExactInput',
+                        args: [route as '0xstring', parseEther(_amount)]
+                    })
+                    setAmountB(formatEther(qouteOutput.result[0]))
+                    let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
+                    setNewPrice(newPrice.toString())
+                }
             } else {
                 setAmountB("")
             }
@@ -130,20 +153,36 @@ export default function Swap({
                 const h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
-            const { request } = await simulateContract(config, {
-                ...router02Contract,
-                functionName: 'exactInputSingle',
-                args: [{
-                    tokenIn: tokenA.value as '0xstring',
-                    tokenOut: tokenB.value as '0xstring',
-                    fee: feeSelect,
-                    recipient: address as '0xstring',
-                    amountIn: parseEther(amountA),
-                    amountOutMinimum: parseEther(String(Number(amountB) * 0.95)),
-                    sqrtPriceLimitX96: BigInt(0)
-                }]
-            })
-            const h = await writeContract(config, request)
+            let h
+            if (altRoute === undefined) {
+                const { request } = await simulateContract(config, {
+                    ...router02Contract,
+                    functionName: 'exactInputSingle',
+                    args: [{
+                        tokenIn: tokenA.value as '0xstring',
+                        tokenOut: tokenB.value as '0xstring',
+                        fee: feeSelect,
+                        recipient: address as '0xstring',
+                        amountIn: parseEther(amountA),
+                        amountOutMinimum: parseEther(String(Number(amountB) * 0.95)),
+                        sqrtPriceLimitX96: BigInt(0)
+                    }]
+                })
+                h = await writeContract(config, request)
+            } else {
+                const route = encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect])
+                const { request } = await simulateContract(config, {
+                    ...router02Contract,
+                    functionName: 'exactInput',
+                    args: [{
+                        path: route as '0xstring',
+                        recipient: address as '0xstring',
+                        amountIn: parseEther(amountA),
+                        amountOutMinimum: parseEther(String(Number(amountB) * 0.95))
+                    }]
+                })
+                h = await writeContract(config, request)
+            }
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
         } catch (e) {
@@ -573,6 +612,42 @@ export default function Swap({
                     feeSelect === 10000 && setExchangeRate(currPrice_10000.toString())
                     feeSelect === 10000 && tvl_10000 < 1e-9 && setExchangeRate('0')
                     tvl_10000 >= 1e-9 ? setTvl10000(tvl_10000.toString()) : setTvl10000('0')
+                    setAltRoute(undefined)
+                    if (tvl_10000 < 1e-9) {
+                        const init: any = {contracts: []}
+                        for (let i = 0; i <= tokens.length - 1; i++) {
+                            init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokens[i].value, 10000] })
+                            init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokens[i].value, tokenB.value, 10000] })
+                        }
+                        const findAltRoute = await readContracts(config, init)
+                        let altIntermediate
+                        let altPair0
+                        let altPair1
+                        for (let i = 0; i <= findAltRoute.length - 1; i+=2) {
+                            if (findAltRoute[i].result !== '0x0000000000000000000000000000000000000000' && findAltRoute[i+1].result !== '0x0000000000000000000000000000000000000000') {
+                                altIntermediate = tokens[0]
+                                altPair0 = findAltRoute[i].result 
+                                altPair1 = findAltRoute[i+1].result
+                                break
+                            }
+                        }
+                        altIntermediate !== undefined && setAltRoute({a: tokenA.value, b: altIntermediate.value, c: tokenB.value})
+                        const altPoolState = await readContracts(config, {
+                            contracts: [
+                                { ...v3PoolABI, address: altPair0 as '0xstring', functionName: 'token0' },
+                                { ...v3PoolABI, address: altPair0 as '0xstring', functionName: 'slot0' },
+                                { ...v3PoolABI, address: altPair1 as '0xstring', functionName: 'token0' },
+                                { ...v3PoolABI, address: altPair1 as '0xstring', functionName: 'slot0' },
+                            ]
+                        })
+                        const altToken0 = altPoolState[0].result !== undefined ? altPoolState[0].result : "" as '0xstring'
+                        const alt0sqrtPriceX96 = altPoolState[1].result !== undefined ? altPoolState[1].result[0] : BigInt(0)
+                        const altPrice0 = altToken0.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2))
+                        const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
+                        const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
+                        const altPrice1 = altToken1.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
+                        feeSelect === 10000 && setExchangeRate((altPrice1 / altPrice0).toString())
+                    }
 
                     const token0_3000 = poolState[4].result !== undefined ? poolState[4].result : "" as '0xstring'
                     const sqrtPriceX96_3000 = poolState[5].result !== undefined ? poolState[5].result[0] : BigInt(0)
@@ -984,6 +1059,9 @@ export default function Swap({
                                 {tokenB.value !== '' as '0xstring' && <span className="w-2/6 font-semibold text-right text-gray-400">{Number(tokenBBalance).toFixed(4)} {tokenB.name}</span>}
                             </div>
                         </div>
+                        {altRoute !== undefined &&
+                            <span className="w-full text-left text-gray-500">Route: {tokens.map(obj => obj.value).indexOf(altRoute.a) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.a)].name}  → {tokens.map(obj => obj.value).indexOf(altRoute.b) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.b)].name} → {tokens.map(obj => obj.value).indexOf(altRoute.c) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.c)].name}</span>
+                        }
                         {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' &&
                             <div className="gap-2 flex flex-row">
                                 {exchangeRate !== '0' ? <span className="text-gray-500 font-bold">1 {tokenB.name} = {Number(exchangeRate).toFixed(4)} {tokenA.name}</span> : <span className="font-bold text-red-500">Insufficient Liquidity!</span>}
@@ -1122,11 +1200,11 @@ export default function Swap({
                         }
                         <div className="w-full gap-1 flex flex-row items-center">
                             <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="Lower Price" value={lowerPrice} onChange={e => {setLowerPrice(e.target.value); setAlignedLowerTick(e.target.value); setRangePercentage(999);}} />
-                            <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenA.name + '/' + tokenB.name + ' (' + Number(lowerPercentage).toFixed(2) + '%)'}</span>
+                            <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenA.name + '/' + tokenB.name + (Number(currPrice) > 0 ? ' (' + Number(lowerPercentage).toFixed(2) + '%)' : '')}</span>
                         </div>
                         <div className="w-full gap-1 flex flex-row items-center">
                             <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="Upper Price" value={upperPrice} onChange={e => {setUpperPrice(e.target.value); setAlignedUpperTick(e.target.value); setRangePercentage(999);}} />
-                            <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenA.name + '/' + tokenB.name + ' (+' + Number(upperPercentage).toFixed(2) + '%)'}</span>
+                            <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenA.name + '/' + tokenB.name + (Number(currPrice) > 0 ? ' (+' + Number(upperPercentage).toFixed(2) + '%)' : '')}</span>
                         </div>
                         {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && Number(amountA) <= Number(tokenABalance) && Number(amountB) <= Number(tokenBBalance) ?
                             <button className="mt-2 p-4 rounded-full w-full bg-blue-500 text-lg font-bold hover:bg-blue-400" onClick={placeLiquidity}>Add Liquidity</button> :
