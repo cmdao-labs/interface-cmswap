@@ -3,7 +3,7 @@ import { useAccount, type Config } from "wagmi"
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts } from '@wagmi/core'
 import { erc20Abi, formatEther, parseEther } from "viem"
 import { Token, BigintIsh } from "@uniswap/sdk-core"
-import { TickMath, encodeSqrtRatioX96, Pool, Position, Route } from "@uniswap/v3-sdk"
+import { TickMath, encodeSqrtRatioX96, Pool, Position } from "@uniswap/v3-sdk"
 import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02 } from "./abi"
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react"
 import { ChevronDownIcon, ArrowDownIcon } from "@heroicons/react/20/solid"
