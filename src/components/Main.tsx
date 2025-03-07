@@ -106,7 +106,7 @@ export default function Main() {
                     }
                 </QueryClientProvider>
             </WagmiProvider>                
-            <footer className='w-full my-5 xl:mt-5 pt-14 px-14 flex flex-row justify-between text-gray-500'>
+            <footer className='w-full my-5 xl:mt-5 pt-14 px-14 flex flex-row justify-between text-gray-500' style={{zIndex: 1}}>
                 <div className="gap-3 flex flex-col text-xs text-left">
                     <div>{'OpenBBQ ' + v}</div>
                     <a className='hover:text-white' style={{textDecoration: "none"}} href="https://github.com/coshi190/openbbq" target="_blank" rel="noreferrer">Github</a>
