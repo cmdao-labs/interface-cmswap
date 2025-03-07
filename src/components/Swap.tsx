@@ -69,6 +69,13 @@ export default function Swap({
     const [tvl500, setTvl500] = React.useState("")
     const [tvl100, setTvl100] = React.useState("")
     const [newPrice, setNewPrice] = React.useState("")
+    const [query, setQuery] = React.useState('')
+    const filteredTokens =
+        query === ''
+            ? tokens
+            : tokens.filter((token) => {
+                return token.name.toLowerCase().includes(query.toLowerCase())
+            })
     const [tokenA, setTokenA] = React.useState<{name: string, value: '0xstring', logo: string}>(tokens[0])
     const [tokenABalance, setTokenABalance] = React.useState("")
     const [amountA, setAmountA] = React.useState("")
@@ -631,7 +638,7 @@ export default function Swap({
                                 break
                             }
                         }
-                        console.log(altIntermediate, altPair0, altPair1)
+                        console.log({altIntermediate, altPair0, altPair1}) // for quick debugging
                         if (altIntermediate !== undefined) {
                             setAltRoute({a: tokenA.value, b: altIntermediate.value, c: tokenB.value})
                             const altPoolState = await readContracts(config, {
@@ -1116,21 +1123,34 @@ export default function Swap({
                                 <input className="p-4 bg-transparent border border-gray-800 rounded-lg w-4/6 text-gray-500 text-[10px] focus:outline-none" placeholder="Token A" value={tokenA.value} onChange={e => setTokenA({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
                                 <div className="w-2/6">
                                     <Listbox value={tokenA} onChange={setTokenA}>
-                                        <ListboxButton className="relative w-full h-full p-3 rounded-lg bg-white/5 text-left font-semibold gap-2 flex flex-row items-center focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25">
-                                            <img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" />
-                                            <span>{tokenA.name}</span>
-                                            <ChevronDownIcon className="pointer-events-none absolute top-4 right-4 size-4 fill-white/60" aria-hidden="true"/>
-                                        </ListboxButton>
-                                        <ListboxOptions anchor="bottom" transition className="w-[var(--button-width)] rounded-lg bg-neutral-800 p-1 text-gray-500 text-sm [--anchor-gap:var(--spacing-1)] focus:outline-none transition duration-100 ease-in data-[leave]:data-[closed]:opacity-0">
-                                            {tokens.map((token) => (
-                                                <ListboxOption key={token.name} value={token} className="cursor-pointer py-2 pr-9 pl-3 text-gray-500 data-[focus]:bg-white data-[focus]:font-semibold">
-                                                    <div className="flex items-center">
-                                                        <img alt="" src={token.logo} className="size-5 shrink-0 rounded-full" />
-                                                        <span className="ml-3 truncate">{token.name}</span>
-                                                    </div>
-                                                </ListboxOption>
-                                            ))}
-                                        </ListboxOptions>
+                                        {({ open }) => {
+                                            React.useEffect(() => {
+                                                if (!open) {
+                                                    setQuery('')
+                                                }
+                                            }, [open]);
+
+                                            return (
+                                                <>
+                                                    <ListboxButton className="relative w-full h-full p-3 rounded-lg bg-white/5 text-left font-semibold gap-2 flex flex-row items-center focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25">
+                                                        <img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" />
+                                                        <span>{tokenA.name}</span>
+                                                        <ChevronDownIcon className="pointer-events-none absolute top-4 right-4 size-4 fill-white/60" aria-hidden="true"/>
+                                                    </ListboxButton>
+                                                    <ListboxOptions anchor="bottom" transition className="w-[var(--button-width)] rounded-lg bg-neutral-800 p-1 text-gray-500 text-sm [--anchor-gap:var(--spacing-1)] focus:outline-none transition duration-100 ease-in data-[leave]:data-[closed]:opacity-0">
+                                                        <input className="m-2 p-2 bg-white/5 rounded-lg w-6/7 text-gray-500 text-[10px] focus:outline-none" placeholder="Search Token" value={query} onChange={e => setQuery(e.target.value)} />
+                                                        {filteredTokens.map(token => (
+                                                            <ListboxOption key={token.name} value={token} className="cursor-pointer py-2 pr-9 pl-3 text-gray-500 data-[focus]:bg-white data-[focus]:font-semibold">
+                                                                <div className="flex items-center">
+                                                                    <img alt="" src={token.logo} className="size-5 shrink-0 rounded-full" />
+                                                                    <span className="ml-3 truncate">{token.name}</span>
+                                                                </div>
+                                                            </ListboxOption>
+                                                        ))}
+                                                    </ListboxOptions>
+                                                </>
+                                            )
+                                        }}
                                     </Listbox>
                                 </div>
                             </div>
@@ -1150,21 +1170,34 @@ export default function Swap({
                                 <input className="p-4 bg-transparent border border-gray-800 rounded-lg w-4/6 text-gray-500 text-[10px] focus:outline-none" placeholder="Token B" value={tokenB.value} onChange={e => setTokenB({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
                                 <div className="w-2/6">
                                     <Listbox value={tokenB} onChange={setTokenB}>
-                                        <ListboxButton className="relative w-full h-full p-3 rounded-lg bg-white/5 text-left font-semibold gap-2 flex flex-row items-center focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25">
-                                            <img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" />
-                                            <span>{tokenB.name}</span>
-                                            <ChevronDownIcon className="pointer-events-none absolute top-4 right-4 size-4 fill-white/60" aria-hidden="true"/>
-                                        </ListboxButton>
-                                        <ListboxOptions anchor="bottom" transition className="w-[var(--button-width)] rounded-lg bg-neutral-800 p-1 text-gray-500 text-sm [--anchor-gap:var(--spacing-1)] focus:outline-none transition duration-100 ease-in data-[leave]:data-[closed]:opacity-0">
-                                            {tokens.map((token) => (
-                                                <ListboxOption key={token.name} value={token} className="cursor-pointer py-2 pr-9 pl-3 text-gray-500 data-[focus]:bg-white data-[focus]:font-semibold">
-                                                    <div className="flex items-center">
-                                                        <img alt="" src={token.logo} className="size-5 shrink-0 rounded-full" />
-                                                        <span className="ml-3 truncate">{token.name}</span>
-                                                    </div>
-                                                </ListboxOption>
-                                            ))}
-                                        </ListboxOptions>
+                                        {({ open }) => {
+                                            React.useEffect(() => {
+                                                if (!open) {
+                                                    setQuery('')
+                                                }
+                                            }, [open]);
+
+                                            return (
+                                                <>
+                                                    <ListboxButton className="relative w-full h-full p-3 rounded-lg bg-white/5 text-left font-semibold gap-2 flex flex-row items-center focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25">
+                                                        <img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" />
+                                                        <span>{tokenB.name}</span>
+                                                        <ChevronDownIcon className="pointer-events-none absolute top-4 right-4 size-4 fill-white/60" aria-hidden="true"/>
+                                                    </ListboxButton>
+                                                    <ListboxOptions anchor="bottom" transition className="w-[var(--button-width)] rounded-lg bg-neutral-800 p-1 text-gray-500 text-sm [--anchor-gap:var(--spacing-1)] focus:outline-none transition duration-100 ease-in data-[leave]:data-[closed]:opacity-0">
+                                                        <input className="m-2 p-2 bg-white/5 rounded-lg w-6/7 text-gray-500 text-[10px] focus:outline-none" placeholder="Search Token" value={query} onChange={e => setQuery(e.target.value)} />
+                                                        {filteredTokens.map((token) => (
+                                                            <ListboxOption key={token.name} value={token} className="cursor-pointer py-2 pr-9 pl-3 text-gray-500 data-[focus]:bg-white data-[focus]:font-semibold">
+                                                                <div className="flex items-center">
+                                                                    <img alt="" src={token.logo} className="size-5 shrink-0 rounded-full" />
+                                                                    <span className="ml-3 truncate">{token.name}</span>
+                                                                </div>
+                                                            </ListboxOption>
+                                                        ))}
+                                                    </ListboxOptions>
+                                                </>
+                                            )
+                                        }}
                                     </Listbox>
                                 </div>
                             </div>
