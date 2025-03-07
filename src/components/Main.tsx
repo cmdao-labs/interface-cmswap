@@ -106,13 +106,13 @@ export default function Main() {
                     }
                 </QueryClientProvider>
             </WagmiProvider>                
-            <footer className='mt-4 w-full p-8 flex flex-row justify-between'>
+            <footer className='w-full my-5 xl:mt-5 pt-14 px-14 flex flex-row justify-between text-gray-500'>
                 <div className="gap-3 flex flex-col text-xs text-left">
                     <div>{'OpenBBQ ' + v}</div>
-                    <a style={{color: "#fff", textDecoration: "none"}} href="https://github.com/coshi190/openbbq" target="_blank" rel="noreferrer">Github</a>
+                    <a className='hover:text-white' style={{textDecoration: "none"}} href="https://github.com/coshi190/openbbq" target="_blank" rel="noreferrer">Github</a>
                 </div>
                 <div className="gap-3 flex flex-col text-xs text-right">
-                    <a style={{color: "#fff", textDecoration: "none"}} href="https://discord.gg/k92ReT5EYy" target="_blank" rel="noreferrer">Chat</a>
+                    <a className='hover:text-white' style={{textDecoration: "none"}} href="https://discord.gg/k92ReT5EYy" target="_blank" rel="noreferrer">Discord</a>
                 </div>
             </footer>
         </>

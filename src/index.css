@@ -75,9 +75,8 @@ body::-webkit-scrollbar { display: none; }
 .slider {
     position: relative;
     height: 1em;
-    width: 350px;
+    width: 325px;
     overflow: hidden;
-    margin-left: 12px;
 }
 
 .slider__word {

@@ -1050,7 +1050,7 @@ export default function Swap({
     console.log({lowerTick, upperTick}) // for fetch monitoring
 
     return (
-        <div className="h-[83vh] mt-10 w-full flex flex-col items-center justify-start text-xs">
+        <div className="h-[95vh] xl:h-[83vh] w-full flex flex-col items-center justify-start text-xs">
             {isAddPositionModal &&
                 <div style={{zIndex: "998"}} className="centermodal">
                     <div className="wrapper">
@@ -1109,11 +1109,11 @@ export default function Swap({
                 </div>
             }
             
-            <div className="pt-4 pb-6 px-6 w-full xl:w-1/3 gap-2 flex flex-col items-start justify-center bg-white/5 rounded-3xl mt-6 card">
+            <div className="mt-[60px] pt-4 pb-6 px-6 w-full xl:w-1/3 h-[710px] gap-2 flex flex-col items-start justify-start bg-white/5 rounded-3xl mt-6 card">
                 <div className="w-full gap-2 flex flex-row items-start justify-start" style={{zIndex: 1}}>
-                    <button className={"p-2 w-1/5 rounded-full hover:text-white hover:font-semibold " + (mode === 0 ? "bg-slate-700 font-bold" : "text-gray-500")} onClick={() => setMode(0)}>Instant Swap</button>
-                    <button className={"p-2 w-1/4 rounded-full hover:text-white hover:font-semibold " + (mode === 1 ? "bg-slate-700 font-bold" : "text-gray-500")} onClick={() => setMode(1)}>Add Liquidity</button>
-                    <button className={"p-2 w-1/5 rounded-full hover:text-white hover:font-semibold " + (mode === 2 ? "bg-slate-700 font-bold" : "text-gray-500")} onClick={() => setMode(2)}>My Position</button>
+                    <button className={"p-2 w-1/3 xl:w-1/5 rounded-full hover:text-white hover:font-semibold " + (mode === 0 ? "bg-slate-700 font-bold" : "text-gray-500")} onClick={() => setMode(0)}>Instant Swap</button>
+                    <button className={"p-2 w-1/3 xl:w-1/4 rounded-full hover:text-white hover:font-semibold " + (mode === 1 ? "bg-slate-700 font-bold" : "text-gray-500")} onClick={() => setMode(1)}>Add Liquidity</button>
+                    <button className={"p-2 w-1/3 xl:w-1/5 rounded-full hover:text-white hover:font-semibold " + (mode === 2 ? "bg-slate-700 font-bold" : "text-gray-500")} onClick={() => setMode(2)}>My Position</button>
                 </div>
                 {mode === 0 &&
                     <>
