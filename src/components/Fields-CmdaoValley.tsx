@@ -617,12 +617,14 @@ export default function FieldCmdaoValley({
                                             <span className='text-lg font-bold'>{obj.Name}</span>
                                             <span className='text-gray-600'>Token ID: {String(obj.Id)}</span>
                                             <span className='w-full h-1/3 overflow-hidden text-ellipsis'>{obj.Description}</span>
-                                            <div className={'w-full p-[20px] border-solid border-2 rounded-xl flex flex-row items-center justify-between ' + (obj.isPeripheryAllow !== '0' ? 'border-emerald-300' : 'border-neutral-700 text-gray-600')}>
-                                                <div className='flex flex-col'>
-                                                    <span>Point</span>
-                                                    <span className='text-lg'>{String(obj.Point)}</span>
+                                            {hookSelect === 0 &&
+                                                <div className={'w-full p-[20px] border-solid border-2 rounded-xl flex flex-row items-center justify-between ' + (obj.isPeripheryAllow !== '0' ? 'border-emerald-300' : 'border-neutral-700 text-gray-600')}>
+                                                    <div className='flex flex-col'>
+                                                        <span>Point</span>
+                                                        <span className='text-lg'>{String(obj.Point)}</span>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            }
                                             {address !== undefined && intrasubModetext !== undefined && 
                                                 <>
                                                     {address.toUpperCase() === intrasubModetext.toUpperCase() &&
