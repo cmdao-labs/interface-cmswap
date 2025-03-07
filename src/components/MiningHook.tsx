@@ -141,7 +141,7 @@ export default function MiningHook({
     }
         
     return (
-        <div className="w-5/6 h-[100vh] rounded-lg gap-5 flex flex-col items-center justify-start pixel bg-neutral-900 text:xs xl:text-lg">
+        <div className="w-full h-[100vh] rounded-lg gap-5 flex flex-col items-center justify-start pixel bg-neutral-900 text:xs xl:text-lg">
             <div className="w-full h-[500px] p-8 gap-6 flex flex-row flex-wrap justify-center bg-[url('https://gateway.commudao.xyz/ipfs/bafybeib5stifg5jcqqxsy4kbwwb6xovei5biyspuzhlwrsng4i62ppwpwy')] bg-cover overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-neutral-800 [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
                 <div className="w-full xl:w-1/3 h-full bg-slate-900 p-8 gap-1 flex flex-col items-start justify-start text-left overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-neutral-800 [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500" style={{boxShadow: "6px 6px 0 #00000040"}}>
                     <span>Block solver</span>

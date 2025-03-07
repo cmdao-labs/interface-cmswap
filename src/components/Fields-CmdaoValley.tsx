@@ -1,12 +1,13 @@
 import React from 'react'
 import type { NavigateFunction } from 'react-router-dom'
-import { ThreeDots } from 'react-loading-icons'
 import { useAccount, type Config } from 'wagmi'
 import { createPublicClient, http, erc721Abi, formatEther } from 'viem'
 import { jbc } from 'viem/chains'
 import { FieldsV2RouterAbi, FieldsHook001 } from './abi'
 import { readContracts, readContract, simulateContract, waitForTransactionReceipt, writeContract } from '@wagmi/core'
 import MiningHook from './MiningHook'
+import { ThreeDots } from 'react-loading-icons'
+import { Tab, TabGroup, TabList, TabPanel, TabPanels, Transition } from "@headlessui/react"
 
 const v2routerAddr = '0x4b958647b3D5240587843C16d4dfC13B19de2671'
 const v2routerCreatedAt = BigInt(4938709)
@@ -37,6 +38,7 @@ export default function FieldCmdaoValley({
     React.useEffect(() => { window.scrollTo(0, 0) }, [])
     let { address, chain } = useAccount()
     const [addr, setAddr] = React.useState(address)
+    const [hookSelect, setHookSelect] = React.useState(0)
     const [nftIndexSelect, setNftIndexSelect] = React.useState(2)
     const [globNftAddr, setGlobNftAddr] = React.useState<'0xstring'>()
     const [nftIndexHashRate, setNftIndexHashRate] = React.useState(BigInt(0))
@@ -492,13 +494,7 @@ export default function FieldCmdaoValley({
             <div className="pixel w-full h-[300px] flex flex-col items-center justify-center bg-[url('https://gateway.commudao.xyz/ipfs/bafybeicyixoicb7ai6zads6t5k6qpyocoyelfbyoi73nmtobfjlv7fseiq')] bg-cover bg-center">
                 <span className='text-7xl p-3 rounded-xl inset-0 bg-black/50'>CMDAO Valley</span>
             </div>
-            <div className='pixel w-full mt-14 gap-10 flex flex-col items-center justify-center text-xs xl:text-sm'>
-                <div className='w-full px-14 gap-4 flex flex-row flex-wrap items-start justify-start'>
-                    <button className='py-2 px-4 bg-slate-800 rounded-full hover:font-bold'>Non-committed point hook</button>
-                    <button className='py-2 px-4 bg-slate-800 rounded-full hover:font-bold'>Mining hook</button>
-                    <button className='py-2 px-4 bg-neutral-800 rounded-full text-gray-500 hover:font-bold cursor-not-allowed'>Fishing hook [Coming soon...]</button>
-                </div>
-                <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
+            <div className='pixel w-full mt-14 gap-10 flex flex-col items-center justify-center text-xs xl:text-sm'>          
                 <div className='w-full gap-6 flex flex-row flex-wrap items-center justify-center'>
                     <button className={'hover:underline ' + (nftIndexSelect === 2 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(2)}>CommuDAO Dungeon</button>
                     <button className={'hover:underline ' + (nftIndexSelect === 4 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(4)}>CM Hexa Cat Meaw JIB JIB</button>
@@ -506,29 +502,43 @@ export default function FieldCmdaoValley({
                     <button className={'hover:underline ' + (nftIndexSelect === 3 ? '' : 'text-gray-500')} onClick={() => setNftIndexSelect(3)}>The Mythical Guardians</button>
                     {/* add nftIndexSelect switch button here */}
                 </div>
-                {nftIndexSelect === 2 &&
-                    <>
-                        <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
-                        <MiningHook config={config} setTxupdate={setTxupdate} setErrMsg={setErrMsg} nftIdMiner={nftIdMiner} addr={addr} />
-                    </>
-                }
                 <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
-                <div className='w-full xl:w-3/4 h-[120px] mb-4 p-[20px] flex flex-row justify-around rounded-full bg-slate-800'>
-                    <div className="flex flex-col justify-around">
-                        <div style={{marginBottom: "20px"}}>NFT COLLECTION HASHRATE</div>
-                        <div style={{fontSize: "24px", marginBottom: "20px"}}>{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(nftIndexHashRate)}</div>
-                    </div>
-                    <div className="flex flex-col justify-around">
-                        <div style={{marginBottom: "20px"}}>MY ELIGIBLE NFT</div>
-                        <div style={{fontSize: "24px", marginBottom: "20px"}}>{nft !== undefined && nft.length > 0 && addr !== undefined ? nft.length : 0}</div>
-                    </div>
-                    <div className="flex flex-col justify-around">
-                        <div style={{marginBottom: "20px"}}>TOTAL POINT</div>
-                        <div style={{fontSize: "24px", marginBottom: "20px", display: "flex", flexFlow: "row wrap", alignItems: "center", justifyContent: "center"}}>
-                            {nft !== undefined && nft.length > 0 && addr !== undefined ? Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(totalPoint) : 0}                                
-                        </div>
-                    </div>
-                </div>
+                <TabGroup className='w-full space-y-10' onChange={index => setHookSelect(index)}>
+                    <TabList className='px-14 gap-4 flex flex-row flex-wrap items-start justify-start text-gray-500'>
+                        <Tab className="py-2 px-4 rounded-full data-[selected]:bg-neutral-800 data-[selected]:text-white data-[hover]:underline focus:outline-none">Non-committed point hook</Tab>
+                        <Tab className="py-2 px-4 rounded-full data-[selected]:bg-neutral-800 data-[selected]:text-white data-[hover]:underline focus:outline-none">Mining hook</Tab>
+                        <Tab className="py-2 px-4 rounded-full data-[selected]:bg-neutral-800 data-[selected]:text-white data-[hover]:underline focus:outline-none">Fishing hook</Tab>
+                    </TabList>
+                    <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
+                    <TabPanels>
+                        <TabPanel className='px-14'>
+                            <div className='w-full xl:w-1/2 h-[120px] p-[24px] flex flex-row justify-around rounded-full bg-white/5'>
+                                <div className="flex flex-col justify-around">
+                                    <div style={{marginBottom: "20px"}}>NFT COLLECTION HASHRATE</div>
+                                    <div style={{fontSize: "24px", marginBottom: "20px"}}>{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(nftIndexHashRate)}</div>
+                                </div>
+                                <div className="flex flex-col justify-around">
+                                    <div style={{marginBottom: "20px"}}>MY ELIGIBLE NFT</div>
+                                    <div style={{fontSize: "24px", marginBottom: "20px"}}>{nft !== undefined && nft.length > 0 && addr !== undefined ? nft.length : 0}</div>
+                                </div>
+                                <div className="flex flex-col justify-around">
+                                    <div style={{marginBottom: "20px"}}>TOTAL POINT</div>
+                                    <div style={{fontSize: "24px", marginBottom: "20px", display: "flex", flexFlow: "row wrap", alignItems: "center", justifyContent: "center"}}>
+                                        {nft !== undefined && nft.length > 0 && addr !== undefined ? Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(totalPoint) : 0}                                
+                                    </div>
+                                </div>
+                            </div>
+                        </TabPanel>
+                        <TabPanel>
+                            {nftIndexSelect === 2 ?
+                                <MiningHook config={config} setTxupdate={setTxupdate} setErrMsg={setErrMsg} nftIdMiner={nftIdMiner} addr={addr} /> :
+                                <span>The hook does not support this NFT collection</span>
+                            }
+                        </TabPanel>
+                        <TabPanel>Coming Soon...</TabPanel>
+                    </TabPanels>
+                </TabGroup>
+                                
                 <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
                 <div className='w-full px-14 gap-4 flex flex-row flex-wrap items-start justify-start'>
                     <button 
@@ -541,16 +551,18 @@ export default function FieldCmdaoValley({
                     >
                         STAKE ALL
                     </button>
-                    <button
-                        className={'py-2 px-4 rounded-xl hover:font-bold ' + ((nft?.filter((obj) => {return obj.isPeripheryAllow === '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'})).length !== 0) ? 'bg-blue-500 hover:bg-blue-400' : 'bg-neutral-400 text-gray-500 cursor-not-allowed')}
-                        onClick={() => {
-                            if (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'})).length !== 0) {
-                                allowPeripheryAll()
-                            }
-                        }}
-                    >
-                        ACTIVATE ALL
-                    </button>
+                    {hookSelect === 0 &&
+                        <button
+                            className={'py-2 px-4 rounded-xl hover:font-bold ' + ((nft?.filter((obj) => {return obj.isPeripheryAllow === '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'})).length !== 0) ? 'bg-blue-500 hover:bg-blue-400' : 'bg-neutral-400 text-gray-500 cursor-not-allowed')}
+                            onClick={() => {
+                                if (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'})).length !== 0) {
+                                    allowPeripheryAll()
+                                }
+                            }}
+                        >
+                            ACTIVATE ALL
+                        </button>
+                    }
                     <button 
                         className={'py-2 px-4 rounded-xl hover:font-bold ' + ((nft?.filter((obj) => {return obj.isStaked === true}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === true})).length !== 0) ? 'bg-red-500 hover:bg-red-400' : 'bg-neutral-400 text-gray-500 cursor-not-allowed')}
                         onClick={() => {
@@ -561,16 +573,18 @@ export default function FieldCmdaoValley({
                     >
                         UNSTAKE ALL
                     </button>
-                    <button 
-                        className={'py-2 px-4 rounded-xl hover:font-bold ' + ((nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'})).length !== 0) ? 'bg-red-500 hover:bg-red-400' : 'bg-neutral-400 text-gray-500 cursor-not-allowed')}
-                        onClick={() => {
-                            if (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'})).length !== 0) {
-                                revokePeripheryAll()
-                            }
-                        }}
-                    >
-                        REVOKE ALL
-                    </button>
+                    {hookSelect === 0 &&
+                        <button 
+                            className={'py-2 px-4 rounded-xl hover:font-bold ' + ((nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'})).length !== 0) ? 'bg-red-500 hover:bg-red-400' : 'bg-neutral-400 text-gray-500 cursor-not-allowed')}
+                            onClick={() => {
+                                if (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'})).length !== 0) {
+                                    revokePeripheryAll()
+                                }
+                            }}
+                        >
+                            REVOKE ALL
+                        </button>
+                    }
                 </div>
                 <div className='w-full px-10 gap-5 flex flex-row flex-wrap items-center justify-start'>
                     {nft !== undefined ?
@@ -604,10 +618,10 @@ export default function FieldCmdaoValley({
                                                                     <button className="w-[150px] p-3 rounded-xl bg-red-500 hover:bg-red-400 hover:font-bold" onClick={() => {unstakeNft(obj.Id as bigint)}}>UNSTAKE</button> :
                                                                     <button className="w-[150px] p-3 rounded-xl bg-blue-500 hover:bg-blue-400 hover:font-bold" onClick={() => {stakeNft(obj.Id as bigint)}}>STAKE</button>
                                                                 }
-                                                                {obj.isPeripheryAllow === '0' && obj.isStaked && <button className="w-[150px] p-3 rounded-xl bg-blue-500 hover:bg-blue-400 hover:font-bold hover:bg-blue-400" onClick={() => {allowPeriphery(obj.Id as bigint, 2)}}>ACTIVATE POINT</button>}
-                                                                {obj.isPeripheryAllow !== '0' && obj.isStaked && <button className="w-[150px] p-3 rounded-xl bg-red-500 hover:bg-red-400 hover:font-bold" onClick={() => {revokePeriphery(obj.Id as bigint)}}>DEACTIVATE POINT</button>}
+                                                                {hookSelect === 0 && obj.isPeripheryAllow === '0' && obj.isStaked && <button className="w-[150px] p-3 rounded-xl bg-blue-500 hover:bg-blue-400 hover:font-bold hover:bg-blue-400" onClick={() => {allowPeriphery(obj.Id as bigint, 2)}}>ACTIVATE POINT</button>}
+                                                                {hookSelect === 0 && obj.isPeripheryAllow !== '0' && obj.isStaked && <button className="w-[150px] p-3 rounded-xl bg-red-500 hover:bg-red-400 hover:font-bold" onClick={() => {revokePeriphery(obj.Id as bigint)}}>DEACTIVATE POINT</button>}
                                                             </div>
-                                                            {nftIndexSelect === 2 && obj.isStaked && <button className={"w-[150px] p-3 rounded-xl " + (Number(nftIdMiner) === Number(obj.Id) ? "bg-emerald-300" : "bg-neutral-700 hover:bg-neutral-400 hover:font-bold")} onClick={async () => {if (await checkPeripheryAllowNftStaked_hook(obj.Id as bigint)) {allowPeriphery(obj.Id as bigint, 9);} setNftIdMiner(obj.Id as bigint);}}>CHOOSE MINER</button>}
+                                                            {hookSelect === 1 && nftIndexSelect === 2 && obj.isStaked && <button className={"w-[150px] p-3 rounded-xl " + (Number(nftIdMiner) === Number(obj.Id) ? "bg-emerald-300" : "bg-neutral-700 hover:bg-neutral-400 hover:font-bold")} onClick={async () => {if (await checkPeripheryAllowNftStaked_hook(obj.Id as bigint)) {allowPeriphery(obj.Id as bigint, 9);} setNftIdMiner(obj.Id as bigint);}}>CHOOSE MINER</button>}
                                                         </>
                                                     }
                                                 </>

@@ -5,6 +5,7 @@ import { jbc } from '@reown/appkit/networks'
 import { createAppKit } from '@reown/appkit/react'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Description, Dialog, DialogPanel, DialogTitle, DialogBackdrop } from '@headlessui/react'
 
 import Headbar from './Headbar'
 import Home from './Home'
@@ -77,17 +78,18 @@ export default function Main() {
                     <div className="wrapper" />
                 </div>
             }
-            {errMsg !== null &&
-                <div style={{zIndex: "999"}} className="centermodal">
-                    <div className="wrapper">
-                        <div className="pixel w-3/4 xl:w-1/2 h-3/4 xl:h-1/2 bg-neutral-900 p-2 xl:p-8 gap-10 flex flex-col items-center justify-center text-sm text-left" style={{boxShadow: "6px 6px 0 #00000040"}}>
-                            <div className='text-2xl text-red-500'>ERROR! [{'beta ' + v}]</div>
-                            <div className='w-5/6 h-[350px] overflow-hidden ellipsis'>{errMsg}</div>
-                            <button className='w-2/3 p-3 rounded-full bg-slate-700' onClick={() => setErrMsg(null)}>CLOSE</button>
+            <Dialog open={errMsg !== null} onClose={() => setErrMsg(null)} className="relative z-50">
+                <DialogBackdrop className="fixed inset-0 bg-black/30" style={{backdropFilter: 'blur(12px)'}} />
+                <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
+                    <DialogPanel className="pixel max-w-xl space-y-2 rounded-lg border border-black bg-neutral-900 text-white">
+                        <DialogTitle className="font-bold p-6 bg-red-600">ERROR! [{'beta ' + v}]</DialogTitle>
+                        <Description className="p-6 text-gray-500 overflow-hidden">{errMsg}</Description>
+                        <div className='p-6'>
+                            <button className='w-2/3 p-3 text-xs rounded-full border border-gray-500 hover:bg-neutral-800' onClick={() => setErrMsg(null)}>CLOSE</button>
                         </div>
-                    </div>
+                    </DialogPanel>
                 </div>
-            }
+            </Dialog>
             <WagmiProvider config={wagmiAdapter.wagmiConfig}>
                 <QueryClientProvider client={queryClient}>
                     <Headbar callMode={callMode} navigate={navigate} />
