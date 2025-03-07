@@ -625,12 +625,13 @@ export default function Swap({
                         let altPair1
                         for (let i = 0; i <= findAltRoute.length - 1; i+=2) {
                             if (findAltRoute[i].result !== '0x0000000000000000000000000000000000000000' && findAltRoute[i+1].result !== '0x0000000000000000000000000000000000000000') {
-                                altIntermediate = tokens[0]
+                                altIntermediate = tokens[i / 2]
                                 altPair0 = findAltRoute[i].result 
                                 altPair1 = findAltRoute[i+1].result
                                 break
                             }
                         }
+                        console.log(altIntermediate, altPair0, altPair1)
                         if (altIntermediate !== undefined) {
                             setAltRoute({a: tokenA.value, b: altIntermediate.value, c: tokenB.value})
                             const altPoolState = await readContracts(config, {
