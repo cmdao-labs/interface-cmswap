@@ -508,6 +508,13 @@ export default function FieldCmdaoValley({
                         <Tab className="py-2 px-4 rounded-full data-[selected]:bg-neutral-800 data-[selected]:text-white data-[hover]:underline focus:outline-none">Non-committed point hook</Tab>
                         <Tab className="py-2 px-4 rounded-full data-[selected]:bg-neutral-800 data-[selected]:text-white data-[hover]:underline focus:outline-none">Mining hook</Tab>
                         <Tab className="py-2 px-4 rounded-full data-[selected]:bg-neutral-800 data-[selected]:text-white data-[hover]:underline focus:outline-none">Fishing hook</Tab>
+                        <Tab className="py-2 px-4 rounded-full data-[selected]:bg-neutral-800 data-[selected]:text-white data-[hover]:underline focus:outline-none">Rat hunting hook</Tab>
+                        <Tab className="py-2 px-4 rounded-full data-[selected]:bg-neutral-800 data-[selected]:text-white data-[hover]:underline focus:outline-none">Cooking hook</Tab>
+                        <Tab className="py-2 px-4 rounded-full data-[selected]:bg-neutral-800 data-[selected]:text-white data-[hover]:underline focus:outline-none">PVE hook</Tab>
+                        <Tab className="py-2 px-4 rounded-full data-[selected]:bg-neutral-800 data-[selected]:text-white data-[hover]:underline focus:outline-none">PVP hook</Tab>
+                        <Tab className="py-2 px-4 rounded-full data-[selected]:bg-neutral-800 data-[selected]:text-white data-[hover]:underline focus:outline-none">Guild hook</Tab>
+                        <Tab className="py-2 px-4 rounded-full data-[selected]:bg-neutral-800 data-[selected]:text-white data-[hover]:underline focus:outline-none">Land hook</Tab>
+                        <Tab className="py-2 px-4 rounded-full data-[selected]:bg-neutral-800 data-[selected]:text-white data-[hover]:underline focus:outline-none">Marketplace hook</Tab>
                     </TabList>
                     <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
                     <TabPanels>
@@ -535,6 +542,13 @@ export default function FieldCmdaoValley({
                                 <span>The hook does not support this NFT collection</span>
                             }
                         </TabPanel>
+                        <TabPanel>Coming Soon...</TabPanel>
+                        <TabPanel>Coming Soon...</TabPanel>
+                        <TabPanel>Coming Soon...</TabPanel>
+                        <TabPanel>Coming Soon...</TabPanel>
+                        <TabPanel>Coming Soon...</TabPanel>
+                        <TabPanel>Coming Soon...</TabPanel>
+                        <TabPanel>Coming Soon...</TabPanel>
                         <TabPanel>Coming Soon...</TabPanel>
                     </TabPanels>
                 </TabGroup>
