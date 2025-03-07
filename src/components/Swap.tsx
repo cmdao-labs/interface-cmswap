@@ -1109,18 +1109,18 @@ export default function Swap({
                 </div>
             }
             
-            <div className="pt-4 pb-6 px-6 w-full xl:w-1/3 gap-2 flex flex-col items-start justify-center bg-neutral-950 rounded-3xl mt-6">
-                <div className="w-full gap-2 flex flex-row items-start justify-start">
+            <div className="pt-4 pb-6 px-6 w-full xl:w-1/3 gap-2 flex flex-col items-start justify-center bg-white/5 rounded-3xl mt-6 card">
+                <div className="w-full gap-2 flex flex-row items-start justify-start" style={{zIndex: 1}}>
                     <button className={"p-2 w-1/5 rounded-full hover:text-white hover:font-semibold " + (mode === 0 ? "bg-slate-700 font-bold" : "text-gray-500")} onClick={() => setMode(0)}>Instant Swap</button>
                     <button className={"p-2 w-1/4 rounded-full hover:text-white hover:font-semibold " + (mode === 1 ? "bg-slate-700 font-bold" : "text-gray-500")} onClick={() => setMode(1)}>Add Liquidity</button>
                     <button className={"p-2 w-1/5 rounded-full hover:text-white hover:font-semibold " + (mode === 2 ? "bg-slate-700 font-bold" : "text-gray-500")} onClick={() => setMode(2)}>My Position</button>
                 </div>
                 {mode === 0 &&
                     <>
-                        <div className="p-6 w-full h-[180px] rounded-xl border border-solid border-gray-700 gap-2 flex flex-col relative">
+                        <div className="p-6 w-full h-[180px] rounded-xl border border-solid border-gray-700 gap-2 flex flex-col relative" style={{zIndex: 2}}>
                             <span className="w-full text-left">From</span>
                             <div className="w-full gap-1 flex flex-row">
-                                <input className="p-4 bg-transparent border border-gray-800 rounded-lg w-4/6 text-gray-500 text-[10px] focus:outline-none" placeholder="Token A" value={tokenA.value} onChange={e => setTokenA({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
+                                <input className="p-4 bg-transparent border border-gray-700 rounded-lg w-4/6 text-gray-500 text-[10px] focus:outline-none" placeholder="Token A" value={tokenA.value} onChange={e => setTokenA({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
                                 <div className="w-2/6">
                                     <Listbox value={tokenA} onChange={setTokenA}>
                                         {({ open }) => {
@@ -1137,7 +1137,7 @@ export default function Swap({
                                                         <span>{tokenA.name}</span>
                                                         <ChevronDownIcon className="pointer-events-none absolute top-4 right-4 size-4 fill-white/60" aria-hidden="true"/>
                                                     </ListboxButton>
-                                                    <ListboxOptions anchor="bottom" transition className="w-[var(--button-width)] rounded-lg bg-neutral-800 p-1 text-gray-500 text-sm [--anchor-gap:var(--spacing-1)] focus:outline-none transition duration-100 ease-in data-[leave]:data-[closed]:opacity-0">
+                                                    <ListboxOptions anchor="bottom" transition className="w-[var(--button-width)] rounded-lg bg-neutral-800 p-1 text-gray-500 text-sm [--anchor-gap:var(--spacing-1)] focus:outline-none transition duration-100 ease-in data-[leave]:data-[closed]:opacity-0" style={{zIndex: 2}}>
                                                         <input className="m-2 p-2 bg-white/5 rounded-lg w-6/7 text-gray-500 text-[10px] focus:outline-none" placeholder="Search Token" value={query} onChange={e => setQuery(e.target.value)} />
                                                         {filteredTokens.map(token => (
                                                             <ListboxOption key={token.name} value={token} className="cursor-pointer py-2 pr-9 pl-3 text-gray-500 data-[focus]:bg-white data-[focus]:font-semibold">
@@ -1164,10 +1164,10 @@ export default function Swap({
                                 <ArrowDownIcon className="pointer-events-none absolute top-3 left-4 size-5 fill-white/60" aria-hidden="true"/>
                             </button>
                         </div>
-                        <div className="p-6 mb-2 w-full h-[180px] rounded-xl bg-white/5 gap-2 flex flex-col">
+                        <div className="p-6 mb-2 w-full h-[180px] rounded-xl bg-neutral-800 gap-2 flex flex-col" style={{zIndex: 1}}>
                             <span className="w-full text-left">To</span>
                             <div className="w-full gap-1 flex flex-row">
-                                <input className="p-4 bg-transparent border border-gray-800 rounded-lg w-4/6 text-gray-500 text-[10px] focus:outline-none" placeholder="Token B" value={tokenB.value} onChange={e => setTokenB({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
+                                <input className="p-4 bg-transparent border border-gray-700 rounded-lg w-4/6 text-gray-500 text-[10px] focus:outline-none" placeholder="Token B" value={tokenB.value} onChange={e => setTokenB({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
                                 <div className="w-2/6">
                                     <Listbox value={tokenB} onChange={setTokenB}>
                                         {({ open }) => {
@@ -1184,7 +1184,7 @@ export default function Swap({
                                                         <span>{tokenB.name}</span>
                                                         <ChevronDownIcon className="pointer-events-none absolute top-4 right-4 size-4 fill-white/60" aria-hidden="true"/>
                                                     </ListboxButton>
-                                                    <ListboxOptions anchor="bottom" transition className="w-[var(--button-width)] rounded-lg bg-neutral-800 p-1 text-gray-500 text-sm [--anchor-gap:var(--spacing-1)] focus:outline-none transition duration-100 ease-in data-[leave]:data-[closed]:opacity-0">
+                                                    <ListboxOptions anchor="bottom" transition className="w-[var(--button-width)] rounded-lg bg-neutral-800 p-1 text-gray-500 text-sm [--anchor-gap:var(--spacing-1)] focus:outline-none transition duration-100 ease-in data-[leave]:data-[closed]:opacity-0" style={{zIndex: 1}}>
                                                         <input className="m-2 p-2 bg-white/5 rounded-lg w-6/7 text-gray-500 text-[10px] focus:outline-none" placeholder="Search Token" value={query} onChange={e => setQuery(e.target.value)} />
                                                         {filteredTokens.map((token) => (
                                                             <ListboxOption key={token.name} value={token} className="cursor-pointer py-2 pr-9 pl-3 text-gray-500 data-[focus]:bg-white data-[focus]:font-semibold">
@@ -1218,7 +1218,7 @@ export default function Swap({
                             </div>
                         }
                         <span className="mt-2 w-full text-left">Swap fee tier</span>
-                        <div className="w-full h-[70px] gap-2 flex flex-row text-gray-400">
+                        <div className="w-full h-[70px] gap-2 flex flex-row text-gray-400" style={{zIndex: 1}}>
                             <button className={"w-1/2 h-full p-3 rounded-lg gap-3 flex flex-col items-center justify-center border border-gray-800 hover:text-white hover:bg-neutral-800 " + (feeSelect === 100 ? "bg-white/5 text-white border-slate-500" : "")} onClick={() => setFeeSelect(100)}>
                                 <span>0.01%</span>
                                 {tokenB.value !== '' as '0xstring' && <span className={(Number(tvl100) > 0 ? 'text-emerald-300 font-bold' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl100))} {tokenB.name}</span>}
@@ -1228,7 +1228,7 @@ export default function Swap({
                                 {tokenB.value !== '' as '0xstring' && <span className={(Number(tvl500) > 0 ? 'text-emerald-300 font-bold' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl500))} {tokenB.name}</span>}
                             </button>
                         </div>
-                        <div className="w-full mb-2 h-[70px] gap-2 flex flex-row text-gray-500">
+                        <div className="w-full mb-2 h-[70px] gap-2 flex flex-row text-gray-500" style={{zIndex: 1}}>
                             <button className={"w-1/2 h-full p-3 rounded-lg gap-3 flex flex-col items-center justify-center border border-gray-800 hover:text-white hover:bg-neutral-800 " + (feeSelect === 3000 ? "bg-white/5 text-white border-slate-500" : "")} onClick={() => setFeeSelect(3000)}>
                                 <span>0.3%</span>
                                 {tokenB.value !== '' as '0xstring' && <span className={(Number(tvl3000) > 0 ? 'text-emerald-300 font-bold' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl3000))} {tokenB.name}</span>}
@@ -1239,70 +1239,96 @@ export default function Swap({
                             </button>
                         </div>
                         {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && Number(amountA) !== 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) !== 0 ?
-                            <button className="p-2 w-full h-[50px] rounded-full bg-blue-500 text-lg font-bold hover:bg-blue-400 " onClick={swap}>Swap</button> :
-                            <button className="p-2 w-full h-[50px] rounded-full bg-gray-500 text-lg font-bold inactive">Swap</button>
+                            <button className="p-2 w-full h-[50px] rounded-full bg-blue-500 text-lg font-bold hover:bg-blue-400" style={{zIndex: 1}} onClick={swap}>Swap</button> :
+                            <button className="p-2 w-full h-[50px] rounded-full bg-gray-500 text-lg font-bold inactive" style={{zIndex: 1}}>Swap</button>
                         }
                     </>
                 }
                 {mode === 1 &&
                     <>  
-                        <div className="w-full gap-1 flex flex-row">
+                        <div className="w-full gap-1 flex flex-row" style={{zIndex: 1}}>
                             <input className="p-4 bg-transparent border border-gray-800 rounded-lg w-4/6 text-gray-500 text-[10px] focus:outline-none" type="text" placeholder="Token A" value={tokenA.value} onChange={e => setTokenA({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
                             <div className="w-2/6">
                                 <Listbox value={tokenA} onChange={setTokenA}>
-                                    <ListboxButton className="relative w-full h-full p-3 rounded-lg bg-white/5 text-left font-semibold gap-2 flex flex-row items-center focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25">
-                                        <img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" />
-                                        <span>{tokenA.name}</span>
-                                        <ChevronDownIcon className="pointer-events-none absolute top-4 right-4 size-4 fill-white/60" aria-hidden="true"/>
-                                    </ListboxButton>
-                                    <ListboxOptions anchor="bottom" transition className="w-[var(--button-width)] rounded-lg bg-neutral-800 p-1 text-gray-500 text-sm [--anchor-gap:var(--spacing-1)] focus:outline-none transition duration-100 ease-in data-[leave]:data-[closed]:opacity-0">
-                                        {tokens.map((token) => (
-                                            <ListboxOption key={token.name} value={token} className="cursor-pointer py-2 pr-9 pl-3 text-gray-500 data-[focus]:bg-white data-[focus]:font-semibold">
-                                                <div className="flex items-center">
-                                                    <img alt="" src={token.logo} className="size-5 shrink-0 rounded-full" />
-                                                    <span className="ml-3 truncate">{token.name}</span>
-                                                </div>
-                                            </ListboxOption>
-                                        ))}
-                                    </ListboxOptions>
+                                    {({ open }) => {
+                                        React.useEffect(() => {
+                                            if (!open) {
+                                                setQuery('')
+                                            }
+                                        }, [open]);
+
+                                        return (
+                                            <>
+                                                <ListboxButton className="relative w-full h-full p-3 rounded-lg bg-white/5 text-left font-semibold gap-2 flex flex-row items-center focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25">
+                                                    <img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" />
+                                                    <span>{tokenA.name}</span>
+                                                    <ChevronDownIcon className="pointer-events-none absolute top-4 right-4 size-4 fill-white/60" aria-hidden="true"/>
+                                                </ListboxButton>
+                                                <ListboxOptions anchor="bottom" transition className="w-[var(--button-width)] rounded-lg bg-neutral-800 p-1 text-gray-500 text-sm [--anchor-gap:var(--spacing-1)] focus:outline-none transition duration-100 ease-in data-[leave]:data-[closed]:opacity-0" style={{zIndex: 1}}>
+                                                    <input className="m-2 p-2 bg-white/5 rounded-lg w-6/7 text-gray-500 text-[10px] focus:outline-none" placeholder="Search Token" value={query} onChange={e => setQuery(e.target.value)} />
+                                                    {filteredTokens.map((token) => (
+                                                        <ListboxOption key={token.name} value={token} className="cursor-pointer py-2 pr-9 pl-3 text-gray-500 data-[focus]:bg-white data-[focus]:font-semibold">
+                                                            <div className="flex items-center">
+                                                                <img alt="" src={token.logo} className="size-5 shrink-0 rounded-full" />
+                                                                <span className="ml-3 truncate">{token.name}</span>
+                                                            </div>
+                                                        </ListboxOption>
+                                                    ))}
+                                                </ListboxOptions>
+                                            </>
+                                        )
+                                    }}
                                 </Listbox>
                             </div>
                         </div>
                         {lowerPrice === '' || Number(lowerPrice) < Number(currPrice) &&
-                            <div className="w-full gap-1 flex flex-row items-center">
+                            <div className="w-full gap-1 flex flex-row items-center" style={{zIndex: 1}}>
                                 <input className="p-4 rounded-lg bg-transparent w-4/6 font-bold focus:outline-none" type="text" placeholder="0" value={amountA} onChange={(e) => {setAmountA(e.target.value); Number(upperPrice) > Number(currPrice) && setAlignedAmountB(e.target.value)}} />
                                 {tokenA.value !== '' as '0xstring' && <button className="w-2/6 font-semibold text-right text-gray-400" onClick={() => setAmountA(tokenABalance)}>{Number(tokenABalance).toFixed(4)} {tokenA.name}</button>}
                             </div>
                         }
-                        <div className="w-full gap-1 flex flex-row">
+                        <div className="w-full gap-1 flex flex-row" style={{zIndex: 1}}>
                             <input className="p-4 bg-transparent border border-gray-800 rounded-lg w-4/6 text-gray-500 text-[10px] focus:outline-none" type="text" placeholder="Token B" value={tokenB.value} onChange={e => setTokenB({name: 'Choose Token', value: e.target.value as '0xstring', logo: '/../favicon.png'})} />
                             <div className="w-2/6">
                                 <Listbox value={tokenB} onChange={setTokenB}>
-                                    <ListboxButton className="relative w-full h-full p-3 rounded-lg bg-white/5 text-left font-semibold gap-2 flex flex-row items-center focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25">
-                                        <img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" />
-                                        <span>{tokenB.name}</span>
-                                        <ChevronDownIcon className="pointer-events-none absolute top-4 right-4 size-4 fill-white/60" aria-hidden="true"/>
-                                    </ListboxButton>
-                                    <ListboxOptions anchor="bottom" transition className="w-[var(--button-width)] rounded-lg bg-neutral-800 p-1 text-gray-500 text-sm [--anchor-gap:var(--spacing-1)] focus:outline-none transition duration-100 ease-in data-[leave]:data-[closed]:opacity-0">
-                                        {tokens.map((token) => (
-                                            <ListboxOption key={token.name} value={token} className="cursor-pointer py-2 pr-9 pl-3 text-gray-500 data-[focus]:bg-white data-[focus]:font-semibold">
-                                                <div className="flex items-center">
-                                                    <img alt="" src={token.logo} className="size-5 shrink-0 rounded-full" />
-                                                    <span className="ml-3 truncate">{token.name}</span>
-                                                </div>
-                                            </ListboxOption>
-                                        ))}
-                                    </ListboxOptions>
+                                    {({ open }) => {
+                                        React.useEffect(() => {
+                                            if (!open) {
+                                                setQuery('')
+                                            }
+                                        }, [open]);
+
+                                        return (
+                                            <>
+                                                <ListboxButton className="relative w-full h-full p-3 rounded-lg bg-white/5 text-left font-semibold gap-2 flex flex-row items-center focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25">
+                                                    <img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" />
+                                                    <span>{tokenB.name}</span>
+                                                    <ChevronDownIcon className="pointer-events-none absolute top-4 right-4 size-4 fill-white/60" aria-hidden="true"/>
+                                                </ListboxButton>
+                                                <ListboxOptions anchor="bottom" transition className="w-[var(--button-width)] rounded-lg bg-neutral-800 p-1 text-gray-500 text-sm [--anchor-gap:var(--spacing-1)] focus:outline-none transition duration-100 ease-in data-[leave]:data-[closed]:opacity-0" style={{zIndex: 1}}>
+                                                    <input className="m-2 p-2 bg-white/5 rounded-lg w-6/7 text-gray-500 text-[10px] focus:outline-none" placeholder="Search Token" value={query} onChange={e => setQuery(e.target.value)} />
+                                                    {filteredTokens.map((token) => (
+                                                        <ListboxOption key={token.name} value={token} className="cursor-pointer py-2 pr-9 pl-3 text-gray-500 data-[focus]:bg-white data-[focus]:font-semibold">
+                                                            <div className="flex items-center">
+                                                                <img alt="" src={token.logo} className="size-5 shrink-0 rounded-full" />
+                                                                <span className="ml-3 truncate">{token.name}</span>
+                                                            </div>
+                                                        </ListboxOption>
+                                                    ))}
+                                                </ListboxOptions>
+                                            </>
+                                        )
+                                    }}
                                 </Listbox>
                             </div>
                         </div>
                         {upperPrice === '' || Number(upperPrice) > Number(currPrice) &&
-                            <div className="w-full gap-1 flex flex-row items-center">
+                            <div className="w-full gap-1 flex flex-row items-center" style={{zIndex: 1}}>
                                 <input className="p-4 rounded-lg bg-transparent w-4/6 font-bold focus:outline-none" type="text" placeholder="0" value={amountB} onChange={(e) => setAmountB(e.target.value)} />
                                 {tokenB.value !== '' as '0xstring' && <button className="w-2/6 font-semibold text-right text-gray-400" onClick={() => setAmountB(tokenBBalance)}>{Number(tokenBBalance).toFixed(4)} {tokenB.name}</button>}
                             </div>
                         }
-                        <div className="w-full h-[100px] gap-2 flex flex-row text-gray-400">
+                        <div className="w-full h-[100px] gap-2 flex flex-row text-gray-400" style={{zIndex: 1}}>
                             <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border border-gray-800 hover:text-white hover:bg-neutral-800 " + (feeSelect === 100 ? "bg-white/5 text-white border-slate-500" : "")} onClick={() => setFeeSelect(100)}>
                                 <span>0.01%</span>
                                 <span className="text-gray-500">Best for very stable pairs</span>
@@ -1321,7 +1347,7 @@ export default function Swap({
                             </button>
                         </div>
                         <span className="m-2 font-semibold">Current price: {Number(currPrice).toFixed(4)} {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenA.name + '/' + tokenB.name}</span>
-                        <div className="w-full h-[100px] gap-2 flex flex-row text-gray-400">
+                        <div className="w-full h-[100px] gap-2 flex flex-row text-gray-400" style={{zIndex: 1}}>
                             <button className={"w-1/4 h-full p-3 rounded-lg gap-3 flex flex-col justify-start border border-gray-800 hover:text-white hover:bg-neutral-800 " + (rangePercentage === 1 ? "bg-white/5 text-white border-slate-500" : "")} onClick={() => setRangePercentage(1)}>
                                 <span>Full Range</span>
                                 <span className="text-gray-500">[-100%, ♾️]</span>
@@ -1340,49 +1366,49 @@ export default function Swap({
                             </button>
                         </div>
                         {pairDetect === '0x0000000000000000000000000000000000000000' &&
-                            <div className="w-full gap-1 flex flex-row items-center">
+                            <div className="w-full gap-1 flex flex-row items-center" style={{zIndex: 1}}>
                                 <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="Initial Price" value={currPrice} onChange={e => setCurrPrice(e.target.value)} />
                                 <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenA.name + '/' + tokenB.name}</span>
                             </div>
                         }
-                        <div className="w-full gap-1 flex flex-row items-center">
+                        <div className="w-full gap-1 flex flex-row items-center" style={{zIndex: 1}}>
                             <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="Lower Price" value={lowerPrice} onChange={e => {setLowerPrice(e.target.value); setAlignedLowerTick(e.target.value); setRangePercentage(999);}} />
                             <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenA.name + '/' + tokenB.name + (Number(currPrice) > 0 ? ' (' + Number(lowerPercentage).toFixed(2) + '%)' : '')}</span>
                         </div>
-                        <div className="w-full gap-1 flex flex-row items-center">
+                        <div className="w-full gap-1 flex flex-row items-center" style={{zIndex: 1}}>
                             <input className="p-4 bg-neutral-900 rounded-lg w-4/6 focus:outline-none" placeholder="Upper Price" value={upperPrice} onChange={e => {setUpperPrice(e.target.value); setAlignedUpperTick(e.target.value); setRangePercentage(999);}} />
                             <span className="w-2/6 text-right text-gray-500">{tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && tokenA.name + '/' + tokenB.name + (Number(currPrice) > 0 ? ' (+' + Number(upperPercentage).toFixed(2) + '%)' : '')}</span>
                         </div>
                         {tokenA.value !== '' as '0xstring' && tokenB.value !== '' as '0xstring' && Number(amountA) <= Number(tokenABalance) && Number(amountB) <= Number(tokenBBalance) ?
-                            <button className="mt-2 p-4 rounded-full w-full bg-blue-500 text-lg font-bold hover:bg-blue-400" onClick={placeLiquidity}>Add Liquidity</button> :
-                            <button className="mt-2 p-4 rounded-full w-full bg-gray-600 text-lg font-bold inactive">Add Liquidity</button>
+                            <button className="mt-2 p-4 rounded-full w-full bg-blue-500 text-lg font-bold hover:bg-blue-400" style={{zIndex: 1}} onClick={placeLiquidity}>Add Liquidity</button> :
+                            <button className="mt-2 p-4 rounded-full w-full bg-gray-600 text-lg font-bold inactive" style={{zIndex: 1}}>Add Liquidity</button>
                         }
                     </>
                 }
                 {mode === 2 && position[0] !== undefined &&
-                    <div className="w-full h-[80vh] gap-5 flex flex-col overflow-y-scroll pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-lg [&::-webkit-scrollbar-track]:bg-neutral-900 [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-zinc-800">
+                    <div className="w-full h-[80vh] gap-5 flex flex-col overflow-y-scroll pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-lg [&::-webkit-scrollbar-track]:bg-neutral-900 [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-zinc-800" style={{zIndex: 1}}>
                         {position.map(obj => 
-                            <div key={Number(obj.Id)} className="w-full h-[342px] bg-neutral-900 gap-2 flex flex-col items-start">
-                                <div className="w-full py-4 h-[200px] bg-neutral-950 flex items-center justify-center relative">
-                                    <img alt="" src={obj.Image} height={100} width={100}/>
+                            <div key={Number(obj.Id)} className="w-full h-[350px] bg-neutral-900 border border-gray-800 rounded-xl gap-2 flex flex-col items-start">
+                                <div className="w-full py-4 h-[242px] bg-white/5 rounded-t-xl relative inset-0 h-full w-full bg-white/5 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]">
+                                    <img alt="" src={obj.Image} height={100} width={100} className="place-self-center" />
                                     <span className="absolute bottom-5 left-5">{obj.CurrPrice > obj.MinPrice && obj.CurrPrice < obj.MaxPrice ? 'In range' : 'Out of range'}</span>
                                     <span className="absolute bottom-5 right-5">{obj.FeeTier / 10000}%</span>
                                 </div>
                                 <div className="w-full h-[20px] py-2 px-6 flex flex-row justify-between">
                                     <span className="text-gray-500">Position #{obj.Id}</span>
-                                    <span>{obj.Amount0.toFixed(4)} {obj.Token0} / {obj.Amount1.toFixed(4)} {obj.Token1}</span>
+                                    <span>{obj.Amount0.toFixed(4)} <span className="text-gray-500">{obj.Token0} /</span> {obj.Amount1.toFixed(4)} <span className="text-gray-500">{obj.Token1}</span></span>
                                 </div>
                                 <div className="w-full h-[20px] py-2 px-6 flex flex-row justify-between">
                                     <span className="text-gray-500">Fee</span>
-                                    <span>{obj.Fee0.toFixed(4)} {obj.Token0} / {obj.Fee1.toFixed(4)} {obj.Token1}</span>
+                                    <span>{obj.Fee0.toFixed(4)} <span className="text-gray-500">{obj.Token0} /</span> {obj.Fee1.toFixed(4)} <span className="text-gray-500">{obj.Token1}</span></span>
                                 </div>
                                 <div className="w-full h-[20px] py-2 px-6 flex flex-row justify-between">
                                     <span className="text-gray-500">Current : Min : Max</span>
-                                    <span>{obj.CurrPrice.toFixed(4)} : {obj.MinPrice.toFixed(4)} : {obj.MaxPrice > 1e18 ? '♾️' : obj.MaxPrice.toFixed(4)} {obj.Token0}/{obj.Token1}</span>
+                                    <span>{obj.CurrPrice.toFixed(4)} : {obj.MinPrice.toFixed(4)} : {obj.MaxPrice > 1e18 ? '♾️' : obj.MaxPrice.toFixed(4)} <span className="text-gray-500">{obj.Token0}/{obj.Token1}</span></span>
                                 </div>
-                                <div className="w-full h-[50px] py-2 px-6 gap-2 flex flex-row items-start justify-start font-semibold">
+                                <div className="w-full h-[50px] mb-4 py-2 px-6 gap-2 flex flex-row items-start justify-start font-semibold">
                                     <button 
-                                        className="p-1 w-1/5 rounded-full bg-gray-500 hover:bg-gray-400" 
+                                        className="px-2 py-1 w-1/4 rounded-full bg-blue-500 hover:bg-blue-400" 
                                         onClick={() => {
                                             setPositionSelected(obj)
                                             setTokenA({name: "", logo: "", value: obj.Token0Addr as '0xstring'})
@@ -1399,8 +1425,10 @@ export default function Swap({
                                     >
                                         Add Liquidity
                                     </button>
-                                    <button className="p-1 w-1/4 rounded-full bg-gray-500 hover:bg-gray-400" onClick={() => {setPositionSelected(obj); setIsRemPositionModal(true);}}>Remove Liquidity</button>
-                                    {Number(obj.Fee0) > 0 && Number(obj.Fee1) > 0 && <button className="p-1 w-1/5 rounded-full bg-gray-500 hover:bg-gray-400" onClick={() => collectFee(BigInt(obj.Id))}>Collect fee</button>}
+                                    <button className="px-2 py-1 w-1/4 rounded-full bg-blue-500 hover:bg-blue-400" onClick={() => {setPositionSelected(obj); setIsRemPositionModal(true);}}>Remove Liquidity</button>
+                                    {Number(obj.Fee0) > 0 && Number(obj.Fee1) > 0 && 
+                                        <button className="px-3 py-1 w-1/5 rounded-full bg-blue-500 hover:bg-blue-400" onClick={() => collectFee(BigInt(obj.Id))}>Collect fee</button>
+                                    }
                                 </div>
                             </div>
                         )}
