@@ -109,10 +109,13 @@ export default function Main() {
             <footer className='w-full my-5 xl:mt-5 pt-14 px-14 flex flex-row justify-between text-gray-500' style={{zIndex: 1}}>
                 <div className="gap-3 flex flex-col text-xs text-left">
                     <div>{'OpenBBQ ' + v}</div>
-                    <a className='hover:text-white' style={{textDecoration: "none"}} href="https://github.com/coshi190/openbbq" target="_blank" rel="noreferrer">Github</a>
+                    <a className='hover:text-white' style={{textDecoration: "none"}} href="https://github.com/coshi190/interface-openbbq" target="_blank" rel="noreferrer">Github Interface</a>
+                    <a className='hover:text-white' style={{textDecoration: "none"}} href="https://github.com/coshi190/contracts-openbbq" target="_blank" rel="noreferrer">Github Smart Contract</a>
+                    <a className='hover:text-white' style={{textDecoration: "none"}} href="http://docs.openbbq.xyz/th" target="_blank" rel="noreferrer">Documentation</a>
                 </div>
                 <div className="gap-3 flex flex-col text-xs text-right">
                     <a className='hover:text-white' style={{textDecoration: "none"}} href="https://discord.gg/k92ReT5EYy" target="_blank" rel="noreferrer">Discord</a>
+                    <a className='hover:text-white' style={{textDecoration: "none"}} href="https://www.facebook.com/commudaostory" target="_blank" rel="noreferrer">Facebook Page</a>
                 </div>
             </footer>
         </>
