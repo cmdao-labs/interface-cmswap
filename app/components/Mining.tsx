@@ -12,7 +12,7 @@ import { Progress } from '@/components/ui/progress'
 
 export default function Mining({ setTxupdate, setErrMsg, nftIdMiner, addr }: {
     setTxupdate: React.Dispatch<React.SetStateAction<string>>
-    setErrMsg: React.Dispatch<React.SetStateAction<string | null>>
+    setErrMsg: React.Dispatch<React.SetStateAction<String | null>>
     nftIdMiner: bigint | undefined
     addr: `0x${string}` | undefined
 }) {
