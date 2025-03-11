@@ -311,6 +311,7 @@ export default function Page() {
     }
     
     const [nftIdMiner, setNftIdMiner] = React.useState<bigint>()
+    const [nftImgMiner, setNftImgMiner] = React.useState<string>()
     const checkPeripheryAllowNftStaked_hook = async(_nftIdMiner: bigint) => {
         const res = await readContracts(config, {
             contracts: [{ ...v2routerContract, functionName: 'stakedUseByPeriphery', args: [BigInt(9), BigInt(nftIndexSelect), _nftIdMiner] }]
@@ -378,7 +379,7 @@ export default function Page() {
                     </TabsContent>
                     <TabsContent value='1'>
                         {nftIndexSelect === 2 ?
-                            <Mining setTxupdate={setTxupdate} setErrMsg={setErrMsg} nftIdMiner={nftIdMiner} addr={addr} /> :
+                            <Mining setTxupdate={setTxupdate} setErrMsg={setErrMsg} nftIdMiner={nftIdMiner} nftImgMiner={nftImgMiner} addr={addr} /> :
                             <span>The hook does not support this NFT collection</span>
                         }
                     </TabsContent>
@@ -483,7 +484,7 @@ export default function Page() {
                                                                 {hookSelect === 0 && obj.isPeripheryAllow === '0' && obj.isStaked && <Button variant="secondary" className="cursor-pointer" onClick={() => {allowPeriphery(obj.Id as bigint, 2)}}>ACTIVATE POINT</Button>}
                                                                 {hookSelect === 0 && obj.isPeripheryAllow !== '0' && obj.isStaked && <Button variant="destructive" className="cursor-pointer" onClick={() => {revokePeriphery(obj.Id as bigint)}}>DEACTIVATE POINT</Button>}
                                                                 {hookSelect === 1 && nftIndexSelect === 2 && obj.isStaked && 
-                                                                    <Button variant="outline" className={"cursor-pointer " + (Number(nftIdMiner) === Number(obj.Id) ? "bg-emerald-300 text-black" : "")} onClick={async () => {if (await checkPeripheryAllowNftStaked_hook(obj.Id as bigint)) {allowPeriphery(obj.Id as bigint, 9);} setNftIdMiner(obj.Id as bigint);}}>CHOOSE MINER</Button>
+                                                                    <Button variant="outline" className={"cursor-pointer " + (Number(nftIdMiner) === Number(obj.Id) ? "bg-emerald-300 text-black" : "")} onClick={async () => {if (await checkPeripheryAllowNftStaked_hook(obj.Id as bigint)) {allowPeriphery(obj.Id as bigint, 9);} setNftIdMiner(obj.Id as bigint); setNftImgMiner(obj.Image);}}>CHOOSE MINER</Button>
                                                                 }
                                                             </div>
                                                         </>
