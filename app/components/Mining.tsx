@@ -437,7 +437,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
                     <div className="p-6 overflow-hidden ellipsis">{consoleMsg}</div>
                 </div>
             </div>
-            {isMining && <WoodChoppingGame nftIdMiner={nftIdMiner} nftImgMiner={nftImgMiner} setErrMsg={setErrMsg} woodBalance={woodBalance} />}
+            {isMining && <WoodChoppingGame nftIdMiner={nftIdMiner} nftImgMiner={nftImgMiner} woodBalance={woodBalance} />}
         </>
     )
 }
