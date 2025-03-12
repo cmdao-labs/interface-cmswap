@@ -266,10 +266,17 @@ export default function WoodChoppingGame({ nftIdMiner, nftImgMiner, woodBalance 
                 onClick={chopWood}
                 style={{ cursor: isChopping ? "pointer" : "default" }}
             >
-                {showAxeAnimation && 
+                {showAxeAnimation ?
                     <div
                         className="absolute z-10 animate-chop gap-2 flex flex-row"
                         style={{ left: `${axePosition.x - 20}px`, top: `${axePosition.y - 20}px` }}
+                    >
+                        <img alt="" src={nftImgMiner} height={100} width={100} />
+                        <Axe size={100} className="text-gray-200" />
+                    </div> :
+                    <div
+                        className="absolute gap-2 flex flex-row"
+                        style={{ left: '200px', bottom: '100px' }}
                     >
                         <img alt="" src={nftImgMiner} height={100} width={100} />
                         <Axe size={100} className="text-gray-200" />
