@@ -35,7 +35,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
         setMiningProgress(0)
         setConsoleMsg("Starting mining operation...")
         const _nonce = Number.parseInt((Math.random() * (100 - 1) + 100).toFixed(0))
-        const target = BigInt(2 ** (256 - difficulty))
+        const target = difficulty <= 256 ? BigInt(2 ** (256 - difficulty)) : BigInt(1)
         const startTime = Date.now()
         const totalIterations = Number(mineForLoop) * 1000000
         // Process mining in chunks to keep UI responsive
@@ -113,7 +113,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
         setMiningProgress(0)
         setConsoleMsg("Starting mining operation (multi-threaded)...")
         const _nonce = Number.parseInt((Math.random() * (100 - 1) + 100).toFixed(0))
-        const target = BigInt(2 ** (256 - difficulty))
+        const target = difficulty <= 256 ? BigInt(2 ** (256 - difficulty)) : BigInt(1)
         const startTime = Date.now()
         const totalIterations = Number(mineForLoop) * 1000000
         // Number of virtual "threads" to use
