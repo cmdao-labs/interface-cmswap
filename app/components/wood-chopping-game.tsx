@@ -62,27 +62,31 @@ export default function WoodChoppingGame({ nftIdMiner, nftImgMiner, woodBalance 
       
     // Load saved game stats from localStorage
     React.useEffect(() => {
-        if (localStorageAvailable) {
-            try {
-                const savedStats = localStorage.getItem("woodChoppingGameStats")
-                if (savedStats) {
-                    const parsedStats = JSON.parse(savedStats)
-                    // If woodScore doesn't exist in saved stats, calculate it
-                    if (!parsedStats.woodScore && nftIdMiner) {
-                        parsedStats.woodScore = calculateWoodScore(nftIdMiner, parsedStats.totalTimeSpent, parsedStats.highestCombo, parsedStats.totalWoodChopped)
+        const loadGameStats = () => {
+            if (!localStorageAvailable) return
+                try {
+                    const savedStats = localStorage.getItem("woodChoppingGameStats")
+                    if (savedStats) {
+                        const parsedStats = JSON.parse(savedStats)
+                        // If woodScore doesn't exist in saved stats, calculate it
+                        if (!parsedStats.woodScore && nftIdMiner) {
+                            parsedStats.woodScore = calculateWoodScore(nftIdMiner, parsedStats.totalTimeSpent, parsedStats.highestCombo, parsedStats.totalWoodChopped)
+                        }
+                        // Important: Use a functional update to ensure we're not overwriting with stale data
+                        setGameStats(currentStats => ({ ...currentStats, ...parsedStats }))
+                    } else if (nftIdMiner) {
+                        // Only initialize woodScore if we don't have saved stats
+                        setGameStats(prev => ({
+                            ...prev,
+                            woodScore: calculateWoodScore(nftIdMiner, prev.totalTimeSpent, prev.highestCombo, prev.totalWoodChopped),
+                        }))
                     }
-                    setGameStats(parsedStats)
-                } else if (nftIdMiner) {
-                    // Initialize with woodScore if we have an NFT ID
-                    setGameStats(prev => ({
-                        ...prev,
-                        woodScore: calculateWoodScore(nftIdMiner, prev.totalTimeSpent, prev.highestCombo, prev.totalWoodChopped),
-                    }))
+                } catch (e) {
+                    console.error("Error loading game stats:", e)
                 }
-            } catch (e) {
-                console.error("Error loading game stats:", e)
             }
-        }
+        // Load stats when component mounts or when dependencies change
+        loadGameStats()
         // Initialize sound effects
         chopSoundRef.current = new Audio("/chop-sound.mp3")
         completeSoundRef.current = new Audio("/complete-sound.mp3")
@@ -109,13 +113,18 @@ export default function WoodChoppingGame({ nftIdMiner, nftImgMiner, woodBalance 
     const saveGameStats = () => {
         if (!localStorageAvailable) return
         try {
-            const updatedStats = {
-                ...gameStats,
-                lastPlayed: Date.now(),
-                woodScore: nftIdMiner ? calculateWoodScore(nftIdMiner, gameStats.totalTimeSpent, gameStats.highestCombo, gameStats.totalWoodChopped) : gameStats.woodScore
-            }
-            localStorage.setItem("woodChoppingGameStats", JSON.stringify(updatedStats))
-            setGameStats(updatedStats)
+            // Use the current state from the callback to ensure we have the latest data
+            setGameStats((currentStats) => {
+                const updatedStats = {
+                    ...currentStats,
+                    lastPlayed: Date.now(),
+                    woodScore: nftIdMiner ? calculateWoodScore(nftIdMiner, currentStats.totalTimeSpent, currentStats.highestCombo, currentStats.totalWoodChopped) : currentStats.woodScore
+                }
+                // Save to localStorage
+                localStorage.setItem("woodChoppingGameStats", JSON.stringify(updatedStats))
+                // Return the updated stats to update the state
+                return updatedStats
+            })
         } catch (e) {
             console.error("Error saving game stats:", e)
             setLocalStorageAvailable(false)
@@ -133,7 +142,7 @@ export default function WoodChoppingGame({ nftIdMiner, nftImgMiner, woodBalance 
         timerRef.current = setInterval(() => {
             const elapsedSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000)
             setMiningTimeAccumulated(elapsedSeconds)
-            // Update stats
+            // Update stats using functional update to ensure we have the latest state
             setGameStats((prev) => {
                 const updated = {
                     ...prev,
