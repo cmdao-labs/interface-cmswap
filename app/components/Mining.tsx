@@ -23,8 +23,20 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
     const [shouldStopMining, setShouldStopMining] = React.useState(false)
     const [threadCount, setThreadCount] = React.useState(4)
     const [chunkSize, setChunkSize] = React.useState(25000)
+    const [timeEstimates, setTimeEstimates] = React.useState({ iterationTime: "Calculating...", solutionTime: "Calculating..." })
 
-    // Optimized mining function that uses a chunked approach
+    const formatEstimatedTime = (seconds: number) => {
+        if (seconds < 60) {
+            return `${Math.round(seconds)} seconds`
+        } else if (seconds < 3600) {
+            return `${Math.round(seconds / 60)} minutes`
+        } else if (seconds < 86400) {
+            return `${Math.round(seconds / 3600)} hours`
+        } else {
+            return `${Math.round(seconds / 86400)} days`
+        }
+    }
+
     const mineBlockChunked = async (difficulty: number) => {
         if (isMining) {
             setConsoleMsg("Mining already in progress...")
@@ -33,21 +45,25 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
         setIsMining(true)
         setShouldStopMining(false)
         setMiningProgress(0)
-        setConsoleMsg("Starting mining operation...")
+        const estimatedHashRate = chunkSize * 20
+        const targetDifficulty = 2 ** difficulty
+        const estimatedTimeSeconds = targetDifficulty / estimatedHashRate
+        const estimatedTimeFormatted = formatEstimatedTime(estimatedTimeSeconds)
+        const estimatedIterationTime = formatEstimatedTime((Number(mineForLoop) * 1000000) / estimatedHashRate)
+        setTimeEstimates({ iterationTime: estimatedIterationTime, solutionTime: estimatedTimeFormatted })
+        setConsoleMsg(`Starting mining operation... at ~${Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(estimatedHashRate)}H/s`)
         const _nonce = Number.parseInt((Math.random() * (100 - 1) + 100).toFixed(0))
         const target = difficulty <= 256 ? BigInt(2 ** (256 - difficulty)) : BigInt(1)
         const startTime = Date.now()
         const totalIterations = Number(mineForLoop) * 1000000
-        // Process mining in chunks to keep UI responsive
         const processChunk = async (currentIteration: number) => {
-            if (shouldStopMining) {
-                setConsoleMsg("Mining operation stopped by user")
-                setIsMining(false)
-                return
-            }
             const endIteration = Math.min(currentIteration + chunkSize, totalIterations)
             for (let i = currentIteration; i < endIteration; i++) {
-                if (shouldStopMining) break
+                if (shouldStopMining) {
+                    setConsoleMsg("Mining operation stopped by user")
+                    setIsMining(false)
+                    return
+                }
                 const nonce = _nonce + i
                 const hash = sha256(
                     encodeAbiParameters(
@@ -62,7 +78,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
                     const endTime = Date.now()
                     const elapsedTime = endTime - startTime
                     const hashRate = i / (elapsedTime / 1000)
-                    setConsoleMsg(`✅ Block Mined! Nonce: ${nonce} | ⏳ Time Taken: ${(elapsedTime / 1000).toFixed(2)} seconds | ⚡ Hash Rate: ${Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(hashRate)}H/s`)
+                    setConsoleMsg(`✅ Block Mined! Nonce: ${nonce} | ⏳ Time Taken: ${(elapsedTime / 1000).toFixed(2)} seconds | ⚡ Hash rate: ${Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(hashRate)}H/s`)
                     try {
                         const { request } = await simulateContract(config, {
                             chainId: 8899,
@@ -84,6 +100,17 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
             currentIteration = endIteration
             const progress = (currentIteration / totalIterations) * 100
             setMiningProgress(progress)
+            if (currentIteration > 0) {
+                const elapsedTime = (Date.now() - startTime) / 1000
+                const currentHashRate = currentIteration / elapsedTime
+                const remainingIterations = totalIterations - currentIteration
+                const estimatedRemainingSeconds = remainingIterations / currentHashRate
+                const estimatedTotalSeconds = 2 ** difficulty / currentHashRate
+                const updatedIterationTime = formatEstimatedTime(estimatedRemainingSeconds)
+                const updatedSolutionTime = formatEstimatedTime(estimatedTotalSeconds)
+                setTimeEstimates({ iterationTime: updatedIterationTime, solutionTime: updatedSolutionTime })
+                setConsoleMsg(`Mining in progress... ⚡ Hash rate: ${Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(currentHashRate)}H/s`)
+            }
             if (currentIteration < totalIterations && !shouldStopMining) {
                 // Allow UI to update before continuing
                 setTimeout(() => processChunk(currentIteration), 0)
@@ -93,7 +120,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
                     const endTime = Date.now()
                     const elapsedTime = endTime - startTime
                     const hashRate = totalIterations / (elapsedTime / 1000)
-                    setConsoleMsg(`❌ Block not found | ⚡ Hash Rate: ${Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(hashRate)}H/s`)
+                    setConsoleMsg(`❌ Block not found | ⚡ Hash rate: ${Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(hashRate)}H/s`)
                 }
                 setIsMining(false)
             }
@@ -111,7 +138,13 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
         setIsMining(true)
         setShouldStopMining(false)
         setMiningProgress(0)
-        setConsoleMsg("Starting mining operation (multi-threaded)...")
+        const estimatedHashRate = 5000 * 20 * threadCount
+        const targetDifficulty = 2 ** difficulty
+        const estimatedTimeSeconds = targetDifficulty / estimatedHashRate
+        const estimatedTimeFormatted = formatEstimatedTime(estimatedTimeSeconds)
+        const estimatedIterationTime = formatEstimatedTime((Number(mineForLoop) * 1000000) / estimatedHashRate)
+        setTimeEstimates({ iterationTime: estimatedIterationTime, solutionTime: estimatedTimeFormatted})
+        setConsoleMsg(`Starting mining operation (multi-threaded)... at ~${Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(estimatedHashRate)}H/s`)
         const _nonce = Number.parseInt((Math.random() * (100 - 1) + 100).toFixed(0))
         const target = difficulty <= 256 ? BigInt(2 ** (256 - difficulty)) : BigInt(1)
         const startTime = Date.now()
@@ -127,6 +160,19 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
             completedIterations += iterations
             const progress = Math.min((completedIterations / totalIterations) * 100, 100)
             setMiningProgress(progress)
+            // Update time estimates based on actual hash rate
+            const elapsedTime = (Date.now() - startTime) / 1000
+            if (elapsedTime > 0) {
+                const currentHashRate = completedIterations / elapsedTime
+                const remainingIterations = totalIterations - completedIterations
+                const estimatedRemainingSeconds = remainingIterations / currentHashRate
+                const estimatedTotalSeconds = 2 ** difficulty / currentHashRate
+                const updatedIterationTime = formatEstimatedTime(estimatedRemainingSeconds)
+                const updatedSolutionTime = formatEstimatedTime(estimatedTotalSeconds)
+                setTimeEstimates({ iterationTime: updatedIterationTime, solutionTime: updatedSolutionTime })
+                setConsoleMsg(
+                `Mining in progress... ⚡ Hash rate: ${Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(currentHashRate)}H/s`)
+            }
         }
         // Function to handle a successful mining result
         const handleSuccess = async (nonce: number, hash: string) => {
@@ -135,7 +181,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
             const endTime = Date.now()
             const elapsedTime = endTime - startTime
             const hashRate = completedIterations / (elapsedTime / 1000)
-            setConsoleMsg(`✅ Block Mined! Nonce: ${nonce} | ⏳ Time Taken: ${(elapsedTime / 1000).toFixed(2)} seconds | ⚡ Hash Rate: ${Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(hashRate)}H/s`)
+            setConsoleMsg(`✅ Block Mined! Nonce: ${nonce} | ⏳ Time Taken: ${(elapsedTime / 1000).toFixed(2)} seconds | ⚡ Hash rate: ${Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(hashRate)}H/s`)
             try {
                 const { request } = await simulateContract(config, {
                     chainId: 8899,
@@ -159,7 +205,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
             const endTime = Date.now()
             const elapsedTime = endTime - startTime
             const hashRate = completedIterations / (elapsedTime / 1000)
-            setConsoleMsg(`❌ Block not found | ⚡ Hash Rate: ${Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(hashRate)}H/s`)
+            setConsoleMsg(`❌ Block not found... ⚡ Hash rate: ${Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(hashRate)}H/s`)
             setIsMining(false)
         }
         // Track how many threads have completed
@@ -182,6 +228,14 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
                 let iterationsProcessed = 0
                 for (let i = currentIteration; i < chunkEnd; i++) {
                     iterationsProcessed++
+                    // Check for stop condition more frequently (every 1000 iterations)
+                    if (i % 1000 === 0 && shouldStopMining) {
+                        threadsCompleted++
+                        if (threadsCompleted === NUM_THREADS) {
+                        handleAllComplete()
+                        }
+                        return
+                    }
                     const nonce = _nonce + i
                     const hash = sha256(
                         encodeAbiParameters(
@@ -305,6 +359,14 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
     const stopMining = () => {
         setShouldStopMining(true)
         setConsoleMsg("Stopping mining operation...")
+        // Force mining to stop after a short delay if it doesn't stop naturally
+        setTimeout(() => {
+            if (isMining) {
+              setIsMining(false)
+              setShouldStopMining(false)
+              setConsoleMsg("Mining operation forcefully stopped")
+            }
+        }, 1000)
     }
 
     return (
@@ -356,14 +418,14 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
                         </Table>
                     </ScrollArea>
                 </div>
-                <div className="gap-2 flex flex-row items-center">
-                    <span>
-                        Reward Balance:{" "}
-                        {Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(Number(woodBalance))}
-                    </span>
-                    <img alt="" src="https://gateway.commudao.xyz/ipfs/bafkreidldk7skx44xwstwat2evjyp4u5oy5nmamnrhurqtjapnwqzwccd4" height={20} width={20} />
-                </div>
                 <div className="w-2/3 gap-4 xl:gap-10 flex flex-row flex-wrap items-center justify-center text-gray-500">
+                    <div className='gap-2 flex flex-row'>
+                        <span>
+                            Reward Balance:{" "}
+                            <span className="text-white">{Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(Number(woodBalance))}</span>
+                        </span>
+                        <img alt="" src="https://gateway.commudao.xyz/ipfs/bafkreidldk7skx44xwstwat2evjyp4u5oy5nmamnrhurqtjapnwqzwccd4" height={20} width={20} />
+                    </div>
                     <div>Current Block: <span className="text-white">{currBlock}</span></div>
                     <div>Base Difficulty: <span className="text-white">{difficulty}</span></div>
                 </div>
@@ -379,7 +441,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
                                 <span className="text-white">{Number(difficulty) > (Number(nftIdMiner) % 100000) / 100 ? Number(difficulty) - (Number(nftIdMiner) % 100000) / 100 : 1}</span>
                             </div>
                         </div>
-                        <div className="w-full gap-3 flex flex-row items-center justify-center">
+                        <div className="w-full gap-2 flex flex-row items-center justify-center">
                             {!isMining ? 
                                 <>
                                     <Button className="cursor-pointer hover:bg-emerald-300" onClick={mining}>MINE FOR</Button>
@@ -393,9 +455,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
                                         {useMultiThreaded ? "Using Multi-Threaded" : "Using Single-Threaded"}
                                     </Button>
                                 </> : 
-                                <Button className="cursor-pointer hover:bg-red-300 bg-red-500" onClick={stopMining}>
-                                    STOP MINING
-                                </Button>
+                                <Button className="cursor-pointer hover:bg-red-300 bg-red-500" onClick={stopMining}>STOP MINING</Button>
                             }
                         </div>
                         <div className="w-full max-w-md p-4 bg-black/50 rounded-lg">
@@ -433,8 +493,16 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
                         )}
                     </>
                 )}
-                <div className="w-3/4 xl:w-1/2 h-[100px] p-8 flex items-center justify-center text-left bg-black" style={{ boxShadow: "6px 6px 0 #00000040" }}>
-                    <div className="p-6 overflow-hidden ellipsis">{consoleMsg}</div>
+                <div className="w-full max-w-md p-4 bg-black/70 rounded-lg">
+                    <p className='my-3'>{consoleMsg}</p>
+                    {isMining &&
+                        <div className="grid grid-cols-2 gap-2 text-xs mb-4">
+                            <div className="text-gray-400">Est. iteration time:</div>
+                            <div className="text-white">{timeEstimates.iterationTime}</div>
+                            <div className="text-gray-400">Est. time to solve:</div>
+                            <div className="text-white">{timeEstimates.solutionTime}</div>
+                        </div>
+                    }
                 </div>
             </div>
             {isMining && <WoodChoppingGame nftIdMiner={nftIdMiner} nftImgMiner={nftImgMiner} woodBalance={woodBalance} />}
