@@ -334,7 +334,7 @@ export default function Page() {
                         </DialogPanel>
                     </div>
                 </Dialog>
-            <div className="w-full h-[300px] flex flex-col items-center justify-center bg-[url('https://gateway.commudao.xyz/ipfs/bafybeicyixoicb7ai6zads6t5k6qpyocoyelfbyoi73nmtobfjlv7fseiq')] bg-cover bg-center">
+            <div className="w-full h-[320px] flex flex-col items-center justify-center bg-[url('https://gateway.commudao.xyz/ipfs/bafybeicyixoicb7ai6zads6t5k6qpyocoyelfbyoi73nmtobfjlv7fseiq')] bg-cover bg-center">
                 <span className='text-7xl p-3 rounded-xl inset-0 bg-black/50'>CMDAO Valley</span>
             </div>
             <div className='w-full mt-14 gap-10 flex flex-col items-center justify-center text-xs xl:text-sm'>          

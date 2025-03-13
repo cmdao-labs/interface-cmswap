@@ -25,9 +25,9 @@ const modal = createAppKit({
     projectId,
     themeMode: 'dark',
     themeVariables: {
-        '--w3m-font-family': 'Inter',
         '--w3m-font-size-master': '8px',
         '--w3m-z-index': 1000, 
+        '--w3m-accent': '#1a1a3a',
     },
     chainImages: {
         8899: 'https://gateway.commudao.xyz/ipfs/bafkreihdmsnmmzhepcfxuvoflht2iqv5w73hg5kbgrc33jrhk7il5ddpgu?img-width=100&img-height=100',

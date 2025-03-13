@@ -11,7 +11,7 @@ export default function Page() {
     const [errMsg, setErrMsg] = React.useState<String | null>(null)
 
     return (
-        <div className="h-[100vh] xl:h-[83vh] w-full flex flex-col items-center justify-start text-xs">
+        <div className="min-h-screen w-full flex flex-col items-center justify-start text-xs">
             {isLoading && <div className="w-full h-full fixed backdrop-blur-[12px] z-999" />}
             <Dialog open={errMsg !== null} onClose={() => setErrMsg(null)} className="relative z-999">
                 <DialogBackdrop className="fixed inset-0 bg-black/30 backdrop-blur-[12px]" />
@@ -25,7 +25,7 @@ export default function Page() {
                     </DialogPanel>
                 </div>
             </Dialog>
-            <div className="w-full xl:w-1/3 h-[710px] mt-[60px] pt-4 pb-6 px-6 bg-white/5 rounded-3xl text-white card">
+            <div className="w-full xl:w-1/3 h-[710px] mt-[100px] pt-4 pb-6 px-6 bg-white/5 rounded-3xl text-white card">
                 <Tabs defaultValue="swap" className="sticky z-99">
                     <TabsList className="w-full bg-white/5">
                         <TabsTrigger value="swap" className="cursor-pointer">Instant swap</TabsTrigger>

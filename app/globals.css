@@ -40,55 +40,6 @@ body::-webkit-scrollbar { display: none; }
     height: 100%;
 }
 
-.slider {
-    position: relative;
-    height: 1em;
-    width: 325px;
-    overflow: hidden;
-}
-
-.slider__word {
-    font-weight: 500;
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    line-height: 1em;
-    transform: translateY(100%);
-    animation: slide 2.5s linear infinite;
-    color: #f5f5f5;
-}
-
-.slider__word:nth-child(2) {
-    animation-delay: 0.83s;
-}
-
-.slider__word:nth-child(3) {
-    animation-delay: 1.67s;
-}
-
-@keyframes slide {
-    0% {
-        transform: translateY(100%);
-        opacity: 0.1;
-    }
-    15% {
-        transform: translateY(0);
-        opacity: 1;
-    }
-    30% {
-        transform: translateY(0);
-        opacity: 1;
-    }
-    45% {
-        transform: translateY(-100%);
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(-100%);
-        opacity: 0.1;
-    }
-}
-
 :root {
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
@@ -201,12 +152,237 @@ body::-webkit-scrollbar { display: none; }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+        @apply border-border outline-ring/50;
     }
   body {
-    @apply bg-background text-foreground;
+        @apply bg-background text-foreground;
     }
 }
+
+#matrix-rain {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.3) 75%, rgba(0, 0, 0, 0.6) 100%),
+        url("data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='matrix' width='40' height='40' patternUnits='userSpaceOnUse'%3E%3Ctext x='50%25' y='50%25' font-size='10' fill='%2332ffa7' text-anchor='middle' dominant-baseline='middle'%3E01%3C/text%3E%3Ctext x='30%25' y='20%25' font-size='8' fill='%2332ffa7' text-anchor='middle' dominant-baseline='middle'%3E10%3C/text%3E%3Ctext x='70%25' y='80%25' font-size='12' fill='%2332ffa7' text-anchor='middle' dominant-baseline='middle'%3E0%3C/text%3E%3Ctext x='20%25' y='70%25' font-size='9' fill='%2332ffa7' text-anchor='middle' dominant-baseline='middle'%3E1%3C/text%3E%3Ctext x='80%25' y='30%25' font-size='11' fill='%2332ffa7' text-anchor='middle' dominant-baseline='middle'%3E01%3C/text%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23matrix)'/%3E%3C/svg%3E");
+}
+  
+.circuit-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10,10 L90,10 M90,10 L90,90 M90,90 L10,90 M10,90 L10,10 M10,50 L90,50 M50,10 L50,90 M30,10 L30,30 M30,30 L70,30 M70,30 L70,10 M30,90 L30,70 M30,70 L70,70 M70,70 L70,90' stroke='%2332ffa7' stroke-width='0.5' fill='none' /%3E%3C/svg%3E");
+}
+  
+/* Flowing background shapes */
+.shape-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.07;
+    z-index: 0;
+}
+  
+.shape-blob-1 {
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(50, 255, 167, 0.3) 0%, rgba(50, 255, 167, 0.1) 70%);
+    top: -200px;
+    right: -200px;
+    animation: float-slow 25s ease-in-out infinite alternate;
+}
+  
+.shape-blob-2 {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(50, 255, 167, 0.3) 0%, rgba(50, 255, 167, 0.1) 70%);
+    bottom: -100px;
+    left: -100px;
+    animation: float-slow 20s ease-in-out infinite alternate-reverse;
+}
+  
+.shape-blob-3 {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(50, 255, 167, 0.3) 0%, rgba(50, 255, 167, 0.1) 70%);
+    top: 40%;
+    right: 10%;
+    animation: float-slow 30s ease-in-out infinite alternate;
+}
+  
+@keyframes float-slow {
+    0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    100% { transform: translate(50px, 50px) rotate(10deg) scale(1.1); }
+}
+  
+.glitch-text {
+    position: relative;
+    animation: glitch 3s infinite;
+}
+  
+@keyframes glitch {
+    0% { text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75), -0.05em -0.025em 0 rgba(0, 255, 0, 0.75), 0.025em 0.05em 0 rgba(0, 0, 255, 0.75); }
+    14% { text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75), -0.05em -0.025em 0 rgba(0, 255, 0, 0.75), 0.025em 0.05em 0 rgba(0, 0, 255, 0.75); }
+    15% { text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75), 0.025em 0.025em 0 rgba(0, 255, 0, 0.75), -0.05em -0.05em 0 rgba(0, 0, 255, 0.75); }
+    49% { text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75), 0.025em 0.025em 0 rgba(0, 255, 0, 0.75), -0.05em -0.05em 0 rgba(0, 0, 255, 0.75); }
+    50% { text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75), 0.05em 0 0 rgba(0, 255, 0, 0.75), 0 -0.05em 0 rgba(0, 0, 255, 0.75); }
+    99% { text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75), 0.05em 0 0 rgba(0, 255, 0, 0.75), 0 -0.05em 0 rgba(0, 0, 255, 0.75); }
+    100% { text-shadow: -0.025em 0 0 rgba(255, 0, 0, 0.75), -0.025em -0.025em 0 rgba(0, 255, 0, 0.75), -0.025em -0.05em 0 rgba(0, 0, 255, 0.75); }
+}
+  
+.glitch-heading {
+    position: relative;
+}
+  
+.glitch-heading::before,
+.glitch-heading::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+  
+.glitch-heading::before {
+    left: 2px;
+    text-shadow: -1px 0 #32ffa7;
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim-1 5s infinite linear alternate-reverse;
+}
+  
+.glitch-heading::after {
+    left: -2px;
+    text-shadow: -1px 0 #ff00ff;
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim-2 5s infinite linear alternate-reverse;
+}
+  
+@keyframes glitch-anim-1 {
+    0% { clip: rect(20px, 9999px, 21px, 0); }
+    10% { clip: rect(77px, 9999px, 78px, 0); }
+    20% { clip: rect(33px, 9999px, 99px, 0); }
+    30% { clip: rect(16px, 9999px, 25px, 0); }
+    40% { clip: rect(5px, 9999px, 85px, 0); }
+    50% { clip: rect(40px, 9999px, 92px, 0); }
+    60% { clip: rect(1px, 9999px, 2px, 0); }
+    70% { clip: rect(24px, 9999px, 95px, 0); }
+    80% { clip: rect(87px, 9999px, 99px, 0); }
+    90% { clip: rect(43px, 9999px, 55px, 0); }
+    100% { clip: rect(82px, 9999px, 99px, 0); }
+}
+  
+@keyframes glitch-anim-2 {
+    0% { clip: rect(82px, 9999px, 59px, 0); }
+    10% { clip: rect(17px, 9999px, 48px, 0); }
+    20% { clip: rect(53px, 9999px, 44px, 0); }
+    30% { clip: rect(86px, 9999px, 35px, 0); }
+    40% { clip: rect(65px, 9999px, 85px, 0); }
+    50% { clip: rect(10px, 9999px, 92px, 0); }
+    60% { clip: rect(1px, 9999px, 23px, 0); }
+    70% { clip: rect(24px, 9999px, 25px, 0); }
+    80% { clip: rect(87px, 9999px 23px, 0); }
+    70% { clip: rect(24px, 9999px, 25px, 0); }
+    80% { clip: rect(87px, 9999px, 99px, 0); }
+    90% { clip: rect(13px, 9999px, 75px, 0); }
+    100% { clip: rect(42px, 9999px, 69px, 0); }
+}
+  
+.glitch-container {
+    position: relative;
+    width: 100%;
+    height: 2px;
+    overflow: hidden;
+}
+  
+.glitch-line {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    height: 2px;
+    width: 100%;
+    background: linear-gradient(90deg, transparent, #32ffa7, transparent);
+    animation: glitch-line 3s linear infinite;
+}
+  
+@keyframes glitch-line {
+    0% { left: -100%; }
+    50%,
+    100% { left: 100%; }
+}
+  
+.blink {
+    animation: blink 1s step-end infinite;
+    color: #32ffa7;
+}
+  
+@keyframes blink {
+    0%,
+    100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+  
+.terminal-window {
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 1px solid #32ffa7;
+    border-radius: 0;
+    overflow: hidden;
+    margin-top: 1.5rem;
+}
+  
+.terminal-header {
+    background-color: rgba(50, 255, 167, 0.1);
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #32ffa7;
+}
+  
+.terminal-body {
+    padding: 1rem;
+    text-align: left;
+}
+  
+.terminal-line {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+  
+.typing-effect {
+    overflow: hidden;
+    border-right: 2px solid #32ffa7;
+    white-space: nowrap;
+    animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+}
+  
+@keyframes typing {
+    from { width: 0; }
+    to { width: 100%; }
+}
+  
+@keyframes blink-caret {
+    from,
+    to { border-color: transparent; }
+    50% { border-color: #32ffa7; }
+}
+  
+.loading-bar {
+    position: relative;
+    overflow: hidden;
+}
+  
+.loading-bar::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: loading 1.5s infinite;
+}
+  
+ @keyframes loading {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}  
 
 /* Wood chopping game animations */
 @keyframes chop {
