@@ -20,8 +20,7 @@ export default function Headbar() {
                         <appkit-button />
                     </div>
                 </div>
-                <div className="glitch-container"><div className="glitch-line" /></div>
             </header>
         </QueryClientProvider>
-  )
+    )
 }
