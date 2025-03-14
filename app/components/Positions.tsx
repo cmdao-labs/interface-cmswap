@@ -451,11 +451,11 @@ export default function Positions({
 
     return (
         <>
-            <ScrollArea className="h-[650px] px-4">
+            <ScrollArea className="h-[650px] px-4 font-mono">
                 {position[0] !== undefined &&
                     <>
                         {position.map(obj => 
-                            <div key={Number(obj.Id)} className="mb-4 w-full bg-neutral-900 border border-gray-800 rounded-xl gap-2 flex flex-col items-start">
+                            <div key={Number(obj.Id)} className="mb-4 w-full bg-[#0a0b1e]/80 border border-[#00ff9d]/10 rounded-xl gap-2 flex flex-col items-start">
                                 <div className="w-full py-4 h-[242px] bg-white/5 rounded-t-xl relative inset-0 h-full w-full bg-white/5 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]">
                                     <img alt="" src={obj.Image} height={100} width={100} className="place-self-center" />
                                     <span className="absolute bottom-5 left-5">{obj.CurrPrice > obj.MinPrice && obj.CurrPrice < obj.MaxPrice ? 'In range' : 'Out of range'}</span>
@@ -477,7 +477,7 @@ export default function Positions({
                                     <Drawer open={isAddPositionModal} onOpenChange={setIsAddPositionModal}>
                                         <Button 
                                             variant="outline"
-                                            className="cursor-pointer" 
+                                            className="bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md cursor-pointer" 
                                             onClick={() => {
                                                 setPositionSelected(obj)
                                                 setTokenA({name: "", logo: "", value: obj.Token0Addr as '0xstring'})
@@ -519,7 +519,7 @@ export default function Positions({
                                         </DrawerContent>
                                     </Drawer>
                                     <Drawer open={isRemPositionModal} onOpenChange={setIsRemPositionModal}>
-                                        <Button variant="outline" className="cursor-pointer" onClick={() => {setPositionSelected(obj); setIsRemPositionModal(true);}}>Remove Liquidity</Button>
+                                        <Button variant="outline" className="bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md cursor-pointer" onClick={() => {setPositionSelected(obj); setIsRemPositionModal(true);}}>Remove Liquidity</Button>
                                         <DrawerContent className="z-100 border">
                                             <div className="mx-auto w-full max-w-sm space-y-4 my-7">
                                                 <DrawerHeader>
@@ -557,7 +557,7 @@ export default function Positions({
                                         </DrawerContent>
                                     </Drawer>
                                     {Number(obj.Fee0) > 0 && Number(obj.Fee1) > 0 && 
-                                        <Button variant="outline" className="cursor-pointer" onClick={() => collectFee(BigInt(obj.Id))}>Collect fee</Button>
+                                        <Button variant="outline" className="bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md cursor-pointer" onClick={() => collectFee(BigInt(obj.Id))}>Collect fee</Button>
                                     }
                                 </div>
                             </div>
