@@ -31,7 +31,7 @@ export default function Page() {
                     <span className="text-gray-500 font-mono text-sm">🛡️ SWAP WITH SAME SECURITY LEVEL OF UNISWAP V3</span>
                 </div>
             </div>
-            <Card className="w-full max-w-xl mx-auto bg-black/80 border border-[#00ff9d]/20 rounded-lg overflow-hidden py-2">
+            <Card className="w-full max-w-xl mx-auto bg-black/80 border border-[#00ff9d]/20 rounded-lg overflow-hidden py-2 mb-8">
                 <div className="px-4">
                     <Tabs defaultValue="swap" className="w-full sticky z-99">
                         <TabsList className="w-full grid grid-cols-3 bg-[#0a0b1e] rounded-md p-1 mb-4">
