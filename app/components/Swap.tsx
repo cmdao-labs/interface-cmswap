@@ -471,7 +471,7 @@ export default function Swap({
                     <ArrowDown className="h-4 w-4 text-[#00ff9d]" />
                 </Button>
             </div>
-            <div className="rounded-lg bg-[#0a0b1e]/80 border border-[#00ff9d]/10 p-4">
+            <div className="rounded-lg border border-[#00ff9d]/10 p-4">
                 <div className="flex justify-between items-center mb-2">
                     <span className="text-gray-400 font-mono text-sm">To</span>
                     <input 
