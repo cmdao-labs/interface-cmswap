@@ -30,7 +30,7 @@ const modal = createAppKit({
         '--w3m-accent': '#1a1a3a',
     },
     chainImages: {
-        8899: 'https://gateway.commudao.xyz/ipfs/bafkreihdmsnmmzhepcfxuvoflht2iqv5w73hg5kbgrc33jrhk7il5ddpgu?img-width=100&img-height=100',
+        8899: '/8899.png',
     },
     features: {
         analytics: true,
