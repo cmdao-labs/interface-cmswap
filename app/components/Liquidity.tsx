@@ -294,8 +294,8 @@ export default function Liquidity({
 
     return (
         <div className='space-y-2'>
-            <div className="rounded-lg border border-[#00ff9d]/10 p-4">
-                <div className="flex justify-between items-center mb-2">
+            <div className="p-3 rounded-lg border border-[#00ff9d]/10 p-4">
+                <div className="flex justify-between items-center text-xs mb-1">
                     <div />
                     <input 
                         className="py-2 w-[340px] focus:outline-none text-gray-400 font-mono text-xs text-right" 
@@ -316,7 +316,7 @@ export default function Liquidity({
                     }
                     <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
+                            <Button variant="ghost" role="combobox" aria-expanded={open} className="w-[180px] h-8 text-white hover:bg-[#162638] hover:text-[#00ff9d] font-mono flex items-center justify-between h-10 cursor-pointer">
                                 <div className='gap-2 flex flex-row items-center justify-center overflow-hidden'>
                                     <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                         <span className="text-[#00ff9d] text-xs">
@@ -366,8 +366,8 @@ export default function Liquidity({
                     </div>
                 </div>
             </div>
-            <div className="rounded-lg border border-[#00ff9d]/10 p-4">
-                <div className="flex justify-between items-center mb-2">
+            <div className="p-3 rounded-lg border border-[#00ff9d]/10 p-4">
+                <div className="flex justify-between items-center text-xs mb-1">
                     <div />
                     <input 
                         className="py-2 w-[340px] focus:outline-none text-gray-400 font-mono text-xs text-right" 
@@ -388,7 +388,7 @@ export default function Liquidity({
                     }
                     <Popover open={open2} onOpenChange={setOpen2}>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" role="combobox" aria-expanded={open2} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
+                            <Button variant="ghost" role="combobox" aria-expanded={open} className="w-[180px] h-8 text-white hover:bg-[#162638] hover:text-[#00ff9d] font-mono flex items-center justify-between h-10 cursor-pointer">
                                 <div className='gap-2 flex flex-row items-center justify-center overflow-hidden'>
                                     <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                         <span className="text-[#00ff9d] text-xs">
@@ -435,55 +435,57 @@ export default function Liquidity({
                     }
                 </div>
             </div>
-            <div className="grid grid-cols-4 gap-2 my-4 h-[50px]">
-                <Button variant="outline" className={"h-full font-mono px-2 py-3 rounded-md gap-1 flex flex-col items-center justify-center text-xs " + (feeSelect === 100 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(100)}>
+            <div className="grid grid-cols-4 gap-2 mt-4">
+                <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (feeSelect === 100 ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(100)}>
                     <span>0.01% fee</span>
-                    <span className="text-gray-500 text-[10px]">👍 stable war pairs</span>
+                    <span className="text-[10px] mt-1 opacity-60">👍 stable war pairs</span>
                 </Button>
-                <Button variant="outline" className={"h-full font-mono px-2 py-3 rounded-md gap-1 flex flex-col items-center justify-center text-xs " + (feeSelect === 500 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(500)}>
+                <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (feeSelect === 500 ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(500)}>
                     <span>0.05% fee</span>
-                    <span className="text-gray-500 text-[12px]">👍 stable pairs</span>
+                    <span className="text-[10px] mt-1 opacity-60">👍 stable pairs</span>
                 </Button>
-                <Button variant="outline" className={"h-full font-mono px-2 py-3 rounded-md gap-1 flex flex-col items-center justify-center text-xs " + (feeSelect === 3000 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(3000)}>
+                <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (feeSelect === 3000 ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(3000)}>
                     <span>0.3% fee</span>
-                    <span className="text-gray-500 text-[12px]">👍 basic pairs</span>
+                    <span className="text-[10px] mt-1 opacity-60">👍 basic pairs</span>
                 </Button>
-                <Button variant="outline" className={"h-full font-mono px-2 py-3 rounded-md gap-1 flex flex-col items-center justify-center text-xs " + (feeSelect === 10000 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(10000)}>
+                <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (feeSelect === 10000 ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(10000)}>
                     <span>1% fee</span>
-                    <span className="text-gray-500 text-[12px]">👍 exotic pairs</span>
+                    <span className="text-[10px] mt-1 opacity-60">👍 exotic pairs</span>
                 </Button>
             </div>
-            <div className="grid grid-cols-4 gap-2 my-4 h-[50px]">
-                <Button variant="outline" className={"h-full font-mono px-2 py-3 rounded-md gap-1 flex flex-col items-center justify-center text-xs " + (rangePercentage === 1 ? "text-[#00ff9d] border-[#00ff9d]/30" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setRangePercentage(1)}>
+            <div className="grid grid-cols-4 gap-2 mt-4">
+                <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (rangePercentage === 1 ? "text-[#00ff9d] border border-[#00ff9d]/20" : "text-gray-400 border border-[#00ff9d]/10 cursor-pointer")} onClick={() => setRangePercentage(1)}>
                     <span>Full Range</span>
-                    <span className="text-gray-500 text-[12px]">[-100%, ♾️]</span>
+                    <span className="text-[10px] mt-1 opacity-60">[-100%, ♾️]</span>
                 </Button>
-                <Button variant="outline" className={"h-full font-mono px-2 py-3 rounded-md gap-1 flex flex-col items-center justify-center text-xs " + (rangePercentage === 0.15 ? "text-[#00ff9d] border-[#00ff9d]/30" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setRangePercentage(0.15)}>
+                <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (rangePercentage === 0.15 ? "text-[#00ff9d] border border-[#00ff9d]/20" : "text-gray-400 border border-[#00ff9d]/10 cursor-pointer")} onClick={() => setRangePercentage(0.15)}>
                     <span>Wide</span>
-                    <span className="text-gray-500 text-[12px]">[-15%, +15%]</span>
+                    <span className="text-[10px] mt-1 opacity-60">[-15%, +15%]</span>
                 </Button>
-                <Button variant="outline" className={"h-full font-mono px-2 py-3 rounded-md gap-1 flex flex-col items-center justify-center text-xs " + (rangePercentage === 0.075 ? "text-[#00ff9d] border-[#00ff9d]/30" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setRangePercentage(0.075)}>
+                <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (rangePercentage === 0.075 ? "text-[#00ff9d] border border-[#00ff9d]/20" : "text-gray-400 border border-[#00ff9d]/10 cursor-pointer")} onClick={() => setRangePercentage(0.075)}>
                     <span>Narrow</span>
-                    <span className="text-gray-500 text-[12px]">[-7.5%, +7.5%]</span>
+                    <span className="text-[10px] mt-1 opacity-60">[-7.5%, +7.5%]</span>
                 </Button>
-                <Button variant="outline" className={"h-full font-mono px-2 py-3 rounded-md gap-1 flex flex-col items-center justify-center text-xs " + (rangePercentage === 0.02 ? "text-[#00ff9d] border-[#00ff9d]/30" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setRangePercentage(0.02)}>
+                <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (rangePercentage === 0.02 ? "text-[#00ff9d] border border-[#00ff9d]/20" : "text-gray-400 border border-[#00ff9d]/10 cursor-pointer")} onClick={() => setRangePercentage(0.02)}>
                     <span>Degen</span>
-                    <span className="text-gray-500 text-[12px]">[-2%, +2%]</span>
+                    <span className="ttext-[10px] mt-1 opacity-60">[-2%, +2%]</span>
                 </Button>
             </div>
-            {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && pairDetect === '0x0000000000000000000000000000000000000000' &&
-                <div className="rounded-lg border border-[#00ff9d]/10 p-4 flex flex-row items-center justify-between">
-                    <input className="border-none text-white font-mono text-sm text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" placeholder="Initial Price" value={currPrice} onChange={e => setCurrPrice(e.target.value)} />
-                    <span className="text-gray-500 font-mono text-xs">{tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && tokenA.name + '/' + tokenB.name}</span>
+            <div className="space-y-2 mt-4">
+                {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && pairDetect === '0x0000000000000000000000000000000000000000' &&
+                    <div className="rounded-lg border border-[#00ff9d]/10 p-3 flex flex-row items-center justify-between">
+                        <input className="font-mono bg-[#0a0b1e]/50 border-[#00ff9d]/10 text-white placeholder:text-gray-600 focus:border-0 focus:outline focus:outline-0" placeholder="Initial Price" value={currPrice} onChange={e => setCurrPrice(e.target.value)} />
+                        <span className="text-gray-500 font-mono text-xs">{tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && tokenA.name + '/' + tokenB.name}</span>
+                    </div>
+                }
+                <div className="rounded-lg border border-[#00ff9d]/10 p-3 flex flex-row items-center justify-between">
+                    <input className="font-mono bg-[#0a0b1e]/50 border-[#00ff9d]/10 text-white placeholder:text-gray-600 focus:border-0 focus:outline focus:outline-0"  placeholder="Lower Price" value={lowerPrice} onChange={e => {setLowerPrice(e.target.value); setAlignedLowerTick(e.target.value); setRangePercentage(999);}} />
+                    <span className="text-gray-500 font-mono text-xs">{tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && tokenA.name + '/' + tokenB.name + (Number(currPrice) > 0 ? ' (' + Number(lowerPercentage).toFixed(2) + '%)' : '')}</span>
                 </div>
-            }
-            <div className="rounded-lg border border-[#00ff9d]/10 p-4 flex flex-row items-center justify-between">
-                <input className="border-none text-white font-mono text-sm text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto"  placeholder="Lower Price" value={lowerPrice} onChange={e => {setLowerPrice(e.target.value); setAlignedLowerTick(e.target.value); setRangePercentage(999);}} />
-                <span className="text-gray-500 font-mono text-xs">{tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && tokenA.name + '/' + tokenB.name + (Number(currPrice) > 0 ? ' (' + Number(lowerPercentage).toFixed(2) + '%)' : '')}</span>
-            </div>
-            <div className="rounded-lg border border-[#00ff9d]/10 p-4 flex flex-row items-center justify-between">
-                <input className="border-none text-white font-mono text-sm text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto"  placeholder="Upper Price" value={upperPrice} onChange={e => {setUpperPrice(e.target.value); setAlignedUpperTick(e.target.value); setRangePercentage(999);}} />
-                <span className="text-gray-500 font-mono text-xs">{tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && tokenA.name + '/' + tokenB.name + (Number(currPrice) > 0 ? ' (+' + Number(upperPercentage).toFixed(2) + '%)' : '')}</span>
+                <div className="rounded-lg border border-[#00ff9d]/10 p-3 flex flex-row items-center justify-between">
+                    <input className="font-mono bg-[#0a0b1e]/50 border-[#00ff9d]/10 text-white placeholder:text-gray-600 focus:border-0 focus:outline focus:outline-0"  placeholder="Upper Price" value={upperPrice} onChange={e => {setUpperPrice(e.target.value); setAlignedUpperTick(e.target.value); setRangePercentage(999);}} />
+                    <span className="text-gray-500 font-mono text-xs">{tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && tokenA.name + '/' + tokenB.name + (Number(currPrice) > 0 ? ' (+' + Number(upperPercentage).toFixed(2) + '%)' : '')}</span>
+                </div>
             </div>
             {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) <= Number(tokenABalance) && Number(amountB) <= Number(tokenBBalance) ?
                 <Button className="w-full bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4 cursor-pointer z-100" onClick={placeLiquidity}>Add Liquidity</Button> :

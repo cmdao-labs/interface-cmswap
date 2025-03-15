@@ -340,7 +340,23 @@ body::-webkit-scrollbar { display: none; }
  @keyframes loading {
     0% { transform: translateX(-100%); }
     100% { transform: translateX(100%); }
-}  
+}
+
+.pixelated {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+  
+@keyframes float2 {
+    0%,
+    100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+  
+.floating {
+    animation: float2 3s ease-in-out infinite;
+}
 
 /* Wood chopping game animations */
 @keyframes chop {
