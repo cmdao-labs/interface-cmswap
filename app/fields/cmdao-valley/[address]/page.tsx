@@ -8,7 +8,7 @@ import { Description, Dialog, DialogPanel, DialogTitle, DialogBackdrop } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Button } from '@/components/ui/button'
-import { v2routerAddr, v2routerCreatedAt, v2routerContract, FieldsHook001Contract, nftIndex2Addr, nftIndex2CreatedAt, nftIndex3Addr, nftIndex3CreatedAt, nftIndex4Addr, nftIndex4CreatedAt, nftIndex5Addr, nftIndex5CreatedAt, publicClient, erc721ABI } from '@/app/lib/8899'
+import { v2routerAddr, v2routerCreatedAt, v2routerContract, FieldsHook001Contract, nftIndex1Addr, nftIndex1CreatedAt, nftIndex2Addr, nftIndex2CreatedAt, nftIndex3Addr, nftIndex3CreatedAt, nftIndex4Addr, nftIndex4CreatedAt, publicClient, erc721ABI } from '@/app/lib/8899'
 import { config } from '@/app/config'
 import Mining from '@/app/components/Mining'
 
@@ -21,7 +21,7 @@ export default function Page() {
     let { address, chain } = useAccount()
     const [addr, setAddr] = React.useState(address)
     const [hookSelect, setHookSelect] = React.useState(0)
-    const [nftIndexSelect, setNftIndexSelect] = React.useState(2)
+    const [nftIndexSelect, setNftIndexSelect] = React.useState(1)
     const [globNftAddr, setGlobNftAddr] = React.useState<'0xstring'>()
     const [nftIndexHashRate, setNftIndexHashRate] = React.useState(BigInt(0))
     const [nft, setNft] = React.useState<{ 
@@ -51,7 +51,10 @@ export default function Page() {
 
         let nftAddr = '0x0' as '0xstring'
         let nftCreatedAt: bigint
-        if (nftIndexSelect === 2) {
+        if (nftIndexSelect === 1) {
+            nftAddr = nftIndex1Addr as '0xstring'
+            nftCreatedAt = nftIndex1CreatedAt
+        } else if (nftIndexSelect === 2) {
             nftAddr = nftIndex2Addr as '0xstring'
             nftCreatedAt = nftIndex2CreatedAt
         } else if (nftIndexSelect === 3) {
@@ -60,9 +63,6 @@ export default function Page() {
         } else if (nftIndexSelect === 4) {
             nftAddr = nftIndex4Addr as '0xstring'
             nftCreatedAt = nftIndex4CreatedAt
-        } else if (nftIndexSelect === 5) {
-            nftAddr = nftIndex5Addr as '0xstring'
-            nftCreatedAt = nftIndex5CreatedAt
         }
         // add condition here when listing more NFT
         setGlobNftAddr(nftAddr)
@@ -93,7 +93,7 @@ export default function Page() {
             })
             let myNftStaked = []
             const checkPeripheryAllowNftStaked = await readContracts(config, {
-                contracts: checkedMyNftStaking.map(obj => ({ ...v2routerContract, functionName: 'stakedUseByPeriphery', args: [BigInt(2), BigInt(nftIndexSelect), obj] }))
+                contracts: checkedMyNftStaking.map(obj => ({ ...v2routerContract, functionName: 'stakedUseByPeriphery', args: [BigInt(1), BigInt(nftIndexSelect), obj] }))
             })
             const tokenUriNftStaked = await readContracts(config, {
                 contracts: checkedMyNftStaking.map(obj => ({ ...erc721ABI, address: nftAddr, functionName: 'tokenURI', args: [obj] }))
@@ -144,7 +144,7 @@ export default function Page() {
             })
             let myNftHolding = []
             const checkPeripheryAllowNftHolding = await readContracts(config, {
-                contracts: filterNftHolding.map(obj => ({ ...v2routerContract, functionName: 'stakedUseByPeriphery', args: [BigInt(2), BigInt(nftIndexSelect), obj] }))
+                contracts: filterNftHolding.map(obj => ({ ...v2routerContract, functionName: 'stakedUseByPeriphery', args: [BigInt(1), BigInt(nftIndexSelect), obj] }))
             })
             const tokenUriNftHolding = await readContracts(config, {
                 contracts: filterNftHolding.map(obj => ({ ...erc721ABI, address: nftAddr, functionName: 'tokenURI', args: [obj] }))
@@ -269,7 +269,7 @@ export default function Page() {
         try {
             const nftManipulation = nft?.filter(obj => { return obj.isPeripheryAllow === '0' })
             for (let i = 0; nftManipulation !== undefined && i <= nftManipulation.length - 1; i++) {
-                const h = await writeContract(config, { ...v2routerContract, functionName: 'allowStakedUseByPeriphery', args: [BigInt(2), BigInt(nftIndexSelect), nftManipulation[i].Id as bigint] })
+                const h = await writeContract(config, { ...v2routerContract, functionName: 'allowStakedUseByPeriphery', args: [BigInt(1), BigInt(nftIndexSelect), nftManipulation[i].Id as bigint] })
                 if (i === nftManipulation.length - 1) {
                     await waitForTransactionReceipt(config, { hash: h })
                     setTxupdate(h)
@@ -284,7 +284,7 @@ export default function Page() {
     const revokePeriphery = async (_nftId: bigint) => {
         setIsLoading(true)
         try {
-            const { request } = await simulateContract(config, { ...v2routerContract, functionName: 'revokeStakedUseByPeriphery', args: [BigInt(2), BigInt(nftIndexSelect), _nftId] })
+            const { request } = await simulateContract(config, { ...v2routerContract, functionName: 'revokeStakedUseByPeriphery', args: [BigInt(1), BigInt(nftIndexSelect), _nftId] })
             const h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
@@ -298,7 +298,7 @@ export default function Page() {
         try {
             const nftManipulation = nft?.filter(obj => { return obj.isPeripheryAllow !== '0' })
             for (let i = 0; nftManipulation !== undefined && i <= nftManipulation.length - 1; i++) {
-                const h = await writeContract(config, { ...v2routerContract, functionName: 'revokeStakedUseByPeriphery', args: [BigInt(2), BigInt(nftIndexSelect), nftManipulation[i].Id as bigint] })
+                const h = await writeContract(config, { ...v2routerContract, functionName: 'revokeStakedUseByPeriphery', args: [BigInt(1), BigInt(nftIndexSelect), nftManipulation[i].Id as bigint] })
                 if (i === nftManipulation.length - 1) {
                     await waitForTransactionReceipt(config, { hash: h })
                     setTxupdate(h)
@@ -314,7 +314,7 @@ export default function Page() {
     const [nftImgMiner, setNftImgMiner] = React.useState<string>()
     const checkPeripheryAllowNftStaked_hook = async(_nftIdMiner: bigint) => {
         const res = await readContracts(config, {
-            contracts: [{ ...v2routerContract, functionName: 'stakedUseByPeriphery', args: [BigInt(9), BigInt(nftIndexSelect), _nftIdMiner] }]
+            contracts: [{ ...v2routerContract, functionName: 'stakedUseByPeriphery', args: [BigInt(2), BigInt(nftIndexSelect), _nftIdMiner] }]
         })
         return Number(res[0].result) === 0
     }
@@ -338,11 +338,11 @@ export default function Page() {
                 <span className='text-7xl p-3 rounded-xl inset-0 bg-black/50'>CMDAO Valley</span>
             </div>
             <div className='w-full mt-14 gap-10 flex flex-col items-center justify-center text-xs xl:text-sm'>          
-                <ToggleGroup type="single" defaultValue='2' className='w-3/4 bg-white/5'>
-                    <ToggleGroupItem className='cursor-pointer' value='2' onClick={() => setNftIndexSelect(2)}>CommuDAO Dungeon</ToggleGroupItem>
-                    <ToggleGroupItem className='cursor-pointer' value='4' onClick={() => setNftIndexSelect(4)}>CM Hexa Cat Meaw</ToggleGroupItem>
-                    <ToggleGroupItem className='cursor-pointer' value='5' onClick={() => setNftIndexSelect(5)}>CM Ory Cat Meaw</ToggleGroupItem>
-                    <ToggleGroupItem className='cursor-pointer' value='3' onClick={() => setNftIndexSelect(3)}>The Mythical Guardians</ToggleGroupItem>
+                <ToggleGroup type="single" defaultValue='1' className='w-3/4 bg-white/5'>
+                    <ToggleGroupItem className='cursor-pointer' value='1' onClick={() => setNftIndexSelect(1)}>CommuDAO Dungeon</ToggleGroupItem>
+                    <ToggleGroupItem className='cursor-pointer' value='3' onClick={() => setNftIndexSelect(3)}>CM Hexa Cat Meaw</ToggleGroupItem>
+                    <ToggleGroupItem className='cursor-pointer' value='4' onClick={() => setNftIndexSelect(4)}>CM Ory Cat Meaw</ToggleGroupItem>
+                    <ToggleGroupItem className='cursor-pointer' value='2' onClick={() => setNftIndexSelect(2)}>The Mythical Guardians</ToggleGroupItem>
                     {/* add nftIndexSelect switch button here */}
                 </ToggleGroup>
                 <div className='w-full my-2 px-10 border-[0.5px] border-solid border-gray-800' />
@@ -378,7 +378,7 @@ export default function Page() {
                         </div>
                     </TabsContent>
                     <TabsContent value='1'>
-                        {nftIndexSelect === 2 ?
+                        {nftIndexSelect === 1 ?
                             <Mining setTxupdate={setTxupdate} setErrMsg={setErrMsg} nftIdMiner={nftIdMiner} nftImgMiner={nftImgMiner} addr={addr} /> :
                             <span>The hook does not support this NFT collection</span>
                         }
@@ -481,10 +481,10 @@ export default function Page() {
                                                                     <Button variant="destructive" className="cursor-pointer" onClick={() => {unstakeNft(obj.Id as bigint)}}>UNSTAKE</Button> :
                                                                     <Button variant="secondary" className="cursor-pointer" onClick={() => {stakeNft(obj.Id as bigint)}}>STAKE</Button>
                                                                 }
-                                                                {hookSelect === 0 && obj.isPeripheryAllow === '0' && obj.isStaked && <Button variant="secondary" className="cursor-pointer" onClick={() => {allowPeriphery(obj.Id as bigint, 2)}}>ACTIVATE POINT</Button>}
+                                                                {hookSelect === 0 && obj.isPeripheryAllow === '0' && obj.isStaked && <Button variant="secondary" className="cursor-pointer" onClick={() => {allowPeriphery(obj.Id as bigint, 1)}}>ACTIVATE POINT</Button>}
                                                                 {hookSelect === 0 && obj.isPeripheryAllow !== '0' && obj.isStaked && <Button variant="destructive" className="cursor-pointer" onClick={() => {revokePeriphery(obj.Id as bigint)}}>DEACTIVATE POINT</Button>}
-                                                                {hookSelect === 1 && nftIndexSelect === 2 && obj.isStaked && 
-                                                                    <Button variant="outline" className={"cursor-pointer " + (Number(nftIdMiner) === Number(obj.Id) ? "bg-emerald-300 text-black" : "")} onClick={async () => {if (await checkPeripheryAllowNftStaked_hook(obj.Id as bigint)) {allowPeriphery(obj.Id as bigint, 9);} setNftIdMiner(obj.Id as bigint); setNftImgMiner(obj.Image);}}>CHOOSE MINER</Button>
+                                                                {hookSelect === 1 && nftIndexSelect === 1 && obj.isStaked && 
+                                                                    <Button variant="outline" className={"cursor-pointer " + (Number(nftIdMiner) === Number(obj.Id) ? "bg-emerald-300 text-black" : "")} onClick={async () => {if (await checkPeripheryAllowNftStaked_hook(obj.Id as bigint)) {allowPeriphery(obj.Id as bigint, 2);} setNftIdMiner(obj.Id as bigint); setNftImgMiner(obj.Image);}}>CHOOSE MINER</Button>
                                                                 }
                                                             </div>
                                                         </>

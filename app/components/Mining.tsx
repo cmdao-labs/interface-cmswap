@@ -82,10 +82,10 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
                     try {
                         const { request } = await simulateContract(config, {
                             chainId: 8899,
-                            address: "0x8652549D215E3c4e30fe33faa717a566E4f6f00C",
+                            address: "0x2d182a42A7c2219D920Fa30110504C44BCfE0a21",
                             abi: FieldsHook002,
                             functionName: "submitPoW",
-                            args: [BigInt(2), nftIdMiner as bigint, BigInt(nonce), hash as `0x${string}`]
+                            args: [BigInt(1), nftIdMiner as bigint, BigInt(nonce), hash as `0x${string}`]
                         })
                         const h = await writeContract(config, request)
                         await waitForTransactionReceipt(config, { hash: h })
@@ -185,10 +185,10 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
             try {
                 const { request } = await simulateContract(config, {
                     chainId: 8899,
-                    address: "0x8652549D215E3c4e30fe33faa717a566E4f6f00C",
+                    address: "0x2d182a42A7c2219D920Fa30110504C44BCfE0a21",
                     abi: FieldsHook002,
                     functionName: "submitPoW",
-                    args: [BigInt(2), nftIdMiner as bigint, BigInt(nonce), hash as `0x${string}`]
+                    args: [BigInt(1), nftIdMiner as bigint, BigInt(nonce), hash as `0x${string}`]
                 })
                 const h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
@@ -295,22 +295,22 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
     React.useEffect(() => {
         const thefetch = async () => {
             const blockNumber = Number(await publicClient.readContract({
-                address: "0x8652549D215E3c4e30fe33faa717a566E4f6f00C",
+                address: "0x2d182a42A7c2219D920Fa30110504C44BCfE0a21",
                 abi: FieldsHook002,
                 functionName: "currentBlock"
             }))
             setCurrBlock(String(blockNumber))
             const difficulty = Number(await publicClient.readContract({
-                address: "0x8652549D215E3c4e30fe33faa717a566E4f6f00C",
+                address: "0x2d182a42A7c2219D920Fa30110504C44BCfE0a21",
                 abi: FieldsHook002,
                 functionName: "currentDifficulty"
             }))
             setDifficulty(String(difficulty))
             const eventBlockchain = (await publicClient.getContractEvents({
                 abi: FieldsHook002,
-                address: "0x8652549D215E3c4e30fe33faa717a566E4f6f00C",
+                address: "0x2d182a42A7c2219D920Fa30110504C44BCfE0a21",
                 eventName: "BlockMined",
-                fromBlock: BigInt(4968595),
+                fromBlock: BigInt(5084777),
                 toBlock: "latest"
             })).map(obj => {
                 return obj.args
@@ -331,7 +331,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
             setLeaderboard(_leaderboard)
             setDifficulty(String(difficulty))
             const woodBal = formatEther(await publicClient.readContract({
-                address: "0x8652549D215E3c4e30fe33faa717a566E4f6f00C",
+                address: "0x2d182a42A7c2219D920Fa30110504C44BCfE0a21",
                 abi: erc20Abi,
                 functionName: "balanceOf",
                 args: [addr as `0x${string}`]
@@ -348,7 +348,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
             setConsoleMsg("Please select a miner first")
             return
         }
-        const minerDiff = Number(difficulty) > (Number(nftIdMiner) % 100000) / 100 ? Number(difficulty) - (Number(nftIdMiner) % 100000) / 100 : 1
+        const minerDiff = Number(difficulty) > (Number(nftIdMiner) % 100000) / 1000 ? Number(difficulty) - (Number(nftIdMiner) % 100000) / 1000 : 1
         if (useMultiThreaded) {
             mineBlockMultiThreaded(minerDiff)
         } else {
@@ -438,7 +438,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
                             </div>
                             <div>
                                 Miner Difficulty:{" "}
-                                <span className="text-white">{Number(difficulty) > (Number(nftIdMiner) % 100000) / 100 ? Number(difficulty) - (Number(nftIdMiner) % 100000) / 100 : 1}</span>
+                                <span className="text-white">{Number(difficulty) > (Number(nftIdMiner) % 100000) / 1000 ? Number(difficulty) - (Number(nftIdMiner) % 100000) / 1000 : 1}</span>
                             </div>
                         </div>
                         <div className="w-full gap-2 flex flex-row items-center justify-center">
