@@ -84,7 +84,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, n
                     try {
                         const { request } = await simulateContract(config, {
                             chainId: 8899,
-                            address: "0x2d182a42A7c2219D920Fa30110504C44BCfE0a21",
+                            address: "0x8339E417ED03cf4733f6FcFB9D295bE588fe2156",
                             abi: FieldsHook002,
                             functionName: "submitPoW",
                             args: [BigInt(1), nftIdMiner as bigint, BigInt(nonce), hash as `0x${string}`]
@@ -189,7 +189,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, n
             try {
                 const { request } = await simulateContract(config, {
                     chainId: 8899,
-                    address: "0x2d182a42A7c2219D920Fa30110504C44BCfE0a21",
+                    address: "0x8339E417ED03cf4733f6FcFB9D295bE588fe2156",
                     abi: FieldsHook002,
                     functionName: "submitPoW",
                     args: [BigInt(1), nftIdMiner as bigint, BigInt(nonce), hash as `0x${string}`]
@@ -300,22 +300,22 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, n
     React.useEffect(() => {
         const thefetch = async () => {
             const blockNumber = Number(await publicClient.readContract({
-                address: "0x2d182a42A7c2219D920Fa30110504C44BCfE0a21",
+                address: "0x8339E417ED03cf4733f6FcFB9D295bE588fe2156",
                 abi: FieldsHook002,
                 functionName: "currentBlock"
             }))
             setCurrBlock(String(blockNumber))
             const difficulty = Number(await publicClient.readContract({
-                address: "0x2d182a42A7c2219D920Fa30110504C44BCfE0a21",
+                address: "0x8339E417ED03cf4733f6FcFB9D295bE588fe2156",
                 abi: FieldsHook002,
                 functionName: "currentDifficulty"
             }))
             setDifficulty(String(difficulty))
             const eventBlockchain = (await publicClient.getContractEvents({
                 abi: FieldsHook002,
-                address: "0x2d182a42A7c2219D920Fa30110504C44BCfE0a21",
+                address: "0x8339E417ED03cf4733f6FcFB9D295bE588fe2156",
                 eventName: "BlockMined",
-                fromBlock: BigInt(5084777),
+                fromBlock: BigInt(5085341),
                 toBlock: "latest"
             })).map(obj => {
                 return obj.args
@@ -336,7 +336,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, n
             setLeaderboard(_leaderboard)
             setDifficulty(String(difficulty))
             const woodBal = formatEther(await publicClient.readContract({
-                address: "0x2d182a42A7c2219D920Fa30110504C44BCfE0a21",
+                address: "0x8339E417ED03cf4733f6FcFB9D295bE588fe2156",
                 abi: erc20Abi,
                 functionName: "balanceOf",
                 args: [addr as `0x${string}`]

@@ -24,10 +24,10 @@ export const erc20ABI = { chainId: 8899, abi: erc20Abi } as const
 export const v3PoolABI = { chainId: 8899, abi: v3Pool } as const
 
 // fields
-export const v2routerAddr = '0x83269693E4bff2D8A2982Aa7595ea94ECF74F9B4' as '0xstring'
-export const v2routerCreatedAt = BigInt(5084694)
+export const v2routerAddr = '0x8E83E1Bb0E1aF049Ab4748F328Ce6760bd7ae431' as '0xstring'
+export const v2routerCreatedAt = BigInt(5085287)
 export const v2routerContract = { chainId: 8899, abi: FieldsV2RouterAbi, address: v2routerAddr } as const
-export const hook001Addr = '0x705CEc6437AF7eD9AFE20dEe8089720f70948c82' as '0xstring'
+export const hook001Addr = '0xbDD70Fd36f9395Ef929178C026967021152C885B' as '0xstring'
 export const FieldsHook001Contract = { chainId: 8899, abi: FieldsHook001, address: hook001Addr } as const
 export const nftIndex1Addr = '0x20724DC1D37E67B7B69B52300fDbA85E558d8F9A' as '0xstring'
 export const nftIndex1CreatedAt = BigInt(335027)
