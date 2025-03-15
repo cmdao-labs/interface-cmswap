@@ -379,7 +379,7 @@ export default function Page() {
                     </TabsContent>
                     <TabsContent value='1'>
                         {nftIndexSelect === 1 ?
-                            <Mining setTxupdate={setTxupdate} setErrMsg={setErrMsg} nftIdMiner={nftIdMiner} nftImgMiner={nftImgMiner} addr={addr} /> :
+                            <Mining setTxupdate={setTxupdate} setErrMsg={setErrMsg} setIsLoading={setIsLoading} nftIdMiner={nftIdMiner} nftImgMiner={nftImgMiner} addr={addr} /> :
                             <span>The hook does not support this NFT collection</span>
                         }
                     </TabsContent>

@@ -11,9 +11,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Progress } from '@/components/ui/progress'
 import WoodChoppingGame from './wood-chopping-game'
 
-export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nftImgMiner, addr }: {
+export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, nftIdMiner, nftImgMiner, addr }: {
     setTxupdate: React.Dispatch<React.SetStateAction<string>>
     setErrMsg: React.Dispatch<React.SetStateAction<String | null>>
+    setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
     nftIdMiner: bigint | undefined
     nftImgMiner: string | undefined
     addr: `0x${string}` | undefined
@@ -75,6 +76,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
                     )
                 )
                 if (BigInt(hash) < target) {
+                    setIsLoading(true)
                     const endTime = Date.now()
                     const elapsedTime = endTime - startTime
                     const hashRate = i / (elapsedTime / 1000)
@@ -94,6 +96,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
                         setErrMsg(String(e))
                     }
                     setIsMining(false)
+                    setIsLoading(false)
                     return
                 }
             }
@@ -178,6 +181,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
         const handleSuccess = async (nonce: number, hash: string) => {
             if (foundSolution) return // Prevent multiple submissions
             foundSolution = true
+            setIsLoading(true)
             const endTime = Date.now()
             const elapsedTime = endTime - startTime
             const hashRate = completedIterations / (elapsedTime / 1000)
@@ -198,6 +202,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
             }
             setShouldStopMining(true)
             setIsMining(false)
+            setIsLoading(false)
         }
         // Function to handle completion of all threads
         const handleAllComplete = () => {
@@ -493,8 +498,8 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, nftIdMiner, nft
                         )}
                     </>
                 )}
-                <div className="w-full max-w-md p-4 bg-black/70 rounded-lg">
-                    <p className='my-3'>{consoleMsg}</p>
+                <div className="w-full max-w-md py-2 px-4 bg-black/70 rounded-lg">
+                    <p className='my-2'>{consoleMsg}</p>
                     {isMining &&
                         <div className="grid grid-cols-2 gap-2 text-xs mb-4">
                             <div className="text-gray-400">Est. iteration time:</div>
