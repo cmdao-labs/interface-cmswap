@@ -358,6 +358,25 @@ body::-webkit-scrollbar { display: none; }
     animation: float2 3s ease-in-out infinite;
 }
 
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+  
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+  
+@keyframes subtle-zoom {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+  
+.animate-subtle-zoom {
+    animation: subtle-zoom 20s infinite ease-in-out;
+}
+
 /* Wood chopping game animations */
 @keyframes chop {
     0% {

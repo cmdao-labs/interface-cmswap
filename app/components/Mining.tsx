@@ -9,7 +9,20 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Progress } from '@/components/ui/progress'
+import { Play, Pause, Settings, ChevronDown, ChevronUp, RefreshCw } from "lucide-react"
+import { cn } from "@/lib/utils"
 import WoodChoppingGame from './wood-chopping-game'
+
+function Pickaxe({ className }: { className?: string }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M14 10l5.5-5.5a1.5 1.5 0 0 0-4-4L10 6" />
+            <path d="M16 2l-6 6" />
+            <path d="M9 10l-7 7a1 1 0 0 0 0 1.4l.6.6a1 1 0 0 0 1.4 0l7-7" />
+            <path d="M17 14l-1 1" />
+        </svg>
+    )
+}
 
 export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, nftIdMiner, nftImgMiner, addr }: {
     setTxupdate: React.Dispatch<React.SetStateAction<string>>
@@ -20,6 +33,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, n
     addr: `0x${string}` | undefined
 }) {
     const [isMining, setIsMining] = React.useState(false)
+    const [showAdvanced, setShowAdvanced] = React.useState(false)
     const [miningProgress, setMiningProgress] = React.useState(0)
     const [shouldStopMining, setShouldStopMining] = React.useState(false)
     const [threadCount, setThreadCount] = React.useState(4)
@@ -112,7 +126,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, n
                 const updatedIterationTime = formatEstimatedTime(estimatedRemainingSeconds)
                 const updatedSolutionTime = formatEstimatedTime(estimatedTotalSeconds)
                 setTimeEstimates({ iterationTime: updatedIterationTime, solutionTime: updatedSolutionTime })
-                setConsoleMsg(`Mining in progress... ⚡ Hash rate: ${Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(currentHashRate)}H/s`)
+                setConsoleMsg(`⚡ Hash rate: ${Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(currentHashRate)}H/s`)
             }
             if (currentIteration < totalIterations && !shouldStopMining) {
                 // Allow UI to update before continuing
@@ -174,7 +188,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, n
                 const updatedSolutionTime = formatEstimatedTime(estimatedTotalSeconds)
                 setTimeEstimates({ iterationTime: updatedIterationTime, solutionTime: updatedSolutionTime })
                 setConsoleMsg(
-                `Mining in progress... ⚡ Hash rate: ${Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(currentHashRate)}H/s`)
+                `⚡ Hash rate: ${Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(currentHashRate)}H/s`)
             }
         }
         // Function to handle a successful mining result
@@ -376,140 +390,217 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, n
 
     return (
         <>
-            <div className="w-full h-[95vh] rounded-lg overflow-hidden gap-4 flex flex-col items-center justify-start bg-neutral-900 text:xs xl:text-sm">
-                <div className="w-full h-[400px] p-8 gap-6 flex flex-row flex-wrap justify-center bg-[url('https://gateway.commudao.xyz/ipfs/bafybeib5stifg5jcqqxsy4kbwwb6xovei5biyspuzhlwrsng4i62ppwpwy')] bg-cover overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-neutral-800 [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
-                    <ScrollArea className="w-full xl:w-1/3 h-full p-4 bg-black/90">
-                        <Table>
-                            <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[100px]">Block</TableHead>
-                                <TableHead>Miner owner</TableHead>
-                                <TableHead className="text-right">Base difficulty</TableHead>
-                            </TableRow>
-                            </TableHeader>
-                            {blockchain !== undefined && (
-                                <TableBody>
-                                    {blockchain.map((obj, index) => {return (
-                                        <TableRow key={index}>
-                                        <TableCell>{String(obj.solvedBlockNumber)}</TableCell>
-                                        <TableCell>{obj.minerOwner?.slice(0, 6) + "..." + obj.minerOwner?.slice(-4)}</TableCell>
-                                        <TableCell className="text-right">{String(obj.solvedBaseDifficulty)}</TableCell>
-                                        </TableRow>
-                                    )})}
-                                </TableBody>
-                            )}
-                        </Table>
-                    </ScrollArea>
-                    <ScrollArea className="w-full xl:w-1/3 h-full p-4 bg-black/90">
-                        <Table>
-                            <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[100px]">Rank</TableHead>
-                                <TableHead>Miner owner</TableHead>
-                                <TableHead className="text-right">Block creation</TableHead>
-                            </TableRow>
-                            </TableHeader>
-                            {leaderboard !== undefined && (
-                                <TableBody>
-                                    {leaderboard.map((obj, index) => {return (
-                                        <TableRow key={index}>
-                                        <TableCell>{String(index + 1)}</TableCell>
-                                        <TableCell>{obj.minerSort?.slice(0, 6) + "..." + obj.minerSort?.slice(-4)}</TableCell>
-                                        <TableCell className="text-right">{obj.value}</TableCell>
-                                        </TableRow>
-                                    )})}
-                                </TableBody>
-                            )}
-                        </Table>
-                    </ScrollArea>
-                </div>
-                <div className="w-2/3 gap-4 xl:gap-10 flex flex-row flex-wrap items-center justify-center text-gray-500">
-                    <div className='gap-2 flex flex-row'>
-                        <span>
-                            Reward Balance:{" "}
-                            <span className="text-white">{Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(Number(woodBalance))}</span>
-                        </span>
-                        <img alt="" src="https://gateway.commudao.xyz/ipfs/bafkreidldk7skx44xwstwat2evjyp4u5oy5nmamnrhurqtjapnwqzwccd4" height={20} width={20} />
+            <main className="container mx-auto p-4 md:p-6 mt-16 relative z-10">
+                <div className="bg-black text-white font-mono">
+                    <div className="relative">
+                    <div className="mb-8">
+                        <div className="block bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-6 transition-transform hover:scale-[1.01] hover:bg-gray-900">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-green-900/30 border border-green-900/50 rounded-md flex items-center justify-center"><Pickaxe className="h-5 w-5 text-green-400" /></div>
+                                    <div>
+                                        <h3 className="text-lg font-medium">Solo Mining</h3>
+                                        <p className="text-sm text-gray-400" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div>Current Block: <span className="text-white">{currBlock}</span></div>
-                    <div>Base Difficulty: <span className="text-white">{difficulty}</span></div>
-                </div>
-                {nftIdMiner !== undefined && (
-                    <>
-                        <div className="my-3 w-2/3 gap-4 xl:gap-10 flex flex-row flex-wrap items-center justify-center text-gray-500">
-                            <div className="gap-3 flex flex-row items-center justify-center">
-                                <span>MINER ID:</span>
-                                <span>{String(nftIdMiner)}</span>
-                            </div>
-                            <div>
-                                Miner Difficulty:{" "}
-                                <span className="text-white">{Number(difficulty) > (Number(nftIdMiner) % 100000) / 1000 ? Number(difficulty) - (Number(nftIdMiner) % 100000) / 1000 : 1}</span>
-                            </div>
-                        </div>
-                        <div className="w-full gap-2 flex flex-row items-center justify-center">
-                            {!isMining ? 
-                                <>
-                                    <Button className="cursor-pointer hover:bg-emerald-300" onClick={mining}>MINE FOR</Button>
-                                    <input
-                                        className="w-[100px] px-6 py-2 bg-neutral-800 text-white text-sm leading-tight focus:outline-none"
-                                        value={mineForLoop}
-                                        onChange={(e) => setMineForLoop(e.target.value)}
-                                    />
-                                    <span className="text-gray-500">M NONCE</span>
-                                    <Button variant="outline" size="sm" className="ml-4" onClick={() => setUseMultiThreaded(!useMultiThreaded)}>
-                                        {useMultiThreaded ? "Using Multi-Threaded" : "Using Single-Threaded"}
-                                    </Button>
-                                </> : 
-                                <Button className="cursor-pointer hover:bg-red-300 bg-red-500" onClick={stopMining}>STOP MINING</Button>
-                            }
-                        </div>
-                        <div className="w-full max-w-md p-4 bg-black/50 rounded-lg">
-                            <h3 className="text-sm font-medium mb-2">Advanced Settings</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs text-gray-400 block mb-1">Thread Count</label>
-                                    <select
-                                        className="w-full bg-neutral-800 text-white text-sm p-1 rounded"
-                                        value={threadCount}
-                                        onChange={e => setThreadCount(Number(e.target.value))}
-                                        disabled={isMining}
-                                    >
-                                        {[2, 4, 6, 8, 12, 16].map((count) => (<option key={count} value={count}>{count}</option>))}
-                                    </select>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div className="h-[400px] bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
+                                <div className="p-3 border-b border-gray-800 flex items-center">
+                                    <span className="w-1 h-4 bg-green-500 rounded-full mr-2" />
+                                    <h3 className="text-sm font-medium">Recent Blocks</h3>
                                 </div>
-                                <div>
-                                    <label className="text-xs text-gray-400 block mb-1">Chunk Size</label>
-                                    <select
-                                        className="w-full bg-neutral-800 text-white text-sm p-1 rounded"
-                                        value={chunkSize}
-                                        onChange={(e) => setChunkSize(Number(e.target.value))}
-                                        disabled={isMining}
-                                    >
-                                        {[10000, 25000, 50000, 100000].map((size) => (<option key={size} value={size}>{size}</option>))}
-                                    </select>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="bg-gray-900">
+                                                <th className="px-4 py-2 text-left text-xs text-gray-400">Block</th>
+                                                <th className="px-4 py-2 text-left text-xs text-gray-400">Miner owner</th>
+                                                <th className="px-4 py-2 text-left text-xs text-gray-400">Base difficulty</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {blockchain !== undefined &&
+                                                <>
+                                                    {blockchain.map((block, index) => (
+                                                        <tr key={index} className="border-t border-gray-800 hover:bg-gray-800/30">
+                                                            <td className="px-4 py-2 text-sm">{block.solvedBlockNumber}</td>
+                                                            <td className="px-4 py-2 text-sm font-mono text-green-400">{block.minerOwner?.slice(0, 6) + "..." + block.minerOwner?.slice(-4)}</td>
+                                                            <td className="px-4 py-2 text-sm">{block.solvedBaseDifficulty}</td>
+                                                        </tr>
+                                                    ))}
+                                                </>
+                                            }
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
-                        </div>
-                        {isMining && (
-                            <div className="w-2/3 space-y-2">
-                                <Progress value={miningProgress} className="h-2 w-full" />
-                                <p className="text-center text-xs text-gray-400">{miningProgress.toFixed(1)}% complete</p>
+                            <div className="h-[400px] bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
+                                <div className="p-3 border-b border-gray-800 flex items-center">
+                                <span className="w-1 h-4 bg-yellow-500 rounded-full mr-2"></span>
+                                <h3 className="text-sm font-medium">Miner Rankings</h3>
+                                </div>
+                                <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                    <tr className="bg-gray-900">
+                                        <th className="px-4 py-2 text-left text-xs text-gray-400">Rank</th>
+                                        <th className="px-4 py-2 text-left text-xs text-gray-400">Miner owner</th>
+                                        <th className="px-4 py-2 text-left text-xs text-gray-400">Block creation</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {leaderboard !== undefined &&
+                                        <>
+                                            {leaderboard.map((rank, index) => (
+                                                <tr key={index} className="border-t border-gray-800 hover:bg-gray-800/30">
+                                                <td className="px-4 py-2 text-sm">
+                                                    <span
+                                                        className={cn(
+                                                            "inline-flex items-center justify-center w-6 h-6 rounded-full text-xs",
+                                                            index === 0
+                                                            ? "bg-yellow-500/20 text-yellow-400"
+                                                            : index === 1
+                                                                ? "bg-gray-500/20 text-gray-300"
+                                                                : index === 2
+                                                                ? "bg-amber-700/20 text-amber-600"
+                                                                : "bg-gray-800",
+                                                        )}
+                                                    >
+                                                        {String(index + 1)}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-2 text-sm font-mono text-green-400">{rank.minerSort?.slice(0, 6) + "..." + rank.minerSort?.slice(-4)}</td>
+                                                <td className="px-4 py-2 text-sm">{rank.value}</td>
+                                                </tr>
+                                            ))}
+                                        </>
+                                    }
+                                    </tbody>
+                                </table>
+                                </div>
                             </div>
-                        )}
-                    </>
-                )}
-                <div className="w-full max-w-md py-2 px-4 bg-black/70 rounded-lg">
-                    <p className='my-2'>{consoleMsg}</p>
-                    {isMining &&
-                        <div className="grid grid-cols-2 gap-2 text-xs mb-4">
-                            <div className="text-gray-400">Est. iteration time:</div>
-                            <div className="text-white">{timeEstimates.iterationTime}</div>
-                            <div className="text-gray-400">Est. time to solve:</div>
-                            <div className="text-white">{timeEstimates.solutionTime}</div>
                         </div>
-                    }
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-4">
+                                <div className="text-xs text-gray-400 mb-1">Reward Balance</div>
+                                    <div className="flex items-center">
+                                    <span className="text-xl font-light">{Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(Number(woodBalance))}</span>
+                                    <span className="text-yellow-500 mx-2">⦿</span>
+                                    <img alt="" src="https://gateway.commudao.xyz/ipfs/bafkreidldk7skx44xwstwat2evjyp4u5oy5nmamnrhurqtjapnwqzwccd4" height={20} width={20} />
+                                </div>
+                            </div>
+                            <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-4">
+                                <div className="text-xs text-gray-400 mb-1">Current Block</div>
+                                <div className="text-xl font-light">{currBlock}</div>
+                            </div>
+                            <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-4">
+                                <div className="text-xs text-gray-400 mb-1">Base Difficulty</div>
+                                <div className="text-xl font-light">{difficulty}</div>
+                            </div>
+                            <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-4">
+                                <div className="text-xs text-gray-400 mb-1">Miner Difficulty</div>
+                                <div className="text-xl font-light">{nftIdMiner !== undefined ? (Number(difficulty) > (Number(nftIdMiner) % 100000) / 1000 ? Number(difficulty) - (Number(nftIdMiner) % 100000) / 1000 : 1) : '--'}</div>
+                            </div>
+                        </div>                      
+                        <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-4 mb-6">
+                            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                                <div>
+                                    <div className="text-xs text-gray-400 mb-1">Miner ID</div>
+                                    <div className="text-sm font-mono">{nftIdMiner !== undefined ? String(nftIdMiner) : '--'}</div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center">
+                                        <div className="px-4 py-2 bg-green-700 rounded-l-md text-sm font-medium">MINE FOR</div>
+                                        <input
+                                            type="number"
+                                            value={mineForLoop}
+                                            onChange={(e) => setMineForLoop(e.target.value)}
+                                            className="w-16 px-3 py-2 bg-gray-800 border-y border-r border-gray-700 rounded-r-md text-sm focus:outline-none"
+                                        />
+                                    </div>
+                                    <div className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-sm">M NONCE</div>
+                                    <div className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-sm flex items-center gap-2 cursor-pointer" onClick={() => setUseMultiThreaded(!useMultiThreaded)}><span className="w-2 h-2 rounded-full bg-green-500" />{useMultiThreaded ? "Using Multi-Threaded" : "Using Single-Threaded"}</div>
+                                </div>
+                                <div className="ml-auto">
+                                    <button
+                                        onClick={isMining ? stopMining : mining}
+                                        className={cn(
+                                            "px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 cursor-pointer",
+                                            isMining
+                                                ? "bg-red-900/30 border border-red-900/50 text-red-400 hover:bg-red-900/40"
+                                                : "bg-green-900/30 border border-green-900/50 text-green-400 hover:bg-green-900/40",
+                                            )}
+                                    >
+                                        {isMining ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                                        {isMining ? "Stop Mining" : "Start Mining"}
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="mt-4">
+                                <button onClick={() => setShowAdvanced(!showAdvanced)} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white cursor-pointer">
+                                    <Settings className="h-4 w-4" />
+                                    Advanced Settings
+                                    {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                </button>
+                                {showAdvanced && 
+                                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs text-gray-400 mb-1 block">Thread Count</label>
+                                            <select
+                                                value={threadCount}
+                                                onChange={(e) => setThreadCount(Number.parseInt(e.target.value))}
+                                                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-sm focus:outline-none"
+                                            >
+                                                <option value={2}>2</option>
+                                                <option value={4}>4</option>
+                                                <option value={8}>8</option>
+                                                <option value={16}>16</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-gray-400 mb-1 block">Chunk Size</label>
+                                            <select
+                                                value={chunkSize}
+                                                onChange={(e) => setChunkSize(Number.parseInt(e.target.value))}
+                                                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-sm focus:outline-none"
+                                            >
+                                                <option value={10000}>10000</option>
+                                                <option value={25000}>25000</option>
+                                                <option value={50000}>50000</option>
+                                                <option value={100000}>100000</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        {isMining && 
+                            <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg">
+                                <div className="p-4 gap-4 flex flex-col items-center justify-between">
+                                    <Progress value={miningProgress} className="h-2 w-full" />
+                                    <p className="text-center text-xs text-gray-400">{miningProgress.toFixed(1)}% complete</p>
+                                </div>
+                                <div className='px-4 pb-4 flex items-center justify-between'>
+                                    <div className="flex items-center gap-2">
+                                        <RefreshCw className="h-4 w-4 animate-spin text-green-500" />
+                                        <span className="text-sm">Mining in progress...</span>
+                                    </div>
+                                    <p className='my-2 text-sm text-green-400'>{consoleMsg}</p>
+                                    <div className="grid grid-cols-2 gap-2 text-xs mb-4">
+                                        <div className="text-gray-400">Est. iteration time:</div>
+                                        <div className="text-white">{timeEstimates.iterationTime}</div>
+                                        <div className="text-gray-400">Est. time to solve:</div>
+                                        <div className="text-white">{timeEstimates.solutionTime}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
                 </div>
-            </div>
+            </main>
             {isMining && <WoodChoppingGame nftIdMiner={nftIdMiner} nftImgMiner={nftImgMiner} woodBalance={woodBalance} />}
         </>
     )
