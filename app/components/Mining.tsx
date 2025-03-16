@@ -5,9 +5,6 @@ import { simulateContract, waitForTransactionReceipt, writeContract } from '@wag
 import { FieldsHook002 } from '../lib/abi'
 import { publicClient } from '@/app/lib/8899'
 import { config } from '@/app/config'
-import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Progress } from '@/components/ui/progress'
 import { Play, Pause, Settings, ChevronDown, ChevronUp, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"

@@ -328,7 +328,7 @@ export default function Page() {
                 <DialogBackdrop className="fixed inset-0 bg-black/30 backdrop-blur-[12px]" />
                 <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
                     <DialogPanel className="max-w-xl space-y-2 rounded-lg border border-black bg-neutral-900 text-white">
-                        <DialogTitle className="font-bold p-6 bg-red-600">ERROR! [beta 0.0.5]</DialogTitle>
+                        <DialogTitle className="font-bold p-6 bg-red-600">ERROR! [beta 0.0.6]</DialogTitle>
                         <Description className="p-6 text-gray-500 overflow-hidden">{errMsg}</Description>
                         <div className='p-6'>
                             <button className='w-2/3 p-3 text-xs rounded-full border border-gray-500 hover:bg-neutral-800 cursor-pointer' onClick={() => setErrMsg(null)}>CLOSE</button>
