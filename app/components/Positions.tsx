@@ -1,6 +1,6 @@
 import React from "react"
 import { useAccount } from "wagmi"
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts } from '@wagmi/core'
+import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, parseEther } from "viem"
 import { Token, BigintIsh } from "@uniswap/sdk-core"
 import { Pool, Position } from "@uniswap/v3-sdk"
@@ -37,7 +37,7 @@ export default function Positions({
     setIsLoading, setErrMsg, 
 }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
-    setErrMsg: React.Dispatch<React.SetStateAction<String | null>>,
+    setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>,
 }) {
     const { address } = useAccount()
     const [txupdate, setTxupdate] = React.useState("")
@@ -232,7 +232,7 @@ export default function Positions({
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
         } catch (e) {
-            setErrMsg(String(e))
+            setErrMsg(e as WriteContractErrorType)
         }
         clearState()
         setIsAddPositionModal(false)
@@ -269,7 +269,7 @@ export default function Positions({
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
         } catch (e) {
-            setErrMsg(String(e))
+            setErrMsg(e as WriteContractErrorType)
         }
         setAmountRemove('')
         setIsRemPositionModal(false)
@@ -293,7 +293,7 @@ export default function Positions({
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
         } catch (e) {
-            setErrMsg(String(e))
+            setErrMsg(e as WriteContractErrorType)
         }
         setAmountRemove('')
         setIsRemPositionModal(false)

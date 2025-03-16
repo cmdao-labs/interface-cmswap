@@ -1,6 +1,6 @@
 import React from 'react'
 import { useAccount } from 'wagmi'
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts } from '@wagmi/core'
+import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, parseEther } from 'viem'
 import { ArrowDown, ChevronDown } from "lucide-react"
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,7 @@ export default function Swap({
     setIsLoading, setErrMsg, 
 }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
-    setErrMsg: React.Dispatch<React.SetStateAction<String | null>>,
+    setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>,
 }) {
     const { address } = useAccount()
     const [txupdate, setTxupdate] = React.useState("")
@@ -129,7 +129,7 @@ export default function Swap({
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
         } catch (e) {
-            setErrMsg(String(e))
+            setErrMsg(e as WriteContractErrorType)
         }
         setIsLoading(false)
     }

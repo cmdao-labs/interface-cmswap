@@ -1,7 +1,7 @@
 'use client'
 import React from 'react'
 import { encodeAbiParameters, erc20Abi, formatEther, sha256 } from 'viem'
-import { simulateContract, waitForTransactionReceipt, writeContract } from '@wagmi/core'
+import { simulateContract, waitForTransactionReceipt, writeContract, type WriteContractErrorType } from '@wagmi/core'
 import { FieldsHook002 } from '../lib/abi'
 import { publicClient } from '@/app/lib/8899'
 import { config } from '@/app/config'
@@ -23,7 +23,7 @@ function Pickaxe({ className }: { className?: string }) {
 
 export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, nftIdMiner, nftImgMiner, addr }: {
     setTxupdate: React.Dispatch<React.SetStateAction<string>>
-    setErrMsg: React.Dispatch<React.SetStateAction<String | null>>
+    setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
     nftIdMiner: bigint | undefined
     nftImgMiner: string | undefined
@@ -104,7 +104,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, n
                         await waitForTransactionReceipt(config, { hash: h })
                         setTxupdate(h)
                     } catch (e) {
-                        setErrMsg(String(e))
+                        setErrMsg(e as WriteContractErrorType)
                     }
                     setIsMining(false)
                     setIsLoading(false)
@@ -209,7 +209,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, n
                 await waitForTransactionReceipt(config, { hash: h })
                 setTxupdate(h)
             } catch (e) {
-                setErrMsg(String(e))
+                setErrMsg(e as WriteContractErrorType)
             }
             setShouldStopMining(true)
             setIsMining(false)

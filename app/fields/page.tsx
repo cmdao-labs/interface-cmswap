@@ -40,9 +40,7 @@ export default function Page() {
                                     <div className="text-[#00ff9d] font-medium">2</div>
                                 </div>
                             </div>
-                            <Button className="w-full mb-5 bg-gradient-to-r from-[#00ff9d]/20 to-[#00cc7d]/20 hover:from-[#00ff9d]/40 hover:to-[#00cc7d]/80 text-[#00ff9d] hover:text-[#0c1420] border-0 h-11 rounded-lg transition-all duration-300 cursor-pointer">
-                                <Link href="/fields/cmdao-valley/undefined">Enter Field</Link>
-                            </Button>
+                            <Link href="/fields/cmdao-valley/undefined"><Button className="w-full mb-5 bg-gradient-to-r from-[#00ff9d]/20 to-[#00cc7d]/20 hover:from-[#00ff9d]/40 hover:to-[#00cc7d]/80 text-[#00ff9d] hover:text-[#0c1420] border-0 h-11 rounded-lg transition-all duration-300 cursor-pointer">Enter Field</Button></Link>
                         </div>
                     </Card>
                     <Card className="bg-[#0c1420]/60 border-0 rounded-xl overflow-hidden py-0">

@@ -4,19 +4,19 @@ import Image from "next/image"
 import { usePathname, useRouter } from 'next/navigation'
 import { formatEther } from 'viem'
 import { useAccount } from 'wagmi'
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts } from '@wagmi/core'
-import { Description, Dialog, DialogPanel, DialogTitle, DialogBackdrop } from '@headlessui/react'
+import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Button } from '@/components/ui/button'
 import { cn } from "@/lib/utils"
 import { v2routerAddr, v2routerCreatedAt, v2routerContract, FieldsHook001Contract, nftIndex1Addr, nftIndex1CreatedAt, nftIndex2Addr, nftIndex2CreatedAt, nftIndex3Addr, nftIndex3CreatedAt, nftIndex4Addr, nftIndex4CreatedAt, publicClient, erc721ABI } from '@/app/lib/8899'
 import { config } from '@/app/config'
+import ErrorModal from '@/app/components/error-modal'
 import Mining from '@/app/components/Mining'
 
 export default function Page() {
     const [isLoading, setIsLoading] = React.useState(false)
-    const [errMsg, setErrMsg] = React.useState<String | null>(null)
+    const [errMsg, setErrMsg] = React.useState<WriteContractErrorType | null>(null)
     const [txupdate, setTxupdate] = React.useState("")
     const router = useRouter()
     const pathname = usePathname()
@@ -200,7 +200,7 @@ export default function Page() {
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
         } catch (e) {
-            setErrMsg(String(e))
+            setErrMsg(e as WriteContractErrorType)
         }
         setIsLoading(false)
     }
@@ -220,7 +220,7 @@ export default function Page() {
                 }
             }
         } catch (e) {
-            setErrMsg(String(e))
+            setErrMsg(e as WriteContractErrorType)
         }
         setIsLoading(false)
     }
@@ -233,7 +233,7 @@ export default function Page() {
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
         } catch (e) {
-            setErrMsg(String(e))
+            setErrMsg(e as WriteContractErrorType)
         }
         setIsLoading(false)
     }
@@ -249,7 +249,7 @@ export default function Page() {
                 }
             }
         } catch (e) {
-            setErrMsg(String(e))
+            setErrMsg(e as WriteContractErrorType)
         }
         setIsLoading(false)
     }
@@ -262,7 +262,7 @@ export default function Page() {
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
         } catch (e) {
-            setErrMsg(String(e))
+            setErrMsg(e as WriteContractErrorType)
         }
         setIsLoading(false)
     }
@@ -278,7 +278,7 @@ export default function Page() {
                 }
             }
         } catch (e) {
-            setErrMsg(String(e))
+            setErrMsg(e as WriteContractErrorType)
         }
         setIsLoading(false)
     }
@@ -291,7 +291,7 @@ export default function Page() {
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
         } catch (e) {
-            setErrMsg(String(e))
+            setErrMsg(e as WriteContractErrorType)
         }
         setIsLoading(false)
     }
@@ -307,7 +307,7 @@ export default function Page() {
                 }
             }
         } catch (e) {
-            setErrMsg(String(e))
+            setErrMsg(e as WriteContractErrorType)
         }
         setIsLoading(false)
     }
@@ -324,18 +324,7 @@ export default function Page() {
     return (
         <div className="min-h-screen bg-black text-white font-mono">
             {isLoading && <div className="w-full h-full fixed backdrop-blur-[12px] z-999" />}
-            <Dialog open={errMsg !== null} onClose={() => setErrMsg(null)} className="relative z-999">
-                <DialogBackdrop className="fixed inset-0 bg-black/30 backdrop-blur-[12px]" />
-                <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
-                    <DialogPanel className="max-w-xl space-y-2 rounded-lg border border-black bg-neutral-900 text-white">
-                        <DialogTitle className="font-bold p-6 bg-red-600">ERROR! [beta 0.0.6]</DialogTitle>
-                        <Description className="p-6 text-gray-500 overflow-hidden">{errMsg}</Description>
-                        <div className='p-6'>
-                            <button className='w-2/3 p-3 text-xs rounded-full border border-gray-500 hover:bg-neutral-800 cursor-pointer' onClick={() => setErrMsg(null)}>CLOSE</button>
-                        </div>
-                    </DialogPanel>
-                </div>
-            </Dialog>
+            <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
             <header className="relative">
                 <div className="relative h-84 w-full overflow-hidden">
                     <Image alt="" src="https://gateway.commudao.xyz/ipfs/bafybeicyixoicb7ai6zads6t5k6qpyocoyelfbyoi73nmtobfjlv7fseiq" fill className="object-cover animate-subtle-zoom" priority />
@@ -425,7 +414,7 @@ export default function Page() {
                     </button>
                     {hookSelect === 0 &&
                         <button 
-                            className="px-4 py-2 bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-md text-sm hover:bg-gray-800 transition-colors"
+                            className="px-4 py-2 bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-md text-sm hover:bg-gray-800 transition-colors cursor-pointer"
                             disabled={(nft?.filter((obj) => {return obj.isPeripheryAllow === '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'})).length !== 0) ? false : true}
                             onClick={() => {
                                 if (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'})).length !== 0) {
@@ -437,7 +426,7 @@ export default function Page() {
                         </button>
                     }
                     <button 
-                        className="px-4 py-2 bg-red-900/30 border border-red-900/50 rounded-md text-sm text-red-400 hover:bg-red-900/40 transition-colors"
+                        className="px-4 py-2 bg-red-900/30 border border-red-900/50 rounded-md text-sm text-red-400 hover:bg-red-900/40 transition-colors cursor-pointer"
                         disabled={(nft?.filter((obj) => {return obj.isStaked === true}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === true})).length !== 0) ? false : true}
                         onClick={() => {
                             if (nft?.filter((obj) => {return obj.isStaked === true}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === true})).length !== 0) {
@@ -449,7 +438,7 @@ export default function Page() {
                     </button>
                     {hookSelect === 0 &&
                         <button 
-                            className="px-4 py-2 bg-red-900/30 border border-red-900/50 rounded-md text-sm text-red-400 hover:bg-red-900/40 transition-colors"
+                            className="px-4 py-2 bg-red-900/30 border border-red-900/50 rounded-md text-sm text-red-400 hover:bg-red-900/40 transition-colors cursor-pointer"
                             disabled={(nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'})).length !== 0) ? false : true}
                             onClick={() => {
                                 if (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'})).length !== 0) {
