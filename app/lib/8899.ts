@@ -6,10 +6,11 @@ import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, Fiel
 export const tokens: {name: string, value: '0xstring', logo: string}[] = [
     { name: 'WJBC', value: '0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747' as '0xstring', logo: './jbc.png' },
     { name: 'JUSDT', value: '0x24599b658b57f91E7643f4F154B16bcd2884f9ac' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreif3vllg6mwswlqypqgtsh7i7wwap7zgrkvtlhdjoc63zjm7uv6vvi' },
-    { name: 'USDT (JBC Bridge)', value: '0xFD8Ef75c1cB00A594D02df48ADdc27414Bd07F8a' as '0xstring', logo: 'https://jibswap.com/images/tokens/USDT.png' },
-    { name: 'BB', value: '0x8fcC6e3a23a0255057bfD9A97799b3a995Bf3D24' as '0xstring', logo: 'https://daobuddy.xyz/img/commuDao/token/BB.png' },
     { name: 'CMJ', value: '0xE67E280f5a354B4AcA15fA7f0ccbF667CF74F97b' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreiabbtn5pc6di4nwfgpqkk3ss6njgzkt2evilc5i2r754pgiru5x4u' },
     { name: 'WOOD-V2', value: '0x8339E417ED03cf4733f6FcFB9D295bE588fe2156' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreidldk7skx44xwstwat2evjyp4u5oy5nmamnrhurqtjapnwqzwccd4' },
+    { name: 'USDT (JBC Bridge)', value: '0xFD8Ef75c1cB00A594D02df48ADdc27414Bd07F8a' as '0xstring', logo: 'https://jibswap.com/images/tokens/USDT.png' },
+    { name: 'BB', value: '0x8fcC6e3a23a0255057bfD9A97799b3a995Bf3D24' as '0xstring', logo: 'https://daobuddy.xyz/img/commuDao/token/BB.png' },
+    { name: 'DoiJIB', value: '0x7414e2D8Fb8466AfA4F85A240c57CB8615901FFB' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafybeicfkse4uvkhhkrhfwtap4h3v5msef6lg3t3xvb2hspw3xd5wegzfi' },
     // can PR listing here
 ]
 export const V3_FACTORY = '0x5835f123bDF137864263bf204Cf4450aAD1Ba3a7' as '0xstring'
