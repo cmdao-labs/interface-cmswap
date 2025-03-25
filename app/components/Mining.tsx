@@ -387,7 +387,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, n
 
     return (
         <>
-            <main className="container mx-auto p-4 md:p-6 mt-16 relative z-10">
+            <main className="container mx-auto py-4 md:py-6 mt-4 relative z-10">
                 <div className="bg-black text-white font-mono">
                     <div className="relative">
                     <div className="mb-8">

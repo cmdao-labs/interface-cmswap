@@ -1,6 +1,6 @@
 import { erc20Abi, erc721Abi, createPublicClient, http } from 'viem'
 import { jbc } from 'viem/chains'
-import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, FieldsV2RouterAbi, FieldsHook001 } from '@/app/lib/abi'
+import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, FieldsV2RouterAbi, FieldsHook001, v3staker } from '@/app/lib/abi'
 
 // swap
 export const tokens: {name: string, value: '0xstring', logo: string}[] = [
@@ -15,6 +15,7 @@ export const tokens: {name: string, value: '0xstring', logo: string}[] = [
 ]
 export const V3_FACTORY = '0x5835f123bDF137864263bf204Cf4450aAD1Ba3a7' as '0xstring'
 export const POSITION_MANAGER = '0xfC445018B20522F9cEd1350201e179555a7573A1' as '0xstring'
+export const positionManagerCreatedAt = BigInt(4990192)
 export const QOUTER_V2 = '0x5ad32c64A2aEd381299061F32465A22B1f7A2EE2' as '0xstring'
 export const ROUTER02 = '0x2174b3346CCEdBB4Faaff5d8088ff60B74909A9d' as '0xstring'
 export const v3FactoryContract = { chainId: 8899, abi: v3Factory, address: V3_FACTORY } as const
@@ -23,8 +24,12 @@ export const qouterV2Contract = { chainId: 8899, abi: qouterV2, address: QOUTER_
 export const router02Contract = { chainId: 8899, abi: router02, address: ROUTER02 } as const
 export const erc20ABI = { chainId: 8899, abi: erc20Abi } as const
 export const v3PoolABI = { chainId: 8899, abi: v3Pool } as const
+export const V3_STAKER = '0xC7Aa8C815937B61F70E04d814914683bB9Bd7579' as '0xstring'
+export const v3StakerContract = { chainId: 8899, address: V3_STAKER, abi: v3staker } as const
 
 // fields
+export const erc721ABI = { chainId: 8899, abi: erc721Abi } as const
+export const esTokenHook003Addr = '0x8ec1ca06d5a6a01ef34543728a584b8dcbd18f79' as '0xstring'
 export const v2routerAddr = '0x8E83E1Bb0E1aF049Ab4748F328Ce6760bd7ae431' as '0xstring'
 export const v2routerCreatedAt = BigInt(5085287)
 export const v2routerContract = { chainId: 8899, abi: FieldsV2RouterAbi, address: v2routerAddr } as const
@@ -38,7 +43,6 @@ export const nftIndex3Addr = '0xb6aaD2B2f9fD5eA0356F49c60Ee599De56206251' as '0x
 export const nftIndex3CreatedAt = BigInt(119318)
 export const nftIndex4Addr = '0xD492E20Ecf3Ae85Fe3E3159BB064442b86D6DC02' as '0xstring'
 export const nftIndex4CreatedAt = BigInt(515400)
-export const erc721ABI = { chainId: 8899, abi: erc721Abi } as const
 // add nft addr, created at here
 
 export const publicClient = createPublicClient({ chain: jbc, transport: http() })

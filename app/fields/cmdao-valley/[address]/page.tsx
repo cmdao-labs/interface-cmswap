@@ -13,6 +13,7 @@ import { v2routerAddr, v2routerCreatedAt, v2routerContract, FieldsHook001Contrac
 import { config } from '@/app/config'
 import ErrorModal from '@/app/components/error-modal'
 import Mining from '@/app/components/Mining'
+import Fishing from '@/app/components/Fishing'
 
 export default function Page() {
     const [isLoading, setIsLoading] = React.useState(false)
@@ -390,7 +391,12 @@ export default function Page() {
                                 <div className='my-8'>The hook does not support this NFT collection</div>
                             }
                         </TabsContent>
-                        <TabsContent value='2'><div className='my-8'>Coming Soon...</div></TabsContent>
+                        <TabsContent value='2'>
+                            {nftIndexSelect === 1 ?
+                                <Fishing setTxupdate={setTxupdate} txupdate={txupdate} setErrMsg={setErrMsg} setIsLoading={setIsLoading} /> :
+                                <div className='my-8'>The hook does not support this NFT collection</div>
+                            }
+                        </TabsContent>
                         <TabsContent value='3'><div className='my-8'>Coming Soon...</div></TabsContent>
                         <TabsContent value='4'><div className='my-8'>Coming Soon...</div></TabsContent>
                         <TabsContent value='5'><div className='my-8'>Coming Soon...</div></TabsContent>
