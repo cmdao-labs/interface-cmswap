@@ -484,7 +484,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, n
                             <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-4">
                                 <div className="text-xs text-gray-400 mb-1">Reward Balance</div>
                                     <div className="flex items-center">
-                                    <span className="text-xl font-light">{Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(Number(woodBalance))}</span>
+                                    <span className="text-xl font-light">{Intl.NumberFormat("en-US").format(Number(woodBalance))}</span>
                                     <span className="text-yellow-500 mx-2">⦿</span>
                                     <img alt="" src="https://gateway.commudao.xyz/ipfs/bafkreidldk7skx44xwstwat2evjyp4u5oy5nmamnrhurqtjapnwqzwccd4" height={20} width={20} />
                                 </div>

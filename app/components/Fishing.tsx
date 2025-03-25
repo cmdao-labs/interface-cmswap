@@ -2,8 +2,10 @@ import React from "react"
 import { useAccount } from "wagmi"
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, parseEther } from "viem"
-import { v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, publicClient, erc721ABI, POSITION_MANAGER, positionManagerCreatedAt, V3_STAKER, v3StakerContract, esTokenHook003Addr } from '@/app/lib/8899'
+import { v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, publicClient, erc721ABI, POSITION_MANAGER, positionManagerCreatedAt, V3_STAKER, v3StakerContract, esTokenHook003Addr, FieldsHook003Contract, hook003Addr } from '@/app/lib/8899'
 import { config } from '@/app/config'
+import { Button } from '@/components/ui/button'
+import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 
 type MyPosition = {
     Id: number;
@@ -30,17 +32,23 @@ type MyPosition = {
 }
 
 export default function Fishing({ 
-    setTxupdate, txupdate, setErrMsg, setIsLoading,
+    setTxupdate, txupdate, setErrMsg, setIsLoading, nftIdVester, addr
 }: {
     setTxupdate: React.Dispatch<React.SetStateAction<string>>
     txupdate: string
     setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>,
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+    nftIdVester: bigint | undefined,
+    addr: `0x${string}` | undefined
 }) {
     const { address } = useAccount()
     const [position, setPosition] = React.useState<MyPosition[]>([])
     const [allPending, setAllPending] = React.useState('')
     const [esTunaBalance, setEsTunaBalance] = React.useState('')
+    const [cTunaVesting, setCTunaVesting] = React.useState('')
+    const [cTunaBalance, setCTunaBalance] = React.useState('')
+    const [isVestModal, setIsVestModal] = React.useState(false)
+    const [amountVest, setAmountVest] = React.useState('')
 
     const calcAmount0 = (
         liquidity: number,
@@ -94,8 +102,44 @@ export default function Fishing({
             const { request } = await simulateContract(config, { 
                 ...v3StakerContract, 
                 functionName: 'claimReward',
-                args: [esTokenHook003Addr, address as '0xstring', parseEther(_amount)] 
+                args: [esTokenHook003Addr, addr as '0xstring', parseEther(_amount)] 
             })
+            const h = await writeContract(config, request)
+            await waitForTransactionReceipt(config, { hash: h })
+            setTxupdate(h)
+        } catch (e) {
+            setErrMsg(e as WriteContractErrorType)
+        }
+        setIsLoading(false)
+    }
+
+    const vest = async () => {
+        setIsLoading(true)
+        try {
+            const allowance = await readContract(config, { ...erc20ABI, address: esTokenHook003Addr, functionName: 'allowance', args: [addr as '0xstring', hook003Addr] })
+            if (allowance < parseEther(amountVest)) {
+                const { request } = await simulateContract(config, { ...erc20ABI, address: esTokenHook003Addr, functionName: 'approve', args: [hook003Addr, parseEther(amountVest)] })
+                const h = await writeContract(config, request)
+                await waitForTransactionReceipt(config, { hash: h })
+            }
+            const { request } = await simulateContract(config, { 
+                ...FieldsHook003Contract, 
+                functionName: 'startVesting',
+                args: [BigInt(1), nftIdVester as bigint, parseEther(amountVest)] 
+            })
+            const h = await writeContract(config, request)
+            await waitForTransactionReceipt(config, { hash: h })
+            setTxupdate(h)
+        } catch (e) {
+            setErrMsg(e as WriteContractErrorType)
+        }
+        setIsLoading(false)
+    }
+
+    const claimVesting = async () => {
+        setIsLoading(true)
+        try {
+            const { request } = await simulateContract(config, { ...FieldsHook003Contract, functionName: 'claimReward' })
             const h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
@@ -108,7 +152,7 @@ export default function Fishing({
     const stakeNft = async (_nftId: bigint) => {
         setIsLoading(true)
         try {
-            const { request: request1 } = await simulateContract(config, { ...erc721ABI, address: POSITION_MANAGER, functionName: 'safeTransferFrom', args: [address as '0xstring', V3_STAKER, _nftId] })
+            const { request: request1 } = await simulateContract(config, { ...erc721ABI, address: POSITION_MANAGER, functionName: 'safeTransferFrom', args: [addr as '0xstring', V3_STAKER, _nftId] })
             const h = await writeContract(config, request1)
             await waitForTransactionReceipt(config, { hash: h })
             const { request: request2 } = await simulateContract(config, { 
@@ -150,7 +194,7 @@ export default function Fishing({
             const { request: request2 } = await simulateContract(config, { 
                 ...v3StakerContract, 
                 functionName: 'withdrawToken',
-                args: [_nftId, address as '0xstring', '0x'] 
+                args: [_nftId, addr as '0xstring', '0x'] 
             })
             const h2 = await writeContract(config, request2)
             await waitForTransactionReceipt(config, { hash: h2 })
@@ -207,11 +251,15 @@ export default function Fishing({
                 }))
             })
 
-            const _allPending = await readContract(config, { ...v3StakerContract, functionName: 'rewards', args: [esTokenHook003Addr, address as '0xstring'] })
+            const _allPending = await readContract(config, { ...v3StakerContract, functionName: 'rewards', args: [esTokenHook003Addr, addr as '0xstring'] })
             setAllPending(formatEther(_allPending))
-            const _esTunaBalance = await readContract(config, { ...erc20ABI, address: esTokenHook003Addr, functionName: 'balanceOf', args: [address as '0xstring'] })
+            const _esTunaBalance = await readContract(config, { ...erc20ABI, address: esTokenHook003Addr, functionName: 'balanceOf', args: [addr as '0xstring'] })
             setEsTunaBalance(formatEther(_esTunaBalance))
-
+            const _cTunaVesting = await readContract(config, { ...FieldsHook003Contract, functionName: 'getClaimableAmount', args: [addr as '0xstring'] })
+            setCTunaVesting(formatEther(_cTunaVesting))
+            const _cTunaBalance = await readContract(config, { ...FieldsHook003Contract, functionName: 'balanceOf', args: [addr as '0xstring'] })
+            setCTunaBalance(formatEther(_cTunaBalance))
+            
 
             const myStaking : MyPosition[] = (await Promise.all(checkedMyNftStaking.map(async (obj, index) => {
                 const metadataFetch = await fetch(tokenUriMyStaking[index].result as string)
@@ -232,7 +280,7 @@ export default function Fishing({
                     functionName: 'collect',
                     args: [{
                         tokenId: obj as bigint,
-                        recipient: address as '0xstring',
+                        recipient: addr as '0xstring',
                         amount0Max: BigInt("340282366920938463463374607431768211455"),
                         amount1Max: BigInt("340282366920938463463374607431768211455"),
                     }],
@@ -327,11 +375,11 @@ export default function Fishing({
                 return Number(obj.Liquidity) !== 0
             }).reverse()
 
-            const balanceOfMyPosition = await readContract(config, { ...positionManagerContract, functionName: 'balanceOf', args: [address as '0xstring'] })
+            const balanceOfMyPosition = await readContract(config, { ...positionManagerContract, functionName: 'balanceOf', args: [addr as '0xstring'] })
             const init: any = {contracts: []}
             for (let i = 0; i <= Number(balanceOfMyPosition) - 1; i++) {
                 init.contracts.push(
-                    { ...positionManagerContract, functionName: 'tokenOfOwnerByIndex', args: [address as '0xstring', i] }
+                    { ...positionManagerContract, functionName: 'tokenOfOwnerByIndex', args: [addr, i] }
                 )
             }
             const tokenIdMyPosition = await readContracts(config, init)
@@ -364,7 +412,7 @@ export default function Fishing({
                     functionName: 'collect',
                     args: [{
                         tokenId: obj.result as bigint,
-                        recipient: address as '0xstring',
+                        recipient: addr as '0xstring',
                         amount0Max: BigInt("340282366920938463463374607431768211455"),
                         amount1Max: BigInt("340282366920938463463374607431768211455"),
                     }]
@@ -470,35 +518,52 @@ export default function Fishing({
                 <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-4">
                     <div className="text-xs text-gray-400 mb-1">esTuna Pending</div>
                     <div className="flex items-center">
-                        <span className="text-xl font-light">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(allPending))}</span>
+                        <span className="text-xl font-light">{Intl.NumberFormat('en-US').format(Number(allPending))}</span>
                         <span className="text-yellow-500 mx-2">⦿</span>
                         <img alt="" src="https://gateway.commudao.xyz/ipfs/bafkreifqroahbmxgnmsqdot5bzu3xbsa7y27mnlo6k45efgidmqxqrstbe" height={20} width={20} />
                     </div>
-                    <button className="flex-1 px-3 py-2 mt-3 bg-green-900/30 border border-green-900/50 rounded-md text-xs text-green-400 hover:bg-green-900/40 transition-colors cursor-pointer" onClick={() => {claimReward(allPending.toString())}}>Claim reward</button>
+                    <button className="flex-1 px-3 py-2 mt-3 bg-green-900/30 border border-green-900/50 rounded-md text-xs text-green-400 hover:bg-green-900/40 transition-colors cursor-pointer" onClick={() => {claimReward(allPending.toString())}}>Claim esTuna</button>
                 </div>
                 <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-4">
                     <div className="text-xs text-gray-400 mb-1">esTuna Balance</div>
                     <div className="flex items-center">
-                        <span className="text-xl font-light">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(esTunaBalance))}</span>
+                        <span className="text-xl font-light">{Intl.NumberFormat('en-US').format(Number(esTunaBalance))}</span>
                         <span className="text-yellow-500 mx-2">⦿</span>
                         <img alt="" src="https://gateway.commudao.xyz/ipfs/bafkreifqroahbmxgnmsqdot5bzu3xbsa7y27mnlo6k45efgidmqxqrstbe" height={20} width={20} />
                     </div>
-                    <span className="text-xs">Vester NFT ID: {}</span>
-                    <button className="flex-1 px-3 py-2 mt-3 bg-green-900/30 border border-green-900/50 rounded-md text-xs text-green-400 hover:bg-green-900/40 transition-colors cursor-pointer">Vest</button>
+                    {nftIdVester !== undefined &&
+                        <>
+                            <span className="text-xs mr-2">Vester NFT: {nftIdVester}</span>
+                            <Drawer open={isVestModal} onOpenChange={setIsVestModal}>
+                                <button className="flex-1 px-3 py-2 mt-3 bg-green-900/30 border border-green-900/50 rounded-md text-xs text-green-400 hover:bg-green-900/40 transition-colors cursor-pointer" onClick={() => setIsVestModal(true)}>Vest</button>
+                                <DrawerContent className="z-100 border">
+                                    <div className="mx-auto w-3/4 xl:w-full max-w-sm space-y-4 my-7">
+                                        <DrawerHeader>
+                                            <DrawerTitle className="text-2xl text-white">esTuna Vesting</DrawerTitle>
+                                        </DrawerHeader>
+                                        <input className="w-full p-4 bg-neutral-800 rounded-lg focus:outline-none" placeholder="0" value={amountVest} onChange={e => setAmountVest(e.target.value)} />
+                                        <DrawerFooter>
+                                            <Button className="w-full bg-blue-500 text-white hover:text-black cursor-pointer" onClick={vest}>Vest</Button>
+                                        </DrawerFooter>
+                                    </div>
+                                </DrawerContent>
+                            </Drawer>
+                        </>
+                    }
                 </div>
                 <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-4">
-                    <div className="text-xs text-gray-400 mb-1">esTuna Vesting</div>
+                    <div className="text-xs text-gray-400 mb-1">cTuna Vesting</div>
                     <div className="flex items-center">
-                        <span className="text-xl font-light"></span>
+                        <span className="text-xl font-light">{Intl.NumberFormat('en-US').format(Number(cTunaVesting))}</span>
                         <span className="text-yellow-500 mx-2">⦿</span>
                         <img alt="" src="https://gateway.commudao.xyz/ipfs/bafkreieyk6odnkrmghee3sc3nfnwxg7jhmyk2tgima3jkdmiy2oap2jc4i" height={20} width={20} />
                     </div>
-                    <button className="flex-1 px-3 py-2 mt-3 bg-green-900/30 border border-green-900/50 rounded-md text-xs text-green-400 hover:bg-green-900/40 transition-colors cursor-pointer">Claim</button>
+                    <button className="flex-1 px-3 py-2 mt-3 bg-green-900/30 border border-green-900/50 rounded-md text-xs text-green-400 hover:bg-green-900/40 transition-colors cursor-pointer" onClick={claimVesting}>Claim cTuna</button>
                 </div>
                 <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-4">
                     <div className="text-xs text-gray-400 mb-1">cTuna Balance</div>
                     <div className="flex items-center">
-                        <span className="text-xl font-light"></span>
+                        <span className="text-xl font-light">{Intl.NumberFormat('en-US').format(Number(cTunaBalance))}</span>
                         <span className="text-yellow-500 mx-2">⦿</span>
                         <img alt="" src="https://gateway.commudao.xyz/ipfs/bafkreieyk6odnkrmghee3sc3nfnwxg7jhmyk2tgima3jkdmiy2oap2jc4i" height={20} width={20} />
                     </div>

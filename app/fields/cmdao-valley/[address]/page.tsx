@@ -315,12 +315,14 @@ export default function Page() {
     
     const [nftIdMiner, setNftIdMiner] = React.useState<bigint>()
     const [nftImgMiner, setNftImgMiner] = React.useState<string>()
-    const checkPeripheryAllowNftStaked_hook = async(_nftIdMiner: bigint) => {
+    const checkPeripheryAllowNftStaked_hook = async(_nftIdMiner: bigint, _hookId: bigint) => {
         const res = await readContracts(config, {
-            contracts: [{ ...v2routerContract, functionName: 'stakedUseByPeriphery', args: [BigInt(2), BigInt(nftIndexSelect), _nftIdMiner] }]
+            contracts: [{ ...v2routerContract, functionName: 'stakedUseByPeriphery', args: [_hookId, BigInt(nftIndexSelect), _nftIdMiner] }]
         })
         return Number(res[0].result) === 0
     }
+
+    const [nftIdVester, setNftIdVester] = React.useState<bigint>()
 
     return (
         <div className="min-h-screen bg-black text-white font-mono">
@@ -393,7 +395,7 @@ export default function Page() {
                         </TabsContent>
                         <TabsContent value='2'>
                             {nftIndexSelect === 1 ?
-                                <Fishing setTxupdate={setTxupdate} txupdate={txupdate} setErrMsg={setErrMsg} setIsLoading={setIsLoading} /> :
+                                <Fishing setTxupdate={setTxupdate} txupdate={txupdate} setErrMsg={setErrMsg} setIsLoading={setIsLoading} nftIdVester={nftIdVester} addr={addr} /> :
                                 <div className='my-8'>The hook does not support this NFT collection</div>
                             }
                         </TabsContent>
@@ -406,58 +408,59 @@ export default function Page() {
                         <TabsContent value='9'><div className='my-8'>Coming Soon...</div></TabsContent>
                     </Tabs>
                 </div>
-                <div className="flex flex-wrap gap-3 mb-8">
-                    <button 
-                        className="px-4 py-2 bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-md text-sm hover:bg-gray-800 transition-colors cursor-pointer"
-                        disabled={(nft?.filter((obj) => {return obj.isStaked === false}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === false})).length !== 0) ? false : true}
-                        onClick={() => {
-                            if (nft?.filter((obj) => {return obj.isStaked === false}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === false})).length !== 0) {
-                                stakeNftAll()
-                            }
-                        }}
-                    >
-                        Stake All
-                    </button>
-                    {hookSelect === 0 &&
-                        <button 
-                            className="px-4 py-2 bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-md text-sm hover:bg-gray-800 transition-colors cursor-pointer"
-                            disabled={(nft?.filter((obj) => {return obj.isPeripheryAllow === '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'})).length !== 0) ? false : true}
-                            onClick={() => {
-                                if (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'})).length !== 0) {
-                                    allowPeripheryAll()
-                                }
-                            }}
-                        >
-                            Activate All
-                        </button>
-                    }
-                    <button 
-                        className="px-4 py-2 bg-red-900/30 border border-red-900/50 rounded-md text-sm text-red-400 hover:bg-red-900/40 transition-colors cursor-pointer"
-                        disabled={(nft?.filter((obj) => {return obj.isStaked === true}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === true})).length !== 0) ? false : true}
-                        onClick={() => {
-                            if (nft?.filter((obj) => {return obj.isStaked === true}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === true})).length !== 0) {
-                                unstakeNftAll()
-                            }
-                        }}
-                    >
-                        Unstake All
-                    </button>
-                    {hookSelect === 0 &&
-                        <button 
-                            className="px-4 py-2 bg-red-900/30 border border-red-900/50 rounded-md text-sm text-red-400 hover:bg-red-900/40 transition-colors cursor-pointer"
-                            disabled={(nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'})).length !== 0) ? false : true}
-                            onClick={() => {
-                                if (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'})).length !== 0) {
-                                    revokePeripheryAll()
-                                }
-                            }}
-                        >
-                            Revoke All
-                        </button>
-                    }
-                </div>
+                
                 <div>
                     <h2 className="text-xl mb-4 font-light flex items-center gap-2"><span className="w-1 h-6 bg-green-500 rounded-full" />NFT Portfolio</h2>
+                    <div className="flex flex-wrap gap-3 mb-8">
+                        <button 
+                            className="px-4 py-2 bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-md text-sm hover:bg-gray-800 transition-colors cursor-pointer"
+                            disabled={(nft?.filter((obj) => {return obj.isStaked === false}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === false})).length !== 0) ? false : true}
+                            onClick={() => {
+                                if (nft?.filter((obj) => {return obj.isStaked === false}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === false})).length !== 0) {
+                                    stakeNftAll()
+                                }
+                            }}
+                        >
+                            Stake All
+                        </button>
+                        {hookSelect === 0 &&
+                            <button 
+                                className="px-4 py-2 bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-md text-sm hover:bg-gray-800 transition-colors cursor-pointer"
+                                disabled={(nft?.filter((obj) => {return obj.isPeripheryAllow === '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'})).length !== 0) ? false : true}
+                                onClick={() => {
+                                    if (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow === '0'})).length !== 0) {
+                                        allowPeripheryAll()
+                                    }
+                                }}
+                            >
+                                Activate All
+                            </button>
+                        }
+                        <button 
+                            className="px-4 py-2 bg-red-900/30 border border-red-900/50 rounded-md text-sm text-red-400 hover:bg-red-900/40 transition-colors cursor-pointer"
+                            disabled={(nft?.filter((obj) => {return obj.isStaked === true}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === true})).length !== 0) ? false : true}
+                            onClick={() => {
+                                if (nft?.filter((obj) => {return obj.isStaked === true}) !== undefined && (nft?.filter((obj) => {return obj.isStaked === true})).length !== 0) {
+                                    unstakeNftAll()
+                                }
+                            }}
+                        >
+                            Unstake All
+                        </button>
+                        {hookSelect === 0 &&
+                            <button 
+                                className="px-4 py-2 bg-red-900/30 border border-red-900/50 rounded-md text-sm text-red-400 hover:bg-red-900/40 transition-colors cursor-pointer"
+                                disabled={(nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'})).length !== 0) ? false : true}
+                                onClick={() => {
+                                    if (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'}) !== undefined && (nft?.filter((obj) => {return obj.isPeripheryAllow !== '0'})).length !== 0) {
+                                        revokePeripheryAll()
+                                    }
+                                }}
+                            >
+                                Revoke All
+                            </button>
+                        }
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {nft !== undefined &&
                             <>
@@ -499,7 +502,10 @@ export default function Page() {
                                                                 <button className="flex-1 px-3 py-2 bg-red-900/30 border border-red-900/50 rounded-md text-xs text-red-400 hover:bg-red-900/40 transition-colors cursor-pointer" onClick={() => {revokePeriphery(nft.Id as bigint)}}>Deactivate</button>
                                                             }
                                                             {hookSelect === 1 && nftIndexSelect === 1 && nft.isStaked && 
-                                                                <Button variant="outline" className={"cursor-pointer " + (Number(nftIdMiner) === Number(nft.Id) ? "bg-emerald-300 text-black" : "")} onClick={async () => {if (await checkPeripheryAllowNftStaked_hook(nft.Id as bigint)) {allowPeriphery(nft.Id as bigint, 2);} setNftIdMiner(nft.Id as bigint); setNftImgMiner(nft.Image);}}>CHOOSE MINER</Button>
+                                                                <Button variant="outline" className={"cursor-pointer " + (Number(nftIdMiner) === Number(nft.Id) ? "bg-emerald-300 text-black" : "")} onClick={async () => {if (await checkPeripheryAllowNftStaked_hook(nft.Id as bigint, BigInt(2))) {allowPeriphery(nft.Id as bigint, 2);} setNftIdMiner(nft.Id as bigint); setNftImgMiner(nft.Image);}}>CHOOSE MINER</Button>
+                                                            }
+                                                            {hookSelect === 2 && nftIndexSelect === 1 && nft.isStaked && 
+                                                                <Button variant="outline" className={"cursor-pointer " + (Number(nftIdVester) === Number(nft.Id) ? "bg-emerald-300 text-black" : "")} onClick={async () => {if (await checkPeripheryAllowNftStaked_hook(nft.Id as bigint, BigInt(3))) {allowPeriphery(nft.Id as bigint, 3);} setNftIdVester(nft.Id as bigint);}}>CHOOSE VESTER</Button>
                                                             }
                                                         </div>
                                                     }
