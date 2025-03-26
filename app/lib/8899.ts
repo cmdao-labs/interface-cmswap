@@ -11,6 +11,7 @@ export const tokens: {name: string, value: '0xstring', logo: string}[] = [
     { name: 'USDT (JBC Bridge)', value: '0xFD8Ef75c1cB00A594D02df48ADdc27414Bd07F8a' as '0xstring', logo: 'https://jibswap.com/images/tokens/USDT.png' },
     { name: 'BB', value: '0x8fcC6e3a23a0255057bfD9A97799b3a995Bf3D24' as '0xstring', logo: 'https://daobuddy.xyz/img/commuDao/token/BB.png' },
     { name: 'DoiJIB', value: '0x7414e2D8Fb8466AfA4F85A240c57CB8615901FFB' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafybeicfkse4uvkhhkrhfwtap4h3v5msef6lg3t3xvb2hspw3xd5wegzfi' },
+    { name: 'KOI', value: '0x69Bf518d68DD22058436aa37D90871869dd73Dc6' as '0xstring', logo: 'https://ipfs.io/ipfs/QmWQzTaEULPdVkYAkhgRmhjEiJxurtRTx6DkpxghPZar4L' },
     // can PR listing here
 ]
 export const V3_FACTORY = '0x5835f123bDF137864263bf204Cf4450aAD1Ba3a7' as '0xstring'
