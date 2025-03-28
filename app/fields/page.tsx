@@ -37,7 +37,7 @@ export default function Page() {
                             <div className="grid grid-cols-2 gap-6">
                                 <div>
                                     <div className="text-sm text-gray-400 mb-1">Hooks</div>
-                                    <div className="text-[#00ff9d] font-medium">2</div>
+                                    <div className="text-[#00ff9d] font-medium">3</div>
                                 </div>
                             </div>
                             <Link href="/fields/cmdao-valley/undefined"><Button className="w-full mb-5 bg-gradient-to-r from-[#00ff9d]/20 to-[#00cc7d]/20 hover:from-[#00ff9d]/40 hover:to-[#00cc7d]/80 text-[#00ff9d] hover:text-[#0c1420] border-0 h-11 rounded-lg transition-all duration-300 cursor-pointer">Enter Field</Button></Link>
