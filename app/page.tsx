@@ -145,7 +145,7 @@ export default function Page() {
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 border border-[#00FF41]/50 flex items-center justify-center">
-                                        <span className="text-[#00FF41] font-mono font-bold">2</span>
+                                        <span className="text-[#00FF41] font-mono font-bold">3</span>
                                     </div>
                                     <span className="text-xl font-mono text-white">GAME_HOOKS</span>
                                 </div>
@@ -161,6 +161,10 @@ export default function Page() {
                                 </div>
                                 <div className="flex items-center justify-between mt-2">
                                     <span className="text-white/70 text-sm font-mono">MINING</span>
+                                    <span className="text-[#00FF41] font-mono">1</span>
+                                </div>
+                                <div className="flex items-center justify-between mt-2">
+                                    <span className="text-white/70 text-sm font-mono">FISHING</span>
                                     <span className="text-[#00FF41] font-mono">1</span>
                                 </div>
                                 <div className="h-1 w-full bg-white/10 overflow-hidden">
