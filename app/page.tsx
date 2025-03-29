@@ -163,6 +163,9 @@ export default function Page() {
                                     <span className="text-white/70 text-sm font-mono">MINING</span>
                                     <span className="text-[#00FF41] font-mono">1</span>
                                 </div>
+                                <div className="h-1 w-full bg-white/10 overflow-hidden">
+                                    <div className="h-full w-full bg-[#00FF41]/70 loading-bar" />
+                                </div>
                                 <div className="flex items-center justify-between mt-2">
                                     <span className="text-white/70 text-sm font-mono">FISHING</span>
                                     <span className="text-[#00FF41] font-mono">1</span>
