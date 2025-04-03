@@ -172,17 +172,6 @@ body::-webkit-scrollbar { display: none; }
     50% { transform: translateY(-20px) rotate(5deg); }
 }
   
-.blink {
-    animation: blink 1s step-end infinite;
-    color: #00ff41;
-}
-  
-@keyframes blink {
-    0%,
-    100% { opacity: 1; }
-    50% { opacity: 0; }
-}
-  
 .terminal-window {
     background-color: rgba(0, 0, 0, 0.5);
     border: 1px solid #00ff41;
@@ -278,41 +267,6 @@ body::-webkit-scrollbar { display: none; }
     80% { clip: rect(87px, 9999px, 99px, 0); }
     90% { clip: rect(13px, 9999px, 75px, 0); }
     100% { clip: rect(42px, 9999px, 69px, 0); }
-}
-  
-.glitch-container {
-    position: relative;
-    width: 100%;
-    height: 2px;
-    overflow: hidden;
-}
-  
-.glitch-line {
-    position: absolute;
-    top: 0;
-    left: -100%;
-    height: 2px;
-    width: 100%;
-    background: linear-gradient(90deg, transparent, #32ffa7, transparent);
-    animation: glitch-line 3s linear infinite;
-}
-  
-@keyframes glitch-line {
-    0% { left: -100%; }
-    50%,
-    100% { left: 100%; }
-}
-  
-.typing-effect {
-    overflow: hidden;
-    border-right: 2px solid #32ffa7;
-    white-space: nowrap;
-    animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
-}
-  
-@keyframes typing {
-    from { width: 0; }
-    to { width: 100%; }
 }
   
 @keyframes blink-caret {
