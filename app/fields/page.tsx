@@ -78,14 +78,6 @@ export default function Page() {
                         </div>
                     </Card>
                 </div>
-                <div className="mt-16 pt-6 border-t border-[#00ff9d]/5">
-                    <div className="flex items-center text-sm text-gray-500">
-                        <span className="text-[#00ff9d] mr-2">$</span>
-                        <span className="text-gray-400 mr-2">fields_loaded</span>
-                        <span className="text-white">1</span>
-                        <span className="ml-2 w-2 h-4 bg-[#00ff9d] opacity-75 animate-pulse" />
-                    </div>
-                </div>
             </main>
         </div>
     )
