@@ -401,7 +401,7 @@ export default function Swap({
 
         setAmountA("")
         setAmountB("")
-        address !== undefined && fetch0()
+        fetch0()
     }, [config, address, tokenA, tokenB, feeSelect, txupdate])
 
     return (
