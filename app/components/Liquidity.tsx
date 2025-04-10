@@ -357,7 +357,7 @@ export default function Liquidity({
                     </Popover>
                 </div>
                 <div className="flex justify-between items-center mt-2">
-                    <span className="text-gray-500 font-mono text-xs">≈ ฿0.00</span>
+                    <span />
                     <div>
                         <span className="text-gray-400 font-mono text-xs">{tokenA.name !== 'Choose Token' ? Number(tokenABalance).toFixed(4) + ' ' + tokenA.name : '0.0000'}</span>
                         {(lowerPrice !== '' && Number(lowerPrice) < Number(currPrice)) &&
@@ -429,7 +429,7 @@ export default function Liquidity({
                     </Popover>
                 </div>
                 <div className="flex justify-between items-center mt-2">
-                    <span className="text-gray-500 font-mono text-xs">≈ ฿0.00</span>
+                    <span />
                     {(upperPrice !== '' || Number(upperPrice) > Number(currPrice)) &&
                         <span className="text-gray-400 font-mono text-xs" onClick={() => setAmountB(tokenBBalance)}>{tokenB.name !== 'Choose Token' ? Number(tokenBBalance).toFixed(4) + ' ' + tokenB.name : '0.0000'}</span>
                     }
@@ -438,19 +438,19 @@ export default function Liquidity({
             <div className="grid grid-cols-4 gap-2 mt-4">
                 <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (feeSelect === 100 ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(100)}>
                     <span>0.01% fee</span>
-                    <span className="text-[10px] mt-1 opacity-60">👍 stable war pairs</span>
+                    <span className="text-[7.5px] mt-1 opacity-60">best for stable war pairs</span>
                 </Button>
                 <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (feeSelect === 500 ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(500)}>
                     <span>0.05% fee</span>
-                    <span className="text-[10px] mt-1 opacity-60">👍 stable pairs</span>
+                    <span className="text-[8px] mt-1 opacity-60">best for stable pairs</span>
                 </Button>
                 <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (feeSelect === 3000 ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(3000)}>
                     <span>0.3% fee</span>
-                    <span className="text-[10px] mt-1 opacity-60">👍 basic pairs</span>
+                    <span className="text-[8px] mt-1 opacity-60">best for basic pairs</span>
                 </Button>
                 <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (feeSelect === 10000 ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(10000)}>
                     <span>1% fee</span>
-                    <span className="text-[10px] mt-1 opacity-60">👍 exotic pairs</span>
+                    <span className="text-[8px] mt-1 opacity-60">best for exotic pairs</span>
                 </Button>
             </div>
             <div className="grid grid-cols-4 gap-2 mt-4">
@@ -493,9 +493,7 @@ export default function Liquidity({
             }
             <div className="mt-4 border-t border-[#00ff9d]/10 pt-4">
                 <div className="flex items-center text-gray-500 font-mono text-xs my-2">
-                    <span className="mr-1">$current_price</span>
-                    <span className="mr-1">_</span>
-                    <span className="animate-pulse">|</span>
+                    <span className="mr-1">current price</span>
                     <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">{Number(currPrice).toFixed(4)} {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && tokenA.name + '/' + tokenB.name}</span>
                 </div>
             </div>

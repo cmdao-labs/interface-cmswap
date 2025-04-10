@@ -28,12 +28,13 @@ export default function Swap({
     const [tokenA, setTokenA] = React.useState<{name: string, value: '0xstring', logo: string}>(tokens[0])
     const [tokenABalance, setTokenABalance] = React.useState("")
     const [amountA, setAmountA] = React.useState("")
-    const [tokenB, setTokenB] = React.useState<{name: string, value: '0xstring', logo: string}>({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
+    const [tokenB, setTokenB] = React.useState<{name: string, value: '0xstring', logo: string}>(tokens[1])
     const [tokenBBalance, setTokenBBalance] = React.useState("")
     const [amountB, setAmountB] = React.useState("")
     const [feeSelect, setFeeSelect] = React.useState(10000)
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
+    const [thbRate, setThbRate] = React.useState("")
 
     function encodePath(tokens: string[], fees: number[]): string {
         let path = "0x"
@@ -81,6 +82,7 @@ export default function Swap({
     }, 700)
 
     const switchToken = () => {
+        setExchangeRate("")
         const _tokenA = tokenB
         const _tokenB = tokenA
         setTokenA(_tokenA)
@@ -136,6 +138,11 @@ export default function Swap({
 
     React.useEffect(() => {
         const fetch0 = async () => {
+            const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD')
+            const data = await response.json()
+            const _thbRate = data.rates.THB
+            setThbRate(_thbRate)
+
             tokenA.value.toUpperCase() === tokenB.value.toUpperCase() && setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
 
             const stateA = await readContracts(config, {
@@ -241,7 +248,7 @@ export default function Swap({
                             const altPrice0 = altToken0.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2))
                             const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
                             const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
-                            const altPrice1 = altToken1.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
+                            const altPrice1 = altToken1.toUpperCase() === tokenB.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
                             setExchangeRate((altPrice1 / altPrice0).toString())
                         }
                     }
@@ -288,7 +295,7 @@ export default function Swap({
                             const altPrice0 = altToken0.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2))
                             const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
                             const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
-                            const altPrice1 = altToken1.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
+                            const altPrice1 = altToken1.toUpperCase() === tokenB.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
                             feeSelect === 3000 && setExchangeRate((altPrice1 / altPrice0).toString())
                         }
                     }
@@ -335,7 +342,7 @@ export default function Swap({
                             const altPrice0 = altToken0.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2))
                             const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
                             const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
-                            const altPrice1 = altToken1.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
+                            const altPrice1 = altToken1.toUpperCase() === tokenB.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
                             feeSelect === 500 && setExchangeRate((altPrice1 / altPrice0).toString())
                         }
                     }
@@ -382,7 +389,7 @@ export default function Swap({
                             const altPrice0 = altToken0.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2))
                             const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
                             const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
-                            const altPrice1 = altToken1.toUpperCase() === tokenA.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
+                            const altPrice1 = altToken1.toUpperCase() === tokenB.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
                             feeSelect === 100 && setExchangeRate((altPrice1 / altPrice0).toString())
                         }
                     }
@@ -459,7 +466,7 @@ export default function Swap({
                     </Popover>
                 </div>
                 <div className="flex justify-between items-center mt-2">
-                    <span className="text-gray-500 font-mono text-xs">≈ ฿0.00</span>
+                    <span />
                     <div>
                         <span className="text-gray-400 font-mono text-xs">{tokenA.name !== 'Choose Token' ? Number(tokenABalance).toFixed(4) + ' ' + tokenA.name : '0.0000'}</span>
                         <Button variant="ghost" size="sm" className="h-6 text-[#00ff9d] font-mono text-xs px-2 cursor-pointer" onClick={() => {setAmountA(tokenABalance); getQoute(tokenABalance);}}>MAX</Button>
@@ -531,7 +538,7 @@ export default function Swap({
                     </Popover>
                 </div>
                 <div className="flex justify-between items-center mt-2">
-                    <span className="text-gray-500 font-mono text-xs">≈ ฿0.00</span>
+                    <span />
                     <span className="text-gray-400 font-mono text-xs">{tokenB.name !== 'Choose Token' ? Number(tokenBBalance).toFixed(4) + ' ' + tokenB.name : '0.0000'}</span>
                 </div>
             </div>
@@ -565,28 +572,36 @@ export default function Swap({
             <div className="mt-4 border-t border-[#00ff9d]/10 pt-4">
                 {altRoute !== undefined &&
                     <div className="flex items-center text-gray-500 font-mono text-xs my-2">
-                        <span className="mr-1">$alt_route</span>
-                        <span className="mr-1">_</span>
-                        <span className="animate-pulse">|</span>
-                        <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">{tokens.map(obj => obj.value).indexOf(altRoute.a) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.a)].name}  → {tokens.map(obj => obj.value).indexOf(altRoute.b) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.b)].name} → {tokens.map(obj => obj.value).indexOf(altRoute.c) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.c)].name}</span>
+                        <span className="mr-1">route</span>
+                        <span className="text-white font-mono text-xs px-2 gap-1">{tokens.map(obj => obj.value).indexOf(altRoute.a) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.a)].name}  → {tokens.map(obj => obj.value).indexOf(altRoute.b) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.b)].name} → {tokens.map(obj => obj.value).indexOf(altRoute.c) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.c)].name}</span>
                     </div>
                 }
                 {tokenA.name !== 'Choose Token' && tokenB.name !== 'Choose Token' && tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' &&
-                    <div className="flex items-center text-gray-500 font-mono text-xs my-2">
-                        <span className="mr-1">$price_qoute</span>
-                        <span className="mr-1">_</span>
-                        <span className="animate-pulse">|</span>
-                        {exchangeRate !== '0' ? <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">1 {tokenB.name} = {Number(exchangeRate).toFixed(4)} {tokenA.name}</span> : <span className="font-bold text-red-500">insufficient liquidity</span>}
-                        {Number(amountB) > 0 && 
-                            <span>[PI: {((Number(newPrice) * 100) / Number(exchangeRate)) - 100 <= 100 ? (((Number(newPrice) * 100) / Number(exchangeRate)) - 100).toFixed(4) : ">100"}%]</span>
-                        } 
-                    </div>
+                    <>
+                        <div className="flex items-center text-gray-500 font-mono text-xs my-2">
+                            <span className="mr-1">price qoute</span>
+                            {exchangeRate !== '0' ? <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">1 {tokenB.name} = {Number(exchangeRate).toFixed(4)} {tokenA.name}</span> : <span className="text-red-500 px-2">insufficient liquidity</span>}
+                            {Number(amountB) > 0 && 
+                                <span>[PI: {((Number(newPrice) * 100) / Number(exchangeRate)) - 100 <= 100 ? (((Number(newPrice) * 100) / Number(exchangeRate)) - 100).toFixed(4) : ">100"}%]</span>
+                            } 
+                        </div>
+                        {(tokenA.name === 'JUSDT' || tokenB.name === 'JUSDT') &&
+                            <div className="flex items-center text-gray-500 font-mono text-xs my-2">
+                                <span className="mr-1">token price</span>
+                                {exchangeRate !== '0' && exchangeRate !== '' && <span className="text-white font-mono text-xs px-2 gap-1">
+                                    {tokenA.name === 'JUSDT' ?
+                                        <span>{Number(Number(exchangeRate) * Number(thbRate)).toFixed(2)} </span> : 
+                                        <span>{Number((1 / Number(exchangeRate)) * Number(thbRate)).toFixed(2)} </span>
+                                    }
+                                    ฿
+                                </span>}
+                            </div>
+                        }
+                    </>
                 }
                 <div className="flex items-center text-gray-500 font-mono text-xs my-2">
-                    <span className="mr-1">$slippage_tolerance</span>
-                    <span className="mr-1">_</span>
-                    <span className="animate-pulse">|</span>
-                    <span className="text-[#00ff9d] font-mono text-xs px-2 flex items-center gap-1">5%</span>
+                    <span className="mr-1">slippage tolerance</span>
+                    <span className="font-mono text-xs px-2 flex items-center gap-1">5%</span>
                 </div>
             </div>
         </div>
