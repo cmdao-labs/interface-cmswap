@@ -330,7 +330,7 @@ export default function Page() {
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
             <header className="relative">
                 <div className="relative h-84 w-full overflow-hidden">
-                    <Image alt="" src="https://gateway.commudao.xyz/ipfs/bafybeicyixoicb7ai6zads6t5k6qpyocoyelfbyoi73nmtobfjlv7fseiq" fill className="object-cover animate-subtle-zoom" priority />
+                    <Image alt="" src="https://gateway.commudao.xyz/ipfs/bafybeicyixoicb7ai6zads6t5k6qpyocoyelfbyoi73nmtobfjlv7fseiq" fill className="object-cover" priority />
                     <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black" />
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 transform translate-y-1/2 z-20">
@@ -371,15 +371,15 @@ export default function Page() {
                         </TabsList>
                         <TabsContent value='0'>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-8">
-                                <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-6 transition-transform hover:scale-[1.02]">
+                                <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-6">
                                     <div className='text-xs text-gray-400 uppercase tracking-wider mb-2'>COLLECTION HASHRATE</div>
                                     <div className='text-3xl font-light'>{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(nftIndexHashRate)}</div>
                                 </div>
-                                <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-6 transition-transform hover:scale-[1.02]">
+                                <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-6">
                                     <div className='text-xs text-gray-400 uppercase tracking-wider mb-2'>ELIGIBLE NFT</div>
                                     <div className='text-3xl font-light'>{nft !== undefined && nft.length > 0 && addr !== undefined ? nft.length : 0}</div>
                                 </div>
-                                <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-6 transition-transform hover:scale-[1.02]">
+                                <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-6">
                                     <div className='text-xs text-gray-400 uppercase tracking-wider mb-2'>TOTAL POINT</div>
                                     <div className='text-3xl font-light'>
                                         {nft !== undefined && nft.length > 0 && addr !== undefined ? Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(totalPoint) : 0}                                

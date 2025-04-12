@@ -26,7 +26,7 @@ export default function Page() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 h-auto">
                     <Card className="group bg-[#0c1420] hover:bg-[#0d1522] border-0 rounded-xl overflow-hidden transition-all duration-300 py-0">
                         <div className="aspect-square relative overflow-hidden">
-                            <img src="https://gateway.commudao.xyz/ipfs/bafybeicyixoicb7ai6zads6t5k6qpyocoyelfbyoi73nmtobfjlv7fseiq" alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                            <img src="https://gateway.commudao.xyz/ipfs/bafybeicyixoicb7ai6zads6t5k6qpyocoyelfbyoi73nmtobfjlv7fseiq?img-width=350&img-height=350" alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                             <div className="absolute inset-0 bg-gradient-to-t from-[#0c1420] to-transparent opacity-60" />
                             <div className="absolute top-4 right-4 bg-[#00ff9d]/10 backdrop-blur-md px-3 py-1 rounded-full">
                                 <span className="text-xs font-medium text-[#00ff9d]">ACTIVE</span>

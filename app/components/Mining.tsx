@@ -8,7 +8,6 @@ import { config } from '@/app/config'
 import { Progress } from '@/components/ui/progress'
 import { Play, Pause, Settings, ChevronDown, ChevronUp, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
-import WoodChoppingGame from './wood-chopping-game'
 
 function Pickaxe({ className }: { className?: string }) {
     return (
@@ -391,7 +390,7 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, n
                 <div className="bg-black text-white font-mono">
                     <div className="relative">
                     <div className="mb-8">
-                        <div className="block bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-6 transition-transform hover:scale-[1.01] hover:bg-gray-900">
+                        <div className="block bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-6">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-green-900/30 border border-green-900/50 rounded-md flex items-center justify-center"><Pickaxe className="h-5 w-5 text-green-400" /></div>
@@ -598,7 +597,6 @@ export default function MiningWithGame({ setTxupdate, setErrMsg, setIsLoading, n
                     </div>
                 </div>
             </main>
-            {isMining && <WoodChoppingGame nftIdMiner={nftIdMiner} nftImgMiner={nftImgMiner} woodBalance={woodBalance} />}
         </>
     )
 }
