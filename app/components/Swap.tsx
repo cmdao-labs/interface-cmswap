@@ -161,7 +161,7 @@ export default function Swap({
 
             tokenA.value.toUpperCase() === tokenB.value.toUpperCase() && setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
 
-            const nativeBal = await getBalance(config, {address: address as '0xstring'})
+            const nativeBal = address !== undefined ? await getBalance(config, {address: address as '0xstring'}) : {value: BigInt(0)}
             const stateA = await readContracts(config, {
                 contracts: [
                     { ...erc20ABI, address: tokenA.value, functionName: 'symbol' },
