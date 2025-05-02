@@ -1,6 +1,6 @@
 import React from "react"
 import { useAccount } from "wagmi"
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
+import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, parseEther } from "viem"
 import { Token, BigintIsh } from "@uniswap/sdk-core"
 import { TickMath, encodeSqrtRatioX96, Pool, Position } from "@uniswap/v3-sdk"
@@ -148,6 +148,13 @@ export default function Liquidity({
                 setTxupdate(h)
             }
             
+            if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
+                const h = await sendTransaction(config, {to: tokens[0].value, value: parseEther(amountA)})
+                await waitForTransactionReceipt(config, { hash: h })
+            } else if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
+                const h = await sendTransaction(config, {to: tokens[0].value, value: parseEther(amountB)})
+                await waitForTransactionReceipt(config, { hash: h })
+            }
             const allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
             if (allowanceA < parseEther(amountA)) {
                 const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountA)] })
@@ -195,6 +202,7 @@ export default function Liquidity({
         const fetch1 = async () => {
             tokenA.value.toUpperCase() === tokenB.value.toUpperCase() && setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
 
+            const nativeBal = await getBalance(config, {address: address as '0xstring'})
             const stateA = await readContracts(config, {
                 contracts: [
                     { ...erc20ABI, address: tokenA.value, functionName: 'symbol' },
@@ -222,8 +230,12 @@ export default function Liquidity({
                     tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].logo : 
                     "../favicon.ico"
             })
-            stateA[1].result !== undefined && setTokenABalance(formatEther(stateA[1].result))
-            stateB[1].result !== undefined && setTokenBBalance(formatEther(stateB[1].result))
+            tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() ? 
+                setTokenABalance(formatEther(nativeBal.value)) :
+                stateA[1].result !== undefined && setTokenABalance(formatEther(stateA[1].result))
+            tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() ? 
+                setTokenBBalance(formatEther(nativeBal.value)) :
+                stateB[1].result !== undefined && setTokenBBalance(formatEther(stateB[1].result))
             stateB[2].result !== undefined && setPairDetect(stateB[2].result)
             
             if (stateB[2].result !== undefined && stateB[2].result !== '0x0000000000000000000000000000000000000000') {

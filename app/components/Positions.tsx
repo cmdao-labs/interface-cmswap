@@ -1,6 +1,6 @@
 import React from "react"
 import { useAccount } from "wagmi"
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
+import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, parseEther } from "viem"
 import { Token, BigintIsh } from "@uniswap/sdk-core"
 import { Pool, Position } from "@uniswap/v3-sdk"
@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI } from '@/app/lib/8899'
+import { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, wrappedNative } from '@/app/lib/8899'
 import { config } from '@/app/config'
 
 type MyPosition = {
@@ -106,7 +106,7 @@ export default function Positions({
         return adjustedMath
     }
 
-    const setAlignedAmountA = useDebouncedCallback(async (_amountB: string) => {
+    const setAlignedAmountB = useDebouncedCallback(async (_amountA: string) => {
         const poolState = await readContracts(config, {
             contracts: [
                 { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'token0' },
@@ -133,22 +133,22 @@ export default function Positions({
                 pool, 
                 tickLower: Number(lowerTick), 
                 tickUpper: Number(upperTick), 
-                amount1: String(parseEther(_amountB)) as BigintIsh,
+                amount1: String(parseEther(_amountA)) as BigintIsh,
             })
-            setAmountA(formatEther(singleSidePositionToken1.mintAmounts.amount0 as unknown as bigint))
+            setAmountB(formatEther(singleSidePositionToken1.mintAmounts.amount0 as unknown as bigint))
         } else {
             const singleSidePositionToken0 = Position.fromAmount0({
                 pool, 
                 tickLower: Number(lowerTick), 
                 tickUpper: Number(upperTick), 
-                amount0: String(parseEther(_amountB)) as BigintIsh,
+                amount0: String(parseEther(_amountA)) as BigintIsh,
                 useFullPrecision: true
             })
-            setAmountA(formatEther(singleSidePositionToken0.mintAmounts.amount1 as unknown as bigint))
+            setAmountB(formatEther(singleSidePositionToken0.mintAmounts.amount1 as unknown as bigint))
         }
     }, 700)
 
-    const setAlignedAmountB = useDebouncedCallback(async (_amountA: string) => {
+    const setAlignedAmountA = useDebouncedCallback(async (_amountB: string) => {
         const poolState = await readContracts(config, {
             contracts: [
                 { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'token0' },
@@ -175,44 +175,56 @@ export default function Positions({
                 pool, 
                 tickLower: Number(lowerTick), 
                 tickUpper: Number(upperTick), 
-                amount0: String(parseEther(_amountA)) as BigintIsh,
+                amount0: String(parseEther(_amountB)) as BigintIsh,
                 useFullPrecision: true
             })
-            setAmountB(formatEther(singleSidePositionToken0.mintAmounts.amount1 as unknown as bigint))
+            setAmountA(formatEther(singleSidePositionToken0.mintAmounts.amount1 as unknown as bigint))
         } else {
             const singleSidePositionToken1 = Position.fromAmount1({
                 pool, 
                 tickLower: Number(lowerTick), 
                 tickUpper: Number(upperTick), 
-                amount1: String(parseEther(_amountA)) as BigintIsh,
+                amount1: String(parseEther(_amountB)) as BigintIsh,
             })
-            setAmountB(formatEther(singleSidePositionToken1.mintAmounts.amount0 as unknown as bigint))
+            setAmountA(formatEther(singleSidePositionToken1.mintAmounts.amount0 as unknown as bigint))
         }
     }, 700)
 
     const getBalanceOfAB = async (_tokenAvalue: '0xstring', _tokenBvalue: '0xstring') => {
+        const nativeBal = await getBalance(config, {address: address as '0xstring'})
         const bal = await readContracts(config, {
             contracts: [
                 { ...erc20ABI, address: _tokenAvalue, functionName: 'balanceOf', args: [address as '0xstring'] },
                 { ...erc20ABI, address: _tokenBvalue, functionName: 'balanceOf', args: [address as '0xstring'] },
             ]
         })
-        bal[0].result !== undefined && setTokenABalance(formatEther(bal[0].result as bigint))
-        bal[1].result !== undefined && setTokenBBalance(formatEther(bal[1].result as bigint))
+        _tokenAvalue.toUpperCase() === tokens[0].value.toUpperCase() ? 
+            setTokenABalance(formatEther(nativeBal.value)) :
+            bal[0].result !== undefined && setTokenABalance(formatEther(bal[0].result))
+        _tokenBvalue.toUpperCase() === tokens[0].value.toUpperCase() ? 
+            setTokenBBalance(formatEther(nativeBal.value)) :
+            bal[1].result !== undefined && setTokenBBalance(formatEther(bal[1].result))
     }
 
     const increaseLiquidity = async (_tokenId: bigint) => {
         setIsLoading(true)
         try {
-            const allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+            if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
+                const h = await sendTransaction(config, {to: tokens[0].value, value: parseEther(amountB)})
+                await waitForTransactionReceipt(config, { hash: h })
+            } else if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
+                const h = await sendTransaction(config, {to: tokens[0].value, value: parseEther(amountA)})
+                await waitForTransactionReceipt(config, { hash: h })
+            }
+            const allowanceA = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
             if (allowanceA < parseEther(amountA)) {
-                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountA)] })
+                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountA)] })
                 const h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
-            const allowanceB = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+            const allowanceB = await readContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
             if (allowanceB < parseEther(amountB)) {
-                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountB)] })
+                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountB)] })
                 const h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
@@ -255,7 +267,7 @@ export default function Positions({
             })
             let h = await writeContract(config, request1)
             await waitForTransactionReceipt(config, { hash: h })
-            const { request: request2 } = await simulateContract(config, {
+            const { result, request: request2 } = await simulateContract(config, {
                 ...positionManagerContract,
                 functionName: 'collect',
                 args: [{
@@ -268,6 +280,23 @@ export default function Positions({
             h = await writeContract(config, request2)
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
+            if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
+                let { request } = await simulateContract(config, {
+                    ...wrappedNative,
+                    functionName: 'withdraw',
+                    args: [result[1] as bigint]
+                })
+                let h = await writeContract(config, request)
+                await waitForTransactionReceipt(config, { hash: h })
+            } else if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
+                let { request } = await simulateContract(config, {
+                    ...wrappedNative,
+                    functionName: 'withdraw',
+                    args: [result[0] as bigint]
+                })
+                let h = await writeContract(config, request)
+                await waitForTransactionReceipt(config, { hash: h })
+            }
         } catch (e) {
             setErrMsg(e as WriteContractErrorType)
         }
@@ -482,7 +511,7 @@ export default function Positions({
                                                 setPositionSelected(obj)
                                                 setTokenA({name: "", logo: "", value: obj.Token0Addr as '0xstring'})
                                                 setTokenB({name: "", logo: "", value: obj.Token1Addr as '0xstring'})
-                                                getBalanceOfAB(obj.Token0Addr as '0xstring', obj.Token1Addr as '0xstring')
+                                                getBalanceOfAB(obj.Token1Addr as '0xstring', obj.Token0Addr as '0xstring')
                                                 setPairDetect(obj.Pair); setFeeSelect(obj.FeeTier)
                                                 setLowerTick(obj.LowerTick.toString())
                                                 setUpperTick(obj.UpperTick.toString())

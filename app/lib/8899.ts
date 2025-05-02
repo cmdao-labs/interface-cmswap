@@ -1,10 +1,10 @@
 import { erc20Abi, erc721Abi, createPublicClient, http } from 'viem'
 import { jbc } from 'viem/chains'
-import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, FieldsV2RouterAbi, FieldsHook001, v3staker, FieldsHook003 } from '@/app/lib/abi'
+import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, FieldsV2RouterAbi, FieldsHook001, v3staker, FieldsHook003, WrappedNative } from '@/app/lib/abi'
 
 // swap
 export const tokens: {name: string, value: '0xstring', logo: string}[] = [
-    { name: 'WJBC', value: '0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747' as '0xstring', logo: './jbc.png' },
+    { name: 'JBC', value: '0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747' as '0xstring', logo: './jbc.png' },
     { name: 'JUSDT', value: '0x24599b658b57f91E7643f4F154B16bcd2884f9ac' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreif3vllg6mwswlqypqgtsh7i7wwap7zgrkvtlhdjoc63zjm7uv6vvi' },
     { name: 'CMJ', value: '0xE67E280f5a354B4AcA15fA7f0ccbF667CF74F97b' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreiabbtn5pc6di4nwfgpqkk3ss6njgzkt2evilc5i2r754pgiru5x4u' },
     { name: 'WOOD-V2', value: '0x8339E417ED03cf4733f6FcFB9D295bE588fe2156' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreidldk7skx44xwstwat2evjyp4u5oy5nmamnrhurqtjapnwqzwccd4' },
@@ -27,6 +27,7 @@ export const erc20ABI = { chainId: 8899, abi: erc20Abi } as const
 export const v3PoolABI = { chainId: 8899, abi: v3Pool } as const
 export const V3_STAKER = '0xC7Aa8C815937B61F70E04d814914683bB9Bd7579' as '0xstring'
 export const v3StakerContract = { chainId: 8899, address: V3_STAKER, abi: v3staker } as const
+export const wrappedNative = { chainId: 8899, abi: WrappedNative, address: tokens[0].value } as const
 
 // fields
 export const v2routerAddr = '0x8E83E1Bb0E1aF049Ab4748F328Ce6760bd7ae431' as '0xstring'

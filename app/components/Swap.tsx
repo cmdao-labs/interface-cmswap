@@ -1,13 +1,13 @@
 import React from 'react'
 import { useAccount } from 'wagmi'
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
+import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, parseEther } from 'viem'
 import { ArrowDown, ChevronDown } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, v3PoolABI } from '@/app/lib/8899'
+import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, v3PoolABI, wrappedNative } from '@/app/lib/8899'
 import { config } from '@/app/config'
 
 export default function Swap({ 
@@ -92,6 +92,10 @@ export default function Swap({
     const swap = async () => {
         setIsLoading(true)
         try {
+            if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
+                const h = await sendTransaction(config, {to: tokens[0].value, value: parseEther(amountA)})
+                await waitForTransactionReceipt(config, { hash: h })
+            }
             const allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', ROUTER02] })
             if (allowanceA < parseEther(amountA)) {
                 const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [ROUTER02, parseEther(amountA)] })
@@ -99,8 +103,9 @@ export default function Swap({
                 await waitForTransactionReceipt(config, { hash: h })
             }
             let h
+            let r
             if (altRoute === undefined) {
-                const { request } = await simulateContract(config, {
+                const { result, request } = await simulateContract(config, {
                     ...router02Contract,
                     functionName: 'exactInputSingle',
                     args: [{
@@ -113,10 +118,11 @@ export default function Swap({
                         sqrtPriceLimitX96: BigInt(0)
                     }]
                 })
+                r = result
                 h = await writeContract(config, request)
             } else {
                 const route = encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect])
-                const { request } = await simulateContract(config, {
+                const { result, request } = await simulateContract(config, {
                     ...router02Contract,
                     functionName: 'exactInput',
                     args: [{
@@ -126,10 +132,20 @@ export default function Swap({
                         amountOutMinimum: parseEther(String(Number(amountB) * 0.95))
                     }]
                 })
+                r = result
                 h = await writeContract(config, request)
             }
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
+            if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
+                let { request } = await simulateContract(config, {
+                    ...wrappedNative,
+                    functionName: 'withdraw',
+                    args: [r as bigint]
+                })
+                let h = await writeContract(config, request)
+                await waitForTransactionReceipt(config, { hash: h })
+            }
         } catch (e) {
             setErrMsg(e as WriteContractErrorType)
         }
@@ -145,6 +161,7 @@ export default function Swap({
 
             tokenA.value.toUpperCase() === tokenB.value.toUpperCase() && setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
 
+            const nativeBal = await getBalance(config, {address: address as '0xstring'})
             const stateA = await readContracts(config, {
                 contracts: [
                     { ...erc20ABI, address: tokenA.value, functionName: 'symbol' },
@@ -174,9 +191,13 @@ export default function Swap({
                 logo: tokens.map(obj => obj.value).indexOf(tokenB.value) !== -1 ? 
                     tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].logo : 
                     "../favicon.ico"
-            })
-            stateA[1].result !== undefined && setTokenABalance(formatEther(stateA[1].result))
-            stateB[1].result !== undefined && setTokenBBalance(formatEther(stateB[1].result))
+            });
+            tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() ? 
+                setTokenABalance(formatEther(nativeBal.value)) :
+                stateA[1].result !== undefined && setTokenABalance(formatEther(stateA[1].result))
+            tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() ? 
+                setTokenBBalance(formatEther(nativeBal.value)) :
+                stateB[1].result !== undefined && setTokenBBalance(formatEther(stateB[1].result))
             const pair10000 = stateB[2].result !== undefined ? stateB[2].result  as '0xstring' : '' as '0xstring'
             const pair3000 = stateB[3].result !== undefined ? stateB[3].result  as '0xstring' : '' as '0xstring'
             const pair500 = stateB[4].result !== undefined ? stateB[4].result  as '0xstring' : '' as '0xstring'
