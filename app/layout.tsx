@@ -13,7 +13,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-    title: 'OpenBBQ',
+    title: 'cmswap',
     description: 'The Future of Permissionless Multiverse',
 }
 

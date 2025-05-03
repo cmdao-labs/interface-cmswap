@@ -97,7 +97,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$Headbar
 ;
 ;
 const metadata = {
-    title: 'OpenBBQ',
+    title: 'cmswap',
     description: 'The Future of Permissionless Multiverse'
 };
 function RootLayout({ children }) {
