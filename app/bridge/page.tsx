@@ -51,9 +51,15 @@ export default function BridgeInterface() {
     const [escrowAddress, setEscrowAddress] = useState('0x' as '0xstring')
     const [bridgeFee, setBridgeFee] = useState('0')
     const [depositValue, setDepositValue] = useState('')
+    const [thbRate, setThbRate] = useState("")
 
     useEffect(() => {
-        const fetch = async () => {
+        const fetch0 = async () => {
+            const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD')
+            const data0 = await response.json()
+            const _thbRate = data0.rates.THB
+            setThbRate(_thbRate)
+
             let reserveAddr = '0x' as '0xstring'
             if (sourceChain.id === 8899 && destinationChain.id === 96) {
                 reserveAddr = '0x8622049edEcC20ADA5aDEeaf2Caa53447e68Ae63' as '0xstring'
@@ -101,7 +107,7 @@ export default function BridgeInterface() {
             data[1].result !== undefined ? setSourceBalance(formatEther(data[1].result)) : setSourceBalance('0')
             data[2].result !== undefined ? setDestinationBalance(formatEther(data[2].result)) : setDestinationBalance('0')
         }
-        fetch()
+        fetch0()
     }, [config, address, txupdate, erc20Abi, sourceChain, destinationChain])
 
     const bridge = async () => {
@@ -314,7 +320,7 @@ export default function BridgeInterface() {
                                 </Popover>
                             </div>
                             <div className="flex justify-between items-center mt-2">
-                                <div className="text-xs text-gray-500 mt-1">≈ ฿0.00</div>
+                                <div className="text-xs text-gray-500 mt-1">฿{Number(Number(depositValue) * Number(thbRate)).toFixed(2)}</div>
                                 <span className="text-gray-400 font-mono text-xs">{tokenA.name !== 'Choose Token' ? Number(sourceBalance).toFixed(4) + ' ' + tokenA.name : '0.0000'}</span>
                             </div>
                         </div>
@@ -373,7 +379,7 @@ export default function BridgeInterface() {
                                 </Popover>
                             </div>
                             <div className="flex justify-between items-center mt-2">
-                                <div className="text-xs text-gray-500 mt-1">≈ ฿0.00</div>
+                                <div className="text-xs text-gray-500 mt-1">฿{Number(depositValue) - Number(bridgeFee) > 0 ? ((Number(depositValue) - Number(bridgeFee)) * Number(thbRate)).toFixed(2) : '0.00'}</div>
                                 <span className="text-gray-400 font-mono text-xs">{tokenB.name !== 'Choose Token' ? Number(destinationBalance).toFixed(4) + ' ' + tokenB.name : '0.0000'}</span>
                             </div>
                         </div>
