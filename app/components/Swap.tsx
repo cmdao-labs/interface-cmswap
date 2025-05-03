@@ -20,10 +20,10 @@ export default function Swap({
     const [txupdate, setTxupdate] = React.useState("")
     const [exchangeRate, setExchangeRate] = React.useState("")
     const [altRoute, setAltRoute] = React.useState<{a: '0xstring', b: '0xstring', c: '0xstring'}>()
-    const [tvl10000, setTvl10000] = React.useState("")
-    const [tvl3000, setTvl3000] = React.useState("")
-    const [tvl500, setTvl500] = React.useState("")
-    const [tvl100, setTvl100] = React.useState("")
+    const [bbqTvl, setBbqTvl] = React.useState<{tvl10000: string; tvl3000: string; tvl500: string; tvl100: string;}>({tvl10000: "", tvl3000: "", tvl500: "", tvl100: ""});
+    const [gameSwapTvl, setgameSwapTvl] = React.useState<{tvl10000: string; tvl3000: string; tvl500: string; tvl100: string;}>({tvl10000: "", tvl3000: "", tvl500: "", tvl100: ""});
+      
+
     const [newPrice, setNewPrice] = React.useState("")
     const [tokenA, setTokenA] = React.useState<{name: string, value: '0xstring', logo: string}>(tokens[0])
     const [tokenABalance, setTokenABalance] = React.useState("")
@@ -35,6 +35,7 @@ export default function Swap({
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
     const [thbRate, setThbRate] = React.useState("")
+    const [poolSelect, setPoolSelect] = React.useState("")
 
     function encodePath(tokens: string[], fees: number[]): string {
         let path = "0x"
@@ -234,7 +235,15 @@ export default function Swap({
                     const tvl_10000 = currPrice_10000 !== 0 ?  (Number(formatEther(tokenAamount_10000)) * (1 / currPrice_10000)) + Number(formatEther(tokenBamount_10000)) : 0
                     feeSelect === 10000 && currPrice_10000 !== Infinity && setExchangeRate(currPrice_10000.toString())
                     feeSelect === 10000 && tvl_10000 < 1e-9 && setExchangeRate('0')
-                    tvl_10000 >= 1e-9 ? setTvl10000(tvl_10000.toString()) : setTvl10000('0')
+
+                    const setTvl10000 = (tvl_10000: number) => {
+                        setBbqTvl(prevTvl => ({
+                            ...prevTvl,
+                            tvl10000: tvl_10000 >= 1e-9 ? tvl_10000.toString() : '0'
+                        }));
+                    };
+                    setTvl10000(tvl_10000)
+
                     if (feeSelect === 10000 && tvl_10000 < 1e-9) {
                         const init: any = {contracts: []}
                         for (let i = 0; i <= tokens.length - 1; i++) {
@@ -282,7 +291,15 @@ export default function Swap({
                     const tvl_3000 = (Number(formatEther(tokenAamount_3000)) * (1 / currPrice_3000)) + Number(formatEther(tokenBamount_3000));
                     feeSelect === 3000 && setExchangeRate(currPrice_3000.toString())
                     feeSelect === 3000 && tvl_3000 < 1e-9 && setExchangeRate('0')
-                    tvl_3000 >= 1e-9 ? setTvl3000(tvl_3000.toString()) : setTvl3000('0')
+
+                    const setTvl3000 = (tvl_3000: number) => {
+                        setBbqTvl(prevTvl => ({
+                            ...prevTvl,
+                            tvl3000: tvl_3000 >= 1e-9 ? tvl_3000.toString() : '0'
+                        }));
+                    };
+                    setTvl3000(tvl_3000)
+
                     if (feeSelect === 3000 && tvl_3000 < 1e-9) {
                         const init: any = {contracts: []}
                         for (let i = 0; i <= tokens.length - 1; i++) {
@@ -329,7 +346,15 @@ export default function Swap({
                     const tvl_500 = (Number(formatEther(tokenAamount_500)) * (1 / currPrice_500)) + Number(formatEther(tokenBamount_500));
                     feeSelect === 500 && setExchangeRate(currPrice_500.toString())
                     feeSelect === 500 && tvl_500 < 1e-9 && setExchangeRate('0')
-                    tvl_500 >= 1e-9 ? setTvl500(tvl_500.toString()) : setTvl500('0')
+
+                    const setTvl500 = (tvl_500: number) => {
+                        setBbqTvl(prevTvl => ({
+                            ...prevTvl,
+                            tvl_500: tvl_500 >= 1e-9 ? tvl_500.toString() : '0'
+                        }));
+                    };
+                    setTvl500(tvl_500)
+
                     if (feeSelect === 500 && tvl_500 < 1e-9) {
                         const init: any = {contracts: []}
                         for (let i = 0; i <= tokens.length - 1; i++) {
@@ -376,7 +401,15 @@ export default function Swap({
                     const tvl_100 = (Number(formatEther(tokenAamount_100)) * (1 / currPrice_100)) + Number(formatEther(tokenBamount_100));
                     feeSelect === 100 && setExchangeRate(currPrice_100.toString())
                     feeSelect === 100 && tvl_100 < 1e-9 && setExchangeRate('0')
-                    tvl_100 >= 1e-9 ? setTvl100(tvl_100.toString()) : setTvl100('0')
+
+                    const setTvl100 = (tvl_100: number) => {
+                        setBbqTvl(prevTvl => ({
+                            ...prevTvl,
+                            tvl_100: tvl_100 >= 1e-9 ? tvl_100.toString() : '0'
+                        }));
+                    };
+                    setTvl100(tvl_100)
+
                     if (feeSelect === 100 && tvl_100 < 1e-9) {
                         const init: any = {contracts: []}
                         for (let i = 0; i <= tokens.length - 1; i++) {
@@ -564,26 +597,50 @@ export default function Swap({
                 </div>
             </div>
             <div className="mt-6">
+                {/** FEE SELECTION  */}
                 <div className="flex justify-between items-center my-2">
                     <span className="text-gray-400 font-mono text-xs">Swap fee tier</span>
                 </div>
                 <div className="grid grid-cols-4 gap-2 h-[70px]">
                     <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 100 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(100)}>
                         <span>0.01%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl100) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl100))} {tokenB.name}</span>}
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(bbqTvl["tvl100"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(bbqTvl["tvl100"]))} {tokenB.name}</span>}
                     </Button>
                     <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 500 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(500)}>
                         <span>0.05%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl500) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl500))} {tokenB.name}</span>}
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(bbqTvl["tvl500"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(bbqTvl["tvl500"]))} {tokenB.name}</span>}
                     </Button>
                     <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 3000 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(3000)}>
                         <span>0.3%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl3000) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl3000))} {tokenB.name}</span>}
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(bbqTvl["tvl3000"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(bbqTvl["tvl3000"]))} {tokenB.name}</span>}
                     </Button>
                     <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 10000 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(10000)}>
                         <span>1%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl10000) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl10000))} {tokenB.name}</span>}
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(bbqTvl["tvl10000"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(bbqTvl["tvl10000"]))} {tokenB.name}</span>}
                     </Button>
+                </div>
+                {/** LIQUIDITY SELECTION  */}
+                <div className="flex justify-between items-center my-2">
+                    <span className="text-gray-400 font-mono text-xs">Liquidity Available</span>
+                </div>
+                <div className="grid grid-cols-4 gap-2 h-[70px]">
+
+                    <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "OpenBBQ" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("OpenBBQ")}>
+                        <span className='flex items-center gap-1'>
+                            OpenBBQ
+                            <span className="bg-emerald-500/10 text-emerald-300 border border-emerald-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">
+                                Best
+                            </span>
+                        </span>
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(bbqTvl[`tvl${feeSelect}` as keyof typeof bbqTvl]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(bbqTvl[`tvl${feeSelect}` as keyof typeof bbqTvl]))} {tokenB.name}</span>}
+                    </Button>
+
+                    <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "Gameswap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("Gameswap")}>
+                        <span>GameSwap</span>
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(gameSwapTvl[`tvl${feeSelect}` as keyof typeof gameSwapTvl]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(gameSwapTvl[`tvl${feeSelect}` as keyof typeof gameSwapTvl]))} {tokenB.name}</span>}
+                    </Button>
+    
+               
                 </div>
             </div>
             {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) !== 0 ?

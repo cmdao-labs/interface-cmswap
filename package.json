@@ -71,6 +71,13 @@
       "elliptic@<=6.6.0": ">=6.6.1",
       "serialize-javascript@<6.0.2": ">=6.0.2",
       "cookie@<0.7.0": ">=0.7.0"
-    }
+    },
+    "ignoredBuiltDependencies": [
+      "bufferutil",
+      "keccak",
+      "secp256k1",
+      "sharp",
+      "utf-8-validate"
+    ]
   }
 }
