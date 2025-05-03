@@ -6,7 +6,7 @@ import Leaderboard from "@/app/pump/ui/Leaderboard";
 import Sort2 from "@/app/pump/ui/Sort2";
 
 export const metadata: Metadata = {
-    title: "Leaderboard | BKGA",
+    title: "Leaderboard | CMswap - PUMP",
     description: "hello superchain.",
 };
 

@@ -2,7 +2,7 @@ import Create from "@/app/pump/ui/Create";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Launch | BKGA",
+  title: "Launch | CMswap - PUMP",
   description: "hello superchain.",
 };
 

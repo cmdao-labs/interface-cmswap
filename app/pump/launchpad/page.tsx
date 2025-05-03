@@ -8,7 +8,7 @@ import Event from "@/app/pump/ui/Event";
 import Sort4 from "@/app/pump/ui/Sort4";
 
 export const metadata: Metadata = {
-    title: "BKGA",
+    title: "CMswap - PUMP",
     description: "hello superchain.",
 };
 

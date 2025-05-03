@@ -46,7 +46,7 @@ export async function generateMetadata(
     })
 
     return {
-        title: result[0].result + " | BKGA",
+        title: result[0].result + " | CMswap - PUMP",
         description: result[1].result,
     }
 }

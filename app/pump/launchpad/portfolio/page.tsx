@@ -6,7 +6,7 @@ import Activity from "@/app/pump/ui/Activity";
 import Sort3 from "@/app/pump/ui/Sort3";
 
 export const metadata: Metadata = {
-    title: "Portfolio | BKGA",
+    title: "Portfolio | CMswap - PUMP",
     description: "hello superchain.",
 };
 
