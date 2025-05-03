@@ -37,6 +37,8 @@ export default function Swap({
     const [thbRate, setThbRate] = React.useState("")
     const [poolSelect, setPoolSelect] = React.useState("")
     const [bestPool, setBestPool] = React.useState("")
+    const [swapDirection, setSwapDirection] = React.useState(false) // false = A->B, true = B->A
+    const [onLoading,setOnLoading] = React.useState(false)
 
     function encodePath(tokens: string[], fees: number[]): string {
         let path = "0x"
@@ -47,6 +49,8 @@ export default function Swap({
         path += tokens[tokens.length - 1].slice(2)
         return path
     }
+
+
 
     const getQoute = useDebouncedCallback(async (_amount: string) => {
         try {
@@ -84,6 +88,7 @@ export default function Swap({
     }, 700)
 
     const switchToken = () => {
+        setSwapDirection(!swapDirection)
         setExchangeRate("")
         const _tokenA = tokenB
         const _tokenB = tokenA
@@ -165,7 +170,8 @@ export default function Swap({
 
     React.useEffect(() => {
         const fetch0 = async () => {
-            const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD')
+        setOnLoading(true)
+        const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD')
             const data = await response.json()
             const _thbRate = data.rates.THB
             setThbRate(_thbRate)
@@ -183,10 +189,10 @@ export default function Swap({
                 contracts: [
                     { ...erc20ABI, address: tokenB.value, functionName: 'symbol' },
                     { ...erc20ABI, address: tokenB.value, functionName: 'balanceOf', args: [address as '0xstring'] },
-                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 10000] }, // BBQswap 
-                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 3000] }, // BBQswap 
-                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 500] }, // BBQswap 
-                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 100] }, // BBQswap 
+                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 10000] }, //  
+                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 3000] }, //  
+                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 500] }, //  
+                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 100] }, //  
                 ]
             })
      
@@ -489,7 +495,7 @@ export default function Swap({
                             tokenBamount_JCLP = (await getBalance(config, {address: JCLP as '0xstring'})  ).value
                         }   
 
-                        let currPrice_jclp = tokens[1].value.toUpperCase() === tokenB.value.toUpperCase()? Number(tokenAamount_JCLP) / Number(tokenBamount_JCLP): ( 1 / (Number(tokenAamount_JCLP) / Number(tokenBamount_JCLP)));
+                        let currPrice_jclp =  Number(tokenAamount_JCLP) / Number(tokenBamount_JCLP);
                         const tvlJCLP = (Number(formatEther(tokenAamount_JCLP)) * (1 / currPrice_jclp)) + Number(formatEther(tokenBamount_JCLP));
                         const exchangeRateJCLP = tvlJCLP < 1e-9 ? 0 : currPrice_jclp
 
@@ -521,9 +527,13 @@ export default function Swap({
                         }
                         
     
-                        const currPrice_julp = tokens[0].value.toUpperCase() === tokenB.value.toUpperCase()
-                        ? (1 / (Number(tokenAamount_JULP) / Number(tokenBamount_JULP)))
-                        : Number(tokenAamount_JULP) / Number(tokenBamount_JULP);
+                        const currPrice_julp = Number(tokenAamount_JULP) / Number(tokenBamount_JULP);
+
+
+                        console.log('currPrice_julp',(1 / (Number(tokenAamount_JULP) / Number(tokenBamount_JULP))))
+                        console.log('currPrice_julp 2 ',Number(tokenAamount_JULP) / Number(tokenBamount_JULP))
+                        console.log('Real ',currPrice_julp)
+
                         const tvlJULP = (Number(formatEther(tokenAamount_JULP)) * (1 / currPrice_julp)) + Number(formatEther(tokenBamount_JULP));
                         const exchangeRateJULP = tvlJULP < 1e-9 ? 0 : currPrice_julp
                 
@@ -547,7 +557,9 @@ export default function Swap({
 
         setAmountA("")
         setAmountB("")
-        fetch0()
+        fetch0().then(res => {setOnLoading(false); }).catch(error => {console.error('Error:', error);setOnLoading(false)});
+
+        
     }, [config, address, tokenA, tokenB, feeSelect, txupdate])
 
     React.useEffect(() => {
@@ -560,17 +572,29 @@ export default function Swap({
             console.log('Quote Price CMswap',GameSwapTvl.exchangeRate)
         }
 
-    },[poolSelect])
+    },[poolSelect, CMswapTVL, GameSwapTvl])
 
     React.useEffect(() => {
-        const CMswapRate = Number(CMswapTVL.exchangeRate);
-        const GameSwapRate = Number(GameSwapTvl.exchangeRate);
-        const bestPool = CMswapRate > GameSwapRate ? "CMswap" : (GameSwapRate > CMswapRate ? "GameSwap" : "")
-        setBestPool(bestPool)
-        if(poolSelect === "" && GameSwapRate != 0 && CMswapRate != 0) {
-            setPoolSelect(bestPool)
+        // set best pool while all finished loading
+        if(!onLoading){
+            console.log('onLoading',onLoading)
+            const CMswapRate = Number(CMswapTVL.exchangeRate);
+            const GameSwapRate = Number(GameSwapTvl.exchangeRate);
+             
+            let bestPool;
+            if(!swapDirection){
+                bestPool = CMswapRate > GameSwapRate ? "CMswap" : (GameSwapRate > CMswapRate ? "GameSwap" : "")
+            }else {
+                bestPool = CMswapRate < GameSwapRate ? "CMswap" : (GameSwapRate < CMswapRate ? "GameSwap" : "")
+            }
+    
+            setBestPool(bestPool)
+            if(poolSelect === "" && GameSwapRate != 0 && CMswapRate != 0) {
+                setPoolSelect(bestPool)
+            }
         }
-    },[CMswapTVL, GameSwapTvl])
+  
+    },[onLoading, CMswapTVL, GameSwapTvl, swapDirection])
 
     return (
         <div className='space-y-2'>
