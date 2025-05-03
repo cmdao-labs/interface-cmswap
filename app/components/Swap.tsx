@@ -21,7 +21,7 @@ export default function Swap({
     const [exchangeRate, setExchangeRate] = React.useState("")
     const [altRoute, setAltRoute] = React.useState<{a: '0xstring', b: '0xstring', c: '0xstring'}>()
 
-    const [bbqTvl, setBbqTvl] = React.useState<{tvl10000: string; tvl3000: string; tvl500: string; tvl100: string; exchangeRate: string;}>({tvl10000: "", tvl3000: "", tvl500: "", tvl100: "",exchangeRate: ""});
+    const [CMswapTVL, setCMswapTVL] = React.useState<{tvl10000: string; tvl3000: string; tvl500: string; tvl100: string; exchangeRate: string;}>({tvl10000: "", tvl3000: "", tvl500: "", tvl100: "",exchangeRate: ""});
     const [GameSwapTvl, setGameSwapTvl] = React.useState<{tvl10000: string; tvl3000: string; tvl500: string; tvl100: string;exchangeRate: string;}>({tvl10000: "", tvl3000: "", tvl500: "", tvl100: "", exchangeRate: ""});
       
     const [newPrice, setNewPrice] = React.useState("")
@@ -36,6 +36,7 @@ export default function Swap({
     const [open2, setOpen2] = React.useState(false)
     const [thbRate, setThbRate] = React.useState("")
     const [poolSelect, setPoolSelect] = React.useState("")
+    const [bestPool, setBestPool] = React.useState("")
 
     function encodePath(tokens: string[], fees: number[]): string {
         let path = "0x"
@@ -257,7 +258,7 @@ export default function Swap({
                     const exchangeRatetvl_10000 = tvl_10000 < 1e-9 ? 0 : currPrice_10000;
 
                     const setTvl10000 = (tvl_10000: number,exchangeRate : number) => {
-                        setBbqTvl(prevTvl => ({
+                        setCMswapTVL(prevTvl => ({
                             ...prevTvl,
                             tvl10000: tvl_10000 >= 1e-9 ? tvl_10000.toString() : '0',
                             exchangeRate: feeSelect === 10000 ? exchangeRate.toString() : prevTvl.exchangeRate
@@ -313,7 +314,7 @@ export default function Swap({
                     const exchangeRatetvl_3000 = tvl_3000 < 1e-9 ? 0 : currPrice_3000
 
                     const setTvl3000 = (tvl_3000: number,exchangeRate: number) => {
-                        setBbqTvl(prevTvl => ({
+                        setCMswapTVL(prevTvl => ({
                             ...prevTvl,
                             tvl3000: tvl_3000 >= 1e-9 ? tvl_3000.toString() : '0',
                             exchangeRate: feeSelect === 3000 ? exchangeRate.toString() : prevTvl.exchangeRate
@@ -368,7 +369,7 @@ export default function Swap({
                     const exchangeRatetvl_500 = tvl_500 < 1e-9 ? 0 : currPrice_500
 
                     const setTvl500 = (tvl_500: number, exchangeRate: number) => {
-                        setBbqTvl(prevTvl => ({
+                        setCMswapTVL(prevTvl => ({
                             ...prevTvl,
                             tvl_500: tvl_500 >= 1e-9 ? tvl_500.toString() : '0',
                             exchangeRate: feeSelect === 500 ? exchangeRate.toString() : prevTvl.exchangeRate
@@ -425,7 +426,7 @@ export default function Swap({
                     const exchangeRatetvl_100 = tvl_100 < 1e-9 ? 0 : currPrice_100;
 
                     const setTvl100 = (tvl_100: number,exchangeRate: number) => {
-                        setBbqTvl(prevTvl => ({
+                        setCMswapTVL(prevTvl => ({
                             ...prevTvl,
                             tvl_100: tvl_100 >= 1e-9 ? tvl_100.toString() : '0',
                             exchangeRate: feeSelect === 100 ? exchangeRate.toString() : prevTvl.exchangeRate
@@ -488,7 +489,7 @@ export default function Swap({
                             tokenBamount_JCLP = (await getBalance(config, {address: JCLP as '0xstring'})  ).value
                         }   
 
-                        let currPrice_jclp = tokens[1].value.toUpperCase() === tokenB.value.toUpperCase()? Number(tokenAamount_JCLP) / Number(tokenBamount_JCLP): Number(tokenBamount_JCLP) / Number(tokenAamount_JCLP);
+                        let currPrice_jclp = tokens[1].value.toUpperCase() === tokenB.value.toUpperCase()? Number(tokenAamount_JCLP) / Number(tokenBamount_JCLP): ( 1 / (Number(tokenAamount_JCLP) / Number(tokenBamount_JCLP)));
                         const tvlJCLP = (Number(formatEther(tokenAamount_JCLP)) * (1 / currPrice_jclp)) + Number(formatEther(tokenBamount_JCLP));
                         const exchangeRateJCLP = tvlJCLP < 1e-9 ? 0 : currPrice_jclp
 
@@ -520,7 +521,9 @@ export default function Swap({
                         }
                         
     
-                        const currPrice_julp = tokens[1].value.toUpperCase() === tokenB.value.toUpperCase()? Number(tokenAamount_JULP) / Number(tokenBamount_JULP): Number(tokenBamount_JULP) / Number(tokenAamount_JULP);
+                        const currPrice_julp = tokens[0].value.toUpperCase() === tokenB.value.toUpperCase()
+                        ? (1 / (Number(tokenAamount_JULP) / Number(tokenBamount_JULP)))
+                        : Number(tokenAamount_JULP) / Number(tokenBamount_JULP);
                         const tvlJULP = (Number(formatEther(tokenAamount_JULP)) * (1 / currPrice_julp)) + Number(formatEther(tokenBamount_JULP));
                         const exchangeRateJULP = tvlJULP < 1e-9 ? 0 : currPrice_julp
                 
@@ -550,13 +553,24 @@ export default function Swap({
     React.useEffect(() => {
         // define exchagerate
         if(poolSelect === "CMswap") {
-            setExchangeRate(bbqTvl.exchangeRate)
-            console.log('Quote Price CMswap',bbqTvl.exchangeRate)
+            setExchangeRate(CMswapTVL.exchangeRate)
+            console.log('Quote Price CMswap',CMswapTVL.exchangeRate)
         }else if(poolSelect === "GameSwap") {
             setExchangeRate(GameSwapTvl.exchangeRate)
             console.log('Quote Price CMswap',GameSwapTvl.exchangeRate)
         }
+
     },[poolSelect])
+
+    React.useEffect(() => {
+        const CMswapRate = Number(CMswapTVL.exchangeRate);
+        const GameSwapRate = Number(GameSwapTvl.exchangeRate);
+        const bestPool = CMswapRate > GameSwapRate ? "CMswap" : (GameSwapRate > CMswapRate ? "GameSwap" : "")
+        setBestPool(bestPool)
+        if(poolSelect === "" && GameSwapRate != 0 && CMswapRate != 0) {
+            setPoolSelect(bestPool)
+        }
+    },[CMswapTVL, GameSwapTvl])
 
     return (
         <div className='space-y-2'>
@@ -703,20 +717,20 @@ export default function Swap({
                 <div className="flex justify-between items-center my-2">
                     <span className="text-gray-400 font-mono text-xs">Liquidity Available</span>
                 </div>
-                <div className="grid grid-cols-4 gap-2 h-[70px]">
+                <div className="grid grid-cols-2 gap-2 h-[70px] ">
                 <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "CMswap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("CMswap")}>
                     <span className='flex items-center gap-1'>
-                        CMswap
-                        <span className="bg-emerald-500/10 text-emerald-300 border border-emerald-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">
-                            Best
-                        </span>
+                        CMswap {bestPool === "CMswap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                     </span>
-                    {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(bbqTvl[`tvl${feeSelect}` as keyof typeof bbqTvl]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(bbqTvl[`tvl${feeSelect}` as keyof typeof bbqTvl]))} {tokenB.name}</span>}
+                    {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL[`tvl${feeSelect}` as keyof typeof CMswapTVL]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(CMswapTVL[`tvl${feeSelect}` as keyof typeof CMswapTVL]))} {tokenB.name}</span>}
                 </Button>
-                    <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "GameSwap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("GameSwap")}>
-                        <span>GameSwap</span>
+                <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "GameSwap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("GameSwap")}>
+                        <span className='flex items-center gap-1'>
+                            GameSwap {bestPool === "GameSwap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
+                        </span>
                     {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(GameSwapTvl['tvl10000']) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(GameSwapTvl['tvl10000']))} {tokenB.name}</span>}
                 </Button>
+               
                 </div>
 
                 {/** FEE SELECTION  */}
@@ -727,19 +741,19 @@ export default function Swap({
                 <div className="grid grid-cols-4 gap-2 h-[70px]">
                     <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 100 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(100)}>
                         <span>0.01%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(bbqTvl["tvl100"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(bbqTvl["tvl100"]))} {tokenB.name}</span>}
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL["tvl100"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(CMswapTVL["tvl100"]))} {tokenB.name}</span>}
                     </Button>
                     <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 500 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(500)}>
                         <span>0.05%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(bbqTvl["tvl500"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(bbqTvl["tvl500"]))} {tokenB.name}</span>}
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL["tvl500"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(CMswapTVL["tvl500"]))} {tokenB.name}</span>}
                     </Button>
                     <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 3000 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(3000)}>
                         <span>0.3%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(bbqTvl["tvl3000"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(bbqTvl["tvl3000"]))} {tokenB.name}</span>}
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL["tvl3000"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(CMswapTVL["tvl3000"]))} {tokenB.name}</span>}
                     </Button>
                     <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 10000 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(10000)}>
                         <span>1%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(bbqTvl["tvl10000"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(bbqTvl["tvl10000"]))} {tokenB.name}</span>}
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL["tvl10000"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(CMswapTVL["tvl10000"]))} {tokenB.name}</span>}
                     </Button>
                 </div>
                     </>
