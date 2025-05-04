@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, v3PoolABI, wrappedNative, CMswapPoolDualRouterContract } from '@/app/lib/8899'
+import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, v3PoolABI, wrappedNative, CMswapPoolDualRouterContract,CMswapPoolDualRouter } from '@/app/lib/8899'
 import { config } from '@/app/config'
 
 export default function Swap({ 
@@ -88,17 +88,17 @@ export default function Swap({
                 }
             } catch {}
         }else if(poolSelect === "GameSwap" ) {
-            console.log("get Quote Price with Gameswap")
             try {
                 if (Number(_amount) !== 0) {
                     if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[2].value.toUpperCase() || tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {   
+                        console.log("get Quote Price with Gameswap")
                         let useFunction: "getExpectedJBCFromToken" | "getExpectedTokenFromJBC" | undefined;
                         let poolAddr = '0x472d0e2E9839c140786D38110b3251d5ED08DF41' as '0xstring';
                         
                         if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                            useFunction = 'getExpectedJBCFromToken'; // token A is JBC
+                            useFunction = 'getExpectedTokenFromJBC'; // token A is JBC
                         } else if (tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {
-                            useFunction = 'getExpectedTokenFromJBC'; // token A is CMJ
+                            useFunction = 'getExpectedJBCFromToken'; // token A is CMJ
                         }
             
                         // Check that useFunction is assigned a valid function name
@@ -114,12 +114,12 @@ export default function Swap({
                             });
 
                             const result = quoteOutput[0].result !== undefined ? quoteOutput[0].result : BigInt(0)
-                            const resultWithDiscount = (BigInt(result) * BigInt(95)) / BigInt(100);
+                    /*         const resultWithDiscount = (BigInt(result) * BigInt(95)) / BigInt(100);
                             console.log("result",result)
-                            console.log("result wDiscount",resultWithDiscount)
-                            setAmountB(formatEther(resultWithDiscount));
+                            console.log("result wDiscount",resultWithDiscount) */
+                            setAmountB(formatEther(result));
                             const amountA = parseFloat(_amount);
-                            const amountB = parseFloat(formatEther(resultWithDiscount));
+                            const amountB = parseFloat(formatEther(result));
 
                             if (amountA > 0 && amountB > 0) {
                                 const price = tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()
@@ -130,48 +130,44 @@ export default function Swap({
                             }
             
          
-                        }else if(
-                            tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[1].value.toUpperCase() || tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenA.value.toUpperCase() === tokens[1].value.toUpperCase())
-                            {
+                        }}
+                    if ((tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[1].value.toUpperCase()) ||(tokenA.value.toUpperCase() === tokens[1].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[0].value.toUpperCase())) {
+                        console.log("get Quote Price with Gameswap")
                         let useFunction: "getExpectedJBCFromToken" | "getExpectedTokenFromJBC" | undefined;
-                        let poolAddr = '0x280608DD7712a5675041b95d0000B9089903B569' as '0xstring';
+                                    let poolAddr = '0x280608DD7712a5675041b95d0000B9089903B569' as '0xstring';
+                                    
+                                    if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
+                                        useFunction = 'getExpectedTokenFromJBC'; // token A is JBC
+                                    } else if (tokenA.value.toUpperCase() === tokens[1].value.toUpperCase()) {
+                                        useFunction = 'getExpectedJBCFromToken'; // token A is JUSDT
+                                    }
+                                    
                         
-                        if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                            useFunction = 'getExpectedJBCFromToken'; // token A is JBC
-                        } else if (tokenA.value.toUpperCase() === tokens[1].value.toUpperCase()) {
-                            useFunction = 'getExpectedTokenFromJBC'; // token A is JUSDT
-                        }
+                                    if (useFunction) {
+                                        const quoteOutput = await readContracts(config, {
+                                            contracts: [
+                                                {
+                                                    ...CMswapPoolDualRouterContract,
+                                                    functionName: useFunction,
+                                                    args: [poolAddr , parseEther(_amount)], 
+                                                },
+                                            ]
+                                        });
             
-                        if (useFunction) {
-                            const quoteOutput = await readContracts(config, {
-                                contracts: [
-                                    {
-                                        ...CMswapPoolDualRouterContract,
-                                        functionName: useFunction,
-                                        args: [poolAddr , parseEther(_amount)], 
-                                    },
-                                ]
-                            });
-
-                            const result = quoteOutput[0].result !== undefined ? quoteOutput[0].result : BigInt(0)
-                            const resultWithDiscount = (BigInt(result) * BigInt(95)) / BigInt(100);
-                            console.log("result",result)
-                            console.log("result wDiscount",resultWithDiscount)
-                            setAmountB(formatEther(resultWithDiscount));
-                            const amountA = parseFloat(_amount);
-                            const amountB = parseFloat(formatEther(resultWithDiscount));
-
-                            if (amountA > 0 && amountB > 0) {
-                                const price = tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()
-                                    ? amountB / amountA // JBC → JUSDT
-                                    : amountA / amountB; // JUSDT → JBC
-
-                                setNewPrice(price.toFixed(6)); // หรือใช้ Decimal Places ตามที่ต้องการ
-                            }
-
-                        }
-                    }
-                    }
+                                        const result = quoteOutput[0].result !== undefined ? quoteOutput[0].result : BigInt(0)
+                                        setAmountB(formatEther(result));
+                                        const amountA = parseFloat(_amount);
+                                        const amountB = parseFloat(formatEther(result));
+            
+                                        if (amountA > 0 && amountB > 0) {
+                                            const price = tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()
+                                                ? amountB / amountA // JBC → JUSDT
+                                                : amountA / amountB; // JUSDT → JBC
+            
+                                            setNewPrice(price.toFixed(6)); // หรือใช้ Decimal Places ตามที่ต้องการ
+                                        }
+            
+                        }}
                 }
             } catch (error) {
                 console.error("Error in getting quote:", error);
@@ -197,6 +193,7 @@ export default function Swap({
             cmsswap();
         }else if(poolSelect === "GameSwap") {
             console.log("Swap with GameSwap")
+            gameswap();
         }
     }
 
@@ -262,6 +259,118 @@ export default function Swap({
         }
         setIsLoading(false)
     }
+
+    const gameswap = async () => {
+        setIsLoading(true);
+        try {
+            const tokenAAddr = tokenA.value.toUpperCase();
+            const tokenBAddr = tokenB.value.toUpperCase();
+            const parsedAmountA = parseEther(amountA);
+            const slippagePercent = 5;
+    
+            // Approve if tokenA is not JBC
+            if (tokenAAddr !== tokens[0].value.toUpperCase()) {
+                const allowanceA = await readContract(config, {
+                    ...erc20ABI,
+                    address: tokenA.value as '0xstring',
+                    functionName: 'allowance',
+                    args: [address as '0xstring', CMswapPoolDualRouter]
+                });
+    
+                if (allowanceA < parsedAmountA) {
+                    const { request } = await simulateContract(config, {
+                        ...erc20ABI,
+                        address: tokenA.value as '0xstring',
+                        functionName: 'approve',
+                        args: [CMswapPoolDualRouter, parsedAmountA]
+                    });
+                    const tx = await writeContract(config, request);
+                    await waitForTransactionReceipt(config, { hash: tx });
+                }
+            }
+    
+            // Determine pool address
+            let poolAddr: '0xstring' | undefined;
+            if (
+                (tokenAAddr === tokens[0].value.toUpperCase() && tokenBAddr === tokens[2].value.toUpperCase()) ||
+                (tokenBAddr === tokens[0].value.toUpperCase() && tokenAAddr === tokens[2].value.toUpperCase())
+            ) {
+                poolAddr = '0x472d0e2E9839c140786D38110b3251d5ED08DF41' as '0xstring';
+            } else if (
+                (tokenAAddr === tokens[0].value.toUpperCase() && tokenBAddr === tokens[1].value.toUpperCase()) ||
+                (tokenBAddr === tokens[0].value.toUpperCase() && tokenAAddr === tokens[1].value.toUpperCase())
+            ) {
+                poolAddr = '0x280608DD7712a5675041b95d0000B9089903B569' as '0xstring';
+            }
+    
+            // Determine swap function name
+            let useFunction:
+                | 'swapJC'
+                | 'swapJU'
+                | 'swapCMJtoJBC'
+                | 'swapJUSDTtoJBC'
+                | undefined;
+    
+            if (poolAddr === '0x472d0e2E9839c140786D38110b3251d5ED08DF41') {
+                if (tokenAAddr === tokens[0].value.toUpperCase()) useFunction = 'swapJC';
+                else if (tokenAAddr === tokens[2].value.toUpperCase()) useFunction = 'swapCMJtoJBC';
+            } else if (poolAddr === '0x280608DD7712a5675041b95d0000B9089903B569') {
+                if (tokenAAddr === tokens[0].value.toUpperCase()) useFunction = 'swapJU';
+                else if (tokenAAddr === tokens[1].value.toUpperCase()) useFunction = 'swapJUSDTtoJBC';
+            }
+    
+            if (!useFunction || !poolAddr) throw new Error('Unsupported token combination');
+    
+            // Estimate expected output
+            let expectedOut: bigint;
+    
+            if (useFunction === 'swapCMJtoJBC' || useFunction === 'swapJUSDTtoJBC') {
+                expectedOut = await readContract(config, {
+                    ...CMswapPoolDualRouterContract,
+                    functionName: 'getExpectedJBCFromToken',
+                    args: [poolAddr, parsedAmountA]
+                });
+            } else if (useFunction === 'swapJC' || useFunction === 'swapJU') {
+                expectedOut = await readContract(config, {
+                    ...CMswapPoolDualRouterContract,
+                    functionName: 'getExpectedTokenFromJBC',
+                    args: [poolAddr, parsedAmountA]
+                });
+            } else {
+                throw new Error('No matching estimation function');
+            }
+    
+            // Calculate minimum output based on slippage
+            const minOut = expectedOut * BigInt(100 - slippagePercent) / BigInt(100);
+    
+            // Simulate and write tx (payable vs non-payable)
+            let request;
+            if (useFunction === 'swapJC' || useFunction === 'swapJU') {
+                ({ request } = await simulateContract(config, {
+                    ...CMswapPoolDualRouterContract,
+                    functionName: useFunction,
+                    args: [minOut],
+                    value: parsedAmountA
+                }));
+            } else {
+                ({ request } = await simulateContract(config, {
+                    ...CMswapPoolDualRouterContract,
+                    functionName: useFunction,
+                    args: [parsedAmountA, minOut]
+                }));
+            }
+    
+            const tx = await writeContract(config, request);
+            await waitForTransactionReceipt(config, { hash: tx });
+            setTxupdate(tx);
+    
+        } catch (e) {
+            setErrMsg(e as WriteContractErrorType);
+        }
+        setIsLoading(false);
+    };
+    
+    
 
     React.useEffect(() => {
         const fetch0 = async () => {
@@ -590,7 +699,7 @@ export default function Swap({
                             tokenBamount_JCLP = (await getBalance(config, {address: JCLP as '0xstring'})  ).value
                         }   
 
-                        let currPrice_jclp =  Number(tokenBamount_JCLP) / Number(tokenAamount_JCLP);
+                        let currPrice_jclp =  Number(tokenAamount_JCLP) / Number(tokenBamount_JCLP);
                         const tvlJCLP = (Number(formatEther(tokenAamount_JCLP)) * (1 / currPrice_jclp)) + Number(formatEther(tokenBamount_JCLP));
                         const exchangeRateJCLP = tvlJCLP < 1e-9 ? 0 : currPrice_jclp
                         console.log(`tokenA Amn ${tokenAamount_JCLP}\nTokenB Amn ${tokenBamount_JCLP}\nCurrPrice ${currPrice_jclp}\nTVL : ${tvlJCLP}`)
@@ -695,6 +804,13 @@ export default function Swap({
         }
   
     },[onLoading, CMswapTVL, GameSwapTvl, swapDirection])
+
+    React.useEffect(() => {
+        if(amountA !== "" && !onLoading){
+            getQoute(amountA)
+            console.log("pool select change new qoute")
+        }
+    },[poolSelect])
 
     return (
         <div className='space-y-2'>
