@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, wrappedNative } from '@/app/lib/8899'
+import { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative } from '@/app/lib/96'
 import { config } from '@/app/config'
 
 type MyPosition = {
@@ -33,7 +33,7 @@ type MyPosition = {
     Fee1: number;
 }
 
-export default function Positions({ 
+export default function Positions96({ 
     setIsLoading, setErrMsg, 
 }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
@@ -118,8 +118,8 @@ export default function Positions({
         const sqrtPriceX96 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
         const tick = poolState[1].result !== undefined ? poolState[1].result[1] : 0
         const liquidity = poolState[2].result !== undefined ? poolState[2].result : BigInt(0)
-        const Token0 = new Token(8899, token0, 18)
-        const Token1 = String(token0).toUpperCase() === tokenA.value.toUpperCase() ? new Token(8899, tokenB.value, 18) : new Token(8899, tokenA.value, 18)
+        const Token0 = new Token(96, token0, 18)
+        const Token1 = String(token0).toUpperCase() === tokenA.value.toUpperCase() ? new Token(96, tokenB.value, 18) : new Token(96, tokenA.value, 18)
         const pool = new Pool(
             Token0,
             Token1,
@@ -160,8 +160,8 @@ export default function Positions({
         const sqrtPriceX96 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
         const tick = poolState[1].result !== undefined ? poolState[1].result[1] : 0
         const liquidity = poolState[2].result !== undefined ? poolState[2].result : BigInt(0)
-        const Token0 = new Token(8899, token0, 18)
-        const Token1 = String(token0).toUpperCase() === tokenA.value.toUpperCase() ? new Token(8899, tokenB.value, 18) : new Token(8899, tokenA.value, 18)
+        const Token0 = new Token(96, token0, 18)
+        const Token1 = String(token0).toUpperCase() === tokenA.value.toUpperCase() ? new Token(96, tokenB.value, 18) : new Token(96, tokenA.value, 18)
         const pool = new Pool(
             Token0,
             Token1,
@@ -216,13 +216,23 @@ export default function Positions({
                 const h = await sendTransaction(config, {to: tokens[0].value, value: parseEther(amountA)})
                 await waitForTransactionReceipt(config, { hash: h })
             }
-            const allowanceA = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+            let allowanceA
+            if (tokenA.value.toUpperCase() === tokens[1].value.toUpperCase()) {
+                allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
+            } else {
+                allowanceA = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+            }
             if (allowanceA < parseEther(amountA)) {
                 const { request } = await simulateContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountA)] })
                 const h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
-            const allowanceB = await readContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+            let allowanceB
+            if (tokenB.value.toUpperCase() === tokens[1].value.toUpperCase()) {
+                allowanceB = await readContract(config, { ...kap20ABI, address: tokenA.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
+            } else {
+                allowanceB = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+            }
             if (allowanceB < parseEther(amountB)) {
                 const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountB)] })
                 const h = await writeContract(config, request)

@@ -10,7 +10,7 @@ import { useDebouncedCallback } from 'use-debounce'
 import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, v3PoolABI, wrappedNative } from '@/app/lib/8899'
 import { config } from '@/app/config'
 
-export default function Swap({ 
+export default function Swap8899({ 
     setIsLoading, setErrMsg, 
 }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,

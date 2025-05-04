@@ -8,7 +8,7 @@ if (!projectId) {
     throw new Error('Project ID is not defined')
 }
 
-export const networks = [jbc, bsc, bitkub, unichain, base]
+export const networks = [jbc, bitkub, bsc, unichain, base]
 
 export const wagmiAdapter = new WagmiAdapter({
     storage: createStorage({
