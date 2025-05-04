@@ -636,6 +636,16 @@ export default function Swap({
                         };
                         setJulpTVL(tvlJULP,exchangeRateJULP)
 
+                    }else{
+                        const resetDefault = () => {
+                            setGameSwapTvl(prevTvl => ({
+                                ...prevTvl,
+                                tvl10000: '0',
+                                exchangeRate: (0).toString()
+                            }));
+                        };
+                        resetDefault()
+
                     }
 
 
@@ -838,12 +848,14 @@ export default function Swap({
                     </span>
                     {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL[`tvl${feeSelect}` as keyof typeof CMswapTVL]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(CMswapTVL[`tvl${feeSelect}` as keyof typeof CMswapTVL]))} {tokenB.name}</span>}
                 </Button>
-                <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "GameSwap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("GameSwap")}>
+                {Number(GameSwapTvl['tvl10000']) > 0 && (
+                    <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "GameSwap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("GameSwap")}>
                         <span className='flex items-center gap-1'>
                             GameSwap {bestPool === "GameSwap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                         </span>
                     {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(GameSwapTvl['tvl10000']) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(GameSwapTvl['tvl10000']))} {tokenB.name}</span>}
                 </Button>
+                )}
                
                 </div>
 
