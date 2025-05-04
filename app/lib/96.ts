@@ -6,6 +6,7 @@ import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3st
 export const tokens: {name: string, value: '0xstring', logo: string}[] = [
     { name: 'KUB', value: '0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5' as '0xstring', logo: './96.png' },
     { name: 'KUSDT', value: '0x7d984C24d2499D840eB3b7016077164e15E5faA6' as '0xstring', logo: './usdt.png' },
+    { name: 'CMM', value: '0x9B005000A10Ac871947D99001345b01C1cEf2790' as '0xstring', logo: './cmm.png' },
     // can PR listing here
 ]
 export const V3_FACTORY = '0x090C6E5fF29251B1eF9EC31605Bdd13351eA316C' as '0xstring'
