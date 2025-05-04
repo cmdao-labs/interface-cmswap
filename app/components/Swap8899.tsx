@@ -339,25 +339,26 @@ export default function Swap8899({
             const minOut = expectedOut * BigInt(100 - slippagePercent) / BigInt(100);
     
             // Simulate and write tx (payable vs non-payable)
-            let request;
             if (useFunction === 'swapJC' || useFunction === 'swapJU') {
-                ({ request } = await simulateContract(config, {
+                const { request } = await simulateContract(config, {
                     ...CMswapPoolDualRouterContract,
                     functionName: useFunction,
                     args: [minOut],
                     value: parsedAmountA
-                }));
+                })
+                const tx = await writeContract(config, request)
+                await waitForTransactionReceipt(config, { hash: tx });
+                setTxupdate(tx)
             } else {
-                ({ request } = await simulateContract(config, {
+                const { request } = await simulateContract(config, {
                     ...CMswapPoolDualRouterContract,
                     functionName: useFunction,
                     args: [parsedAmountA, minOut]
-                }));
+                })
+                const tx = await writeContract(config, request)
+                await waitForTransactionReceipt(config, { hash: tx });
+                setTxupdate(tx)
             }
-    
-            const tx = await writeContract(config, request);
-            await waitForTransactionReceipt(config, { hash: tx });
-            setTxupdate(tx);
     
         } catch (e) {
             setErrMsg(e as WriteContractErrorType);
