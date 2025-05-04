@@ -364,15 +364,31 @@ export default function Swap8899({
                     const currPrice_10000 = token0_10000.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2))
                     const tvl_10000 = currPrice_10000 !== 0 ?  (Number(formatEther(tokenAamount_10000)) * (1 / currPrice_10000)) + Number(formatEther(tokenBamount_10000)) : 0
                     const exchangeRatetvl_10000 = tvl_10000 < 1e-9 ? 0 : currPrice_10000;
+                    feeSelect === 10000 && currPrice_10000 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2).toString())
 
-                    const setTvl10000 = (tvl_10000: number,exchangeRate : number) => {
+                    const updateTvl10000 = (tvl_10000: number) => {
                         setCMswapTVL(prevTvl => ({
                             ...prevTvl,
                             tvl10000: tvl_10000 >= 1e-9 ? tvl_10000.toString() : '0',
-                            exchangeRate: feeSelect === 10000 ? exchangeRate.toString() : prevTvl.exchangeRate
                         }));
                     };
-                    setTvl10000(tvl_10000,exchangeRatetvl_10000)
+                    
+                    const updateExchangeRateCmswapTVL = (feeAmount: number,exchangeRate: number) => {
+                        setCMswapTVL(prevTvl => ({
+                            ...prevTvl,
+                            exchangeRate: feeSelect === feeAmount ? exchangeRate.toString() : prevTvl.exchangeRate
+                        }));
+                    };
+                    const updateExchangeRateGameSwapTVL = (feeAmount: number,exchangeRate: number) => {
+                        setGameSwapTvl(prevTvl => ({
+                            ...prevTvl,
+                            exchangeRate: feeSelect === feeAmount ? exchangeRate.toString() : prevTvl.exchangeRate
+                        }));
+                    };
+
+                    updateTvl10000(tvl_10000);
+                    updateExchangeRateCmswapTVL(10000,exchangeRatetvl_10000);
+                    
 
                     if (feeSelect === 10000 && tvl_10000 < 1e-9  && poolSelect === "CMswap" ) {
                         const init: any = {contracts: []}
@@ -409,7 +425,7 @@ export default function Swap8899({
                             const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
                             const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
                             const altPrice1 = altToken1.toUpperCase() === tokenB.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
-                            setExchangeRate((altPrice1 / altPrice0).toString())
+                            updateExchangeRateCmswapTVL(10000,Number((altPrice1 / altPrice0).toString()));
                         }
                     }
 
@@ -420,6 +436,7 @@ export default function Swap8899({
                     const currPrice_3000 = token0_3000.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2))
                     const tvl_3000 = (Number(formatEther(tokenAamount_3000)) * (1 / currPrice_3000)) + Number(formatEther(tokenBamount_3000));
                     const exchangeRatetvl_3000 = tvl_3000 < 1e-9 ? 0 : currPrice_3000
+                    feeSelect === 3000 && currPrice_3000 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2).toString())
 
                     const setTvl3000 = (tvl_3000: number,exchangeRate: number) => {
                         setCMswapTVL(prevTvl => ({
@@ -464,8 +481,8 @@ export default function Swap8899({
                             const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
                             const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
                             const altPrice1 = altToken1.toUpperCase() === tokenB.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
-                            feeSelect === 3000  && poolSelect === "CMswap"  &&  setExchangeRate((altPrice1 / altPrice0).toString())
-                        }
+                            updateExchangeRateCmswapTVL(3000,Number((altPrice1 / altPrice0).toString()));
+                }
                     }
                     
                     const token0_500 = poolState[8].result !== undefined ? poolState[8].result : "" as '0xstring'
@@ -475,6 +492,7 @@ export default function Swap8899({
                     const currPrice_500 = token0_500.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_500) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2))
                     const tvl_500 = (Number(formatEther(tokenAamount_500)) * (1 / currPrice_500)) + Number(formatEther(tokenBamount_500));
                     const exchangeRatetvl_500 = tvl_500 < 1e-9 ? 0 : currPrice_500
+                    feeSelect === 500 && currPrice_500 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2).toString())
 
                     const setTvl500 = (tvl_500: number, exchangeRate: number) => {
                         setCMswapTVL(prevTvl => ({
@@ -521,7 +539,7 @@ export default function Swap8899({
                             const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
                             const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
                             const altPrice1 = altToken1.toUpperCase() === tokenB.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
-                            feeSelect === 500 && poolSelect === "CMswap" && setExchangeRate((altPrice1 / altPrice0).toString())
+                            updateExchangeRateCmswapTVL(500,Number((altPrice1 / altPrice0).toString()));
                         }
                     }
 
@@ -532,6 +550,7 @@ export default function Swap8899({
                     const currPrice_100 = token0_100.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_100) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_100) / (2 ** 96)) ** 2))
                     const tvl_100 = (Number(formatEther(tokenAamount_100)) * (1 / currPrice_100)) + Number(formatEther(tokenBamount_100));
                     const exchangeRatetvl_100 = tvl_100 < 1e-9 ? 0 : currPrice_100;
+                    feeSelect === 100 && currPrice_100 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_100) / (2 ** 96)) ** 2).toString())
 
                     const setTvl100 = (tvl_100: number,exchangeRate: number) => {
                         setCMswapTVL(prevTvl => ({
@@ -576,7 +595,7 @@ export default function Swap8899({
                             const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
                             const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
                             const altPrice1 = altToken1.toUpperCase() === tokenB.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
-                            feeSelect === 100  && poolSelect === "CMswap"  && setExchangeRate((altPrice1 / altPrice0).toString())
+                            updateExchangeRateCmswapTVL(100,Number((altPrice1 / altPrice0).toString()));
                         }
                     }
 
@@ -601,11 +620,12 @@ export default function Swap8899({
                         const tvlJCLP = (Number(formatEther(tokenAamount_JCLP)) * (1 / currPrice_jclp)) + Number(formatEther(tokenBamount_JCLP));
                         const exchangeRateJCLP = tvlJCLP < 1e-9 ? 0 : currPrice_jclp
                         console.log(`tokenA Amn ${tokenAamount_JCLP}\nTokenB Amn ${tokenBamount_JCLP}\nCurrPrice ${currPrice_jclp}\nTVL : ${tvlJCLP}`)
+                        currPrice_jclp !== Infinity && poolSelect === "GameSwap" && setFixedExchangeRate(Number(currPrice_jclp).toString())
 
                         const setJulpTVL = (tvl10000: number, exchangeRate: number) => {
                             setGameSwapTvl(prevTvl => ({
                                 ...prevTvl,
-                                tvl10000: tvlJCLP >= 1e-9 ? tvlJCLP.toString() : '0',
+                                tvl10000: tvl10000 >= 1e-9 ? tvlJCLP.toString() : '0',
                                 exchangeRate: exchangeRate.toString()
                             }));
                         };
@@ -921,7 +941,19 @@ export default function Swap8899({
                     <>
                         <div className="flex items-center text-gray-500 font-mono text-xs my-2">
                             <span className="mr-1">price qoute</span>
+<<<<<<< Updated upstream
                                 {exchangeRate !== '0' ? <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">1 {tokenA.name} = {(1/Number(exchangeRate)).toFixed(4)} {tokenB.name}</span> : <span className="text-red-500 px-2">insufficient liquidity</span>}
+=======
+                            {exchangeRate !== '0'
+                                ? (<span
+                                        className="text-[#00ff9d] font-mono text-xs px-2 gap-1 hover:cursor-pointer" onClick={() => setSwapDirection(!swapDirection)}>
+                                        {swapDirection ? `1 ${tokenB.name} = ${Number(exchangeRate).toFixed(4)} ${tokenA.name}` : `1 ${tokenA.name} = ${ isFinite(1 / Number(exchangeRate)) ? (1 / Number(exchangeRate)).toFixed(4) : (0).toFixed(4) } ${tokenB.name}`}
+                                    </span>
+                                )
+                                : <span className="text-red-500 px-2">insufficient liquidity</span>
+                            }
+
+>>>>>>> Stashed changes
                             {Number(amountB) > 0 && 
                                 <span>[PI: {
                                     ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 <= 100 ? 
