@@ -10,7 +10,7 @@ import { useDebouncedCallback } from 'use-debounce'
 import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, v3PoolABI, wrappedNative } from '@/app/lib/8899'
 import { config } from '@/app/config'
 
-export default function Swap({ 
+export default function Swap8899({ 
     setIsLoading, setErrMsg, 
 }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
@@ -19,6 +19,7 @@ export default function Swap({
     const { address } = useAccount()
     const [txupdate, setTxupdate] = React.useState("")
     const [exchangeRate, setExchangeRate] = React.useState("")
+    const [fixedExchangeRate, setFixedExchangeRate] = React.useState("")
     const [altRoute, setAltRoute] = React.useState<{a: '0xstring', b: '0xstring', c: '0xstring'}>()
     const [tvl10000, setTvl10000] = React.useState("")
     const [tvl3000, setTvl3000] = React.useState("")
@@ -34,7 +35,6 @@ export default function Swap({
     const [feeSelect, setFeeSelect] = React.useState(10000)
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
-    const [thbRate, setThbRate] = React.useState("")
 
     function encodePath(tokens: string[], fees: number[]): string {
         let path = "0x"
@@ -154,11 +154,6 @@ export default function Swap({
 
     React.useEffect(() => {
         const fetch0 = async () => {
-            const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD')
-            const data = await response.json()
-            const _thbRate = data.rates.THB
-            setThbRate(_thbRate)
-
             tokenA.value.toUpperCase() === tokenB.value.toUpperCase() && setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
 
             const nativeBal = address !== undefined ? await getBalance(config, {address: address as '0xstring'}) : {value: BigInt(0)}
@@ -233,6 +228,7 @@ export default function Swap({
                     const currPrice_10000 = token0_10000.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2))
                     const tvl_10000 = currPrice_10000 !== 0 ?  (Number(formatEther(tokenAamount_10000)) * (1 / currPrice_10000)) + Number(formatEther(tokenBamount_10000)) : 0
                     feeSelect === 10000 && currPrice_10000 !== Infinity && setExchangeRate(currPrice_10000.toString())
+                    feeSelect === 10000 && currPrice_10000 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2).toString())
                     feeSelect === 10000 && tvl_10000 < 1e-9 && setExchangeRate('0')
                     tvl_10000 >= 1e-9 ? setTvl10000(tvl_10000.toString()) : setTvl10000('0')
                     if (feeSelect === 10000 && tvl_10000 < 1e-9) {
@@ -281,6 +277,7 @@ export default function Swap({
                     const currPrice_3000 = token0_3000.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2))
                     const tvl_3000 = (Number(formatEther(tokenAamount_3000)) * (1 / currPrice_3000)) + Number(formatEther(tokenBamount_3000));
                     feeSelect === 3000 && setExchangeRate(currPrice_3000.toString())
+                    feeSelect === 3000 && setFixedExchangeRate(((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2).toString())
                     feeSelect === 3000 && tvl_3000 < 1e-9 && setExchangeRate('0')
                     tvl_3000 >= 1e-9 ? setTvl3000(tvl_3000.toString()) : setTvl3000('0')
                     if (feeSelect === 3000 && tvl_3000 < 1e-9) {
@@ -328,6 +325,7 @@ export default function Swap({
                     const currPrice_500 = token0_500.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_500) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2))
                     const tvl_500 = (Number(formatEther(tokenAamount_500)) * (1 / currPrice_500)) + Number(formatEther(tokenBamount_500));
                     feeSelect === 500 && setExchangeRate(currPrice_500.toString())
+                    feeSelect === 500 && setFixedExchangeRate(((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2).toString())
                     feeSelect === 500 && tvl_500 < 1e-9 && setExchangeRate('0')
                     tvl_500 >= 1e-9 ? setTvl500(tvl_500.toString()) : setTvl500('0')
                     if (feeSelect === 500 && tvl_500 < 1e-9) {
@@ -375,6 +373,7 @@ export default function Swap({
                     const currPrice_100 = token0_100.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_100) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_100) / (2 ** 96)) ** 2))
                     const tvl_100 = (Number(formatEther(tokenAamount_100)) * (1 / currPrice_100)) + Number(formatEther(tokenBamount_100));
                     feeSelect === 100 && setExchangeRate(currPrice_100.toString())
+                    feeSelect === 100 && setFixedExchangeRate(((Number(currPrice_100) / (2 ** 96)) ** 2).toString())
                     feeSelect === 100 && tvl_100 < 1e-9 && setExchangeRate('0')
                     tvl_100 >= 1e-9 ? setTvl100(tvl_100.toString()) : setTvl100('0')
                     if (feeSelect === 100 && tvl_100 < 1e-9) {
@@ -570,19 +569,19 @@ export default function Swap({
                 <div className="grid grid-cols-4 gap-2 h-[70px]">
                     <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 100 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(100)}>
                         <span>0.01%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl100) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl100))} {tokenB.name}</span>}
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl100) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl100))} {(tokenA.name === 'JUSDT' || tokenB.name === 'JUSDT') ? '$' : tokenB.name}</span>}
                     </Button>
                     <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 500 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(500)}>
                         <span>0.05%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl500) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl500))} {tokenB.name}</span>}
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl500) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl500))} {(tokenA.name === 'JUSDT' || tokenB.name === 'JUSDT') ? '$' : tokenB.name}</span>}
                     </Button>
                     <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 3000 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(3000)}>
                         <span>0.3%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl3000) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl3000))} {tokenB.name}</span>}
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl3000) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl3000))} {(tokenA.name === 'JUSDT' || tokenB.name === 'JUSDT') ? '$' : tokenB.name}</span>}
                     </Button>
                     <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 10000 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(10000)}>
                         <span>1%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl10000) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl10000))} {tokenB.name}</span>}
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl10000) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl10000))} {(tokenA.name === 'JUSDT' || tokenB.name === 'JUSDT') ? '$' : tokenB.name}</span>}
                     </Button>
                 </div>
             </div>
@@ -603,18 +602,23 @@ export default function Swap({
                             <span className="mr-1">price qoute</span>
                             {exchangeRate !== '0' ? <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">1 {tokenB.name} = {Number(exchangeRate).toFixed(4)} {tokenA.name}</span> : <span className="text-red-500 px-2">insufficient liquidity</span>}
                             {Number(amountB) > 0 && 
-                                <span>[PI: {((Number(newPrice) * 100) / Number(exchangeRate)) - 100 <= 100 ? (((Number(newPrice) * 100) / Number(exchangeRate)) - 100).toFixed(4) : ">100"}%]</span>
+                                <span>[PI: {
+                                    ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 <= 100 ? 
+                                        ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 > 0 ?
+                                            ((100 - ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate)))) * -1).toFixed(4) :
+                                            (100 - ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate)))).toFixed(4) 
+                                        : 
+                                        ">100"
+                                }%]</span>
                             } 
                         </div>
                         {(tokenA.name === 'JUSDT' || tokenB.name === 'JUSDT') &&
                             <div className="flex items-center text-gray-500 font-mono text-xs my-2">
                                 <span className="mr-1">token price</span>
                                 {exchangeRate !== '0' && exchangeRate !== '' && <span className="text-white font-mono text-xs px-2 gap-1">
-                                    {tokenA.name === 'JUSDT' ?
-                                        <span>{Number(Number(exchangeRate) * Number(thbRate)).toFixed(2)} </span> : 
-                                        <span>{Number((1 / Number(exchangeRate)) * Number(thbRate)).toFixed(2)} </span>
-                                    }
-                                    ฿
+                                    {tokenA.name === 'JUSDT' && <span>{Number(exchangeRate).toFixed(2)} </span>}
+                                    {tokenB.name === 'JUSDT' && <span>{Number(1 / Number(exchangeRate)).toFixed(2)} </span>}
+                                    $
                                 </span>}
                             </div>
                         }

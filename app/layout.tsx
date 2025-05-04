@@ -13,7 +13,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-    title: 'cmswap',
+    title: 'CMswap',
     description: 'The Future of Permissionless Multiverse',
 }
 
