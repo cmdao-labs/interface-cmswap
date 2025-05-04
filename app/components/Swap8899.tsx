@@ -49,129 +49,39 @@ export default function Swap8899({
         return path
     }
 
-     const getQoute = useDebouncedCallback(async (_amount: string) => {
-        if(poolSelect === "CMswap") {
-            console.log("get Quote Price with CMswap")
-            try {
-                if (Number(_amount) !== 0) {
-                    if (altRoute === undefined) {
-                        const qouteOutput = await simulateContract(config, {
-                            ...qouterV2Contract,
-                            functionName: 'quoteExactInputSingle',
-                            args: [{
-                                tokenIn: tokenA.value as '0xstring',
-                                tokenOut: tokenB.value as '0xstring',
-                                amountIn: parseEther(_amount),
-                                fee: feeSelect,
-                                sqrtPriceLimitX96: BigInt(0),
-                            }]
-                        })
-                        setAmountB(formatEther(qouteOutput.result[0]))
-                        let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
-                        setNewPrice(newPrice.toString())
-                    } else {
-                        const route = encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect])
-                        const qouteOutput = await simulateContract(config, {
-                            ...qouterV2Contract,
-                            functionName: 'quoteExactInput',
-                            args: [route as '0xstring', parseEther(_amount)]
-                        })
-                        setAmountB(formatEther(qouteOutput.result[0]))
-                        let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
-                        setNewPrice(newPrice.toString())
-                    }
+    const getQoute = useDebouncedCallback(async (_amount: string) => {
+        try {
+            if (Number(_amount) !== 0) {
+                if (altRoute === undefined) {
+                    const qouteOutput = await simulateContract(config, {
+                        ...qouterV2Contract,
+                        functionName: 'quoteExactInputSingle',
+                        args: [{
+                            tokenIn: tokenA.value as '0xstring',
+                            tokenOut: tokenB.value as '0xstring',
+                            amountIn: parseEther(_amount),
+                            fee: feeSelect,
+                            sqrtPriceLimitX96: BigInt(0),
+                        }]
+                    })
+                    setAmountB(formatEther(qouteOutput.result[0]))
+                    let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
+                    setNewPrice(newPrice.toString())
                 } else {
-                    setAmountB("")
+                    const route = encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect])
+                    const qouteOutput = await simulateContract(config, {
+                        ...qouterV2Contract,
+                        functionName: 'quoteExactInput',
+                        args: [route as '0xstring', parseEther(_amount)]
+                    })
+                    setAmountB(formatEther(qouteOutput.result[0]))
+                    let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
+                    setNewPrice(newPrice.toString())
                 }
-            } catch {}
-        }else if(poolSelect === "GameSwap" ) {
-            try {
-                if (Number(_amount) !== 0) {
-                    if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[2].value.toUpperCase() || tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {   
-                        console.log("get Quote Price with Gameswap")
-                        let useFunction: "getExpectedJBCFromToken" | "getExpectedTokenFromJBC" | undefined;
-                        let poolAddr = '0x472d0e2E9839c140786D38110b3251d5ED08DF41' as '0xstring';
-                        
-                        if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                            useFunction = 'getExpectedTokenFromJBC'; // token A is JBC
-                        } else if (tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {
-                            useFunction = 'getExpectedJBCFromToken'; // token A is CMJ
-                        }
-            
-                        // Check that useFunction is assigned a valid function name
-                        if (useFunction) {
-                            const quoteOutput = await readContracts(config, {
-                                contracts: [
-                                    {
-                                        ...CMswapPoolDualRouterContract,
-                                        functionName: useFunction,
-                                        args: [poolAddr , parseEther(_amount)], 
-                                    },
-                                ]
-                            });
-
-                            const result = quoteOutput[0].result !== undefined ? quoteOutput[0].result : BigInt(0)
-                    /*         const resultWithDiscount = (BigInt(result) * BigInt(95)) / BigInt(100);
-                            console.log("result",result)
-                            console.log("result wDiscount",resultWithDiscount) */
-                            setAmountB(formatEther(result));
-                            const amountA = parseFloat(_amount);
-                            const amountB = parseFloat(formatEther(result));
-
-                            if (amountA > 0 && amountB > 0) {
-                                const price = tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()
-                                    ? amountB / amountA // JBC → CMJ
-                                    : amountA / amountB; // CMJ → JBC
-
-                                setNewPrice(price.toFixed(6)); // หรือใช้ Decimal Places ตามที่ต้องการ
-                            }
-            
-         
-                        }}
-                    if ((tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[1].value.toUpperCase()) ||(tokenA.value.toUpperCase() === tokens[1].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[0].value.toUpperCase())) {
-                        console.log("get Quote Price with Gameswap")
-                        let useFunction: "getExpectedJBCFromToken" | "getExpectedTokenFromJBC" | undefined;
-                                    let poolAddr = '0x280608DD7712a5675041b95d0000B9089903B569' as '0xstring';
-                                    
-                                    if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                                        useFunction = 'getExpectedTokenFromJBC'; // token A is JBC
-                                    } else if (tokenA.value.toUpperCase() === tokens[1].value.toUpperCase()) {
-                                        useFunction = 'getExpectedJBCFromToken'; // token A is JUSDT
-                                    }
-                                    
-                        
-                                    if (useFunction) {
-                                        const quoteOutput = await readContracts(config, {
-                                            contracts: [
-                                                {
-                                                    ...CMswapPoolDualRouterContract,
-                                                    functionName: useFunction,
-                                                    args: [poolAddr , parseEther(_amount)], 
-                                                },
-                                            ]
-                                        });
-            
-                                        const result = quoteOutput[0].result !== undefined ? quoteOutput[0].result : BigInt(0)
-                                        setAmountB(formatEther(result));
-                                        const amountA = parseFloat(_amount);
-                                        const amountB = parseFloat(formatEther(result));
-            
-                                        if (amountA > 0 && amountB > 0) {
-                                            const price = tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()
-                                                ? amountB / amountA // JBC → JUSDT
-                                                : amountA / amountB; // JUSDT → JBC
-            
-                                            setNewPrice(price.toFixed(6)); // หรือใช้ Decimal Places ตามที่ต้องการ
-                                        }
-            
-                        }}
-                }
-            } catch (error) {
-                console.error("Error in getting quote:", error);
+            } else {
+                setAmountB("")
             }
-            
-        }
-
+        } catch {}
     }, 700)
 
     const switchToken = () => {
@@ -687,7 +597,7 @@ export default function Swap8899({
                             tokenBamount_JCLP = (await getBalance(config, {address: JCLP as '0xstring'})  ).value
                         }   
 
-                        let currPrice_jclp =  Number(tokenAamount_JCLP) / Number(tokenBamount_JCLP);
+                        let currPrice_jclp =  Number(tokenBamount_JCLP) / Number(tokenAamount_JCLP);
                         const tvlJCLP = (Number(formatEther(tokenAamount_JCLP)) * (1 / currPrice_jclp)) + Number(formatEther(tokenBamount_JCLP));
                         const exchangeRateJCLP = tvlJCLP < 1e-9 ? 0 : currPrice_jclp
                         console.log(`tokenA Amn ${tokenAamount_JCLP}\nTokenB Amn ${tokenBamount_JCLP}\nCurrPrice ${currPrice_jclp}\nTVL : ${tvlJCLP}`)
@@ -1011,7 +921,7 @@ export default function Swap8899({
                     <>
                         <div className="flex items-center text-gray-500 font-mono text-xs my-2">
                             <span className="mr-1">price qoute</span>
-                            {exchangeRate !== '0' ? <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">1 {tokenA.name} = {Number(1/Number(exchangeRate)).toFixed(4)} {tokenB.name}</span> : <span className="text-red-500 px-2">insufficient liquidity</span>}
+                                {exchangeRate !== '0' ? <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">1 {tokenA.name} = {(1/Number(exchangeRate)).toFixed(4)} {tokenB.name}</span> : <span className="text-red-500 px-2">insufficient liquidity</span>}
                             {Number(amountB) > 0 && 
                                 <span>[PI: {
                                     ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 <= 100 ? 
