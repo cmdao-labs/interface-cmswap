@@ -23,7 +23,7 @@ export default function Swap({
 
     const [CMswapTVL, setCMswapTVL] = React.useState<{tvl10000: string; tvl3000: string; tvl500: string; tvl100: string; exchangeRate: string;}>({tvl10000: "", tvl3000: "", tvl500: "", tvl100: "",exchangeRate: ""});
     const [GameSwapTvl, setGameSwapTvl] = React.useState<{tvl10000: string; tvl3000: string; tvl500: string; tvl100: string;exchangeRate: string;}>({tvl10000: "", tvl3000: "", tvl500: "", tvl100: "", exchangeRate: ""});
-      
+
     const [newPrice, setNewPrice] = React.useState("")
     const [tokenA, setTokenA] = React.useState<{name: string, value: '0xstring', logo: string}>(tokens[0])
     const [tokenABalance, setTokenABalance] = React.useState("")
