@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, v3PoolABI, wrappedNative } from '@/app/lib/8899'
+import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, v3PoolABI, wrappedNative,CMswapPoolDualRouterContract,CMswapPoolDualRouter } from '@/app/lib/8899'
 import { config } from '@/app/config'
 
 export default function Swap8899({ 
@@ -21,10 +21,9 @@ export default function Swap8899({
     const [exchangeRate, setExchangeRate] = React.useState("")
     const [fixedExchangeRate, setFixedExchangeRate] = React.useState("")
     const [altRoute, setAltRoute] = React.useState<{a: '0xstring', b: '0xstring', c: '0xstring'}>()
-    const [tvl10000, setTvl10000] = React.useState("")
-    const [tvl3000, setTvl3000] = React.useState("")
-    const [tvl500, setTvl500] = React.useState("")
-    const [tvl100, setTvl100] = React.useState("")
+    const [CMswapTVL, setCMswapTVL] = React.useState<{tvl10000: string; tvl3000: string; tvl500: string; tvl100: string; exchangeRate: string;}>({tvl10000: "", tvl3000: "", tvl500: "", tvl100: "",exchangeRate: ""});
+    const [GameSwapTvl, setGameSwapTvl] = React.useState<{tvl10000: string; tvl3000: string; tvl500: string; tvl100: string;exchangeRate: string;}>({tvl10000: "", tvl3000: "", tvl500: "", tvl100: "", exchangeRate: ""});
+
     const [newPrice, setNewPrice] = React.useState("")
     const [tokenA, setTokenA] = React.useState<{name: string, value: '0xstring', logo: string}>(tokens[0])
     const [tokenABalance, setTokenABalance] = React.useState("")
@@ -35,6 +34,10 @@ export default function Swap8899({
     const [feeSelect, setFeeSelect] = React.useState(10000)
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
+    const [poolSelect, setPoolSelect] = React.useState("")
+    const [bestPool, setBestPool] = React.useState("")
+    const [swapDirection, setSwapDirection] = React.useState(false) // false = A->B, true = B->A
+    const [onLoading,setOnLoading] = React.useState(false)
 
     function encodePath(tokens: string[], fees: number[]): string {
         let path = "0x"
@@ -89,7 +92,17 @@ export default function Swap8899({
         setTokenB(_tokenB)
     }
 
-    const swap = async () => {
+    const handleSwap = async () => {
+        if(poolSelect === "CMswap") {
+            console.log("Swap with CMswap")
+            cmsswap();
+        }else if(poolSelect === "GameSwap") {
+            console.log("Swap with GameSwap")
+            gameswap();
+        }
+    }
+
+    const cmsswap = async () => {
         setIsLoading(true)
         try {
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
@@ -152,11 +165,122 @@ export default function Swap8899({
         setIsLoading(false)
     }
 
+    const gameswap = async () => {
+        setIsLoading(true);
+        try {
+            const tokenAAddr = tokenA.value.toUpperCase();
+            const tokenBAddr = tokenB.value.toUpperCase();
+            const parsedAmountA = parseEther(amountA);
+            const slippagePercent = 5;
+    
+            // Approve if tokenA is not JBC
+            if (tokenAAddr !== tokens[0].value.toUpperCase()) {
+                const allowanceA = await readContract(config, {
+                    ...erc20ABI,
+                    address: tokenA.value as '0xstring',
+                    functionName: 'allowance',
+                    args: [address as '0xstring', CMswapPoolDualRouter]
+                });
+    
+                if (allowanceA < parsedAmountA) {
+                    const { request } = await simulateContract(config, {
+                        ...erc20ABI,
+                        address: tokenA.value as '0xstring',
+                        functionName: 'approve',
+                        args: [CMswapPoolDualRouter, parsedAmountA]
+                    });
+                    const tx = await writeContract(config, request);
+                    await waitForTransactionReceipt(config, { hash: tx });
+                }
+            }
+    
+            // Determine pool address
+            let poolAddr: '0xstring' | undefined;
+            if (
+                (tokenAAddr === tokens[0].value.toUpperCase() && tokenBAddr === tokens[2].value.toUpperCase()) ||
+                (tokenBAddr === tokens[0].value.toUpperCase() && tokenAAddr === tokens[2].value.toUpperCase())
+            ) {
+                poolAddr = '0x472d0e2E9839c140786D38110b3251d5ED08DF41' as '0xstring';
+            } else if (
+                (tokenAAddr === tokens[0].value.toUpperCase() && tokenBAddr === tokens[1].value.toUpperCase()) ||
+                (tokenBAddr === tokens[0].value.toUpperCase() && tokenAAddr === tokens[1].value.toUpperCase())
+            ) {
+                poolAddr = '0x280608DD7712a5675041b95d0000B9089903B569' as '0xstring';
+            }
+    
+            // Determine swap function name
+            let useFunction:
+                | 'swapJC'
+                | 'swapJU'
+                | 'swapCMJtoJBC'
+                | 'swapJUSDTtoJBC'
+                | undefined;
+    
+            if (poolAddr === '0x472d0e2E9839c140786D38110b3251d5ED08DF41' as '0xstring') {
+                if (tokenAAddr === tokens[0].value.toUpperCase()) useFunction = 'swapJC';
+                else if (tokenAAddr === tokens[2].value.toUpperCase()) useFunction = 'swapCMJtoJBC';
+            } else if (poolAddr === '0x280608DD7712a5675041b95d0000B9089903B569' as '0xstring') {
+                if (tokenAAddr === tokens[0].value.toUpperCase()) useFunction = 'swapJU';
+                else if (tokenAAddr === tokens[1].value.toUpperCase()) useFunction = 'swapJUSDTtoJBC';
+            }
+    
+            if (!useFunction || !poolAddr) throw new Error('Unsupported token combination');
+    
+            // Estimate expected output
+            let expectedOut: bigint;
+    
+            if (useFunction === 'swapCMJtoJBC' || useFunction === 'swapJUSDTtoJBC') {
+                expectedOut = await readContract(config, {
+                    ...CMswapPoolDualRouterContract,
+                    functionName: 'getExpectedJBCFromToken',
+                    args: [poolAddr, parsedAmountA]
+                });
+            } else if (useFunction === 'swapJC' || useFunction === 'swapJU') {
+                expectedOut = await readContract(config, {
+                    ...CMswapPoolDualRouterContract,
+                    functionName: 'getExpectedTokenFromJBC',
+                    args: [poolAddr, parsedAmountA]
+                });
+            } else {
+                throw new Error('No matching estimation function');
+            }
+    
+            // Calculate minimum output based on slippage
+            const minOut = expectedOut * BigInt(100 - slippagePercent) / BigInt(100);
+    
+            // Simulate and write tx (payable vs non-payable)
+            let request;
+            if (useFunction === 'swapJC' || useFunction === 'swapJU') {
+                ({ request } = await simulateContract(config, {
+                    ...CMswapPoolDualRouterContract,
+                    functionName: useFunction,
+                    args: [minOut],
+                    value: parsedAmountA
+                }));
+            } else {
+                ({ request } = await simulateContract(config, {
+                    ...CMswapPoolDualRouterContract,
+                    functionName: useFunction,
+                    args: [parsedAmountA, minOut]
+                }));
+            }
+    
+            const tx = await writeContract(config, request);
+            await waitForTransactionReceipt(config, { hash: tx });
+            setTxupdate(tx);
+    
+        } catch (e) {
+            setErrMsg(e as WriteContractErrorType);
+        }
+        setIsLoading(false);
+    };
+    
     React.useEffect(() => {
         const fetch0 = async () => {
+        setOnLoading(true)
             tokenA.value.toUpperCase() === tokenB.value.toUpperCase() && setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
 
-            const nativeBal = address !== undefined ? await getBalance(config, {address: address as '0xstring'}) : {value: BigInt(0)}
+            const nativeBal = await getBalance(config, {address: address as '0xstring'})
             const stateA = await readContracts(config, {
                 contracts: [
                     { ...erc20ABI, address: tokenA.value, functionName: 'symbol' },
@@ -167,12 +291,14 @@ export default function Swap8899({
                 contracts: [
                     { ...erc20ABI, address: tokenB.value, functionName: 'symbol' },
                     { ...erc20ABI, address: tokenB.value, functionName: 'balanceOf', args: [address as '0xstring'] },
-                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 10000] },
-                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 3000] },
-                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 500] },
-                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 100] },
+                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 10000] }, //  
+                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 3000] }, //  
+                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 500] }, //  
+                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, 100] }, //  
                 ]
             })
+     
+
             stateA[0].result !== undefined && tokenA.name === "Choose Token" && setTokenA({
                 name: stateA[0].result,
                 value: tokenA.value,
@@ -193,10 +319,14 @@ export default function Swap8899({
             tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() ? 
                 setTokenBBalance(formatEther(nativeBal.value)) :
                 stateB[1].result !== undefined && setTokenBBalance(formatEther(stateB[1].result))
+
             const pair10000 = stateB[2].result !== undefined ? stateB[2].result  as '0xstring' : '' as '0xstring'
             const pair3000 = stateB[3].result !== undefined ? stateB[3].result  as '0xstring' : '' as '0xstring'
             const pair500 = stateB[4].result !== undefined ? stateB[4].result  as '0xstring' : '' as '0xstring'
             const pair100 = stateB[5].result !== undefined ? stateB[5].result  as '0xstring' : '' as '0xstring'
+
+            const JCLP  = '0x472d0e2E9839c140786D38110b3251d5ED08DF41' as '0xstring'
+            const JULP = '0x280608DD7712a5675041b95d0000B9089903B569' as '0xstring'
 
             if (tokenA.name !== 'Choose Token' && tokenB.name !== 'Choose Token') {
                 try {
@@ -219,6 +349,12 @@ export default function Swap8899({
                             { ...v3PoolABI, address: pair100, functionName: 'slot0' },
                             { ...erc20ABI, address: tokenA.value, functionName: 'balanceOf', args: [pair100] },
                             { ...erc20ABI, address: tokenB.value, functionName: 'balanceOf', args: [pair100] },
+
+                            { ...erc20ABI, address: tokenA.value, functionName: 'balanceOf', args: [JULP] }, // I16 JULP => Check JUSDT Balance
+                            { ...erc20ABI, address: tokenB.value, functionName: 'balanceOf', args: [JULP] }, // I17 JULP => Check JUSDT Balance
+                            { ...erc20ABI, address: tokenA.value, functionName: 'balanceOf', args: [JCLP] }, // I18 JCLP => Check CMJ Balance
+                            { ...erc20ABI, address: tokenB.value, functionName: 'balanceOf', args: [JCLP] }, // I19 JCLP => Check CMJ Balance
+
                         ]
                     })
                     const token0_10000 = poolState[0].result !== undefined ? poolState[0].result : "" as '0xstring'
@@ -227,11 +363,18 @@ export default function Swap8899({
                     const tokenBamount_10000 = poolState[3].result !== undefined ? poolState[3].result : BigInt(0)
                     const currPrice_10000 = token0_10000.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2))
                     const tvl_10000 = currPrice_10000 !== 0 ?  (Number(formatEther(tokenAamount_10000)) * (1 / currPrice_10000)) + Number(formatEther(tokenBamount_10000)) : 0
-                    feeSelect === 10000 && currPrice_10000 !== Infinity && setExchangeRate(currPrice_10000.toString())
-                    feeSelect === 10000 && currPrice_10000 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2).toString())
-                    feeSelect === 10000 && tvl_10000 < 1e-9 && setExchangeRate('0')
-                    tvl_10000 >= 1e-9 ? setTvl10000(tvl_10000.toString()) : setTvl10000('0')
-                    if (feeSelect === 10000 && tvl_10000 < 1e-9) {
+                    const exchangeRatetvl_10000 = tvl_10000 < 1e-9 ? 0 : currPrice_10000;
+
+                    const setTvl10000 = (tvl_10000: number,exchangeRate : number) => {
+                        setCMswapTVL(prevTvl => ({
+                            ...prevTvl,
+                            tvl10000: tvl_10000 >= 1e-9 ? tvl_10000.toString() : '0',
+                            exchangeRate: feeSelect === 10000 ? exchangeRate.toString() : prevTvl.exchangeRate
+                        }));
+                    };
+                    setTvl10000(tvl_10000,exchangeRatetvl_10000)
+
+                    if (feeSelect === 10000 && tvl_10000 < 1e-9  && poolSelect === "CMswap" ) {
                         const init: any = {contracts: []}
                         for (let i = 0; i <= tokens.length - 1; i++) {
                             init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokens[i].value, 10000] })
@@ -276,11 +419,18 @@ export default function Swap8899({
                     const tokenBamount_3000 = poolState[7].result !== undefined ? poolState[7].result : BigInt(0)
                     const currPrice_3000 = token0_3000.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2))
                     const tvl_3000 = (Number(formatEther(tokenAamount_3000)) * (1 / currPrice_3000)) + Number(formatEther(tokenBamount_3000));
-                    feeSelect === 3000 && setExchangeRate(currPrice_3000.toString())
-                    feeSelect === 3000 && setFixedExchangeRate(((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2).toString())
-                    feeSelect === 3000 && tvl_3000 < 1e-9 && setExchangeRate('0')
-                    tvl_3000 >= 1e-9 ? setTvl3000(tvl_3000.toString()) : setTvl3000('0')
-                    if (feeSelect === 3000 && tvl_3000 < 1e-9) {
+                    const exchangeRatetvl_3000 = tvl_3000 < 1e-9 ? 0 : currPrice_3000
+
+                    const setTvl3000 = (tvl_3000: number,exchangeRate: number) => {
+                        setCMswapTVL(prevTvl => ({
+                            ...prevTvl,
+                            tvl3000: tvl_3000 >= 1e-9 ? tvl_3000.toString() : '0',
+                            exchangeRate: feeSelect === 3000 ? exchangeRate.toString() : prevTvl.exchangeRate
+                        }));
+                    };
+                    setTvl3000(tvl_3000,exchangeRatetvl_3000)
+
+                    if (feeSelect === 3000 && tvl_3000 < 1e-9  && poolSelect === "CMswap" ) {
                         const init: any = {contracts: []}
                         for (let i = 0; i <= tokens.length - 1; i++) {
                             init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokens[i].value, 3000] })
@@ -314,7 +464,7 @@ export default function Swap8899({
                             const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
                             const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
                             const altPrice1 = altToken1.toUpperCase() === tokenB.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
-                            feeSelect === 3000 && setExchangeRate((altPrice1 / altPrice0).toString())
+                            feeSelect === 3000  && poolSelect === "CMswap"  &&  setExchangeRate((altPrice1 / altPrice0).toString())
                         }
                     }
                     
@@ -324,11 +474,20 @@ export default function Swap8899({
                     const tokenBamount_500 = poolState[11].result !== undefined ? poolState[11].result : BigInt(0)
                     const currPrice_500 = token0_500.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_500) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2))
                     const tvl_500 = (Number(formatEther(tokenAamount_500)) * (1 / currPrice_500)) + Number(formatEther(tokenBamount_500));
-                    feeSelect === 500 && setExchangeRate(currPrice_500.toString())
-                    feeSelect === 500 && setFixedExchangeRate(((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2).toString())
-                    feeSelect === 500 && tvl_500 < 1e-9 && setExchangeRate('0')
-                    tvl_500 >= 1e-9 ? setTvl500(tvl_500.toString()) : setTvl500('0')
-                    if (feeSelect === 500 && tvl_500 < 1e-9) {
+                    const exchangeRatetvl_500 = tvl_500 < 1e-9 ? 0 : currPrice_500
+
+                    const setTvl500 = (tvl_500: number, exchangeRate: number) => {
+                        setCMswapTVL(prevTvl => ({
+                            ...prevTvl,
+                            tvl_500: tvl_500 >= 1e-9 ? tvl_500.toString() : '0',
+                            exchangeRate: feeSelect === 500 ? exchangeRate.toString() : prevTvl.exchangeRate
+                        }));
+                    };
+                    
+                    setTvl500(tvl_500, exchangeRatetvl_500);
+                    
+
+                    if (feeSelect === 500 && tvl_500 < 1e-9  && poolSelect === "CMswap" ) {
                         const init: any = {contracts: []}
                         for (let i = 0; i <= tokens.length - 1; i++) {
                             init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokens[i].value, 500] })
@@ -362,7 +521,7 @@ export default function Swap8899({
                             const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
                             const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
                             const altPrice1 = altToken1.toUpperCase() === tokenB.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
-                            feeSelect === 500 && setExchangeRate((altPrice1 / altPrice0).toString())
+                            feeSelect === 500 && poolSelect === "CMswap" && setExchangeRate((altPrice1 / altPrice0).toString())
                         }
                     }
 
@@ -372,11 +531,18 @@ export default function Swap8899({
                     const tokenBamount_100 = poolState[15].result !== undefined ? poolState[15].result : BigInt(0)
                     const currPrice_100 = token0_100.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_100) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_100) / (2 ** 96)) ** 2))
                     const tvl_100 = (Number(formatEther(tokenAamount_100)) * (1 / currPrice_100)) + Number(formatEther(tokenBamount_100));
-                    feeSelect === 100 && setExchangeRate(currPrice_100.toString())
-                    feeSelect === 100 && setFixedExchangeRate(((Number(currPrice_100) / (2 ** 96)) ** 2).toString())
-                    feeSelect === 100 && tvl_100 < 1e-9 && setExchangeRate('0')
-                    tvl_100 >= 1e-9 ? setTvl100(tvl_100.toString()) : setTvl100('0')
-                    if (feeSelect === 100 && tvl_100 < 1e-9) {
+                    const exchangeRatetvl_100 = tvl_100 < 1e-9 ? 0 : currPrice_100;
+
+                    const setTvl100 = (tvl_100: number,exchangeRate: number) => {
+                        setCMswapTVL(prevTvl => ({
+                            ...prevTvl,
+                            tvl_100: tvl_100 >= 1e-9 ? tvl_100.toString() : '0',
+                            exchangeRate: feeSelect === 100 ? exchangeRate.toString() : prevTvl.exchangeRate
+                        }));
+                    };
+                    setTvl100(tvl_100,exchangeRatetvl_100)
+
+                    if (feeSelect === 100 && tvl_100 < 1e-9  && poolSelect === "CMswap" )  {
                         const init: any = {contracts: []}
                         for (let i = 0; i <= tokens.length - 1; i++) {
                             init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokens[i].value, 100] })
@@ -410,9 +576,86 @@ export default function Swap8899({
                             const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
                             const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
                             const altPrice1 = altToken1.toUpperCase() === tokenB.value.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
-                            feeSelect === 100 && setExchangeRate((altPrice1 / altPrice0).toString())
+                            feeSelect === 100  && poolSelect === "CMswap"  && setExchangeRate((altPrice1 / altPrice0).toString())
                         }
                     }
+
+                    if(
+                        tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[2].value.toUpperCase() 
+                        ||
+                        tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()
+                    ) { 
+                        console.log('JCLP GameSwap view active')
+                        let tokenAamount_JCLP = BigInt(0); 
+                        let tokenBamount_JCLP = BigInt(0); 
+
+                        if(tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[2].value.toUpperCase()){
+                            tokenAamount_JCLP = (await getBalance(config, {address: JCLP as '0xstring'})).value
+                            tokenBamount_JCLP = poolState[19].result !== undefined ? poolState[19].result : BigInt(0)
+                        }else if(tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()){
+                            tokenAamount_JCLP = poolState[18].result !== undefined ? poolState[18].result : BigInt(0)
+                            tokenBamount_JCLP = (await getBalance(config, {address: JCLP as '0xstring'})  ).value
+                        }   
+
+                        let currPrice_jclp =  Number(tokenAamount_JCLP) / Number(tokenBamount_JCLP);
+                        const tvlJCLP = (Number(formatEther(tokenAamount_JCLP)) * (1 / currPrice_jclp)) + Number(formatEther(tokenBamount_JCLP));
+                        const exchangeRateJCLP = tvlJCLP < 1e-9 ? 0 : currPrice_jclp
+                        console.log(`tokenA Amn ${tokenAamount_JCLP}\nTokenB Amn ${tokenBamount_JCLP}\nCurrPrice ${currPrice_jclp}\nTVL : ${tvlJCLP}`)
+
+                        const setJulpTVL = (tvl10000: number, exchangeRate: number) => {
+                            setGameSwapTvl(prevTvl => ({
+                                ...prevTvl,
+                                tvl10000: tvlJCLP >= 1e-9 ? tvlJCLP.toString() : '0',
+                                exchangeRate: exchangeRate.toString()
+                            }));
+                        };
+                        setJulpTVL(tvlJCLP,exchangeRateJCLP)
+
+
+                    }else if(
+                        tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[1].value.toUpperCase() 
+                        ||
+                        tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenA.value.toUpperCase() === tokens[1].value.toUpperCase()
+                    ) {
+                        console.log('JULP GameSwap view active')
+                        let tokenAamount_JULP = BigInt(0); 
+                        let tokenBamount_JULP = BigInt(0); 
+
+                        if(tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[1].value.toUpperCase()){
+                            tokenAamount_JULP = (await getBalance(config, {address: JULP as '0xstring'})).value
+                            tokenBamount_JULP = poolState[17].result !== undefined ? poolState[17].result : BigInt(0)
+                        }else if(tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenA.value.toUpperCase() === tokens[1].value.toUpperCase()){
+                            tokenAamount_JULP = poolState[16].result !== undefined ? poolState[16].result : BigInt(0)
+                            tokenBamount_JULP = (await getBalance(config, {address: JULP as '0xstring'})  ).value
+                        }
+                        
+    
+                        const currPrice_julp = Number(tokenAamount_JULP) / Number(tokenBamount_JULP);
+                        const tvlJULP = (Number(formatEther(tokenAamount_JULP)) * (1 / currPrice_julp)) + Number(formatEther(tokenBamount_JULP));
+                        const exchangeRateJULP = tvlJULP < 1e-9 ? 0 : currPrice_julp
+                
+                        const setJulpTVL = (tvl10000: number, exchangeRate: number) => {
+                            setGameSwapTvl(prevTvl => ({
+                                ...prevTvl,
+                                tvl10000: tvlJULP >= 1e-9 ? tvlJULP.toString() : '0',
+                                exchangeRate: exchangeRate.toString()
+                            }));
+                        };
+                        setJulpTVL(tvlJULP,exchangeRateJULP)
+
+                    }else{
+                        const resetDefault = () => {
+                            setGameSwapTvl(prevTvl => ({
+                                ...prevTvl,
+                                tvl10000: '0',
+                                exchangeRate: (0).toString()
+                            }));
+                        };
+                        resetDefault()
+
+                    }
+
+
                 } catch {
                     setExchangeRate("0")
                 }
@@ -421,8 +664,56 @@ export default function Swap8899({
 
         setAmountA("")
         setAmountB("")
-        fetch0()
+        fetch0().then(res => {setOnLoading(false); }).catch(error => {console.error('Error:', error);setOnLoading(false)});
+
+        
     }, [config, address, tokenA, tokenB, feeSelect, txupdate])
+
+    React.useEffect(() => {
+        // define exchagerate
+        if(poolSelect === "CMswap") {
+            setExchangeRate(CMswapTVL.exchangeRate)
+            console.log('Quote Price CMswap',CMswapTVL.exchangeRate)
+        }else if(poolSelect === "GameSwap") {
+            setExchangeRate(GameSwapTvl.exchangeRate)
+            console.log('Quote Price CMswap',GameSwapTvl.exchangeRate)
+        }
+
+    },[poolSelect, CMswapTVL, GameSwapTvl])
+
+
+    React.useEffect(() => {
+        if (!onLoading && tokens[0] && tokenA && CMswapTVL && GameSwapTvl) {
+            const CMswapRate = Number(CMswapTVL.exchangeRate || 0);
+            const GameSwapRate = Number(GameSwapTvl.exchangeRate || 0);
+    
+            console.log("tokens[0].value === tokenA.value:", tokens[0].value === tokenA.value);
+            console.log("CMswapRate:", CMswapRate);
+            console.log("GameSwapRate:", GameSwapRate);
+    
+            let bestPool = "";
+    
+            if (tokens[0].value === tokenA.value) {
+                bestPool = CMswapRate > GameSwapRate ? "CMswap" : "GameSwap";
+            } else {
+                bestPool = CMswapRate < GameSwapRate ? "CMswap" : "GameSwap";
+            }
+    
+            setBestPool(bestPool);
+    
+            if (poolSelect === "" && GameSwapRate !== 0 && CMswapRate !== 0) {
+                setPoolSelect(bestPool);
+            }
+        }
+    }, [onLoading, CMswapTVL, GameSwapTvl, tokens, tokenA]);
+
+    React.useEffect(() => {
+        if(amountA !== "" && !onLoading){
+            getQoute(amountA)
+            console.log("pool select change new qoute")
+        }
+    },[poolSelect])
+
 
     return (
         <div className='space-y-2'>
@@ -563,30 +854,60 @@ export default function Swap8899({
                 </div>
             </div>
             <div className="mt-6">
-                <div className="flex justify-between items-center my-2">
-                    <span className="text-gray-400 font-mono text-xs">Swap fee tier</span>
-                </div>
-                <div className="grid grid-cols-4 gap-2 h-[70px]">
-                    <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 100 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(100)}>
-                        <span>0.01%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl100) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl100))} {(tokenA.name === 'JUSDT' || tokenB.name === 'JUSDT') ? '$' : tokenB.name}</span>}
-                    </Button>
-                    <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 500 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(500)}>
-                        <span>0.05%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl500) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl500))} {(tokenA.name === 'JUSDT' || tokenB.name === 'JUSDT') ? '$' : tokenB.name}</span>}
-                    </Button>
-                    <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 3000 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(3000)}>
-                        <span>0.3%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl3000) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl3000))} {(tokenA.name === 'JUSDT' || tokenB.name === 'JUSDT') ? '$' : tokenB.name}</span>}
-                    </Button>
-                    <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 10000 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(10000)}>
-                        <span>1%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl10000) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl10000))} {(tokenA.name === 'JUSDT' || tokenB.name === 'JUSDT') ? '$' : tokenB.name}</span>}
-                    </Button>
-                </div>
-            </div>
+
+
+{/** LIQUIDITY SELECTION  */}
+<div className="flex justify-between items-center my-2">
+    <span className="text-gray-400 font-mono text-xs">Liquidity Available</span>
+</div>
+<div className="grid grid-cols-2 gap-2 h-[70px] ">
+<Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "CMswap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("CMswap")}>
+    <span className='flex items-center gap-1'>
+        CMswap {bestPool === "CMswap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
+    </span>
+    {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL[`tvl${feeSelect}` as keyof typeof CMswapTVL]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(CMswapTVL[`tvl${feeSelect}` as keyof typeof CMswapTVL]))} {tokenB.name}</span>}
+</Button>
+{Number(GameSwapTvl['tvl10000']) > 0 && (
+    <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "GameSwap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("GameSwap")}>
+        <span className='flex items-center gap-1'>
+            GameSwap {bestPool === "GameSwap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
+        </span>
+        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(GameSwapTvl['tvl10000']) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(GameSwapTvl['tvl10000']))} {tokenB.name}</span>}
+    </Button>
+    )}
+
+    </div>
+
+{/** FEE SELECTION  */}
+{poolSelect === "CMswap" && (
+    <><div className="flex justify-between items-center my-2">
+    <span className="text-gray-400 font-mono text-xs">Swap fee tier</span>
+</div>
+<div className="grid grid-cols-4 gap-2 h-[70px]">
+    <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 100 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(100)}>
+        <span>0.01%</span>
+        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL["tvl100"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(CMswapTVL["tvl100"]))} {tokenB.name}</span>}
+    </Button>
+    <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 500 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(500)}>
+        <span>0.05%</span>
+        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL["tvl500"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(CMswapTVL["tvl500"]))} {tokenB.name}</span>}
+    </Button>
+    <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 3000 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(3000)}>
+        <span>0.3%</span>
+        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL["tvl3000"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(CMswapTVL["tvl3000"]))} {tokenB.name}</span>}
+    </Button>
+    <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 10000 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(10000)}>
+        <span>1%</span>
+        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL["tvl10000"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(CMswapTVL["tvl10000"]))} {tokenB.name}</span>}
+    </Button>
+</div>
+    </>
+)}
+
+
+</div>
             {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) !== 0 ?
-                <Button className="w-full bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4 cursor-pointer" onClick={swap}>Swap</Button> :
+                <Button className="w-full bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4 cursor-pointer" onClick={handleSwap}>Swap</Button> :
                 <Button disabled className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4">Swap</Button>
             }
             <div className="mt-4 border-t border-[#00ff9d]/10 pt-4">
@@ -600,7 +921,7 @@ export default function Swap8899({
                     <>
                         <div className="flex items-center text-gray-500 font-mono text-xs my-2">
                             <span className="mr-1">price qoute</span>
-                            {exchangeRate !== '0' ? <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">1 {tokenB.name} = {Number(exchangeRate).toFixed(4)} {tokenA.name}</span> : <span className="text-red-500 px-2">insufficient liquidity</span>}
+                            {exchangeRate !== '0' ? <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">1 {tokenA.name} = {Number(1/Number(exchangeRate)).toFixed(4)} {tokenB.name}</span> : <span className="text-red-500 px-2">insufficient liquidity</span>}
                             {Number(amountB) > 0 && 
                                 <span>[PI: {
                                     ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 <= 100 ? 
