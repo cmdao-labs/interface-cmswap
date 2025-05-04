@@ -249,25 +249,26 @@ export default function Swap8899({
             const minOut = expectedOut * BigInt(100 - slippagePercent) / BigInt(100);
     
             // Simulate and write tx (payable vs non-payable)
-            let request;
             if (useFunction === 'swapJC' || useFunction === 'swapJU') {
-                ({ request } = await simulateContract(config, {
+                const { request } = await simulateContract(config, {
                     ...CMswapPoolDualRouterContract,
                     functionName: useFunction,
                     args: [minOut],
                     value: parsedAmountA
-                }));
+                })
+                const tx = await writeContract(config, request)
+                await waitForTransactionReceipt(config, { hash: tx });
+                setTxupdate(tx)
             } else {
-                ({ request } = await simulateContract(config, {
+                const { request } = await simulateContract(config, {
                     ...CMswapPoolDualRouterContract,
                     functionName: useFunction,
                     args: [parsedAmountA, minOut]
-                }));
+                })
+                const tx = await writeContract(config, request)
+                await waitForTransactionReceipt(config, { hash: tx });
+                setTxupdate(tx)
             }
-    
-            const tx = await writeContract(config, request);
-            await waitForTransactionReceipt(config, { hash: tx });
-            setTxupdate(tx);
     
         } catch (e) {
             setErrMsg(e as WriteContractErrorType);
@@ -733,7 +734,7 @@ export default function Swap8899({
                     />
                 </div>
                 <div className="flex items-center justify-between">
-                    <input placeholder="0.0" autoFocus className="bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountA} onChange={e => {setAmountA(e.target.value); getQoute(e.target.value);}} />
+                    <input placeholder="0.0" autoFocus className="w-[140px] sm:w-[200px] bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountA} onChange={e => {setAmountA(e.target.value); getQoute(e.target.value);}} />
                     <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
@@ -805,7 +806,7 @@ export default function Swap8899({
                     />
                 </div>
                 <div className="flex items-center justify-between">
-                    <input placeholder="0.0" className="bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountB} readOnly />
+                    <input placeholder="0.0" className="w-[140px] sm:w-[200px] bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountB} readOnly />
                     <Popover open={open2} onOpenChange={setOpen2}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" aria-expanded={open2} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
@@ -905,7 +906,7 @@ export default function Swap8899({
 )}
 
 
-</div>
+        </div>
             {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) !== 0 ?
                 <Button className="w-full bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4 cursor-pointer" onClick={handleSwap}>Swap</Button> :
                 <Button disabled className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4">Swap</Button>
@@ -921,7 +922,7 @@ export default function Swap8899({
                     <>
                         <div className="flex items-center text-gray-500 font-mono text-xs my-2">
                             <span className="mr-1">price qoute</span>
-                                {exchangeRate !== '0' ? <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">1 {tokenA.name} = {(1/Number(exchangeRate)).toFixed(4)} {tokenB.name}</span> : <span className="text-red-500 px-2">insufficient liquidity</span>}
+                            {exchangeRate !== '0' ? <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">1 {tokenB.name} = {Number(exchangeRate).toFixed(4)} {tokenA.name}</span> : <span className="text-red-500 px-2">insufficient liquidity</span>}
                             {Number(amountB) > 0 && 
                                 <span>[PI: {
                                     ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 <= 100 ? 
