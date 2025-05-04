@@ -1,6 +1,6 @@
 import { erc20Abi, erc721Abi, createPublicClient, http } from 'viem'
 import { jbc } from 'viem/chains'
-import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, FieldsV2RouterAbi, FieldsHook001, v3staker, FieldsHook003, WrappedNative } from '@/app/lib/abi'
+import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, FieldsV2RouterAbi, FieldsHook001, v3staker, FieldsHook003, WrappedNative,CMswapPoolDualRouterABI } from '@/app/lib/abi'
 
 // swap
 export const tokens: {name: string, value: '0xstring', logo: string}[] = [
@@ -19,6 +19,7 @@ export const POSITION_MANAGER = '0xfC445018B20522F9cEd1350201e179555a7573A1' as 
 export const positionManagerCreatedAt = BigInt(4990192)
 export const QOUTER_V2 = '0x5ad32c64A2aEd381299061F32465A22B1f7A2EE2' as '0xstring'
 export const ROUTER02 = '0x2174b3346CCEdBB4Faaff5d8088ff60B74909A9d' as '0xstring'
+export const CMswapPoolDualRouter = '0xdCC3b8b6B166Cd0026CEdF68871f0cE92DB880ec' as '0xstring'
 export const v3FactoryContract = { chainId: 8899, abi: v3Factory, address: V3_FACTORY } as const
 export const positionManagerContract = { chainId: 8899, address: POSITION_MANAGER, abi: NonfungiblePositionManager } as const
 export const qouterV2Contract = { chainId: 8899, abi: qouterV2, address: QOUTER_V2 } as const
@@ -28,6 +29,8 @@ export const v3PoolABI = { chainId: 8899, abi: v3Pool } as const
 export const V3_STAKER = '0xC7Aa8C815937B61F70E04d814914683bB9Bd7579' as '0xstring'
 export const v3StakerContract = { chainId: 8899, address: V3_STAKER, abi: v3staker } as const
 export const wrappedNative = { chainId: 8899, abi: WrappedNative, address: tokens[0].value } as const
+export const CMswapPoolDualRouterContract = { chainId: 8899, abi: CMswapPoolDualRouterABI , address: CMswapPoolDualRouter} as const
+
 
 // fields
 export const v2routerAddr = '0x8E83E1Bb0E1aF049Ab4748F328Ce6760bd7ae431' as '0xstring'
