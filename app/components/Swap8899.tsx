@@ -996,7 +996,7 @@ export default function Swap8899({
 )}
 
 
-</div>
+        </div>
             {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) !== 0 ?
                 <Button className="w-full bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4 cursor-pointer" onClick={handleSwap}>Swap</Button> :
                 <Button disabled className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4">Swap</Button>
@@ -1012,7 +1012,7 @@ export default function Swap8899({
                     <>
                         <div className="flex items-center text-gray-500 font-mono text-xs my-2">
                             <span className="mr-1">price qoute</span>
-                            {exchangeRate !== '0' ? <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">1 {tokenA.name} = {Number(1/Number(exchangeRate)).toFixed(4)} {tokenB.name}</span> : <span className="text-red-500 px-2">insufficient liquidity</span>}
+                            {exchangeRate !== '0' ? <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">1 {tokenB.name} = {Number(exchangeRate).toFixed(4)} {tokenA.name}</span> : <span className="text-red-500 px-2">insufficient liquidity</span>}
                             {Number(amountB) > 0 && 
                                 <span>[PI: {
                                     ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 <= 100 ? 
