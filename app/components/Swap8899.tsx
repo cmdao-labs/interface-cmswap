@@ -367,12 +367,14 @@ export default function Swap8899({
                     const exchangeRatetvl_10000 = tvl_10000 < 1e-9 ? 0 : currPrice_10000;
                     feeSelect === 10000 && currPrice_10000 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2).toString())
 
-                    const updateTvl10000 = (tvl_10000: number) => {
+                    // extract code for use
+                    const updateTvlKey = (key: keyof typeof CMswapTVL, value: number) => {
                         setCMswapTVL(prevTvl => ({
                             ...prevTvl,
-                            tvl10000: tvl_10000 >= 1e-9 ? tvl_10000.toString() : '0',
+                            [key]: value >= 1e-9 ? value.toString() : '0',
                         }));
                     };
+                    
                     
                     const updateExchangeRateCmswapTVL = (feeAmount: number,exchangeRate: number) => {
                         setCMswapTVL(prevTvl => ({
@@ -380,14 +382,8 @@ export default function Swap8899({
                             exchangeRate: feeSelect === feeAmount ? exchangeRate.toString() : prevTvl.exchangeRate
                         }));
                     };
-                    const updateExchangeRateGameSwapTVL = (feeAmount: number,exchangeRate: number) => {
-                        setGameSwapTvl(prevTvl => ({
-                            ...prevTvl,
-                            exchangeRate: feeSelect === feeAmount ? exchangeRate.toString() : prevTvl.exchangeRate
-                        }));
-                    };
 
-                    updateTvl10000(tvl_10000);
+                    updateTvlKey('tvl10000',tvl_10000);
                     updateExchangeRateCmswapTVL(10000,exchangeRatetvl_10000);
                     
 
@@ -438,15 +434,8 @@ export default function Swap8899({
                     const tvl_3000 = (Number(formatEther(tokenAamount_3000)) * (1 / currPrice_3000)) + Number(formatEther(tokenBamount_3000));
                     const exchangeRatetvl_3000 = tvl_3000 < 1e-9 ? 0 : currPrice_3000
                     feeSelect === 3000 && currPrice_3000 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2).toString())
-
-                    const setTvl3000 = (tvl_3000: number,exchangeRate: number) => {
-                        setCMswapTVL(prevTvl => ({
-                            ...prevTvl,
-                            tvl3000: tvl_3000 >= 1e-9 ? tvl_3000.toString() : '0',
-                            exchangeRate: feeSelect === 3000 ? exchangeRate.toString() : prevTvl.exchangeRate
-                        }));
-                    };
-                    setTvl3000(tvl_3000,exchangeRatetvl_3000)
+                    updateTvlKey('tvl3000',tvl_3000);
+                    updateExchangeRateCmswapTVL(3000,exchangeRatetvl_3000);
 
                     if (feeSelect === 3000 && tvl_3000 < 1e-9  && poolSelect === "CMswap" ) {
                         const init: any = {contracts: []}
@@ -494,17 +483,8 @@ export default function Swap8899({
                     const tvl_500 = (Number(formatEther(tokenAamount_500)) * (1 / currPrice_500)) + Number(formatEther(tokenBamount_500));
                     const exchangeRatetvl_500 = tvl_500 < 1e-9 ? 0 : currPrice_500
                     feeSelect === 500 && currPrice_500 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2).toString())
-
-                    const setTvl500 = (tvl_500: number, exchangeRate: number) => {
-                        setCMswapTVL(prevTvl => ({
-                            ...prevTvl,
-                            tvl_500: tvl_500 >= 1e-9 ? tvl_500.toString() : '0',
-                            exchangeRate: feeSelect === 500 ? exchangeRate.toString() : prevTvl.exchangeRate
-                        }));
-                    };
-                    
-                    setTvl500(tvl_500, exchangeRatetvl_500);
-                    
+                    updateTvlKey('tvl500',tvl_500);
+                    updateExchangeRateCmswapTVL(500,exchangeRatetvl_500);
 
                     if (feeSelect === 500 && tvl_500 < 1e-9  && poolSelect === "CMswap" ) {
                         const init: any = {contracts: []}
@@ -552,15 +532,8 @@ export default function Swap8899({
                     const tvl_100 = (Number(formatEther(tokenAamount_100)) * (1 / currPrice_100)) + Number(formatEther(tokenBamount_100));
                     const exchangeRatetvl_100 = tvl_100 < 1e-9 ? 0 : currPrice_100;
                     feeSelect === 100 && currPrice_100 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_100) / (2 ** 96)) ** 2).toString())
-
-                    const setTvl100 = (tvl_100: number,exchangeRate: number) => {
-                        setCMswapTVL(prevTvl => ({
-                            ...prevTvl,
-                            tvl_100: tvl_100 >= 1e-9 ? tvl_100.toString() : '0',
-                            exchangeRate: feeSelect === 100 ? exchangeRate.toString() : prevTvl.exchangeRate
-                        }));
-                    };
-                    setTvl100(tvl_100,exchangeRatetvl_100)
+                    updateTvlKey('tvl100',tvl_100);
+                    updateExchangeRateCmswapTVL(100,exchangeRatetvl_100);
 
                     if (feeSelect === 100 && tvl_100 < 1e-9  && poolSelect === "CMswap" )  {
                         const init: any = {contracts: []}
