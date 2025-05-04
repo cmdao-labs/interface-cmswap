@@ -941,9 +941,6 @@ export default function Swap8899({
                     <>
                         <div className="flex items-center text-gray-500 font-mono text-xs my-2">
                             <span className="mr-1">price qoute</span>
-<<<<<<< Updated upstream
-                                {exchangeRate !== '0' ? <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">1 {tokenA.name} = {(1/Number(exchangeRate)).toFixed(4)} {tokenB.name}</span> : <span className="text-red-500 px-2">insufficient liquidity</span>}
-=======
                             {exchangeRate !== '0'
                                 ? (<span
                                         className="text-[#00ff9d] font-mono text-xs px-2 gap-1 hover:cursor-pointer" onClick={() => setSwapDirection(!swapDirection)}>
@@ -953,7 +950,6 @@ export default function Swap8899({
                                 : <span className="text-red-500 px-2">insufficient liquidity</span>
                             }
 
->>>>>>> Stashed changes
                             {Number(amountB) > 0 && 
                                 <span>[PI: {
                                     ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 <= 100 ? 
