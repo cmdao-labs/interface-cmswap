@@ -14,13 +14,14 @@ export const tokens: {name: string, value: '0xstring', logo: string}[] = [
     { name: 'KOI', value: '0x7dB96BAdD11596E69db7a6ab1e674Ac711fD83a0' as '0xstring', logo: 'https://ipfs.io/ipfs/QmWQzTaEULPdVkYAkhgRmhjEiJxurtRTx6DkpxghPZar4L' },
     // can PR listing here
 ]
+
 export const V3_FACTORY = '0x5835f123bDF137864263bf204Cf4450aAD1Ba3a7' as '0xstring'
 export const POSITION_MANAGER = '0xfC445018B20522F9cEd1350201e179555a7573A1' as '0xstring'
 export const positionManagerCreatedAt = BigInt(4990192)
 export const QOUTER_V2 = '0x5ad32c64A2aEd381299061F32465A22B1f7A2EE2' as '0xstring'
 export const ROUTER02 = '0x2174b3346CCEdBB4Faaff5d8088ff60B74909A9d' as '0xstring'
 export const CMswapPoolDualRouter = '0xdCC3b8b6B166Cd0026CEdF68871f0cE92DB880ec' as '0xstring'
-export const CMswapUniSmartRoute = '0x88Aed8690fCf9Cb5e826e59fd1a42c7F73AB3c80' as '0xstring'
+export const CMswapUniSmartRoute = '0xb4fE95eFFD4B1E1d3727700984a99d5687343519' as '0xstring'
 export const v3FactoryContract = { chainId: 8899, abi: v3Factory, address: V3_FACTORY } as const
 export const positionManagerContract = { chainId: 8899, address: POSITION_MANAGER, abi: NonfungiblePositionManager } as const
 export const qouterV2Contract = { chainId: 8899, abi: qouterV2, address: QOUTER_V2 } as const
