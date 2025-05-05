@@ -457,7 +457,7 @@ export default function Liquidity96({
                     }
                 </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (feeSelect === 100 ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(100)}>
                     <span>0.01% fee</span>
                     <span className="text-xs mt-1 opacity-60">best for stable war pairs</span>
