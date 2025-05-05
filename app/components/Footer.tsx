@@ -17,7 +17,7 @@ export default function Footer() {
                             <Github className="w-4 h-4" /><span>INTERFACE</span>
                         </Link>
                         <div className="h-4 w-px bg-[#32ffa7]/20 hidden md:block" />
-                        <Link href="http://docs.openbbq.xyz/th" target="_blank" rel="noreferrer" className="text-white/60 hover:text-[#32ffa7] text-xs flex items-center gap-1 hidden md:flex font-mono">
+                        <Link href="http://docs.cmswap.xyz/th" target="_blank" rel="noreferrer" className="text-white/60 hover:text-[#32ffa7] text-xs flex items-center gap-1 hidden md:flex font-mono">
                             <FileText className="w-4 h-4" /><span>DOCS</span>
                         </Link>
                     </div>
