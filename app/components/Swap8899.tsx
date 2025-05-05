@@ -704,7 +704,7 @@ export default function Swap8899({
     React.useEffect(() => {
         if(amountA !== "" && !onLoading){
             getQoute(amountA)
-            console.log("pool select change new qoute")
+            console.log("pool select change new quote")
         }
     },[poolSelect])
 
@@ -869,12 +869,12 @@ export default function Swap8899({
             {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(GameSwapTvl['tvl10000']) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(GameSwapTvl['tvl10000']))}  {(tokenB.name === 'JUSDT') ? '$' : tokenB.name}</span>}
         </Button>
         )}
-   {/*      <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "JibSwap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("JibSwap")}>
+        <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "JibSwap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("JibSwap")}>
             <span className='flex items-center gap-1'>
                 JibSwap {bestPool === "JibSwap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
             </span>
             {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(GameSwapTvl['tvl10000']) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(GameSwapTvl['tvl10000']))}  {(tokenB.name === 'JUSDT') ? '$' : tokenB.name}</span>}
-        </Button> */}
+        </Button>
   
             </div>
 
@@ -920,7 +920,7 @@ export default function Swap8899({
                 {tokenA.name !== 'Choose Token' && tokenB.name !== 'Choose Token' && tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' &&
                     <>
                         <div className="flex items-center text-gray-500 font-mono text-xs my-2">
-                            <span className="mr-1">price qoute</span>
+                            <span className="mr-1">price quote</span>
                             {exchangeRate !== '0'
                                 ? (<span
                                         className="text-[#00ff9d] font-mono text-xs px-2 gap-1 hover:cursor-pointer" onClick={() => setSwapDirection(!swapDirection)}>
