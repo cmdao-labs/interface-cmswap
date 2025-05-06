@@ -92,7 +92,8 @@ export default function Swap8899({
                     setAmountB("")
                 }
             } catch {}
-        }else if(poolSelect === "GameSwap" ) {
+        }
+        if(poolSelect === "GameSwap" ) {
             try {
                 if (Number(_amount) !== 0) {
                     if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[2].value.toUpperCase() || tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {   
@@ -119,9 +120,6 @@ export default function Swap8899({
                             });
 
                             const result = quoteOutput[0].result !== undefined ? quoteOutput[0].result : BigInt(0)
-                    /*         const resultWithDiscount = (BigInt(result) * BigInt(95)) / BigInt(100);
-                            console.log("result",result)
-                            console.log("result wDiscount",resultWithDiscount) */
                             setAmountB(formatEther(result));
                             const amountA = parseFloat(_amount);
                             const amountB = parseFloat(formatEther(result));
@@ -169,7 +167,7 @@ export default function Swap8899({
                                                 ? amountB / amountA // JBC → JUSDT
                                                 : amountA / amountB; // JUSDT → JBC
             
-                                            setNewPrice(price.toFixed(6)); // หรือใช้ Decimal Places ตามที่ต้องการ
+                                        setNewPrice(price.toFixed(6)); // หรือใช้ Decimal Places ตามที่ต้องการ
                                         }
             
                         }}
@@ -178,7 +176,8 @@ export default function Swap8899({
                 console.error("Error in getting GameSwap quote:", error);
             }
             
-        }else if(poolSelect === "JibSwap"){
+        }
+        if(poolSelect === "JibSwap"){
             try {
                 if (Number(_amount) !== 0) {
                     let TokenA = tokenA.value === "0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747" as '0xstring' ? "0x99999999990FC47611b74827486218f3398A4abD" as '0xstring' : tokenA.value; // convert WJBC Meow to WJBC Jib
@@ -199,25 +198,22 @@ export default function Swap8899({
                     const bestAmountOut = result !== undefined ? result[0] as bigint : BigInt(0);
                     const bestPath = result !== undefined ? result[1] : [];
                     const bestPathArray: string[] = bestPath.map((addr: `0x${string}`) => addr); // แปลง readonly `0x${string}`[] เป็น string[]
-                    console.log("Best Amount Out (wei):", bestAmountOut);
-                    console.log("Best Path Array:", bestPathArray);
+                 
                     if(bestPathArray.length > 2){
-                        
                         setAltRoute({a: bestPathArray[0] as '0xstring', b:bestPathArray[1]  as '0xstring' , c:bestPathArray[2]  as '0xstring'})
-                        
                     }else{
                         setAltRoute(undefined)
                     }
                     setBestPathArray(bestPathArray)
-                    setAmountB(formatEther(bestAmountOut))
 
                     if (Number(_amount) > 0 && bestAmountOut > 0) {
-                        const price = tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()
+                        const price = tokenA.value.toUpperCase() !== tokens[0].value.toUpperCase()
                             ? Number(_amount) / Number(formatEther(bestAmountOut))  
                             : Number(formatEther(bestAmountOut)) / Number(_amount);
                 
                         setNewPrice(price.toFixed(6)); // ปรับแต่ง Decimal Places ตามที่ต้องการ
-                    }
+                        setAmountB(formatEther(bestAmountOut))
+                }
             
                 }
             } catch (error) {
