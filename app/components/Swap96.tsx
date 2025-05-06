@@ -21,10 +21,13 @@ export default function Swap96({
     const [exchangeRate, setExchangeRate] = React.useState("")
     const [fixedExchangeRate, setFixedExchangeRate] = React.useState("")
     const [altRoute, setAltRoute] = React.useState<{a: '0xstring', b: '0xstring', c: '0xstring'}>()
-    const [tvl10000, setTvl10000] = React.useState("")
-    const [tvl3000, setTvl3000] = React.useState("")
-    const [tvl500, setTvl500] = React.useState("")
-    const [tvl100, setTvl100] = React.useState("")
+    const [CMswapTVL, setCMswapTVL] = React.useState<{tvl10000: string; tvl3000: string; tvl500: string; tvl100: string; exchangeRate: string;}>({tvl10000: "", tvl3000: "", tvl500: "", tvl100: "",exchangeRate: ""});
+    const [DMswapTVL, setDMswapTVL] = React.useState<{tvl10000: string; tvl3000: string; tvl500: string; tvl100: string;exchangeRate: string;}>({tvl10000: "", tvl3000: "", tvl500: "", tvl100: "", exchangeRate: ""});
+    const [UdonTVL, setUdonTVL] = React.useState<{tvl10000: string; exchangeRate: string;}>({tvl10000: "", exchangeRate: ""});
+    const [bestPool, setBestPool] = React.useState("")
+    const [poolSelect, setPoolSelect] = React.useState("")
+
+
     const [newPrice, setNewPrice] = React.useState("")
     const [tokenA, setTokenA] = React.useState<{name: string, value: '0xstring', logo: string}>(tokens[0])
     const [tokenABalance, setTokenABalance] = React.useState("")
@@ -204,6 +207,14 @@ export default function Swap96({
             const pair500 = stateB[4].result !== undefined ? stateB[4].result  as '0xstring' : '' as '0xstring'
             const pair100 = stateB[5].result !== undefined ? stateB[5].result  as '0xstring' : '' as '0xstring'
 
+            const updateCMswapTvlKey = (key: keyof typeof CMswapTVL, value: number) => {setCMswapTVL(prevTvl => ({...prevTvl,[key]: value >= 1e-9 ? value.toString() : '0',}));};
+            const updateDMswapTvlKey = (key: keyof typeof DMswapTVL, value: number) => {setDMswapTVL(prevTvl => ({...prevTvl,[key]: value >= 1e-9 ? value.toString() : '0',}));};
+            const updateUdonswapTvlKey = (key: keyof typeof UdonTVL, value: number) => {setUdonTVL(prevTvl => ({...prevTvl,[key]: value >= 1e-9 ? value.toString() : '0',}));};
+
+            const updateExchangeRateCmswapTVL = (feeAmount: number,exchangeRate: number) => {setCMswapTVL(prevTvl => ({...prevTvl,exchangeRate: feeSelect === feeAmount ? exchangeRate.toString() : prevTvl.exchangeRate}));
+            };
+
+
             if (tokenA.name !== 'Choose Token' && tokenB.name !== 'Choose Token') {
                 try {
                     setAltRoute(undefined)
@@ -236,7 +247,8 @@ export default function Swap96({
                     feeSelect === 10000 && currPrice_10000 !== Infinity && setExchangeRate(currPrice_10000.toString())
                     feeSelect === 10000 && currPrice_10000 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2).toString())
                     feeSelect === 10000 && tvl_10000 < 1e-9 && setExchangeRate('0')
-                    tvl_10000 >= 1e-9 ? setTvl10000(tvl_10000.toString()) : setTvl10000('0')
+                    updateCMswapTvlKey('tvl10000',tvl_10000);
+                    //tvl_10000 >= 1e-9 ? setTvl10000(tvl_10000.toString()) : setTvl10000('0')
                     if (feeSelect === 10000 && tvl_10000 < 1e-9) {
                         const init: any = {contracts: []}
                         for (let i = 0; i <= tokens.length - 1; i++) {
@@ -285,7 +297,9 @@ export default function Swap96({
                     feeSelect === 3000 && setExchangeRate(currPrice_3000.toString())
                     feeSelect === 3000 && setFixedExchangeRate(((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2).toString())
                     feeSelect === 3000 && tvl_3000 < 1e-9 && setExchangeRate('0')
-                    tvl_3000 >= 1e-9 ? setTvl3000(tvl_3000.toString()) : setTvl3000('0')
+                    //tvl_3000 >= 1e-9 ? setTvl3000(tvl_3000.toString()) : setTvl3000('0')
+                    updateCMswapTvlKey('tvl3000',tvl_3000);
+                    
                     if (feeSelect === 3000 && tvl_3000 < 1e-9) {
                         const init: any = {contracts: []}
                         for (let i = 0; i <= tokens.length - 1; i++) {
@@ -333,7 +347,8 @@ export default function Swap96({
                     feeSelect === 500 && setExchangeRate(currPrice_500.toString())
                     feeSelect === 500 && setFixedExchangeRate(((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2).toString())
                     feeSelect === 500 && tvl_500 < 1e-9 && setExchangeRate('0')
-                    tvl_500 >= 1e-9 ? setTvl500(tvl_500.toString()) : setTvl500('0')
+                    //tvl_500 >= 1e-9 ? setTvl500(tvl_500.toString()) : setTvl500('0')
+                    updateCMswapTvlKey('tvl500',tvl_500);
                     if (feeSelect === 500 && tvl_500 < 1e-9) {
                         const init: any = {contracts: []}
                         for (let i = 0; i <= tokens.length - 1; i++) {
@@ -381,7 +396,9 @@ export default function Swap96({
                     feeSelect === 100 && setExchangeRate(currPrice_100.toString())
                     feeSelect === 100 && setFixedExchangeRate(((Number(currPrice_100) / (2 ** 96)) ** 2).toString())
                     feeSelect === 100 && tvl_100 < 1e-9 && setExchangeRate('0')
-                    tvl_100 >= 1e-9 ? setTvl100(tvl_100.toString()) : setTvl100('0')
+                    //tvl_100 >= 1e-9 ? setTvl100(tvl_100.toString()) : setTvl100('0')
+                    updateCMswapTvlKey('tvl100',tvl_100);
+
                     if (feeSelect === 100 && tvl_100 < 1e-9) {
                         const init: any = {contracts: []}
                         for (let i = 0; i <= tokens.length - 1; i++) {
@@ -569,25 +586,65 @@ export default function Swap96({
                 </div>
             </div>
             <div className="mt-6">
+                 {/** LIQUIDITY SELECTION  */}
+                <div className="flex justify-between items-center my-2">
+                    <span className="text-gray-400 font-mono text-xs">Liquidity Available</span>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 auto-rows-auto">
+                        {(() => {
+                        const tvlKeys = ['tvl10000', 'tvl3000', 'tvl500', 'tvl100'] as const;
+                        const shouldShowTVL = tvlKeys.some(key => Number(CMswapTVL[key]) > 0);
+                        const tvlValue = Number(CMswapTVL[`tvl${feeSelect}` as keyof typeof CMswapTVL]);
+                
+                        if(!shouldShowTVL){
+                            return ""
+                        }
+                
+                        return (
+                            <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "CMswap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("CMswap")}>
+                            <span className="flex items-center gap-1">
+                                CMswap {bestPool === "CMswap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
+                            </span>
+                            {tokenB.value !== "0x" as "0xstring" && shouldShowTVL && (<span className={"truncate" + (tvlValue > 0 ? " text-emerald-300" : "")}>TVL: {Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(tvlValue)} {(tokenA.name === 'KUSDT' || tokenB.name === 'KUSDT') ? "$" : tokenB.name}</span>)}
+                            </Button>
+                        );
+                        })()}
+                    <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "DiamonSwap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("DiamonSwap")}>
+                        <span className='flex items-center gap-1'>
+                            DiamonFinance {bestPool === "DiamonSwap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
+                        </span>
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(DMswapTVL['tvl10000']) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(DMswapTVL['tvl10000']))}  {(tokenA.name === 'KUSDT' || tokenB.name === 'KUSDT') ? '$' : tokenB.name}</span>}
+                    </Button>
+                    <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "UdonSwap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("UdonSwap")}>
+                        <span className='flex items-center gap-1'>
+                            UdonSwap {bestPool === "UdonSwap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
+                        </span>
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(UdonTVL['tvl10000']) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(UdonTVL['tvl10000']))}  {(tokenA.name === 'KUSDT' || tokenB.name === 'KUSDT') ? '$' : tokenB.name}</span>}
+                    </Button>
+                </div>
+
+
+                 {/** GAME SWAP FEE SELECTION  */}
+
                 <div className="flex justify-between items-center my-2">
                     <span className="text-gray-400 font-mono text-xs">Swap fee tier</span>
                 </div>
                 <div className="grid grid-cols-4 gap-2 h-[70px]">
                     <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 100 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(100)}>
                         <span>0.01%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl100) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl100))} {(tokenA.name === 'KUSDT' || tokenB.name === 'KUSDT') ? '$' : tokenB.name}</span>}
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL['tvl100']) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(CMswapTVL['tvl100']))} {(tokenA.name === 'KUSDT' || tokenB.name === 'KUSDT') ? '$' : tokenB.name}</span>}
                     </Button>
                     <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 500 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(500)}>
                         <span>0.05%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl500) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl500))} {(tokenA.name === 'KUSDT' || tokenB.name === 'KUSDT') ? '$' : tokenB.name}</span>}
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL['tvl500']) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(CMswapTVL['tvl500']))} {(tokenA.name === 'KUSDT' || tokenB.name === 'KUSDT') ? '$' : tokenB.name}</span>}
                     </Button>
                     <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 3000 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(3000)}>
                         <span>0.3%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl3000) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl3000))} {(tokenA.name === 'KUSDT' || tokenB.name === 'KUSDT') ? '$' : tokenB.name}</span>}
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL['tvl3000']) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(CMswapTVL['tvl3000']))} {(tokenA.name === 'KUSDT' || tokenB.name === 'KUSDT') ? '$' : tokenB.name}</span>}
                     </Button>
                     <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 10000 ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(10000)}>
                         <span>1%</span>
-                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(tvl10000) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(tvl10000))} {(tokenA.name === 'KUSDT' || tokenB.name === 'KUSDT') ? '$' : tokenB.name}</span>}
+                        {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL['tvl10000']) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(CMswapTVL['tvl10000']))} {(tokenA.name === 'KUSDT' || tokenB.name === 'KUSDT') ? '$' : tokenB.name}</span>}
                     </Button>
                 </div>
             </div>
