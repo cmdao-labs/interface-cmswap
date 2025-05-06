@@ -35,6 +35,7 @@ export default function Swap96({
     const [feeSelect, setFeeSelect] = React.useState(10000)
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
+    const [swapDirection, setSwapDirection] = React.useState(true) // false = A->B, true = B->A
 
     function encodePath(tokens: string[], fees: number[]): string {
         let path = "0x"
@@ -605,8 +606,14 @@ export default function Swap96({
                     <>
                         <div className="flex items-center text-gray-500 font-mono text-xs my-2">
                             <span className="mr-1">price qoute</span>
-                            {exchangeRate !== '0' ? <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">1 {tokenB.name} = {Number(exchangeRate).toFixed(4)} {tokenA.name}</span> : <span className="text-red-500 px-2">insufficient liquidity</span>}
-                            {Number(amountB) > 0 && 
+                            {exchangeRate !== '0' && !isNaN(Number(exchangeRate)) 
+                                ? (<span
+                                        className="text-[#00ff9d] font-mono text-xs px-2 gap-1 hover:cursor-pointer" onClick={() => setSwapDirection(!swapDirection)}>
+                                        {swapDirection ? `1 ${tokenB.name} = ${Number(exchangeRate).toFixed(4)} ${tokenA.name}` : `1 ${tokenA.name} = ${ isFinite(1 / Number(exchangeRate)) ? (1 / Number(exchangeRate)).toFixed(4) : (0).toFixed(4) } ${tokenB.name}`}
+                                    </span>
+                                )
+                                : <span className="text-red-500 px-2">insufficient liquidity</span>
+                            }                            {Number(amountB) > 0 && 
                                 <span>[PI: {
                                     ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 <= 100 ? 
                                         ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 > 0 ?
