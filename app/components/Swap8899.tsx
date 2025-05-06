@@ -58,8 +58,9 @@ export default function Swap8899({
     }
 
     const getQoute = useDebouncedCallback(async (_amount: string) => {
-        if(poolSelect === "CMswap") {
+        let CMswapRate;let GameswapRate;let JibswapRate;
             console.log("get Quote Price with CMswap")
+            //**---------- CMswap */
             try {
                 if (Number(_amount) !== 0) {
                     if (altRoute === undefined) {
@@ -74,7 +75,10 @@ export default function Swap8899({
                                 sqrtPriceLimitX96: BigInt(0),
                             }]
                         })
-                        setAmountB(formatEther(qouteOutput.result[0]))
+                        if(poolSelect ==="CMswap"){
+                            setAmountB(formatEther(qouteOutput.result[0]))
+                        }
+                        CMswapRate = formatEther(qouteOutput.result[0])
                         let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
                         setNewPrice(newPrice.toString())
                     } else {
@@ -85,6 +89,10 @@ export default function Swap8899({
                             args: [route as '0xstring', parseEther(_amount)]
                         })
                         setAmountB(formatEther(qouteOutput.result[0]))
+                        if(poolSelect ==="CMswap"){
+                            setAmountB(formatEther(qouteOutput.result[0]))
+                        }
+                        CMswapRate = formatEther(qouteOutput.result[0])
                         let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
                         setNewPrice(newPrice.toString())
                     }
@@ -92,8 +100,8 @@ export default function Swap8899({
                     setAmountB("")
                 }
             } catch {}
-        }
-        if(poolSelect === "GameSwap" ) {
+            //**---------- Gameswap */
+
             try {
                 if (Number(_amount) !== 0) {
                     if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[2].value.toUpperCase() || tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {   
@@ -120,17 +128,19 @@ export default function Swap8899({
                             });
 
                             const result = quoteOutput[0].result !== undefined ? quoteOutput[0].result : BigInt(0)
-                            setAmountB(formatEther(result));
-                            const amountA = parseFloat(_amount);
-                            const amountB = parseFloat(formatEther(result));
-
+                            GameswapRate = formatEther(result)
+               
+                            if(poolSelect === "GameSwap"){
+                                setAmountB(formatEther(result));
+                        const amountA = parseFloat(_amount);
+                                const amountB = parseFloat(formatEther(result));
                             if (amountA > 0 && amountB > 0) {
                                 const price = tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()
                                     ? amountB / amountA // JBC → CMJ
                                     : amountA / amountB; // CMJ → JBC
 
                                 setNewPrice(price.toFixed(6)); // หรือใช้ Decimal Places ตามที่ต้องการ
-                            }
+                            }}
             
          
                         }}
@@ -156,17 +166,18 @@ export default function Swap8899({
                                                 },
                                             ]
                                         });
-            
+
                                         const result = quoteOutput[0].result !== undefined ? quoteOutput[0].result : BigInt(0)
-                                        setAmountB(formatEther(result));
                                         const amountA = parseFloat(_amount);
                                         const amountB = parseFloat(formatEther(result));
             
-                                        if (amountA > 0 && amountB > 0) {
+                                        GameswapRate = (formatEther(result))
+                                if(poolSelect === "GameSwap" && amountA > 0 && amountB > 0){
+                                            setAmountB(formatEther(result));
+                                           
                                             const price = tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()
                                                 ? amountB / amountA // JBC → JUSDT
                                                 : amountA / amountB; // JUSDT → JBC
-            
                                         setNewPrice(price.toFixed(6)); // หรือใช้ Decimal Places ตามที่ต้องการ
                                         }
             
@@ -176,8 +187,8 @@ export default function Swap8899({
                 console.error("Error in getting GameSwap quote:", error);
             }
             
-        }
-        if(poolSelect === "JibSwap"){
+            //**---------- Jibswap */
+            
             try {
                 if (Number(_amount) !== 0) {
                     let TokenA = tokenA.value === "0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747" as '0xstring' ? "0x99999999990FC47611b74827486218f3398A4abD" as '0xstring' : tokenA.value; // convert WJBC Meow to WJBC Jib
@@ -205,23 +216,22 @@ export default function Swap8899({
                         setAltRoute(undefined)
                     }
                     setBestPathArray(bestPathArray)
-
-                    if (Number(_amount) > 0 && bestAmountOut > 0) {
-                        const price = tokenA.value.toUpperCase() !== tokens[0].value.toUpperCase()
+                    if(poolSelect === "JibSwap" && Number(_amount) > 0 && bestAmountOut > 0){
+                        const price = tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()
                             ? Number(_amount) / Number(formatEther(bestAmountOut))  
                             : Number(formatEther(bestAmountOut)) / Number(_amount);
                 
-                        setNewPrice(price.toFixed(6)); // ปรับแต่ง Decimal Places ตามที่ต้องการ
-                        setAmountB(formatEther(bestAmountOut))
-                }
-            
+                        setNewPrice((1/price).toFixed(6)); // ปรับแต่ง Decimal Places ตามที่ต้องการ
+                                        setAmountB(formatEther(bestAmountOut))
+                    }
+                    JibswapRate = formatEther(bestAmountOut)
                 }
             } catch (error) {
                 console.error("Error in getting JibSwap quote:", error);
             }
             
-        }
-
+        console.log(`New RATE UPDATED\nCMswap : ${CMswapRate}\nGameswap : ${GameswapRate}\nJibSwap  :${JibswapRate} `);
+        return {CMswapRate,GameswapRate,JibswapRate}
     }, 700)
 
     const switchToken = () => {
@@ -919,58 +929,73 @@ export default function Swap8899({
     }, [config, address, tokenA, tokenB, feeSelect, txupdate])
 
     React.useEffect(() => {
-        // define exchagerate
-        if(poolSelect === "CMswap") {
-            setExchangeRate(CMswapTVL.exchangeRate)
-            console.log('Quote Price CMswap',CMswapTVL.exchangeRate)
-        }else if(poolSelect === "GameSwap") {
-            setExchangeRate(GameSwapTvl.exchangeRate)
-            console.log('Quote Price GameSwap',GameSwapTvl.exchangeRate)
-        }else if(poolSelect === "JibSwap"){
-            setExchangeRate(JibSwapTvl.exchangeRate)
-            console.log('Quote Price JibSwap',JibSwapTvl.exchangeRate)
-
-        }
-
-    },[poolSelect, CMswapTVL, GameSwapTvl,JibSwapTvl])
-
+        const updateRate = async () => {
+            if (Number(amountA) !== 0) {
+                const quote = await getQoute(amountA);
+                if (poolSelect === "CMswap" && quote?.CMswapRate) {
+                    setExchangeRate(quote.CMswapRate);
+                    console.log('Quote Price CMswap', quote.CMswapRate);
+                    return;
+                } else if (poolSelect === "GameSwap" && quote?.GameswapRate) {
+                    setExchangeRate(quote.GameswapRate);
+                    console.log('Quote Price GameSwap', quote.GameswapRate);
+                    return;
+                } else if (poolSelect === "JibSwap" && quote?.JibswapRate) {
+                    setExchangeRate(quote.JibswapRate);
+                    console.log('Quote Price JibSwap', quote.JibswapRate);
+                    return;
+                }
+            }
+    
+            // Fallback: use TVL values
+            if (poolSelect === "CMswap") {
+                setExchangeRate(CMswapTVL.exchangeRate);
+                console.log('Fallback Quote Price CMswap', CMswapTVL.exchangeRate);
+            } else if (poolSelect === "GameSwap") {
+                setExchangeRate(GameSwapTvl.exchangeRate);
+                console.log('Fallback Quote Price GameSwap', GameSwapTvl.exchangeRate);
+            } else if (poolSelect === "JibSwap") {
+                setExchangeRate(JibSwapTvl.exchangeRate);
+                console.log('Fallback Quote Price JibSwap', JibSwapTvl.exchangeRate);
+            }
+        };
+    
+        updateRate();
+    }, [amountA, poolSelect, CMswapTVL, GameSwapTvl, JibSwapTvl]);
+    
 
     React.useEffect(() => {
-        if (!onLoading && tokens[0] && tokenA && CMswapTVL && GameSwapTvl && JibSwapTvl) {
-          const rates = {
-            CMswap: Number(CMswapTVL.exchangeRate || 0),
-            GameSwap: Number(GameSwapTvl.exchangeRate || 0),
-            JibSwap: Number(JibSwapTvl.exchangeRate || 0),
-          };
+        const fetchQuoteAndSetPool = async () => {
+          if (!onLoading && CMswapTVL && GameSwapTvl && JibSwapTvl) {
+            const quote = await getQoute(amountA);  // เปลี่ยนเป็น getTokenQuote แทน getQoute
       
-          console.log("Token match:", tokens[0].value === tokenA.value);
-          console.log("Rates:", rates);
+            const rates = {
+              CMswap: Number(quote?.CMswapRate || CMswapTVL.exchangeRate || 0),
+              GameSwap: Number(quote?.GameswapRate || GameSwapTvl.exchangeRate || 0),
+              JibSwap: Number(quote?.JibswapRate || JibSwapTvl.exchangeRate || 0),
+            };
       
-          const isTokenReversed = tokens[0].value !== tokenA.value;
+            console.log("Token match:", tokens[0].value === tokenA.value);
+            console.log("Rates:", rates);
       
-          const sortedEntries = Object.entries(rates).sort((a, b) => {
-            return isTokenReversed
-              ? a[1] - b[1] // ยิ่งน้อยยิ่งดี (reverse pair)
-              : b[1] - a[1]; // ยิ่งมากยิ่งดี (forward pair)
-          });
+            // เลือก pool ที่มีอัตราแลกเปลี่ยนสูงสุด
+            const sortedEntries = Object.entries(rates).sort((a, b) => b[1] - a[1]);  // ลำดับจากสูงสุดไปต่ำสุด
       
-          const [bestPool] = sortedEntries[0]; 
+            // เลือก pool ที่มีอัตราแลกเปลี่ยนสูงสุด
+            const [bestPool, bestRate] = sortedEntries[0]; 
       
-          setBestPool(bestPool);
+            setBestPool(bestPool);  // ตั้งค่า pool ที่ดีที่สุด
       
-          if (poolSelect === "" && Object.values(rates).every((r) => r !== 0)) {
-            setPoolSelect(bestPool);
+            if (poolSelect === "" && Object.values(rates).every((r) => r !== 0)) {
+              setPoolSelect(bestPool);  // ถ้ายังไม่ได้เลือก pool ให้เลือก pool ที่ดีที่สุด
+              console.log("BestPool is",bestPool)
+            }
           }
-        }
-      }, [onLoading, CMswapTVL, GameSwapTvl, JibSwapTvl, tokens, tokenA]);
+        };
       
-    React.useEffect(() => {
-        if(amountA !== "" && !onLoading){
-            getQoute(amountA)
-            console.log("pool select change new quote")
-        }
-    },[poolSelect])
-
+        fetchQuoteAndSetPool();
+      }, [onLoading, CMswapTVL, GameSwapTvl, JibSwapTvl, amountB, amountA]);
+      
 
     return (
         <div className='space-y-2'>
