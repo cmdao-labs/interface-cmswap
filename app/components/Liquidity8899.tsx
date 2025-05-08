@@ -305,21 +305,13 @@ export default function Liquidity8899({
     }, [config, address, tokenA, tokenB, feeSelect, rangePercentage, txupdate,mode])
     console.log({lowerTick, upperTick}) // for fetch monitoring
 
+    React.useEffect(() =>{
+        setMode("Manual")
+    },[feeSelect,tokenA,tokenB])
+
     return (
         <div className='space-y-2'>
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (mode === "Manual" ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setMode("Manual")}>
-                    <span>Manual Pairing</span>
-                </Button>
-                <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (mode === "Auto" ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setMode("Auto")}>
-                    <span>Auto Pairing</span>
-                </Button>
-            </div>
-            {mode === "Auto" && (
-                <div className="text-gray-400 font-mono text-xs text-center">
-                    Automated sell of token <strong>{tokenA.name}</strong> into <strong>{tokenB.name}</strong> and pairing tokens.
-                </div>
-                )}
+         
             <div className="p-3 rounded-lg border border-[#00ff9d]/10 p-4">
       
         
@@ -394,6 +386,7 @@ export default function Liquidity8899({
                     </div>
                 </div>
             </div>
+            
             <div className="p-3 rounded-lg border border-[#00ff9d]/10 p-4">
                 <div className="flex justify-between items-center text-xs mb-1">
                     <div />
@@ -499,6 +492,31 @@ export default function Liquidity8899({
                     <span className="ttext-[10px] mt-1 opacity-60">[-2%, +2%]</span>
                 </Button>
             </div>
+
+
+            { tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && false && pairDetect !== '0x0000000000000000000000000000000000000000' &&
+            <>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+
+                <Button variant="outline" className={"font-mono h-auto rounded text-xs w-full flex flex-col " + (mode === "Manual" ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setMode("Manual")}>
+                    <span>Manual Pairing</span>
+                </Button>
+                
+                <Button variant="outline" className={"font-mono h-auto rounded text-xs w-full flex flex-col " + (mode === "Auto" ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setMode("Auto")}>
+                    <span>Auto Pairing</span>
+                </Button>
+            </div>
+            {mode === "Auto" && (
+            <div className="text-gray-400 font-mono text-xs text-left">
+                Automated sale of <strong>{tokenA.name}</strong> for <strong>{tokenB.name}</strong> via CMswapV3 LP, followed by liquidity pairing. <br />
+                <span className="text-red-400">Note: Low liquidity may result in slippage or losses during the swap process.</span>
+            </div>
+            )}
+            </>
+
+            }
+          
+
             <div className="space-y-2 mt-4">
                 {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && pairDetect === '0x0000000000000000000000000000000000000000' &&
                     <div className="rounded-lg border border-[#00ff9d]/10 p-3 flex flex-row items-center justify-between">
