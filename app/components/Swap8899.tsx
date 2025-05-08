@@ -58,8 +58,9 @@ export default function Swap8899({
     }
 
     const getQoute = useDebouncedCallback(async (_amount: string) => {
-        let CMswapRate;let GameswapRate;let JibswapRate;
-            console.log("get Quote Price with CMswap")
+        let CMswapRate = undefined;let GameswapRate= undefined;let JibswapRate= undefined;
+        setBestPathArray(null)
+        console.log("get Quote Price with CMswap")
             //**---------- CMswap */
             try {
                 if (Number(_amount) !== 0) {
@@ -221,10 +222,10 @@ export default function Swap8899({
                             ? Number(_amount) / Number(formatEther(bestAmountOut))  
                             : Number(formatEther(bestAmountOut)) / Number(_amount);
                 
-                        setNewPrice((1/price).toFixed(6)); // ปรับแต่ง Decimal Places ตามที่ต้องการ
-                                        setAmountB(formatEther(bestAmountOut))
+                        setNewPrice((1/price).toFixed(6));
+                        setAmountB(formatEther(bestAmountOut))
                     }
-                    JibswapRate = formatEther(bestAmountOut)
+                    JibswapRate = formatEther(bestAmountOut)    
                 }
             } catch (error) {
                 console.error("Error in getting JibSwap quote:", error);
@@ -799,7 +800,7 @@ export default function Swap8899({
                         }
                     }
 
-                    //** Start Quote Price from Jibswap */
+                    //** Start Route Price via CMswapDualRoute for GameSwap */
 
                     if(
                         tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[2].value.toUpperCase() 
@@ -878,7 +879,6 @@ export default function Swap8899({
                     }
 
                     //** Start Quote Price from JibSwap via CMswapUniSmartRoute  */
-                        console.log("Pool selected at JibSwap");
                         let TokenA = tokenA.value === "0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747" as '0xstring' ? "0x99999999990FC47611b74827486218f3398A4abD" as '0xstring' : tokenA.value ; // convert WJBC Meow to WJBC Jib
                         let TokenB = tokenB.value === "0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747" as '0xstring' ? "0x99999999990FC47611b74827486218f3398A4abD" as '0xstring' : tokenB.value ; // convert WJBC Meow to WJBC Jib
                         // Handle WJBC contract
