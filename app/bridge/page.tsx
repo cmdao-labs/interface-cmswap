@@ -381,7 +381,7 @@ export default function BridgeInterface() {
             
                     {sourceChain.id === chainId ?
                         <>
-                            {depositValue <= reserve ?
+                            {Number(depositValue) <= Number(reserve) ?
                                 <Button className="w-full mt-4 mb-4 bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/20 cursor-pointer" onClick={bridge}>Confirm</Button> :
                                 <Button disabled className="w-full mt-4 mb-4 bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 cursor-pointer">Insufficient escrow</Button>
                             }

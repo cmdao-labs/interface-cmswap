@@ -22,7 +22,7 @@ export default function ErrorModal({ errorMsg, setErrMsg }: {
                 <div>
                     <DialogTitle className="text-xl">Transaction Failed</DialogTitle>
                     <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs font-normal bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800">beta 0.0.10</Badge>
+                        <Badge variant="outline" className="text-xs font-normal bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800">beta 0.1.0</Badge>
                         {errorMsg !== null && <span className="text-xs text-muted-foreground">viem@{Object.values(errorMsg)[5]}</span>}
                     </div>
                 </div>

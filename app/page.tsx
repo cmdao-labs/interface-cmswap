@@ -224,47 +224,6 @@ export default function Page() {
                         </div>
                         <div className="pt-8" />
                     </div>
-                    <div className="max-w-4xl mx-auto mt-12 relative">
-                        <div className="absolute -inset-0.5" />
-                        <div className="relative bg-black/30 border border-[#00FF41]/30 p-8 overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-[#00FF41]/5 rounded-full blur-2xl -mr-16 -mt-16" />
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 border border-[#00FF41]/50 flex items-center justify-center">
-                                        <span className="text-[#00FF41] font-mono font-bold">3</span>
-                                    </div>
-                                    <span className="text-xl font-mono text-white">OFFICIAL_GAME_HOOKS</span>
-                                </div>
-                                <div className="text-[#00FF41]">[...]</div>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-white/70 text-sm font-mono">NON-COMMITTED-POINT</span>
-                                    <span className="text-[#00FF41] font-mono">1</span>
-                                </div>
-                                <div className="h-1 w-full bg-white/10 overflow-hidden">
-                                    <div className="h-full w-full bg-[#00FF41]/70 loading-bar" />
-                                </div>
-                                <div className="flex items-center justify-between mt-2">
-                                    <span className="text-white/70 text-sm font-mono">MINING</span>
-                                    <span className="text-[#00FF41] font-mono">1</span>
-                                </div>
-                                <div className="h-1 w-full bg-white/10 overflow-hidden">
-                                    <div className="h-full w-full bg-[#00FF41]/70 loading-bar" />
-                                </div>
-                                <div className="flex items-center justify-between mt-2">
-                                    <span className="text-white/70 text-sm font-mono">FISHING</span>
-                                    <span className="text-[#00FF41] font-mono">1</span>
-                                </div>
-                                <div className="h-1 w-full bg-white/10 overflow-hidden">
-                                    <div className="h-full w-full bg-[#00FF41]/70 loading-bar" />
-                                </div>
-                            </div>
-                            <div className="mt-6 pt-6 border-t border-[#00FF41]/20 text-xs">
-                                <p className="text-white/60 text-sm font-mono">developed_by_second_labs</p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
                 <div className="container mx-auto px-4 py-16">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

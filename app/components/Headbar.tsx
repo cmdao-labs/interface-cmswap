@@ -25,7 +25,6 @@ export default function Headbar() {
                                     <Link href="/swap" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono"><Button variant="ghost" className='cursor-pointer'>Swap</Button></Link>
                                     <Link href="/bridge" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono"><Button variant="ghost" className='cursor-pointer'>Bridge</Button></Link>
                                     <Link href="/pump" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono"><Button variant="ghost" className='cursor-pointer'>Pump</Button></Link>
-                                    <Link href="/fields" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono"><Button variant="ghost" className='cursor-pointer'>Fields</Button></Link>
                                 </div>
                             </div>
                             <div className="md:hidden ml-4 flex items-center">
@@ -56,7 +55,6 @@ export default function Headbar() {
                                     <Link href="/swap" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer'>Swap</Button></Link>
                                     <Link href="/bridge" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer'>Bridge</Button></Link>
                                     <Link href="/pump" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer'>Pump</Button></Link>
-                                    <Link href="/fields" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer'>Fields</Button></Link>
                                 </div>
                             </div>
                         )}
