@@ -69,7 +69,6 @@ export default function Swap96({
     const getQoute = useDebouncedCallback(async (_amount: string) => {
         let CMswapRate = undefined ;let DiamonSwapRate = undefined;let UdonswapRate = undefined;
         const amountIn = Number(_amount)
-        setBestPathArray(null)
 
         //**--------- CMswap */
         try {
@@ -568,7 +567,7 @@ export default function Swap96({
                     const tokenAamount_3000 = poolState[6].result !== undefined ? poolState[6].result : BigInt(0)
                     const tokenBamount_3000 = poolState[7].result !== undefined ? poolState[7].result : BigInt(0)
                     const currPrice_3000 = token0_3000.toUpperCase() === tokenB.value.toUpperCase() ? (Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2))
-                    const tvl_3000 = (Number(formatEther(tokenAamount_3000)) * (1 / currPrice_3000)) + Number(formatEther(tokenBamount_3000));
+                    const tvl_3000 = currPrice_3000 !== 0 ?  (Number(formatEther(tokenAamount_3000)) * (1 / currPrice_3000)) + Number(formatEther(tokenBamount_3000)) : 0
                     feeSelect === 3000 && updateExchangeRateCMswapTVL(3000,Number(currPrice_3000.toString()))
                     feeSelect === 3000 && setFixedExchangeRate(((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2).toString())
                     feeSelect === 3000 && tvl_3000 < 1e-9 && updateExchangeRateCMswapTVL(3000,0)
@@ -861,9 +860,6 @@ export default function Swap96({
                 DiamonSwap: Number(quote?.DiamonSwapRate|| DMswapTVL.exchangeRate || 0),
                 UdonSwap: Number(quote?.UdonswapRate || UdonTVL.exchangeRate || 0),
             };
-        
-            console.log("Token match:", tokens[0].value === tokenA.value);
-            console.log("Rates:", rates);
         
             // เลือก pool ที่มีอัตราแลกเปลี่ยนสูงสุด
             const sortedEntries = Object.entries(rates).sort((a, b) => b[1] - a[1]); 
