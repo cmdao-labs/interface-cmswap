@@ -59,7 +59,6 @@ export default function Swap8899({
 
     const getQoute = useDebouncedCallback(async (_amount: string) => {
         let CMswapRate = undefined;let GameswapRate= undefined;let JibswapRate= undefined;
-        setBestPathArray(null)
         console.log("get Quote Price with CMswap")
             //**---------- CMswap */
             try {
