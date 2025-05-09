@@ -4,7 +4,8 @@ import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3st
 
 // swap
 export const tokens: {name: string, value: '0xstring', logo: string}[] = [
-    { name: 'KUB', value: '0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5' as '0xstring', logo: './96.png' },
+    { name: 'KUB', value: '0xnative' as '0xstring', logo: './96.png' },
+    { name: 'KKUB', value: '0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5' as '0xstring', logo: './96.png' },
     { name: 'KUSDT', value: '0x7d984C24d2499D840eB3b7016077164e15E5faA6' as '0xstring', logo: './usdt.png' },
     { name: 'CMM', value: '0x9B005000A10Ac871947D99001345b01C1cEf2790' as '0xstring', logo: './cmm.png' },
     { name: 'LUMI', value: '0x95013Dcb6A561e6C003AED9C43Fb8B64008aA361' as '0xstring', logo: './lumi.webp' },
@@ -28,7 +29,7 @@ export const kap20ABI = { chainId: 96, abi: kap20abi } as const
 export const v3PoolABI = { chainId: 96, abi: v3Pool } as const
 export const V3_STAKER = '0xC216ad61623617Aa01b757A06836AA8D6fb547fF' as '0xstring'
 export const v3StakerContract = { chainId: 96, address: V3_STAKER, abi: v3staker } as const
-export const wrappedNative = { chainId: 96, abi: WrappedNative, address: tokens[0].value } as const
+export const wrappedNative = { chainId: 96, abi: WrappedNative, address: tokens[1].value } as const
 export const CMswapUniSmartRouteContractV2 =  { chainId: 96, abi: CMswapUniSmartRouteABIV2 , address: CMswapUniSmartRoute} as const
 export const UniswapPairv2PoolABI = { chainId: 96, abi: UniswapPair} as const
 
