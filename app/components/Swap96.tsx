@@ -247,6 +247,18 @@ export default function Swap96({
     const CMswap = async () => {
         setIsLoading(true)
         try {
+            let tokenAvalue
+            let tokenBvalue
+            if (tokenA.value === tokens[0].value) {
+                tokenAvalue = tokens[1].value
+            } else {
+                tokenAvalue = tokenA.value
+            }
+            if (tokenB.value === tokens[0].value) {
+                tokenBvalue = tokens[1].value
+            } else {
+                tokenBvalue = tokenB.value
+            }
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
                 const h = await sendTransaction(config, {to: tokens[1].value, value: parseEther(amountA)})
                 await waitForTransactionReceipt(config, { hash: h })
@@ -269,8 +281,8 @@ export default function Swap96({
                     ...router02Contract,
                     functionName: 'exactInputSingle',
                     args: [{
-                        tokenIn: tokenA.value as '0xstring',
-                        tokenOut: tokenB.value as '0xstring',
+                        tokenIn: tokenAvalue as '0xstring',
+                        tokenOut: tokenBvalue as '0xstring',
                         fee: feeSelect,
                         recipient: address as '0xstring',
                         amountIn: parseEther(amountA),

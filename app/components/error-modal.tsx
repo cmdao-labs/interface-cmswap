@@ -30,8 +30,8 @@ export default function ErrorModal({ errorMsg, setErrMsg }: {
                 <div className="py-2">
                     {errorMsg !== null && <DialogDescription className="text-sm text-foreground mb-2">{Object.values(errorMsg)[1]}</DialogDescription>}
                     <div className="rounded-md bg-muted/50 p-3 text-sm">
-                        <div className="font-medium mb-1">Error Type</div>
-                        {errorMsg !== null && <div className="font-mono text-xs text-muted-foreground mb-3">{Object.values(errorMsg)[6]}</div>}
+                        <div className="font-medium mb-1">Error Reason</div>
+                        {errorMsg !== null && <div className="font-mono text-xs text-muted-foreground mb-3">{Object.values(errorMsg)[4]}</div>}
                         <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen} className="space-y-2">
                             <CollapsibleTrigger asChild>
                                 <Button variant="ghost" size="sm" className="flex w-full justify-between p-0 h-auto">
