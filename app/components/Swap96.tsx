@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useDebouncedCallback } from 'use-debounce'
 import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative,CMswapUniSmartRouteContractV2,UniswapPairv2PoolABI,CMswapUniSmartRoute } from '@/app/lib/96'
 import { config } from '@/app/config'
+import { useSearchParams } from 'next/navigation'
 
 export default function Swap96({ 
     setIsLoading, setErrMsg, 
@@ -43,6 +44,30 @@ export default function Swap96({
     const [swapDirection, setSwapDirection] = React.useState(true) // false = A->B, true = B->A
     const [CMswapToken0, setCMswapToken0] = React.useState("");
 
+    React.useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search)
+        const tokenAAddress = searchParams.get('tokenA')?.toLowerCase()
+        const tokenBAddress = searchParams.get('tokenB')?.toLowerCase()
+      
+        if (!tokenAAddress || !tokenBAddress) return
+      
+        const foundTokenA = tokens.find(t => t.value.toLowerCase() === tokenAAddress)
+        const foundTokenB = tokens.find(t => t.value.toLowerCase() === tokenBAddress)
+      
+        if (foundTokenA) setTokenA(foundTokenA)
+        if (foundTokenB) setTokenB(foundTokenB)
+            
+      }, [])
+
+    const updateURLWithTokens = (tokenAValue?: string, tokenBValue?: string) => {
+        const url = new URL(window.location.href)
+      
+        if (tokenAValue) {url.searchParams.set('tokenA', tokenAValue)}
+        if (tokenBValue) {url.searchParams.set('tokenB', tokenBValue)}
+        if (!tokenAValue) {url.searchParams.delete('tokenA')}
+        if (!tokenBValue) {url.searchParams.delete('tokenB')}
+        window.history.replaceState({}, '', url.toString())
+      }
 
     function encodePath(tokens: string[], fees: number[]): string {
         let path = "0x"
@@ -137,11 +162,10 @@ export default function Swap96({
                     const bestPathArray: string[] = bestPath.map((addr: `0x${string}`) => addr); // แปลง readonly `0x${string}`[] เป็น string[]
                     
                     if(bestPathArray.length > 2 && poolSelect ==="DiamonSwap"){
+                        console.log("DM ROUTED : ",bestPathArray)
                         setAltRoute({a: bestPathArray[0] as '0xstring', b:bestPathArray[1]  as '0xstring' , c:bestPathArray[2]  as '0xstring'})
-                    }else{
-                        setAltRoute(undefined)
                     }
-                    
+
                     if(poolSelect === "DiamonSwap" && Number(_amount) > 0 && bestAmountOut > 0){
                         setBestPathArray(bestPathArray)
                     const price = 1/Number(formatEther(bestAmountOut))
@@ -175,10 +199,10 @@ export default function Swap96({
                     const bestPathArray: string[] = bestPath.map((addr: `0x${string}`) => addr); // แปลง readonly `0x${string}`[] เป็น string[]
                     
                     if(bestPathArray.length > 2 && poolSelect ==="UdonSwap"){
+                        console.log("UDON ROUTED : ",bestPathArray)
                         setAltRoute({a: bestPathArray[0] as '0xstring', b:bestPathArray[1]  as '0xstring' , c:bestPathArray[2]  as '0xstring'})
-                    }else{
-                        setAltRoute(undefined)
                     }
+
                     if(poolSelect === "UdonSwap" && Number(_amount) > 0 && bestAmountOut > 0){
                     setBestPathArray(bestPathArray)
                     const price = 1/Number(formatEther(bestAmountOut))
@@ -191,6 +215,7 @@ export default function Swap96({
                 }
             } catch (error) {
                 console.error("Error in getting DiamondSwap quote:", error);
+
             }
 
 
@@ -995,6 +1020,7 @@ export default function Swap96({
                                                 onSelect={() => {
                                                     setTokenA(token)
                                                     setOpen(false)
+                                                    updateURLWithTokens(token.value, tokenB?.value)
                                                 }}
                                                 className='cursor-pointer'
                                             >
@@ -1067,6 +1093,7 @@ export default function Swap96({
                                                 onSelect={() => {
                                                     setTokenB(token)
                                                     setOpen2(false)
+                                                    updateURLWithTokens(tokenA?.value, token.value)
                                                 }}
                                                 className='cursor-pointer'
                                             >

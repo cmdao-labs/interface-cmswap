@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useDebouncedCallback } from 'use-debounce'
 import { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI } from '@/app/lib/8899'
 import { config } from '@/app/config'
+import { useSearchParams } from 'next/navigation'
 
 export default function Liquidity8899({ 
     setIsLoading, setErrMsg, 
@@ -40,6 +41,33 @@ export default function Liquidity8899({
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
     const [mode,setMode] = React.useState("Manual") // Use to declare Manual Mode ( 2 Tokens ) or Auto Mode ( 1 Token )
+
+
+    React.useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search)
+        const tokenAAddress = searchParams.get('tokenA')?.toLowerCase()
+        const tokenBAddress = searchParams.get('tokenB')?.toLowerCase()
+        
+        if (!tokenAAddress || !tokenBAddress) return
+        
+        const foundTokenA = tokens.find(t => t.value.toLowerCase() === tokenAAddress)
+        const foundTokenB = tokens.find(t => t.value.toLowerCase() === tokenBAddress)
+        
+        if (foundTokenA) setTokenA(foundTokenA)
+        if (foundTokenB) setTokenB(foundTokenB)
+            
+        }, [])
+
+    const updateURLWithTokens = (tokenAValue?: string, tokenBValue?: string) => {
+        const url = new URL(window.location.href)
+        
+        if (tokenAValue) {url.searchParams.set('tokenA', tokenAValue)}
+        if (tokenBValue) {url.searchParams.set('tokenB', tokenBValue)}
+        if (!tokenAValue) {url.searchParams.delete('tokenA')}
+        if (!tokenBValue) {url.searchParams.delete('tokenB')}
+        window.history.replaceState({}, '', url.toString())
+    }
+
 
     const setAlignedLowerTick = useDebouncedCallback((_lowerPrice: string) => {
         setAmountA("")
@@ -361,6 +389,8 @@ export default function Liquidity8899({
                                                 onSelect={() => {
                                                     setTokenA(token)
                                                     setOpen(false)
+                                                    updateURLWithTokens(token.value,tokenB?.value)
+
                                                 }}
                                                 className='cursor-pointer'
                                             >
@@ -434,6 +464,7 @@ export default function Liquidity8899({
                                                 onSelect={() => {
                                                     setTokenB(token)
                                                     setOpen2(false)
+                                                    updateURLWithTokens(tokenA?.value,token.value)
                                                 }}
                                                 className='cursor-pointer'
                                             >
