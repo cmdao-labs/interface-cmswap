@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative,CMswapUniSmartRouteContractV2,UniswapPairv2PoolABI,CMswapUniSmartRoute } from '@/app/lib/96'
+import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative,CMswapUniSmartRouteContractV2,UniswapPairv2PoolABI,CMswapUniSmartRoute,BitkubEvmKYCContract } from '@/app/lib/96'
 import { config } from '@/app/config'
 import { useSearchParams } from 'next/navigation'
 
@@ -29,8 +29,6 @@ export default function Swap96({
     const [poolSelect, setPoolSelect] = React.useState("")
     const [bestPathArray, setBestPathArray] = React.useState<string[] | null>(null)
     const [wrappedRoute, setWrappedRoute] = React.useState(false)
-
-
     const [newPrice, setNewPrice] = React.useState("")
     const [tokenA, setTokenA] = React.useState<{name: string, value: '0xstring', logo: string}>(tokens[0])
     const [tokenABalance, setTokenABalance] = React.useState("")
@@ -43,6 +41,7 @@ export default function Swap96({
     const [open2, setOpen2] = React.useState(false)
     const [swapDirection, setSwapDirection] = React.useState(true) // false = A->B, true = B->A
     const [CMswapToken0, setCMswapToken0] = React.useState("");
+    const [isAccountKYC,setAccountKYC] = React.useState(false); //  NEED KYC LEVEL 1 FOR UNWRAPPED KKUB to KUB
 
     React.useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search)
@@ -56,6 +55,7 @@ export default function Swap96({
       
         if (foundTokenA) setTokenA(foundTokenA)
         if (foundTokenB) setTokenB(foundTokenB)
+
             
       }, [])
 
@@ -67,7 +67,23 @@ export default function Swap96({
         if (!tokenAValue) {url.searchParams.delete('tokenA')}
         if (!tokenBValue) {url.searchParams.delete('tokenB')}
         window.history.replaceState({}, '', url.toString())
-      }
+    }
+
+    const checkBitkubEVMKycLevel = async () => {
+    if (!address) return;
+
+    try {
+        const [{ result }] = await readContracts(config, {
+        contracts: [{ ...BitkubEvmKYCContract, functionName: 'kycsLevel', args: [address] }]
+        });
+
+        console.log(`Account : ${address}\nKYC Level: ${result}`);
+        setAccountKYC(!!result && result > 1);
+
+    } catch (error) {
+        setErrMsg(error as WriteContractErrorType);
+    }
+    };
 
     function encodePath(tokens: string[], fees: number[]): string {
         let path = "0x"
@@ -78,6 +94,7 @@ export default function Swap96({
         path += tokens[tokens.length - 1].slice(2)
         return path
     }
+
     function calculateRate(
         amountIn: number,
         amountOut: number,
@@ -90,7 +107,6 @@ export default function Swap96({
             return 1 / (amountIn / amountOut)
         }
     }
-    
 
     const getQoute = useDebouncedCallback(async (_amount: string) => {
         let CMswapRate = undefined ;let DiamonSwapRate = undefined;let UdonswapRate = undefined;
@@ -348,6 +364,7 @@ export default function Swap96({
         }
         setIsLoading(false)
     }
+
     const DMswap = async () => {
             setIsLoading(true)
             try {
@@ -424,7 +441,8 @@ export default function Swap96({
                 setErrMsg(e as WriteContractErrorType)
             }
             setIsLoading(false)
-        }
+    }
+
     const Udonswap = async () => {
         setIsLoading(true)
         try {
@@ -504,6 +522,8 @@ export default function Swap96({
     }
 
     React.useEffect(() => {
+        
+
         const fetch0 = async () => {
             (tokenA.value.toUpperCase() === tokenB.value.toUpperCase()) && setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
             
@@ -907,7 +927,8 @@ export default function Swap96({
 
         setAmountA("")
         setAmountB("")
-        fetch0()
+        checkBitkubEVMKycLevel().then(() => fetch0());
+
     }, [config, address, tokenA, tokenB, feeSelect, txupdate])
 
     React.useEffect(() => {
@@ -1187,10 +1208,28 @@ export default function Swap96({
                     )}
                 </div>
             }
-            {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountA)  && Number(amountB) !== 0 ?
-                <Button className="w-full bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4 cursor-pointer" onClick={handleSwap}>Swap</Button> :
-                <Button disabled className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4">Swap</Button>
-            }
+        {((tokenB.value === '0xnative' as '0xstring' && tokenA.value.toLowerCase() === '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5')) && !isAccountKYC ? (
+            <div className="text-red-500 mt-4 text-sm font-mono">
+                <span>Please </span><a href="https://kkub-otp.bitkubchain.com/" target="_blank" className="underline text-blue-400">
+                     KYC your address</a><span> before UNWRAP</span>
+                
+                </div>
+            ) : (tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountB) !== 0 ? (
+                <Button
+                className="w-full bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4 cursor-pointer"
+                onClick={handleSwap}
+                >
+                Swap
+                </Button>
+            ) : (
+                <Button
+                disabled
+                className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4"
+                >
+                Swap
+                </Button>
+            ))}
+
             <div className="mt-4 border-t border-[#00ff9d]/10 pt-4">
                 {altRoute !== undefined &&
                     <div className="flex items-center text-gray-500 font-mono text-xs my-2">
