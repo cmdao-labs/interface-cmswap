@@ -933,7 +933,7 @@ export default function Swap96({
 
     React.useEffect(() => {
         const updateRate = async () => {
-            if (Number(amountA) !== 0) {
+/*             if (Number(amountA) !== 0) {
                 const quote = await getQoute(amountA);
                 if (poolSelect === "CMswap" && quote?.CMswapRate) {
                     setExchangeRate(quote.CMswapRate);
@@ -949,7 +949,7 @@ export default function Swap96({
                     return;
                 }
             }
-    
+     */
             // Fallback: use TVL values
             if (poolSelect === "CMswap") {
                 setExchangeRate(CMswapTVL.exchangeRate);
