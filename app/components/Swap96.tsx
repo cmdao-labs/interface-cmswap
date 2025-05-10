@@ -135,7 +135,7 @@ export default function Swap96({
                         if(poolSelect === "CMswap"){
                             setAmountB(formatEther(qouteOutput.result[0]))
                         }
-                        CMswapRate = calculateRate(amountIn, Number(formatEther(qouteOutput.result[0])), tokenAvalue, CMswapToken0).toFixed(6)
+                        CMswapRate = formatEther(qouteOutput.result[0])
                         let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
                         setNewPrice(newPrice.toString())
                     } else {
@@ -148,7 +148,7 @@ export default function Swap96({
                         if(poolSelect === "CMswap"){
                             setAmountB(formatEther(qouteOutput.result[0]))
                         }
-                        CMswapRate = calculateRate(amountIn, Number(formatEther(qouteOutput.result[0])), tokenAvalue, CMswapToken0).toFixed(6)
+                        CMswapRate = formatEther(qouteOutput.result[0])
 
                         let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
                         setNewPrice(newPrice.toString())
@@ -189,8 +189,7 @@ export default function Swap96({
                         setNewPrice((1/price).toFixed(6));
                         setAmountB(formatEther(bestAmountOut))
                     }
-                    const amountOut = Number(formatEther(bestAmountOut))
-                    DiamonSwapRate = calculateRate(amountIn, amountOut, tokenAvalue, getBestPrice[1].result as '0xstring').toFixed(6)
+                    DiamonSwapRate = Number(formatEther(bestAmountOut))
 
                 }
             } catch (error) {
@@ -224,8 +223,7 @@ export default function Swap96({
                     const price = 1/Number(formatEther(bestAmountOut))
                         setNewPrice((price).toFixed(6));
                         setAmountB(formatEther(bestAmountOut))
-                        const amountOut = Number(formatEther(bestAmountOut))
-                        UdonswapRate = calculateRate(amountIn, amountOut, tokenAvalue, getBestPrice[1].result as '0xstring').toFixed(6)
+                        UdonswapRate = Number(formatEther(bestAmountOut))
                     }
                 
                 }
