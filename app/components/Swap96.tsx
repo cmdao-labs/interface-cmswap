@@ -625,15 +625,14 @@ export default function Swap96({
                         const sqrtPriceX96_10000 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
                         const tokenAamount_10000 = poolState[2].result !== undefined ? poolState[2].result : BigInt(0)
                         const tokenBamount_10000 = poolState[3].result !== undefined ? poolState[3].result : BigInt(0)
-                        const currPrice_10000 = token0_10000.toUpperCase() !== tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2))
+                        const currPrice_10000 = token0_10000.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2))
                         console.warn(`Token0 \n${token0_10000}\nTokenB \n${tokenBvalue}\n${token0_10000.toUpperCase() !== tokenBvalue.toUpperCase()}\nPrice : ${currPrice_10000}`)
-                        const tvl_10000 = currPrice_10000 !== 0 ?  (Number(formatEther(tokenAamount_10000)) * (1 / currPrice_10000)) + Number(formatEther(tokenBamount_10000)) : 0
+                        const tvl_10000 = currPrice_10000 !== 0 && currPrice_10000 !== Infinity ? (Number(formatEther(tokenAamount_10000)) * (1 / currPrice_10000)) + Number(formatEther(tokenBamount_10000)) : 0
                         feeSelect === 10000 && currPrice_10000 !== Infinity && updateExchangeRateCMswapTVL(10000,Number(currPrice_10000.toString()))
                         feeSelect === 10000 && currPrice_10000 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2).toString())
-                        feeSelect === 10000 && tvl_10000 < 1e-9 && updateExchangeRateCMswapTVL(10000,0)
-                        
-                        updateCMswapTvlKey('tvl10000',tvl_10000);
-                        if(feeSelect === 10000){
+                        feeSelect === 10000 && currPrice_10000 !== Infinity && tvl_10000 < 1e-9 && updateExchangeRateCMswapTVL(10000,0)
+                        updateCMswapTvlKey('tvl10000', tvl_10000)
+                        if (feeSelect === 10000) {
                             setCMswapToken0(token0_10000 as '0xstring')
                         }
                         //tvl_10000 >= 1e-9 ? setTvl10000(tvl_10000.toString()) : setTvl10000('0')
@@ -681,13 +680,13 @@ export default function Swap96({
                         const tokenAamount_3000 = poolState[6].result !== undefined ? poolState[6].result : BigInt(0)
                         const tokenBamount_3000 = poolState[7].result !== undefined ? poolState[7].result : BigInt(0)
                         const currPrice_3000 = token0_3000.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2))
-                        const tvl_3000 = currPrice_3000 !== 0 ?  (Number(formatEther(tokenAamount_3000)) * (1 / currPrice_3000)) + Number(formatEther(tokenBamount_3000)) : 0
-                        feeSelect === 3000 && updateExchangeRateCMswapTVL(3000,Number(currPrice_3000.toString()))
-                        feeSelect === 3000 && setFixedExchangeRate(((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2).toString())
-                        feeSelect === 3000 && tvl_3000 < 1e-9 && updateExchangeRateCMswapTVL(3000,0)
+                        const tvl_3000 = currPrice_3000 !== 0 && currPrice_3000 !== Infinity ?  (Number(formatEther(tokenAamount_3000)) * (1 / currPrice_3000)) + Number(formatEther(tokenBamount_3000)) : 0
+                        feeSelect === 3000 && currPrice_3000 !== Infinity && updateExchangeRateCMswapTVL(3000,Number(currPrice_3000.toString()))
+                        feeSelect === 3000 && currPrice_3000 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2).toString())
+                        feeSelect === 3000 && currPrice_3000 !== Infinity && tvl_3000 < 1e-9 && updateExchangeRateCMswapTVL(3000,0)
                         //tvl_3000 >= 1e-9 ? setTvl3000(tvl_3000.toString()) : setTvl3000('0')
-                        updateCMswapTvlKey('tvl3000',tvl_3000);
-                        if(feeSelect === 3000){
+                        updateCMswapTvlKey('tvl3000', tvl_3000);
+                        if (feeSelect === 3000) {
                             setCMswapToken0(token0_3000 as '0xstring')
                         }
                         
@@ -734,13 +733,12 @@ export default function Swap96({
                         const tokenAamount_500 = poolState[10].result !== undefined ? poolState[10].result : BigInt(0)
                         const tokenBamount_500 = poolState[11].result !== undefined ? poolState[11].result : BigInt(0)
                         const currPrice_500 = token0_500.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_500) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2))
-                        const tvl_500 = (Number(formatEther(tokenAamount_500)) * (1 / currPrice_500)) + Number(formatEther(tokenBamount_500));
-                        feeSelect === 500 && updateExchangeRateCMswapTVL(500,Number(currPrice_500.toString()))
-                        feeSelect === 500 && setFixedExchangeRate(((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2).toString())
-                        feeSelect === 500 && tvl_500 < 1e-9 && updateExchangeRateCMswapTVL(500,0)
-                        //tvl_500 >= 1e-9 ? setTvl500(tvl_500.toString()) : setTvl500('0')
-                        updateCMswapTvlKey('tvl500',tvl_500);
-                        if(feeSelect === 500){
+                        const tvl_500 = currPrice_500 !== 0 && currPrice_500 !== Infinity ? (Number(formatEther(tokenAamount_500)) * (1 / currPrice_500)) + Number(formatEther(tokenBamount_500)) : 0
+                        feeSelect === 500 && currPrice_500 !== Infinity && updateExchangeRateCMswapTVL(500,Number(currPrice_500.toString()))
+                        feeSelect === 500 && currPrice_500 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2).toString())
+                        feeSelect === 500 && currPrice_500 !== Infinity && tvl_500 < 1e-9 && updateExchangeRateCMswapTVL(500,0)
+                        updateCMswapTvlKey('tvl500', tvl_500);
+                        if (feeSelect === 500) {
                             setCMswapToken0(token0_500 as '0xstring')
                         }
                         
@@ -787,16 +785,14 @@ export default function Swap96({
                         const tokenAamount_100 = poolState[14].result !== undefined ? poolState[14].result : BigInt(0)
                         const tokenBamount_100 = poolState[15].result !== undefined ? poolState[15].result : BigInt(0)
                         const currPrice_100 = token0_100.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_100) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_100) / (2 ** 96)) ** 2))
-                        const tvl_100 = (Number(formatEther(tokenAamount_100)) * (1 / currPrice_100)) + Number(formatEther(tokenBamount_100));
-                        feeSelect === 100 && updateExchangeRateCMswapTVL(100,Number(currPrice_100.toString()))
-                        feeSelect === 100 && setFixedExchangeRate(((Number(currPrice_100) / (2 ** 96)) ** 2).toString())
-                        feeSelect === 100 && tvl_100 < 1e-9 && updateExchangeRateCMswapTVL(100,0)
-                        //tvl_100 >= 1e-9 ? setTvl100(tvl_100.toString()) : setTvl100('0')
-                        updateCMswapTvlKey('tvl100',tvl_100);
-                        if(feeSelect === 100){
+                        const tvl_100 = currPrice_100 !== 0 && currPrice_100 !== Infinity ? (Number(formatEther(tokenAamount_100)) * (1 / currPrice_100)) + Number(formatEther(tokenBamount_100)) : 0
+                        feeSelect === 100 && currPrice_100 !== Infinity && updateExchangeRateCMswapTVL(100,Number(currPrice_100.toString()))
+                        feeSelect === 100 && currPrice_100 !== Infinity && setFixedExchangeRate(((Number(currPrice_100) / (2 ** 96)) ** 2).toString())
+                        feeSelect === 100 && currPrice_100 !== Infinity && tvl_100 < 1e-9 && updateExchangeRateCMswapTVL(100,0)
+                        updateCMswapTvlKey('tvl100', tvl_100);
+                        if (feeSelect === 100) {
                             setCMswapToken0(token0_100 as '0xstring')
                         }
-                        
 
                         if (feeSelect === 100 && tvl_100 < 1e-9) {
                             const init: any = {contracts: []}
