@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useDebouncedCallback } from 'use-debounce'
 import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, v3PoolABI, wrappedNative,CMswapPoolDualRouterContract,CMswapPoolDualRouter,CMswapUniSmartRoute,CMswapUniSmartRouteContract } from '@/app/lib/8899'
 import { config } from '@/app/config'
+import { useSearchParams } from 'next/navigation'
 
 export default function Swap8899({ 
     setIsLoading, setErrMsg, 
@@ -41,6 +42,30 @@ export default function Swap8899({
     const [swapDirection, setSwapDirection] = React.useState(true) // false = A->B, true = B->A
     const [onLoading,setOnLoading] = React.useState(false)
 
+    React.useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search)
+        const tokenAAddress = searchParams.get('tokenA')?.toLowerCase()
+        const tokenBAddress = searchParams.get('tokenB')?.toLowerCase()
+        
+        if (!tokenAAddress || !tokenBAddress) return
+        
+        const foundTokenA = tokens.find(t => t.value.toLowerCase() === tokenAAddress)
+        const foundTokenB = tokens.find(t => t.value.toLowerCase() === tokenBAddress)
+        
+        if (foundTokenA) setTokenA(foundTokenA)
+        if (foundTokenB) setTokenB(foundTokenB)
+            
+        }, [])
+
+    const updateURLWithTokens = (tokenAValue?: string, tokenBValue?: string) => {
+        const url = new URL(window.location.href)
+        
+        if (tokenAValue) {url.searchParams.set('tokenA', tokenAValue)}
+        if (tokenBValue) {url.searchParams.set('tokenB', tokenBValue)}
+        if (!tokenAValue) {url.searchParams.delete('tokenA')}
+        if (!tokenBValue) {url.searchParams.delete('tokenB')}
+        window.history.replaceState({}, '', url.toString())
+        }
 
     function encodePath(tokens: string[], fees: number[]): string {
         let path = "0x"
@@ -1042,6 +1067,7 @@ export default function Swap8899({
                                                 onSelect={() => {
                                                     setTokenA(token)
                                                     setOpen(false)
+                                                    updateURLWithTokens(token.value, tokenB?.value)
                                                 }}
                                                 className='cursor-pointer'
                                             >
@@ -1114,6 +1140,7 @@ export default function Swap8899({
                                                 onSelect={() => {
                                                     setTokenB(token)
                                                     setOpen2(false)
+                                                    updateURLWithTokens(tokenA?.value, token.value)
                                                 }}
                                                 className='cursor-pointer'
                                             >
