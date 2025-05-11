@@ -95,21 +95,9 @@ export default function Swap96({
         return path
     }
 
-    function calculateRate(
-        amountIn: number,
-        amountOut: number,
-        tokenIn: string,
-        baseToken: string
-    ): number {
-        if (tokenIn.toUpperCase() === baseToken.toUpperCase()) {
-            return amountIn/ amountOut  
-        } else {
-            return 1 / (amountIn / amountOut)
-        }
-    }
 
     const getQoute = useDebouncedCallback(async (_amount: string) => {
-        let CMswapRate = undefined ;let DiamonSwapRate = undefined;let UdonswapRate = undefined;
+        let CMswapRate = 0 ;let DiamonSwapRate = 0;let UdonswapRate = 0;
         const amountIn = Number(_amount)
         let tokenAvalue
         let tokenBvalue
@@ -135,7 +123,7 @@ export default function Swap96({
                         if(poolSelect === "CMswap"){
                             setAmountB(formatEther(qouteOutput.result[0]))
                         }
-                        CMswapRate = calculateRate(amountIn, Number(formatEther(qouteOutput.result[0])), tokenAvalue, CMswapToken0).toFixed(6)
+                        CMswapRate = qouteOutput.result[0] !== undefined ? 0 : formatEther(qouteOutput.result[0]) 
                         let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
                         setNewPrice(newPrice.toString())
                     } else {
@@ -148,7 +136,7 @@ export default function Swap96({
                         if(poolSelect === "CMswap"){
                             setAmountB(formatEther(qouteOutput.result[0]))
                         }
-                        CMswapRate = calculateRate(amountIn, Number(formatEther(qouteOutput.result[0])), tokenAvalue, CMswapToken0).toFixed(6)
+                        CMswapRate = qouteOutput.result[0] !== undefined ? 0 : formatEther(qouteOutput.result[0]) 
 
                         let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
                         setNewPrice(newPrice.toString())
@@ -189,8 +177,7 @@ export default function Swap96({
                         setNewPrice((1/price).toFixed(6));
                         setAmountB(formatEther(bestAmountOut))
                     }
-                    const amountOut = Number(formatEther(bestAmountOut))
-                    DiamonSwapRate = calculateRate(amountIn, amountOut, tokenAvalue, getBestPrice[1].result as '0xstring').toFixed(6)
+                    DiamonSwapRate = Number(formatEther(bestAmountOut))
 
                 }
             } catch (error) {
@@ -224,8 +211,7 @@ export default function Swap96({
                     const price = 1/Number(formatEther(bestAmountOut))
                         setNewPrice((price).toFixed(6));
                         setAmountB(formatEther(bestAmountOut))
-                        const amountOut = Number(formatEther(bestAmountOut))
-                        UdonswapRate = calculateRate(amountIn, amountOut, tokenAvalue, getBestPrice[1].result as '0xstring').toFixed(6)
+                        UdonswapRate = Number(formatEther(bestAmountOut))
                     }
                 
                 }
@@ -900,15 +886,7 @@ export default function Swap96({
                             exchangeRateUdon = tvlUdon < 1e-9 ? 0 : currPriceUdon
                             currPriceUdon !== Infinity && poolSelect === "UdonSwap" && setFixedExchangeRate(Number(currPriceUdon).toString())
         
-                            console.log(`Udon Swap Pair ${UdonPair}`)
-                            console.log("Token A ",tokenAamount)
-                            console.log("Token B ",tokenBamount)
-                            console.log("Price ",currPriceUdon)
-                            console.log("TVL ",tvlUdon)
-                            console.log("exRate ",exchangeRateUdon)
-        
                         }
-        
                         updateUdonswapTvlKey(tvlUdon)
                         updateExchangeRateUdonswapTVL(exchangeRateUdon)
 
@@ -929,7 +907,7 @@ export default function Swap96({
 
     React.useEffect(() => {
         const updateRate = async () => {
-            if (Number(amountA) !== 0) {
+/*             if (Number(amountA) !== 0) {
                 const quote = await getQoute(amountA);
                 if (poolSelect === "CMswap" && quote?.CMswapRate) {
                     setExchangeRate(quote.CMswapRate);
@@ -945,7 +923,7 @@ export default function Swap96({
                     return;
                 }
             }
-    
+     */
             // Fallback: use TVL values
             if (poolSelect === "CMswap") {
                 setExchangeRate(CMswapTVL.exchangeRate);
@@ -964,32 +942,63 @@ export default function Swap96({
 
     React.useEffect(() => {
         const fetchQuoteAndSetPool = async () => {
-            if (CMswapTVL && DMswapTVL && UdonTVL) {
-            const quote = await getQoute(amountA); 
-        
-            const rates = {
-                CMswap: Number(quote?.CMswapRate || CMswapTVL.exchangeRate || 0),
-                DiamonSwap: Number(quote?.DiamonSwapRate|| DMswapTVL.exchangeRate || 0),
-                UdonSwap: Number(quote?.UdonswapRate || UdonTVL.exchangeRate || 0),
-            };
-        
-            // เลือก pool ที่มีอัตราแลกเปลี่ยนสูงสุด
-            const sortedEntries = Object.entries(rates).sort((a, b) => b[1] - a[1]); 
-        
-            // เลือก pool ที่มีอัตราแลกเปลี่ยนสูงสุด
-            const [bestPool, bestRate] = sortedEntries[0]; 
-        
-            setBestPool(bestPool);  
-        
-            if (poolSelect === "" && Object.values(rates).every((r) => r !== 0)) {
-                setPoolSelect(bestPool);  
-                console.log("BestPool is",bestPool)
-            }
+            if (CMswapTVL || DMswapTVL || UdonTVL) {
+                try {
+                    const quote = await getQoute(amountA);
+                    console.log("Fetched quote:", quote);
+                    
+                    const CMRate = Number(quote?.CMswapRate) > 0
+                        ? Number(quote?.CMswapRate)
+                        : Number(CMswapTVL?.exchangeRate || 0);
+
+                    const DMRate = Number(quote?.DiamonSwapRate) > 0
+                        ? Number(quote?.DiamonSwapRate)
+                        : Number(DMswapTVL?.exchangeRate || 0);
+
+                    const UdonRate = Number(quote?.UdonswapRate) > 0
+                        ? Number(quote?.UdonswapRate)
+                        : Number(UdonTVL?.exchangeRate || 0);
+
+                    const rates = {
+                        CMswap: CMRate,
+                        DiamonSwap: DMRate,
+                        UdonSwap: UdonRate,
+                    };
+
+                    console.log("Computed rates:", rates);
+
+                    const validRates = Object.entries(rates).filter(([, rate]) => rate > 0);
+                    if (validRates.length === 0) {
+                        console.log("No valid rates available from any pool.");
+                        return;
+                    }
+
+                    const sortedEntries = validRates.sort((a, b) => b[1] - a[1]);
+                    const [bestPool, bestRate] = sortedEntries[0];
+
+                    console.log("Best pool selected:", bestPool, "with rate:", bestRate);
+                    setBestPool(bestPool);
+
+                    if (poolSelect === "") {
+                        setPoolSelect(bestPool);
+                        console.log("Pool selected automatically:", bestPool);
+                    }
+
+                } catch (error) {
+                    console.error("Error fetching quote or processing rates:", error);
+                }
             }
         };
-        
+
         fetchQuoteAndSetPool();
-    }, [ CMswapTVL, DMswapTVL, UdonTVL, amountB, amountA]);
+    }, [CMswapTVL, DMswapTVL, UdonTVL, amountB, amountA]);
+
+    React.useEffect(() => {
+        setPoolSelect("")
+        setFeeSelect(10000)
+    },[tokenA,tokenB])
+
+
               
     return (
         <div className='space-y-2'>
