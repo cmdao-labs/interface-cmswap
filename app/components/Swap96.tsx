@@ -123,7 +123,6 @@ export default function Swap96({
                         if(poolSelect === "CMswap"){
                             setAmountB(formatEther(qouteOutput.result[0]))
                         }
-                        CMswapRate = qouteOutput.result[0] !== undefined ? 0 : Number(formatEther(qouteOutput.result[0]))
                         CMswapRate = qouteOutput.result[0] !== undefined ? 0 : Number(formatEther(qouteOutput.result[0]) )
                         let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
                         setNewPrice(newPrice.toString())
@@ -137,7 +136,6 @@ export default function Swap96({
                         if(poolSelect === "CMswap"){
                             setAmountB(formatEther(qouteOutput.result[0]))
                         }
-                        CMswapRate = qouteOutput.result[0] !== undefined ? 0 : Number(formatEther(qouteOutput.result[0]))
                         CMswapRate = qouteOutput.result[0] !== undefined ? 0 : Number(formatEther(qouteOutput.result[0]) )
 
                         let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
