@@ -65,7 +65,8 @@ export default function ExchangePage() {
       price: 48.5,
       type: "buy",
       date: "2025-05-11 11:30:00",
-    }, {
+    },
+    {
       id: 4,
       fromToken: token,
       toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
@@ -73,7 +74,8 @@ export default function ExchangePage() {
       price: 50,
       type: "sell",
       date: "2025-05-11 12:34:56",
-    }, {
+    },
+    {
       id: 6,
       fromToken: token,
       toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
@@ -81,7 +83,8 @@ export default function ExchangePage() {
       price: 51,
       type: "sell",
       date: "2025-05-11 12:34:56",
-    }, {
+    },
+    {
       id: 7,
       fromToken: token,
       toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
@@ -89,7 +92,8 @@ export default function ExchangePage() {
       price: 49,
       type: "sell",
       date: "2025-05-11 12:34:56",
-    },{
+    },
+    {
       id: 8,
       fromToken: token,
       toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
@@ -97,7 +101,8 @@ export default function ExchangePage() {
       price: 48.5,
       type: "sell",
       date: "2025-05-11 12:34:56",
-    },{
+    },
+    {
       id: 9,
       fromToken: token,
       toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
@@ -105,7 +110,8 @@ export default function ExchangePage() {
       price: 47,
       type: "sell",
       date: "2025-05-11 12:34:56",
-    },{
+    },
+    {
       id: 10,
       fromToken: token,
       toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
@@ -113,7 +119,8 @@ export default function ExchangePage() {
       price: 49,
       type: "buy",
       date: "2025-05-11 12:34:56",
-    },{
+    },
+    {
       id: 11,
       fromToken: token,
       toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
@@ -121,7 +128,8 @@ export default function ExchangePage() {
       price: 45,
       type: "buy",
       date: "2025-05-11 12:34:56",
-    },{
+    },
+    {
       id: 12,
       fromToken: token,
       toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
@@ -129,7 +137,8 @@ export default function ExchangePage() {
       price: 40,
       type: "buy",
       date: "2025-05-11 12:34:56",
-    },{
+    },
+    {
       id: 13,
       fromToken: token,
       toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
@@ -145,86 +154,104 @@ export default function ExchangePage() {
       name: "SOLA BOOSTER / KKUB",
       desc: "Metal Valley",
       img1: "https://cryptologos.cc/logos/solana-sol-logo.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png"
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
     },
     {
       name: "MinerK / KKUB",
       desc: "Metal Valley",
       img1: "https://cdn-icons-png.flaticon.com/512/4332/4332625.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png"
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
     },
     {
       name: "Carrot Seed / KKUB",
       desc: "Morning Moon Village",
       img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png"
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
     },
     {
       name: "Cabbage Seed / KKUB",
       desc: "Morning Moon Village",
       img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png"
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
     },
     {
       name: "Honeycomb / KKUB",
       desc: "Morning Moon Village",
       img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png"
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
     },
     {
       name: "Raw Diamond / KKUB",
       desc: "Bitkub Metaverse",
       img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png"
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
     },
     {
       name: "Raw Ruby / KKUB",
       desc: "Bitkub Metaverse",
       img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png"
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
     },
     {
       name: "Apple / KKUB",
       desc: "Bitkub Metaverse",
       img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png"
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
     },
     {
       name: "Apple / KKUB",
       desc: "Bitkub Metaverse",
       img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png"
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
     },
     {
       name: "Apple / KKUB",
       desc: "Bitkub Metaverse",
       img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png"
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
     },
     {
       name: "Apple / KKUB",
       desc: "Bitkub Metaverse",
       img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png"
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
     },
     {
       name: "Apple / KKUB",
       desc: "Bitkub Metaverse",
       img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png"
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
     },
     {
       name: "Apple / KKUB",
       desc: "Bitkub Metaverse",
       img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png"
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
     },
     {
       name: "Apple / KKUB",
       desc: "Bitkub Metaverse",
       img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png"
-    }
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
+    },
+    {
+      name: "Apple / KKUB",
+      desc: "Bitkub Metaverse",
+      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
+    },
+    {
+      name: "Apple / KKUB",
+      desc: "Bitkub Metaverse",
+      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
+    },
+    {
+      name: "Apple / KKUB",
+      desc: "Bitkub Metaverse",
+      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
+      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
+    },
   ];
 
   const handleOrder = () => {
@@ -246,27 +273,26 @@ export default function ExchangePage() {
     setOrders(orders.filter((o) => o.id !== id));
   };
 
-  const groupOrdersByPrice = (orders: Order[], type: 'buy' | 'sell') => {
-  const grouped = new Map<number, number>();
+  const groupOrdersByPrice = (orders: Order[], type: "buy" | "sell") => {
+    const grouped = new Map<number, number>();
 
-  orders
-    .filter((o) => o.type === type)
-    .forEach((o) => {
-      if (grouped.has(o.price)) {
-        grouped.set(o.price, grouped.get(o.price)! + o.amount);
-      } else {
-        grouped.set(o.price, o.amount);
-      }
-    });
+    orders
+      .filter((o) => o.type === type)
+      .forEach((o) => {
+        if (grouped.has(o.price)) {
+          grouped.set(o.price, grouped.get(o.price)! + o.amount);
+        } else {
+          grouped.set(o.price, o.amount);
+        }
+      });
 
-  // Sort descending for sell, ascending for buy
-  const sortedEntries = Array.from(grouped.entries()).sort((a, b) =>
-    type === "sell" ? b[0] - a[0] : a[0] - b[0]
-  );
+    // Sort descending for sell, ascending for buy
+    const sortedEntries = Array.from(grouped.entries()).sort((a, b) =>
+      type === "sell" ? b[0] - a[0] : a[0] - b[0]
+    );
 
-  return sortedEntries;
-};
-
+    return sortedEntries;
+  };
 
   return (
     <div className="min-h-screen min-w-screen  w-full bg-[#0a0b1e] text-white px-6 py-6 mt-[120px]">
@@ -316,7 +342,7 @@ export default function ExchangePage() {
           <hr className="border-gray-700 mb-4" />
 
           {/* Mapping Token Pairs with Scrollable Container */}
-          <div className="space-y-4 max-h-100 overflow-y-auto pr-2 scrollbar-hide">
+          <div className="space-y-4 max-h-200 overflow-y-auto pr-2 scrollbar-hide">
             {tokenPairs.map((pair, idx) => (
               <div key={idx} className="flex items-center space-x-3">
                 <div className="relative w-10 h-10">
@@ -332,7 +358,9 @@ export default function ExchangePage() {
                   />
                 </div>
                 <div>
-                  <p className="text-white font-semibold text-sm">{pair.name}</p>
+                  <p className="text-white font-semibold text-sm">
+                    {pair.name}
+                  </p>
                   <p className="text-xs text-gray-400">{pair.desc}</p>
                 </div>
               </div>
@@ -340,11 +368,9 @@ export default function ExchangePage() {
           </div>
         </div>
 
-
-
         {/* Center Panel: Trading */}
         <div className="md:col-span-6 bg-[#1a1b2e] rounded-xl p-6">
-          <div className="h-48 bg-[#2a2b3c] mb-6 rounded-lg flex items-center justify-center">
+          <div className="h-[550px] bg-[#2a2b3c] mb-6 rounded-lg flex items-center justify-center">
             <span className="text-gray-500">[Trading Chart Placeholder]</span>
           </div>
 
@@ -352,15 +378,17 @@ export default function ExchangePage() {
           <div className="flex space-x-4 mb-4">
             <button
               onClick={() => setTradeType("buy")}
-              className={`flex-1 py-2 rounded-lg font-semibold ${tradeType === "buy" ? "bg-green-600" : "bg-gray-700"
-                }`}
+              className={`flex-1 py-2 rounded-lg font-semibold ${
+                tradeType === "buy" ? "bg-green-600" : "bg-gray-700"
+              }`}
             >
               Buy
             </button>
             <button
               onClick={() => setTradeType("sell")}
-              className={`flex-1 py-2 rounded-lg font-semibold ${tradeType === "sell" ? "bg-red-600" : "bg-gray-700"
-                }`}
+              className={`flex-1 py-2 rounded-lg font-semibold ${
+                tradeType === "sell" ? "bg-red-600" : "bg-gray-700"
+              }`}
             >
               Sell
             </button>
@@ -408,38 +436,47 @@ export default function ExchangePage() {
             {/* Submit Button */}
             <button
               onClick={handleOrder}
-              className={`w-full py-2 rounded-lg font-semibold ${tradeType === "buy" ? "bg-green-600" : "bg-red-600"
-                }`}
+              className={`w-full py-2 rounded-lg font-semibold ${
+                tradeType === "buy" ? "bg-green-600" : "bg-red-600"
+              }`}
             >
               {tradeType === "buy" ? "BUY" : "SELL"} {token.symbol}
             </button>
           </div>
         </div>
 
-{/* Right Panel: Order Book */}
-<div className="md:col-span-4 bg-[#1a1b2e] rounded-xl p-4">
-  <h3 className="text-lg font-semibold mb-4 text-white">Order Book</h3>
+      {/* Right Panel: Order Book */}
+<div className="md:col-span-4 bg-[#1a1b2e] rounded-xl p-4 flex flex-col justify-center h-full">
+  <h3 className="text-lg font-semibold mb-4 text-white text-center">Order Book</h3>
 
-  {/* Sell Orders */}
-  <div className="space-y-2 mb-6">
-    <p className="text-red-400 font-semibold">Sell Orders</p>
-    {groupOrdersByPrice(orders, "sell").map(([price, amount]) => (
-      <div key={`sell-${price}`} className="flex justify-between text-sm text-red-200">
-        <span>{price.toFixed(2)} KKUB</span>
-        <span>{amount.toFixed(2)} SOLA</span>
-      </div>
-    ))}
-  </div>
+  <div className="flex flex-col divide-y divide-gray-700 max-h-[400px] overflow-y-auto">
+    {/* Sell Orders */}
+    <div className="flex flex-col items-center space-y-2 pb-4 w-full">
+      <p className="text-red-400 font-semibold text-center">Sell Orders</p>
+      {groupOrdersByPrice(orders, "sell").map(([price, amount]) => (
+        <div
+          key={`sell-${price}`}
+          className="flex justify-center items-center space-x-4 text-sm text-red-200 w-full"
+        >
+          <span className="w-1/2 text-center">{price.toFixed(2)} KKUB</span>
+          <span className="w-1/2 text-center">{amount.toFixed(2)} SOLA</span>
+        </div>
+      ))}
+    </div>
 
-  {/* Buy Orders */}
-  <div className="space-y-2">
-    <p className="text-green-400 font-semibold">Buy Orders</p>
-    {groupOrdersByPrice(orders, "buy").map(([price, amount]) => (
-      <div key={`buy-${price}`} className="flex justify-between text-sm text-green-200">
-        <span>{price.toFixed(2)} KKUB</span>
-        <span>{amount.toFixed(2)} SOLA</span>
-      </div>
-    ))}
+    {/* Buy Orders */}
+    <div className="flex flex-col items-center space-y-2 pt-4 w-full">
+      <p className="text-green-400 font-semibold text-center">Buy Orders</p>
+      {groupOrdersByPrice(orders, "buy").map(([price, amount]) => (
+        <div
+          key={`buy-${price}`}
+          className="flex justify-center items-center space-x-4 text-sm text-green-200 w-full"
+        >
+          <span className="w-1/2 text-center">{price.toFixed(2)} KKUB</span>
+          <span className="w-1/2 text-center">{amount.toFixed(2)} SOLA</span>
+        </div>
+      ))}
+    </div>
   </div>
 </div>
 
@@ -450,19 +487,21 @@ export default function ExchangePage() {
         {/* Tabs */}
         <div className="flex justify-start space-x-8 mb-6 border-b border-gray-700 pb-2">
           <button
-            className={`${view === "Orders"
-              ? "text-white font-semibold pb-2 border-b-2 border-green-500"
-              : "text-gray-400 hover:text-white "
-              }`}
+            className={`${
+              view === "Orders"
+                ? "text-white font-semibold pb-2 border-b-2 border-green-500"
+                : "text-gray-400 hover:text-white "
+            }`}
             onClick={() => setView("Orders")}
           >
             Orders
           </button>
           <button
-            className={`${view === "History"
-              ? "text-white font-semibold pb-2 border-b-2 border-green-500"
-              : "text-gray-400 hover:text-white "
-              }`}
+            className={`${
+              view === "History"
+                ? "text-white font-semibold pb-2 border-b-2 border-green-500"
+                : "text-gray-400 hover:text-white "
+            }`}
             onClick={() => setView("History")}
           >
             Trade History
