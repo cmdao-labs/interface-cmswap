@@ -127,7 +127,7 @@ export default function Swap96({
                         if (poolSelect === "CMswap") {
                             setAmountB(formatEther(qouteOutput.result[0]))
                         }
-                        CMswapRate = qouteOutput.result[0] !== undefined ? 0 : Number(formatEther(qouteOutput.result[0]))
+                        CMswapRate = qouteOutput.result[0] !== undefined ? Number(formatEther(qouteOutput.result[0])) : 0  
                         let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
                         setNewPrice(newPrice.toString())
                     } else {
@@ -140,7 +140,7 @@ export default function Swap96({
                         if (poolSelect === "CMswap") {
                             setAmountB(formatEther(qouteOutput.result[0]))
                         }
-                        CMswapRate = qouteOutput.result[0] !== undefined ? 0 : Number(formatEther(qouteOutput.result[0]))
+                        CMswapRate = qouteOutput.result[0] !== undefined ? Number(formatEther(qouteOutput.result[0])) : 0
 
                         let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
                         setNewPrice(newPrice.toString())
@@ -236,6 +236,7 @@ export default function Swap96({
         const _tokenB = tokenA
         setTokenA(_tokenA)
         setTokenB(_tokenB)
+        updateURLWithTokens(_tokenA.value,_tokenB.value)
     }
 
     const handleSwap = async () => {
@@ -831,6 +832,7 @@ export default function Swap96({
 
                     try {
                         setAltRoute(undefined)
+
                         const getPairAddr = await readContracts(config, { contracts: [{ ...CMswapUniSmartRouteContractV2, functionName: 'getPairAddress', args: [BigInt(0), tokenAvalue, tokenBvalue], }] })
                         const DiamonPair = getPairAddr[0].result !== undefined ? getPairAddr[0].result as '0xstring' : '' as '0xstring'
                         const getPoolState = await readContracts(config, {
@@ -844,19 +846,13 @@ export default function Swap96({
                         let tvlDM = 0;
                         let exchangeRateDM = 0;
                         if (DiamonPair !== "0x0000000000000000000000000000000000000000" as '0xstring') {
-                            const tokenAamount = getPoolState[0].result !== undefined ? getPoolState[0].result : BigInt(0)
-                            const tokenBamount = getPoolState[1].result !== undefined ? getPoolState[1].result : BigInt(0)
-                            const currPriceDM = getPoolState[2].result !== undefined && getPoolState[2].result !== tokenBvalue ? Number(tokenAamount) / Number(tokenBamount) : 1 / (Number(tokenAamount) / Number(tokenBamount))
-                            tvlDM = (Number(formatEther(tokenAamount)) * (1 / currPriceDM)) + Number(formatEther(tokenBamount));
+                            const tokenAamount = BigInt(getPoolState[0].result || 0);
+                            const tokenBamount = BigInt(getPoolState[1].result || 0);
+                            const currPriceDM = getPoolState[2].result !== undefined   ? Number(tokenAamount) / Number(tokenBamount) : 0
+
+                            tvlDM = currPriceDM !== 0 && currPriceDM !== Infinity ? (Number(formatEther(tokenAamount)) * (1 / currPriceDM)) + Number(formatEther(tokenBamount)) : 0
                             exchangeRateDM = tvlDM < 1e-9 ? 0 : currPriceDM
                             currPriceDM !== Infinity && poolSelect === "DiamonSwap" && setFixedExchangeRate(Number(currPriceDM).toString())
-
-                            console.log(`DiamonFiance Swap Pair ${DiamonPair}`)
-                            console.log("Token A ", tokenAamount)
-                            console.log("Token B ", tokenBamount)
-                            console.log("Price ", currPriceDM)
-                            console.log("TVL ", tvlDM)
-                            console.log("exRate ", exchangeRateDM)
 
                         }
 
@@ -872,6 +868,7 @@ export default function Swap96({
 
                     try {
                         setAltRoute(undefined)
+
                         const getPairAddr = await readContracts(config, { contracts: [{ ...CMswapUniSmartRouteContractV2, functionName: 'getPairAddress', args: [BigInt(1), tokenAvalue, tokenBvalue], }] })
                         const UdonPair = getPairAddr[0].result !== undefined ? getPairAddr[0].result as '0xstring' : '' as '0xstring'
                         const getPoolState = await readContracts(config, {
@@ -887,7 +884,7 @@ export default function Swap96({
                             const tokenAamount = getPoolState[0].result !== undefined ? getPoolState[0].result : BigInt(0)
                             const tokenBamount = getPoolState[1].result !== undefined ? getPoolState[1].result : BigInt(0)
                             //const currPriceUdon = Number(tokenAamount) / Number(tokenBamount);
-                            const currPriceUdon = getPoolState[2].result !== undefined ? Number(tokenAamount) / Number(tokenBamount) : Number(tokenBamount) / Number(tokenAamount)
+                            const currPriceUdon =  getPoolState[2].result !== undefined   ? Number(tokenAamount) / Number(tokenBamount) : 0
 
                             tvlUdon = (Number(formatEther(tokenAamount)) * (1 / currPriceUdon)) + Number(formatEther(tokenBamount));
                             exchangeRateUdon = tvlUdon < 1e-9 ? 0 : currPriceUdon
@@ -1169,7 +1166,7 @@ export default function Swap96({
                             }
 
                             return (
-                                <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "CMswap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("CMswap")}>
+                                <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "CMswap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("CMswap"); getQoute(amountA);}}>
                                     <span className="flex items-center gap-1">
                                         CMswap {bestPool === "CMswap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                     </span>
@@ -1178,7 +1175,7 @@ export default function Swap96({
                             );
                         })()}
                         {Number(DMswapTVL['tvl10000']) > 0 && (
-                            <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "DiamonSwap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("DiamonSwap")}>
+                            <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "DiamonSwap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("DiamonSwap"); getQoute(amountA);}}>
                                 <span className='flex items-center gap-1'>
                                     DiamonFinance {bestPool === "DiamonSwap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                 </span>
@@ -1186,7 +1183,7 @@ export default function Swap96({
                             </Button>
                         )}
                         {Number(UdonTVL['tvl10000']) > 0 && (
-                            <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "UdonSwap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("UdonSwap")}>
+                            <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "UdonSwap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("UdonSwap");; getQoute(amountA);}}>
                                 <span className='flex items-center gap-1'>
                                     UdonSwap {bestPool === "UdonSwap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                 </span>
