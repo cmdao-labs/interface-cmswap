@@ -44,23 +44,30 @@ export default function Swap96({
     const [isAccountKYC, setAccountKYC] = React.useState(false); //  NEED KYC LEVEL 1 FOR UNWRAPPED KKUB to KUB
     const [hasInitializedFromParams, setHasInitializedFromParams] = React.useState(false)
 
-    React.useEffect(() => {
-        const searchParams = new URLSearchParams(window.location.search)
-        const tokenAAddress = searchParams.get('tokenA')?.toLowerCase()
-        const tokenBAddress = searchParams.get('tokenB')?.toLowerCase()
+React.useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search)
+    const tokenAAddress = searchParams.get('tokenA')?.toLowerCase()
+    const tokenBAddress = searchParams.get('tokenB')?.toLowerCase()
 
-        if (!tokenAAddress || !tokenBAddress) return
-
+    if (tokenAAddress && tokenBAddress) {
         const foundTokenA = tokens.find(t => t.value.toLowerCase() === tokenAAddress)
         const foundTokenB = tokens.find(t => t.value.toLowerCase() === tokenBAddress)
 
         if (foundTokenA) setTokenA(foundTokenA)
         if (foundTokenB) setTokenB(foundTokenB)
-
-        if (foundTokenA || foundTokenB) {
-            setHasInitializedFromParams(true)
+    } else {
+        if (tokenA?.value && tokenB?.value) {
+            updateURLWithTokens(tokenA.value, tokenB.value)
         }
-    }, [])
+    }
+    setHasInitializedFromParams(true)
+}, [])
+
+
+
+    React.useEffect(() => {
+        console.log("hasInitializedFromParams : ",hasInitializedFromParams)
+    },[hasInitializedFromParams])
 
     const updateURLWithTokens = (tokenAValue?: string, tokenBValue?: string) => {
         const url = new URL(window.location.href)
@@ -911,7 +918,7 @@ export default function Swap96({
             })
         }
 
-    }, [config, address, tokenA, tokenB, feeSelect, txupdate])
+    }, [config, address, tokenA, tokenB, feeSelect, txupdate,hasInitializedFromParams])
 
 
     React.useEffect(() => {

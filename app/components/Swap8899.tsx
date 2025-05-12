@@ -43,23 +43,25 @@ export default function Swap8899({
     const [onLoading, setOnLoading] = React.useState(false)
     const [hasInitializedFromParams, setHasInitializedFromParams] = React.useState(false)
 
-    React.useEffect(() => {
-        const searchParams = new URLSearchParams(window.location.search)
-        const tokenAAddress = searchParams.get('tokenA')?.toLowerCase()
-        const tokenBAddress = searchParams.get('tokenB')?.toLowerCase()
+React.useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search)
+    const tokenAAddress = searchParams.get('tokenA')?.toLowerCase()
+    const tokenBAddress = searchParams.get('tokenB')?.toLowerCase()
 
-        if (!tokenAAddress || !tokenBAddress) return
-
+    if (tokenAAddress && tokenBAddress) {
         const foundTokenA = tokens.find(t => t.value.toLowerCase() === tokenAAddress)
         const foundTokenB = tokens.find(t => t.value.toLowerCase() === tokenBAddress)
 
         if (foundTokenA) setTokenA(foundTokenA)
         if (foundTokenB) setTokenB(foundTokenB)
-
-        if (foundTokenA || foundTokenB) {
-            setHasInitializedFromParams(true)
+    } else {
+        if (tokenA?.value && tokenB?.value) {
+            updateURLWithTokens(tokenA.value, tokenB.value)
         }
-    }, [])
+    }
+    setHasInitializedFromParams(true)
+}, [])
+
 
     const updateURLWithTokens = (tokenAValue?: string, tokenBValue?: string) => {
         const url = new URL(window.location.href)
@@ -958,7 +960,7 @@ export default function Swap8899({
             fetch0()
         }
 
-    }, [config, address, tokenA, tokenB, feeSelect, txupdate])
+    }, [config, address, tokenA, tokenB, feeSelect, txupdate,hasInitializedFromParams])
 
     React.useEffect(() => {
         const updateRate = async () => {
