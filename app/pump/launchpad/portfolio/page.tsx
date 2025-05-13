@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from 'react';
 import type { Metadata } from "next";
 import Dashboard from "@/app/pump/ui/Dashboard";
-import Activity from "@/app/pump/ui/Activity";
+// import Activity from "@/app/pump/ui/Activity";
 import Sort3 from "@/app/pump/ui/Sort3";
 
 export const metadata: Metadata = {
