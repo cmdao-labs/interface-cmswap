@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import Search from "@/app/pump/ui/Search";
 import Sort from "@/app/pump/ui/Sort";
 import Table from "@/app/pump/ui/Table";
-// import Event from "@/app/pump/ui/Event";
+import Event from "@/app/pump/ui/Event";
 import Sort4 from "@/app/pump/ui/Sort4";
 
 export const metadata: Metadata = {
@@ -109,7 +109,7 @@ export default async function Launchpad(props: {
           </div>
         }>
           <div className="w-full h-full flex flex-row flex-wrap items-start justify-start gap-6 overflow-visible" style={{zIndex: 1}}>
-            {/* <Event mode={mode} chain={chain} /> */}
+            <Event mode={mode} chain={chain} />
             <div className="flex flex-row flex-wrap 2xl:flex-no-wrap gap-6 w-full">
               <Search />
               <Sort />

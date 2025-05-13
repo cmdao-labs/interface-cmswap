@@ -105,7 +105,7 @@ export default function Create({
   };
 
   return (
-    <main className="row-start-2 w-full xl:w-1/4 self-center h-full flex flex-col gap-6 items-center xl:items-start">
+    <main className="row-start-2 w-full xl:w-1/4 self-center h-full flex flex-col gap-6 items-center xl:items-start mt-[100px] md:mt-1">
         <Link href={"/pump/launchpad?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")} prefetch={false} className="underline hover:font-bold">Back to launchpad</Link>
         <span className="text-2xl font-bold mt-4">Create a meme 🚀</span>
         <form action={launch} className="flex flex-col gap-6">

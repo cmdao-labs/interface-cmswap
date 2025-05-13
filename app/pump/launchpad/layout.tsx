@@ -182,14 +182,14 @@ export default function BlogLayout({
     // }, [account, mode])
 
     const handleChain = (term: string) => {
-        redirect('/pump/launchpad?chain=' + term);
+        redirect('/pump/launchpad?chain=' + term + '&mode=pro');
     };
 
     return (
         <div className="grid grid-rows-[20px_1fr_10px] items-center justify-items-center min-h-screen pb-20 gap-16 p-4 sm:p-10 font-[family-name:var(--font-geist-sans)] bg-slate-900 text-white">
-            <header className="mt-[150px] mb-10 row-start-1 flex gap-4 md:gap-8 items-center justify-start md:justify-center text-xs md:text-sm w-full flex-wrap" style={{zIndex: 1}}>
+            <header className="mt-[220px] md:mt-[150px] mb-10 row-start-1 flex gap-4 md:gap-8 items-center justify-start md:justify-center text-xs md:text-sm w-full flex-wrap" style={{zIndex: 1}}>
                 <div className="flex flex-row gap-1">
-                    <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2" onClick={() => {if (chain !== 'bitkub') {handleChain('bitkub');}}}><Image src="/96.png" alt="bitkub" width={25} height={25} style={{filter: chain !== 'bitkub' ? "grayscale(1)" : "grayscale(0)"}} /></button>
+                    <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2" onClick={() => {if (chain !== 'kub') {handleChain('kub');}}}><Image src="/96.png" alt="bitkub" width={25} height={25} style={{filter: chain !== 'kub' ? "grayscale(1)" : "grayscale(0)"}} /></button>
                 </div>
                 {/* {connections && account.address !== undefined &&
                     <Link href={"/pump/launchpad/portfolio?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite") + "&addr=" + account.address} prefetch={false} className="underline text-emerald-300 hover:font-bold">Portfolio</Link>

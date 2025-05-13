@@ -375,7 +375,7 @@ export default function Trade({
     }
 
     return (
-        <main className="row-start-2 w-full flex flex-col gap-4 items-center xl:items-start">
+        <main className="row-start-2 w-full flex flex-col gap-4 items-center xl:items-start mt-[60px] md:mt-1">
             {headnoti && <div className="w-full h-[40px] bg-sky-500 animate-pulse text-center p-2 flex flex-row gap-2 items-center justify-center">
                 <span>Trade Successful!, </span>
                 <Link href={_explorer + "tx/" + hash} rel="noopener noreferrer" target="_blank" prefetch={false} className="underline">your txn hash</Link>
@@ -383,7 +383,7 @@ export default function Trade({
             </div>}
             <div className="ml-[28px] w-full xl:w-2/3 flex flex-col gap-4 mb-2">
                 <Link href={"/pump/launchpad?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")} prefetch={false} className="underline hover:font-bold">Back to launchpad</Link>
-                <div className="w-full flex flex-row flex-wrap justify-between text-xs xl:text-md">
+                <div className="w-full flex flex-col md:flex-row flex-wrap justify-between text-xs xl:text-md">
                     <div className="flex flex-row flex-wrap gap-2">
                         <span className="text-emerald-300">{result2.status === 'success' && result2.data![0].result}</span>
                         <span>{result2.status === 'success' && '[$' + result2.data![1].result + ']'}</span>
@@ -433,11 +433,11 @@ export default function Trade({
                     <iframe height="100%" width="100%" id="geckoterminal-embed" title="GeckoTerminal Embed" src={"https://www.geckoterminal.com/" + (chain === "KUB" && "bitkub_chain") + "/pools/" + lp + "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"} allow="clipboard-write"></iframe>
                     <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
                         <div className="w-1/5 sm:w-1/3">Timestamp</div>
-                        <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-end gap-10">
-                            <span className="text-right w-[50px] xl:w-[200px]">From</span>
-                            <span className="text-right w-[100px] xl:w-[200px]">Asset</span>
-                            <span className="text-right w-[50px] xl:w-[200px]">Amount</span>
-                            <span className="text-right w-[50px] xl:w-[200px]">Txn hash</span>
+                        <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-start gap-10">
+                            <span className="text-right w-[30px] xl:w-[200px]">From</span>
+                            <span className="text-right w-[70px] xl:w-[200px]">Asset</span>
+                            <span className="text-right w-[30px] xl:w-[200px]">Amount</span>
+                            <span className="text-right w-[30px] xl:w-[200px]">Txn</span>
                         </div>
                     </div>
                     <div className="w-full h-[950px] pr-4 flex flex-col items-center sm:items-start overflow-y-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-neutral-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-sky-500" style={{zIndex: 1}}>
@@ -445,14 +445,14 @@ export default function Trade({
                             <div className="w-full h-[10px] flex flex-row items-center justify-around text-xs md:text-sm py-6 border-b border-gray-800" key={index}>
                                 <span className="w-1/5 sm:w-1/3 text-gray-500 text-xs">{new Intl.DateTimeFormat('en-GB', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Bangkok', }).format(new Date(res.timestamp))}</span>
                                 <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-end gap-10 text-xs sm:text-sm">
-                                    <span className="text-right w-[50px] xl:w-[200px]">{res.from.slice(0, 5) + '...' + res.from.slice(37)}</span>
-                                    <div className="text-right w-[100px] xl:w-[200px] flex flex-row gap-2 items-center justify-end overflow-hidden">
+                                    <span className="text-right w-[30px] xl:w-[200px]">{res.from.slice(0, 5) + '...' + res.from.slice(37)}</span>
+                                    <div className="text-right w-[70px] xl:w-[200px] flex flex-row gap-2 items-center justify-end overflow-hidden">
                                         {res.action === 'buy' && <span className="text-green-500 font-bold">{res.action.toUpperCase()}</span>}
                                         {res.action === 'sell' && <span className="text-red-500 font-bold">{res.action.toUpperCase()}</span>}
                                         {res.action === 'launch' && <span className="text-emerald-300 font-bold">🚀 {res.action.toUpperCase()} & BUY</span>}
                                     </div>
-                                    <span className="text-right w-[50px] xl:w-[200px]">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res.value)}</span>
-                                    <Link href={_explorer + "tx/" + res.hash} rel="noopener noreferrer" target="_blank" prefetch={false} className="font-bold text-right w-[50px] xl:w-[200px] underline truncate">{res.hash.slice(0, 5) + '...' + res.hash.slice(61)}</Link>
+                                    <span className="text-right w-[30px] xl:w-[200px]">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res.value)}</span>
+                                    <Link href={_explorer + "tx/" + res.hash} rel="noopener noreferrer" target="_blank" prefetch={false} className="font-bold text-right w-[30px] xl:w-[200px] underline truncate">{res.hash.slice(0, 5) + '...' + res.hash.slice(61)}</Link>
                                 </div>
                             </div>
                         )}
