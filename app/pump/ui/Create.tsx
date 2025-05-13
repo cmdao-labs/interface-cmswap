@@ -17,35 +17,23 @@ export default function Create({
   const connections = useConnections();
 
   let _chainId = 0;
-  if (chain === 'unichain' || chain === '') {
-    _chainId = 130;
-  } else if (chain === 'base') {
-    _chainId = 8453;
+  if (chain === 'kub' || chain === '') {
+    _chainId = 96;
   }
   let currencyAddr: string = '';
   let bkgafactoryAddr: string = '';
   let _blockcreated: number = 1;
   let facABI: any = null;
-  if ((chain === 'unichain' || chain === '') && (mode === 'lite' || mode === '')) {
-    currencyAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
-    bkgafactoryAddr = '0xaA3Caad9e335a133d96EA3D5D73df2dcF9e360d4';
-    _blockcreated = 8581591;
+  if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '')) {
+    // currencyAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
+    // bkgafactoryAddr = '0xaA3Caad9e335a133d96EA3D5D73df2dcF9e360d4';
+    // _blockcreated = 8581591;
+    // facABI = ERC20FactoryABI;
+  } else if ((chain === 'kub' || chain === '') && mode === 'pro') {
+    currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
+    bkgafactoryAddr = '0x1EA7349DB1af6bCC048c97572e9295c1e1a15c6b';
+    _blockcreated = 25033350;
     facABI = ERC20FactoryABI;
-  } else if ((chain === 'unichain' || chain === '') && mode === 'pro') {
-    currencyAddr = '0x4200000000000000000000000000000000000006';
-    bkgafactoryAddr = '0xf9ACe692e54183acdaB6341DcCde4e457aEf37Dd';
-    _blockcreated = 8581591;
-    facABI = ERC20FactoryABI;
-  } else if (chain === 'base' && (mode === 'lite' || mode === '')) {
-    currencyAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
-    bkgafactoryAddr = '0xaA3Caad9e335a133d96EA3D5D73df2dcF9e360d4';
-    _blockcreated = 26462082;
-    facABI = ERC20FactoryETHABI;
-  } else if (chain === 'base' && mode === 'pro') {
-    currencyAddr = '0x4200000000000000000000000000000000000006';
-    bkgafactoryAddr = '0xf9ACe692e54183acdaB6341DcCde4e457aEf37Dd';
-    _blockcreated = 26462082;
-    facABI = ERC20FactoryETHABI;
   }
   const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
   const bkgafactoryContract = {
@@ -65,45 +53,45 @@ export default function Create({
       alert('Your token is launching, pls wait a sec...')
       const data = new FormData();
       data.set("file", file);
-      const uploadRequest = await fetch("/api/files", { method: "POST", body: data, });
+      const uploadRequest = await fetch("/pump/api/files", { method: "POST", body: data, });
       const upload = await uploadRequest.json();
       console.log(name, ticker, desp, 'ipfs://' + upload.IpfsHash);
       let result = '';
       if (mode !== 'pro') {
-        const allowance = await readContracts(config, {
-          contracts: [
-            {
-                address: dataofcurr.addr as '0xstring',
-                abi: erc20Abi,
-                functionName: 'allowance',
-                args: [account.address as '0xstring', bkgafactoryAddr as '0xstring'],
-                chainId: _chainId,
-            },
-          ],
-        });
-        if (Number(formatEther(allowance[0].result!)) < 309000) {
-            writeContract(config, {
-                address: dataofcurr.addr as '0xstring',
-                abi: erc20Abi,
-                functionName: 'approve',
-                args: [bkgafactoryAddr as '0xstring', parseEther('309000')],
-                chainId: _chainId,
-            })
-        }
-        result = await writeContract(config, {
-          ...bkgafactoryContract,
-          functionName: 'createToken',
-          args: [name, ticker, 'ipfs://' + upload.IpfsHash, desp],
-        });
+        // const allowance = await readContracts(config, {
+        //   contracts: [
+        //     {
+        //         address: dataofcurr.addr as '0xstring',
+        //         abi: erc20Abi,
+        //         functionName: 'allowance',
+        //         args: [account.address as '0xstring', bkgafactoryAddr as '0xstring'],
+        //         chainId: _chainId,
+        //     },
+        //   ],
+        // });
+        // if (Number(formatEther(allowance[0].result!)) < 309000) {
+        //     writeContract(config, {
+        //         address: dataofcurr.addr as '0xstring',
+        //         abi: erc20Abi,
+        //         functionName: 'approve',
+        //         args: [bkgafactoryAddr as '0xstring', parseEther('0')],
+        //         chainId: _chainId,
+        //     })
+        // }
+        // result = await writeContract(config, {
+        //   ...bkgafactoryContract,
+        //   functionName: 'createToken',
+        //   args: [name, ticker, 'ipfs://' + upload.IpfsHash, desp],
+        // });
       } else {
         result = await writeContract(config, {
           ...bkgafactoryContract,
           functionName: 'createToken',
           args: [name, ticker, 'ipfs://' + upload.IpfsHash, desp],
-          value: parseEther('0.005'),
+          value: parseEther('0'),
         });
       }
-      alert("Launch success!, your txn hash: https://unichain.blockscout.com/tx/" + result);
+      alert("Launch success!, your txn hash: " + (chain === 'kub' && "https://www.kubscan.com/tx/") + result);
     } catch (e) {
       console.log(e);
       alert("Launch failed");
@@ -130,11 +118,11 @@ export default function Create({
           <div className="text-teal-900 pt-2 w-full" role="alert">
             <div className="flex">
               <svg className="fill-current h-4 w-4 text-teal-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/></svg>
-              <p className="font-bold text-xs">Deployment cost: {mode === 'pro' ? '0.005 eth' : '209,000 $THB'}</p>
+              <p className="font-bold text-xs">Deployment cost: {chain === 'kub' ? 'free' : ''}</p>
             </div>
           </div>
           {connections && account.address !== undefined && account.chainId === _chainId ? 
-            <button className="w-1/2 p-2 mb-3 rounded-2xl font-bold bg-emerald-300 text-slate-900 underline hover:bg-sky-500 hover:text-white" type="submit"><span className="self-center">Launch!</span></button> :
+            <button className="w-1/2 p-2 mb-3 rounded-2xl font-bold bg-emerald-300 text-slate-900 underline hover:bg-sky-500 hover:text-white cursor-pointer" type="submit"><span className="self-center">Launch!</span></button> :
             <button className="w-1/2 p-2 mb-3 rounded-2xl font-bold bg-gray-500 cursor-not-allowed"><span className="self-center">Launch!</span></button>
           }
         </form>
