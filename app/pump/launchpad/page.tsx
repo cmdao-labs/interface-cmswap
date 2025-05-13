@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import Search from "@/app/pump/ui/Search";
 import Sort from "@/app/pump/ui/Sort";
 import Table from "@/app/pump/ui/Table";
-import Event from "@/app/pump/ui/Event";
+// import Event from "@/app/pump/ui/Event";
 import Sort4 from "@/app/pump/ui/Sort4";
 
 export const metadata: Metadata = {

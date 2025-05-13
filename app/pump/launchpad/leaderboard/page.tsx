@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from 'react';
 import type { Metadata } from "next";
-import Leaderboard from "@/app/pump/ui/Leaderboard";
+// import Leaderboard from "@/app/pump/ui/Leaderboard";
 import Sort2 from "@/app/pump/ui/Sort2";
 
 export const metadata: Metadata = {
@@ -49,7 +49,7 @@ export default async function LeaderboardPage(props: {
           <div className="w-full h-[70px] sm:px-14 sm:py-10 bg-gray-500 rounded-lg mb-1 animate-pulse" />
         </div>
       }>
-        <Leaderboard rankby={rankby} mode={mode} chain={chain} />
+        {/* <Leaderboard rankby={rankby} mode={mode} chain={chain} /> */}
       </Suspense>
     </main>
   );
