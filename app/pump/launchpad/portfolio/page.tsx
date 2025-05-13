@@ -48,7 +48,7 @@ export default async function Portfolio(props: {
             <div className="w-full h-[50px] py-6 bg-gray-500 rounded-lg mb-1 animate-pulse" />
         </main>
       }>
-        {activity === 'true' ? <Activity addr={addr} mode={mode} chain={chain} /> : <Dashboard addr={addr} mode={mode} chain={chain} />}
+        {/* {activity === 'true' ? <Activity addr={addr} mode={mode} chain={chain} /> : <Dashboard addr={addr} mode={mode} chain={chain} />} */}
       </Suspense>
     </main>
   );
