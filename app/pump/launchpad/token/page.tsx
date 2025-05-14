@@ -54,6 +54,7 @@ export default async function Ticker(props: {
       chain?: string;
       ticker?: string;
       lp?: string;
+      token?: string;
     }>;
   }) {
     const searchParams = await props.searchParams;
@@ -61,8 +62,9 @@ export default async function Ticker(props: {
     const chain = searchParams?.chain || '';
     const ticker = searchParams?.ticker || '';
     const lp = searchParams?.lp || '';
+    const token = searchParams?.token || '';
     
     return (
-        <Trade mode={mode} chain={chain} ticker={ticker} lp={lp} />
+        <Trade mode={mode} chain={chain} ticker={ticker} lp={lp} token={token} />
     )
 }

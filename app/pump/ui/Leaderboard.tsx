@@ -14,11 +14,12 @@ const buildDataUrl = (address: string): string => {
 };
 
 export default async function Leaderboard({
-  rankby, mode, chain,
+  rankby, mode, chain, token,
 }: {
   rankby: string;
   mode: string;
   chain: string;
+  token: string;
 }) {
   await connection();
 
@@ -41,13 +42,12 @@ export default async function Leaderboard({
   let _blockcreated: number = 1;
   let v2facAddr: string = '';
   let v2routerAddr: string = '';
-  if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '')) {
-    // currencyAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
-    // bkgafactoryAddr = '0xaA3Caad9e335a133d96EA3D5D73df2dcF9e360d4';
-    // _blockcreated = 8581591;
-    // v2facAddr = '0x1f98400000000000000000000000000000000002';
-    // v2routerAddr = '0x284f11109359a7e1306c3e447ef14d38400063ff';
-    // currencyLp = '0x8E2D7f0F8b3A4DEFa2e00f85254C77F3FcD26053';
+  if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '') && (token === 'cmm' || token === '')) {
+    currencyAddr = '0x9b005000a10ac871947d99001345b01c1cef2790';
+    bkgafactoryAddr = '0xf23b60960b62Cad9921a2Cf2DD8064b73EE3F4E4';
+    _blockcreated = 25213194;
+    v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
+    v2routerAddr = '0x3F7582E36843FF79F173c7DC19f517832496f2D8';
   } else if ((chain === 'kub' || chain === '') && mode === 'pro') {
     currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
     bkgafactoryAddr = '0xa4ccd318dA0659DE1BdA6136925b873C2117ef4C';
@@ -69,11 +69,11 @@ export default async function Leaderboard({
     chainId: _chainId,
   } as const
 
-  const bkgafactoryLiteContract = {
-    address: '0xaA3Caad9e335a133d96EA3D5D73df2dcF9e360d4',
-    abi: ERC20FactoryABI,
-    chainId: _chainId,
-  } as const
+  // const bkgafactoryLiteContract = {
+  //   address: '0xaA3Caad9e335a133d96EA3D5D73df2dcF9e360d4',
+  //   abi: ERC20FactoryABI,
+  //   chainId: _chainId,
+  // } as const
 
   const tokenCount = await readContracts(config, {contracts: [{ ...bkgafactoryContract, functionName: 'totalIndex', },],});
   const init: any = {contracts: []};

@@ -9,10 +9,11 @@ import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
 import { UniswapV2FactoryABI } from '@/app/pump/abi/UniswapV2Factory';
 
 export default async function Event({
-    mode, chain,
+    mode, chain, token,
   }: {
     mode: string;
     chain: string;
+    token: string;
   }) {
     await connection();
 
@@ -32,11 +33,11 @@ export default async function Event({
     let bkgafactoryAddr: string = '';
     let _blockcreated: number = 0;
     let v2facAddr: string = '';
-    if ((chain === 'kub') && (mode === 'lite' || mode === '')) {
-        // currencyAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
-        // bkgafactoryAddr = '0xaA3Caad9e335a133d96EA3D5D73df2dcF9e360d4';
-        // _blockcreated = 8581591;
-        // v2facAddr = '0x1f98400000000000000000000000000000000002';
+    if ((chain === 'kub') && (mode === 'lite' || mode === '') && (token === 'cmm' || token === '')) {
+        currencyAddr = '0x9b005000a10ac871947d99001345b01c1cef2790';
+        bkgafactoryAddr = '0xf23b60960b62Cad9921a2Cf2DD8064b73EE3F4E4';
+        _blockcreated = 25213194;
+        v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
     } else if ((chain === 'kub') && mode === 'pro') {
         currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
         bkgafactoryAddr = '0xa4ccd318dA0659DE1BdA6136925b873C2117ef4C';

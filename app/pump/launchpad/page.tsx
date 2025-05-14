@@ -6,6 +6,7 @@ import Sort from "@/app/pump/ui/Sort";
 import Table from "@/app/pump/ui/Table";
 import Event from "@/app/pump/ui/Event";
 import Sort4 from "@/app/pump/ui/Sort4";
+import Sort5 from "@/app/pump/ui/Sort5";
 
 export const metadata: Metadata = {
     title: "CMswap - PUMP",
@@ -20,6 +21,7 @@ export default async function Launchpad(props: {
     sort?: string;
     order?: string;
     page?: string;
+    token?: string;
   }>;
 }) {
   const searchParams = await props.searchParams;
@@ -28,6 +30,7 @@ export default async function Launchpad(props: {
   const query = searchParams?.query || '';
   const sort = searchParams?.sort || '';
   const order = searchParams?.order || '';
+  const token = searchParams?.token || '';
   
   return (
     <main className="mt-[100px] w-full h-full flex flex-col gap-4 items-center sm:items-start overflow-hidden">
@@ -37,6 +40,9 @@ export default async function Launchpad(props: {
             <span>Create a token</span> 
             🚀
           </Link>
+        </div>
+        <div className="flex flex-row flex-wrap 2xl:flex-no-wrap gap-14 w-full gap-6 mt-2 mb-6" style={{zIndex: 1}}>
+          {mode === 'lite' && chain === 'kub' && <Sort5 />}
         </div>
         <Suspense key={'mode-' + mode + '-chain-' + chain + '-query-' + query + '-sort-' + sort + '-order-' + order} fallback={
           <div className="w-full h-full flex flex-row flex-wrap items-start justify-start gap-6 overflow-visible" style={{zIndex: 1}}>
@@ -109,13 +115,13 @@ export default async function Launchpad(props: {
           </div>
         }>
           <div className="w-full h-full flex flex-row flex-wrap items-start justify-start gap-6 overflow-visible" style={{zIndex: 1}}>
-            <Event mode={mode} chain={chain} />
+            <Event mode={mode} chain={chain} token={token} />
             <div className="flex flex-row flex-wrap 2xl:flex-no-wrap gap-6 w-full">
               <Search />
               <Sort />
             </div>
             <div className="w-full flex flex-row flex-wrap items-start justify-start overflow-y-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-neutral-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-sky-500">
-              <Table mode={mode} query={query} sort={sort} order={order} chain={chain} />
+              <Table mode={mode} query={query} sort={sort} order={order} chain={chain} token={token} />
             </div>
           </div>
         </Suspense>

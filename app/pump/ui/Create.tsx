@@ -9,10 +9,11 @@ import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
 import { ERC20FactoryETHABI } from '@/app/pump/abi/ERC20FactoryETH';
 
 export default function Create({
-  mode, chain,
+  mode, chain, token,
 }: {
   mode: string;
   chain: string;
+  token: string;
 }) {
   const connections = useConnections();
 
@@ -24,11 +25,11 @@ export default function Create({
   let bkgafactoryAddr: string = '';
   let _blockcreated: number = 1;
   let facABI: any = null;
-  if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '')) {
-    // currencyAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
-    // bkgafactoryAddr = '0xaA3Caad9e335a133d96EA3D5D73df2dcF9e360d4';
-    // _blockcreated = 8581591;
-    // facABI = ERC20FactoryABI;
+  if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '') && (token === 'cmm' || token === '')) {
+    currencyAddr = '0x9b005000a10ac871947d99001345b01c1cef2790';
+    bkgafactoryAddr = '0xf23b60960b62Cad9921a2Cf2DD8064b73EE3F4E4';
+    _blockcreated = 25213194;
+    facABI = ERC20FactoryABI;
   } else if ((chain === 'kub' || chain === '') && mode === 'pro') {
     currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
     bkgafactoryAddr = '0xa4ccd318dA0659DE1BdA6136925b873C2117ef4C';
@@ -57,32 +58,33 @@ export default function Create({
       const upload = await uploadRequest.json();
       console.log(name, ticker, desp, 'ipfs://' + upload.IpfsHash);
       let result = '';
-      if (mode !== 'pro') {
-        // const allowance = await readContracts(config, {
-        //   contracts: [
-        //     {
-        //         address: dataofcurr.addr as '0xstring',
-        //         abi: erc20Abi,
-        //         functionName: 'allowance',
-        //         args: [account.address as '0xstring', bkgafactoryAddr as '0xstring'],
-        //         chainId: _chainId,
-        //     },
-        //   ],
-        // });
-        // if (Number(formatEther(allowance[0].result!)) < 309000) {
-        //     writeContract(config, {
-        //         address: dataofcurr.addr as '0xstring',
-        //         abi: erc20Abi,
-        //         functionName: 'approve',
-        //         args: [bkgafactoryAddr as '0xstring', parseEther('0')],
-        //         chainId: _chainId,
-        //     })
-        // }
-        // result = await writeContract(config, {
-        //   ...bkgafactoryContract,
-        //   functionName: 'createToken',
-        //   args: [name, ticker, 'ipfs://' + upload.IpfsHash, desp],
-        // });
+      if (mode === 'lite' && (token === 'cmm' || token === '')) {
+        const allowance = await readContracts(config, {
+          contracts: [
+            {
+                address: dataofcurr.addr as '0xstring',
+                abi: erc20Abi,
+                functionName: 'allowance',
+                args: [account.address as '0xstring', bkgafactoryAddr as '0xstring'],
+                chainId: _chainId,
+            },
+          ],
+        });
+        if (Number(formatEther(allowance[0].result!)) < 0.0036) {
+            writeContract(config, {
+                address: dataofcurr.addr as '0xstring',
+                abi: erc20Abi,
+                functionName: 'approve',
+                args: [bkgafactoryAddr as '0xstring', parseEther('0.0037')],
+                chainId: _chainId,
+            })
+        }
+        result = await writeContract(config, {
+          ...bkgafactoryContract,
+          functionName: 'createToken',
+          args: [name, ticker, 'ipfs://' + upload.IpfsHash, desp],
+          value: parseEther('0'),
+        });
       } else {
         result = await writeContract(config, {
           ...bkgafactoryContract,
@@ -118,7 +120,7 @@ export default function Create({
           <div className="text-teal-900 pt-2 w-full" role="alert">
             <div className="flex">
               <svg className="fill-current h-4 w-4 text-teal-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/></svg>
-              <p className="font-bold text-xs">Deployment cost: {chain === 'kub' ? '0.0036 KUB (not included network fee)' : ''}</p>
+              <p className="font-bold text-xs">Deployment cost: {chain === 'kub' && mode === 'pro' && '0.0036 KUB (not included network fee)'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && '0.0036 CMM (not included network fee)'}</p>
             </div>
           </div>
           {connections && account.address !== undefined && account.chainId === _chainId ? 

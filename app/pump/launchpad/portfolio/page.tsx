@@ -16,6 +16,7 @@ export default async function Portfolio(props: {
       activity?: string;
       mode?: string;
       chain?: string;
+      token?: string;
     }>;
   }) {
   const searchParams = await props.searchParams;
@@ -23,6 +24,7 @@ export default async function Portfolio(props: {
   const activity = searchParams?.activity || '';
   const mode = searchParams?.mode || '';
   const chain = searchParams?.chain || '';
+  const token = searchParams?.token || '';
 
   return (
     <main className="row-start-2 w-full xl:w-1/2 self-center h-full flex flex-col gap-6 items-center lg:items-start mt-[100px]">
@@ -48,7 +50,7 @@ export default async function Portfolio(props: {
             <div className="w-full h-[50px] py-6 bg-gray-500 rounded-lg mb-1 animate-pulse" />
         </main>
       }>
-        {activity === 'true' ? <Activity addr={addr} mode={mode} chain={chain} /> : <Dashboard addr={addr} mode={mode} chain={chain} />}
+        {activity === 'true' ? <Activity addr={addr} mode={mode} chain={chain} token={token} /> : <Dashboard addr={addr} mode={mode} chain={chain} token={token} />}
       </Suspense>
     </main>
   );

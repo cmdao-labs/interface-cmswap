@@ -16,12 +16,13 @@ import { UniswapV3QouterABI } from '@/app/pump/abi/UniswapV3Qouter';
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
 export default function Trade({
-    mode, chain, ticker, lp,
+    mode, chain, ticker, lp, token,
   }: {
     mode: string;
     chain: string;
     ticker: string;
     lp: string;
+    token: string;
   }) {
     let _chain: any = null;
     let _chainId = 0;
@@ -41,12 +42,13 @@ export default function Trade({
     let v2facAddr: string = '';
     let v2routerAddr: string = '';
     let v3qouterAddr: string = '';
-    if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '')) {
-        // currencyAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
-        // bkgafactoryAddr = '0xaA3Caad9e335a133d96EA3D5D73df2dcF9e360d4';
-        // _blockcreated = 8581591;
-        // v2facAddr = '0x1f98400000000000000000000000000000000002';
-        // v2routerAddr = '0x284f11109359a7e1306c3e447ef14d38400063ff';
+    if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '') && (token === 'cmm' || token === '')) {
+        currencyAddr = '0x9b005000a10ac871947d99001345b01c1cef2790';
+        bkgafactoryAddr = '0xf23b60960b62Cad9921a2Cf2DD8064b73EE3F4E4';
+        _blockcreated = 25213194;
+        v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
+        v2routerAddr = '0x3F7582E36843FF79F173c7DC19f517832496f2D8';
+        v3qouterAddr = '0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f';
     } else if ((chain === 'kub' || chain === '') && mode === 'pro') {
         currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
         bkgafactoryAddr = '0xa4ccd318dA0659DE1BdA6136925b873C2117ef4C';
@@ -342,31 +344,39 @@ export default function Trade({
                 value: trademode ? parseEther(inputBalance) : BigInt(0)
             })
         } else {
-            // const allowance = await readContracts(config, {
-            //     contracts: [
-            //         {
-            //             address: trademode ? dataofcurr.addr as '0xstring' : ticker as '0xstring',
-            //             abi: erc20Abi,
-            //             functionName: 'allowance',
-            //             args: [account.address as '0xstring', dataofuniv2router.addr as '0xstring'],
-            //             chainId: _chainId,
-            //         },
-            //     ],
-            // });
-            // if (Number(formatEther(allowance[0].result!)) < Number(inputBalance)) {
-            //     writeContract(config, {
-            //         address: trademode ? dataofcurr.addr as '0xstring' : ticker as '0xstring',
-            //         abi: erc20Abi,
-            //         functionName: 'approve',
-            //         args: [dataofuniv2router.addr as '0xstring', parseEther(String(Number(inputBalance) + 1))],
-            //         chainId: _chainId,
-            //     })
-            // }
-            // result = await writeContract(config, {
-            //     ...univ2RouterContract,
-            //     functionName: 'swapExactTokensForTokens',
-            //     args: [parseEther(inputBalance), parseEther(String(Number(outputBalance) * 0.95)), path, account.address as '0xstring', BigInt((Number(Date.now() / 100).toFixed(0)) + 3600)],
-            // })
+            const allowance = await readContracts(config, {
+                contracts: [
+                    {
+                        address: trademode ? dataofcurr.addr as '0xstring' : ticker as '0xstring',
+                        abi: erc20Abi,
+                        functionName: 'allowance',
+                        args: [account.address as '0xstring', dataofuniv2router.addr as '0xstring'],
+                        chainId: _chainId,
+                    },
+                ],
+            });
+            if (Number(formatEther(allowance[0].result!)) < Number(inputBalance)) {
+                writeContract(config, {
+                    address: trademode ? dataofcurr.addr as '0xstring' : ticker as '0xstring',
+                    abi: erc20Abi,
+                    functionName: 'approve',
+                    args: [dataofuniv2router.addr as '0xstring', parseEther(String(Number(inputBalance) + 1))],
+                    chainId: _chainId,
+                })
+            }
+            result = await writeContract(config, {
+                ...univ2RouterContract,
+                functionName: 'exactInputSingle',
+                args: [{
+                    tokenIn: trademode ? dataofcurr.addr as '0xstring' : ticker as '0xstring', 
+                    tokenOut: trademode ? ticker as '0xstring' : dataofcurr.addr as '0xstring', 
+                    fee: 10000,
+                    recipient: account.address as '0xstring',
+                    amountIn: parseEther(inputBalance),
+                    amountOutMinimum: parseEther(outputBalance) * BigInt(95) / BigInt(100),
+                    sqrtPriceLimitX96: BigInt(0)
+                }],
+            })
         }
         setHeadnoti(true);
         setHash(result);
@@ -403,7 +413,7 @@ export default function Trade({
                                 Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format((1 / ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2)))
                             :
                             'Fetching...'
-                    }</span> {chain === 'kub' ? 'KUB' : ''}</span>
+                    }</span> {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}</span>
                     <span>Market Cap: <span className="text-emerald-300">{
                         result3.status === 'success' ?
                             result3.data![1].result!.toUpperCase() !== dataofcurr.addr.toUpperCase() ?
@@ -411,7 +421,7 @@ export default function Trade({
                                 Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format((1 / ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2)) * 1000000000)
                             :
                             'Fetching...'
-                    }</span> {chain === 'kub' ? 'KUB' : ''}</span>
+                    }</span> {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}</span>
                     <span>
                         Creator: {creator.slice(0, 5)}...{creator.slice(37)} ····· {
                             Number(Number(Date.now() / 1000).toFixed(0)) - Number(createAt) < 60 && rtf.format(Number(createAt) - Number(Number(Date.now() / 1000).toFixed(0)), 'second')
@@ -466,7 +476,7 @@ export default function Trade({
                         </div>
                         <div className="w-full flex flex-row justify-between text-2xl">
                             <input className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-3/5 font-bold bg-transparent" placeholder="0" value={inputBalance} onChange={(event) => {setInputBalance(event.target.value); qoute(event.target.value);}} type="number" />
-                            <span className="mr-[20px] w-2/5 text-right truncate">{trademode ? chain === 'kub' ? 'KUB' : '' : result2.status === 'success' && '$' + result2.data![1].result}</span>
+                            <span className="mr-[20px] w-2/5 text-right truncate">{trademode ? chain === 'kub' && mode === 'pro' ? 'KUB' : token === 'cmm' || token === '' ? 'CMM' : '' : result2.status === 'success' && '$' + result2.data![1].result}</span>
                         </div>
                         <div className="mr-[20px] self-end text-sm">
                             {mode === 'pro' ?
@@ -482,7 +492,7 @@ export default function Trade({
                         </div>
                         <div className="w-full flex flex-row justify-between text-2xl text-emerald-300 font-bold">
                             <span className="ml-[20px] w-3/5 overflow-hidden">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(Number(outputBalance))}</span>
-                            <span className="mr-[20px] w-2/5 text-right truncate">{!trademode ? chain === 'kub' ? 'KUB' :'' : result2.status === 'success' && '$' + result2.data![1].result}</span>
+                            <span className="mr-[20px] w-2/5 text-right truncate">{!trademode ? chain === 'kub' && mode === 'pro' ? 'KUB' : token === 'cmm' || token === '' ? 'CMM' : '' : result2.status === 'success' && '$' + result2.data![1].result}</span>
                         </div>
                         <div className="mr-[20px] self-end text-sm">
                             {mode === 'pro' ?
@@ -521,23 +531,21 @@ export default function Trade({
                                         )
                                     }%</span>
                                     <div className='has-tooltip'>
-                                        <span className='tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs'>{'When the market cap reaches 1 ' + (mode === 'pro' && chain === 'kub' ? ' KUB' : '') + ', 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.'}</span>
+                                        <span className='tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs'>{'When the market cap reaches 1 ' + (chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + ', 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.'}</span>
                                     </div>
                                 </div>
                                 <div className="ml-[20px] mr-[20px] h-6 bg-gray-400 rounded-lg overflow-hidden">
                                     <div className="h-6 bg-sky-400 rounded-lg" style={{width: 
                                         result3.status === 'success' ?
                                             result3.data![1].result?.toUpperCase() !== currencyAddr.toUpperCase() ? 
-                                                ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2 * 100 / (mode === 'pro' ? 1 : 320000000)) + '%':
-                                                (((1 / ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2)) * 100) / (mode === 'pro' ? 1 : 320000000)) + '%'
+                                                ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2 * 100 / (mode === 'pro' ? 1 : 1)) + '%':
+                                                (((1 / ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2)) * 100) / (mode === 'pro' ? 1 : 1)) + '%'
                                             :
                                             '0%'
                                     }} />
                                 </div>
                             </>
                         }
-                        
-                        
                     </div>
                     <div className="w-full h-[780px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center">
                         <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">
