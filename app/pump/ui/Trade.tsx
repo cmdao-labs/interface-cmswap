@@ -336,7 +336,7 @@ export default function Trade({
                     fee: 10000,
                     recipient: account.address as '0xstring',
                     amountIn: parseEther(inputBalance),
-                    amountOutMinimum: BigInt((Number(parseEther(outputBalance)) * 0.95).toFixed(0)),
+                    amountOutMinimum: parseEther(outputBalance) * BigInt(95) / BigInt(100),
                     sqrtPriceLimitX96: BigInt(0)
                 }],
                 value: trademode ? parseEther(inputBalance) : BigInt(0)
