@@ -503,7 +503,7 @@ export default function Trade({
                             :
                             "https://gateway.commudao.xyz/ipfs/"
                         } alt="token_waiting_for_approve" width={100} height={100} /></div>
-                        <div className="ml-[20px] h-[190px] overflow-hidden mr-[20px]"><span className="text-xs">Description: {result2.status === 'success' && result2.data![2].result}</span></div>
+                        <div className="ml-[20px] h-[190px] mr-[20px]"><span className="text-xs">Description: {result2.status === 'success' && result2.data![2].result}</span></div>
                         {(result2.status === 'success' && result2.data[7].result) ?
                             <>
                                 <span className="ml-[20px] text-sm font-bold">🔥 This token has graduated!: {gradHash !== '' && <Link href={_explorer + "tx/" + gradHash} rel="noopener noreferrer" target="_blank" prefetch={false} className="underline text-emerald-300">Txn hash</Link>}</span>
@@ -516,20 +516,20 @@ export default function Trade({
                                     <span>graduation progress: {
                                         result3.status === 'success' &&  Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(
                                             result3.data![1].result?.toUpperCase() !== currencyAddr.toUpperCase() ?
-                                                ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2 * 1000000000 * 100 / (mode === 'pro' ? 1 : 320000000)) :
-                                                ((1 / ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2)) * 1000000000 * 100) / (mode === 'pro' ? 1 : 320000000)
+                                                ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2 * 100 / (mode === 'pro' ? 1 : 320000000)) :
+                                                ((1 / ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2)) * 100) / (mode === 'pro' ? 1 : 320000000)
                                         )
                                     }%</span>
                                     <div className='has-tooltip'>
-                                        <span className='tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs'>{'When the market cap reaches ' + (mode === 'pro' && chain === 'kub' ? '1 KUB' : '') + ', 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.'}</span>
+                                        <span className='tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs'>{'When the market cap reaches 1 ' + (mode === 'pro' && chain === 'kub' ? ' KUB' : '') + ', 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.'}</span>
                                     </div>
                                 </div>
                                 <div className="ml-[20px] mr-[20px] h-6 bg-gray-400 rounded-lg overflow-hidden">
                                     <div className="h-6 bg-sky-400 rounded-lg" style={{width: 
                                         result3.status === 'success' ?
                                             result3.data![1].result?.toUpperCase() !== currencyAddr.toUpperCase() ? 
-                                                ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2 * 1000000000 * 100 / (mode === 'pro' ? 1 : 320000000)) + '%':
-                                                (((1 / ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2)) * 1000000000 * 100) / (mode === 'pro' ? 1 : 320000000)) + '%'
+                                                ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2 * 100 / (mode === 'pro' ? 1 : 320000000)) + '%':
+                                                (((1 / ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2)) * 100) / (mode === 'pro' ? 1 : 320000000)) + '%'
                                             :
                                             '0%'
                                     }} />
