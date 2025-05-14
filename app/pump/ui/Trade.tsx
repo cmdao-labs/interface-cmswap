@@ -528,7 +528,7 @@ export default function Trade({
                                     <div className="h-6 bg-sky-400 rounded-lg" style={{width: 
                                         result3.status === 'success' ?
                                             result3.data![1].result?.toUpperCase() !== currencyAddr.toUpperCase() ? 
-                                                ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2 * 1000000000 * 100 / (mode === 'pro' ? 1 : 320000000)) :
+                                                ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2 * 1000000000 * 100 / (mode === 'pro' ? 1 : 320000000)) + '%':
                                                 (((1 / ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2)) * 1000000000 * 100) / (mode === 'pro' ? 1 : 320000000)) + '%'
                                             :
                                             '0%'
