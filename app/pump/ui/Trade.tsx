@@ -49,8 +49,8 @@ export default function Trade({
         // v2routerAddr = '0x284f11109359a7e1306c3e447ef14d38400063ff';
     } else if ((chain === 'kub' || chain === '') && mode === 'pro') {
         currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
-        bkgafactoryAddr = '0x1EA7349DB1af6bCC048c97572e9295c1e1a15c6b';
-        _blockcreated = 25033350;
+        bkgafactoryAddr = '0xa4ccd318dA0659DE1BdA6136925b873C2117ef4C';
+        _blockcreated = 25208360;
         v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
         v2routerAddr = '0x3F7582E36843FF79F173c7DC19f517832496f2D8';
         v3qouterAddr = '0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f';
