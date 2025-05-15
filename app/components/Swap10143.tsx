@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI, CMswapUniSmartRoute, BitkubEvmKYCContract } from '@/app/lib/96'
+import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative, UniswapPairv2PoolABI } from '@/app/lib/10143'
 import { config } from '@/app/config'
 import { useSearchParams } from 'next/navigation'
 
-export default function Swap96({
+export default function Swap10143({
     setIsLoading, setErrMsg,
 }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
@@ -41,7 +41,6 @@ export default function Swap96({
     const [open2, setOpen2] = React.useState(false)
     const [swapDirection, setSwapDirection] = React.useState(true) // false = A->B, true = B->A
     const [CMswapToken0, setCMswapToken0] = React.useState("");
-    const [isAccountKYC, setAccountKYC] = React.useState(false); //  NEED KYC LEVEL 1 FOR UNWRAPPED KKUB to KUB
     const [hasInitializedFromParams, setHasInitializedFromParams] = React.useState(false)
 
     React.useEffect(() => {
@@ -76,22 +75,6 @@ export default function Swap96({
         if (!tokenBValue) { url.searchParams.delete('tokenB') }
         window.history.replaceState({}, '', url.toString())
     }
-
-    const checkBitkubEVMKycLevel = async () => {
-        if (!address) return;
-
-        try {
-            const [{ result }] = await readContracts(config, {
-                contracts: [{ ...BitkubEvmKYCContract, functionName: 'kycsLevel', args: [address] }]
-            });
-
-            console.log(`Account : ${address}\nKYC Level: ${result}`);
-            setAccountKYC(!!result && result > 1);
-
-        } catch (error) {
-            setErrMsg(error as WriteContractErrorType);
-        }
-    };
 
     function encodePath(tokens: string[], fees: number[]): string {
         let path = "0x"
@@ -154,81 +137,8 @@ export default function Swap96({
                     setAmountB("")
                 }
             } catch { }
-            //**--------- DiamonSwap */
-            try {
-                if (Number(_amount) !== 0) {
-                    const getPairAddr = await readContracts(config, { contracts: [{ ...CMswapUniSmartRouteContractV2, functionName: 'getPairAddress', args: [BigInt(0), tokenAvalue, tokenBvalue], }] })
-                    const DiamondPair = getPairAddr[0].result !== undefined ? getPairAddr[0].result as '0xstring' : '' as '0xstring'
 
-                    const getBestPrice = await readContracts(config, {
-                        contracts: [
-                            { ...CMswapUniSmartRouteContractV2, functionName: 'findBestPathAndAmountOut', args: [BigInt(0), tokenAvalue, tokenBvalue, parseEther(_amount)] },
-                            { ...UniswapPairv2PoolABI, address: DiamondPair, functionName: 'token0' }
-                        ]
-                    });
-
-                    const result = getBestPrice[0].result;
-                    const bestAmountOut = result !== undefined ? result[0] as bigint : BigInt(0);
-                    const bestPath = result !== undefined ? result[1] : [];
-                    const bestPathArray: string[] = bestPath.map((addr: `0x${string}`) => addr); // แปลง readonly `0x${string}`[] เป็น string[]
-
-                    if (bestPathArray.length > 2 && poolSelect === "DiamonSwap") {
-                        console.log("DM ROUTED : ", bestPathArray)
-                        setAltRoute({ a: bestPathArray[0] as '0xstring', b: bestPathArray[1] as '0xstring', c: bestPathArray[2] as '0xstring' })
-                    }
-
-                    if (poolSelect === "DiamonSwap" && Number(_amount) > 0 && bestAmountOut > 0) {
-                        setBestPathArray(bestPathArray)
-                        const price = 1 / Number(formatEther(bestAmountOut))
-
-                        setNewPrice((1 / price).toFixed(6));
-                        setAmountB(formatEther(bestAmountOut))
-                    }
-                    DiamonSwapRate = Number(formatEther(bestAmountOut))
-
-                }
-            } catch (error) {
-                console.error("Error in getting DiamondSwap quote:", error);
-            }
-            //**--------- UdonSwap */
-            try {
-                if (Number(_amount) !== 0) {
-                    const getPairAddr = await readContracts(config, { contracts: [{ ...CMswapUniSmartRouteContractV2, functionName: 'getPairAddress', args: [BigInt(1), tokenAvalue, tokenBvalue], }] })
-                    const UdonPair = getPairAddr[0].result !== undefined ? getPairAddr[0].result as '0xstring' : '' as '0xstring'
-
-                    const getBestPrice = await readContracts(config, {
-                        contracts: [
-                            { ...CMswapUniSmartRouteContractV2, functionName: 'findBestPathAndAmountOut', args: [BigInt(1), tokenAvalue, tokenBvalue, parseEther(_amount)] },
-                            { ...UniswapPairv2PoolABI, address: UdonPair, functionName: 'token0' }
-                        ]
-                    });
-
-                    const result = getBestPrice[0].result;
-                    const bestAmountOut = result !== undefined ? result[0] as bigint : BigInt(0);
-                    const bestPath = result !== undefined ? result[1] : [];
-                    const bestPathArray: string[] = bestPath.map((addr: `0x${string}`) => addr); // แปลง readonly `0x${string}`[] เป็น string[]
-
-                    if (bestPathArray.length > 2 && poolSelect === "UdonSwap") {
-                        console.log("UDON ROUTED : ", bestPathArray)
-                        setAltRoute({ a: bestPathArray[0] as '0xstring', b: bestPathArray[1] as '0xstring', c: bestPathArray[2] as '0xstring' })
-                    }
-
-                    if (poolSelect === "UdonSwap" && Number(_amount) > 0 && bestAmountOut > 0) {
-                        setBestPathArray(bestPathArray)
-                        const price = 1 / Number(formatEther(bestAmountOut))
-                        setNewPrice((price).toFixed(6));
-                        setAmountB(formatEther(bestAmountOut))
-                        UdonswapRate = Number(formatEther(bestAmountOut))
-                    }
-
-                }
-            } catch (error) {
-                console.error("Error in getting DiamondSwap quote:", error);
-
-            }
-
-            console.log(`New RATE UPDATED\nCMswap : ${CMswapRate}\nDiamonSwap : ${DiamonSwapRate}\nUdonSwap  :${UdonswapRate} `);
-            return { CMswapRate, DiamonSwapRate, UdonswapRate }
+            return { CMswapRate }
         }
     }, 700)
 
@@ -247,12 +157,6 @@ export default function Swap96({
         } else if (poolSelect === "CMswap") {
             console.log("Swap with CMswap")
             CMswap()
-        } else if (poolSelect === "DiamonSwap") {
-            console.log("Swap with DiamonSwap")
-            DMswap()
-        } else if (poolSelect === "UdonSwap") {
-            console.log("Swap with UdonSwap")
-            Udonswap()
         }
     }
 
@@ -295,12 +199,7 @@ export default function Swap96({
                 tokenBvalue = tokenB.value
             }
             if (tokenA.value.toUpperCase() !== tokens[0].value.toUpperCase()) {
-                let allowanceA
-                if (tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {
-                    allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value as '0xstring', functionName: 'allowances', args: [address as '0xstring', ROUTER02] })
-                } else {
-                    allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', ROUTER02] })
-                }
+                let allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', ROUTER02] })
                 if (allowanceA < parseEther(amountA)) {
                     const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [ROUTER02, parseEther(amountA)] })
                     const h = await writeContract(config, request)
@@ -353,162 +252,6 @@ export default function Swap96({
                 let h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
-        } catch (e) {
-            setErrMsg(e as WriteContractErrorType)
-        }
-        setIsLoading(false)
-    }
-
-    const DMswap = async () => {
-        setIsLoading(true)
-        try {
-            const deadline = Math.floor(Date.now() / 1000) + 60 * 10
-
-            if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                // token a 
-                let h, r
-
-                if (tokenA.value.toUpperCase() === tokens[0].value.toLocaleUpperCase()) {
-                    const { result, request } = await simulateContract(config, {
-                        ...CMswapUniSmartRouteContractV2,
-                        functionName: 'swapExactETHForTokensWithFee',
-                        value: parseEther(amountA),
-                        args: [BigInt(0), parseEther(amountB) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
-                    })
-                    r = result
-                    h = await writeContract(config, request)
-
-                } else {
-                    const route = bestPathArray as readonly `0x${string}`[];
-                    const { result, request } = await simulateContract(config, {
-                        ...CMswapUniSmartRouteContractV2,
-                        functionName: 'swapExactTokensForTokensWithFee',
-                        args: [
-                            BigInt(0),
-                            parseEther(amountA),
-                            parseEther(amountB) * BigInt(95) / BigInt(100),
-                            route,
-                            address as `0x${string}`,
-                            BigInt(deadline)
-                        ]
-                    });
-
-                    r = result;
-                    h = await writeContract(config, request);
-                    await waitForTransactionReceipt(config, { hash: h })
-                    setTxupdate(h)
-                }
-
-
-            } else if (tokenA.value.toUpperCase() !== tokens[0].value.toLocaleUpperCase()) {
-                // token A = Normal ERC20
-                let allowanceA;
-                if (tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {
-                    allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value as '0xstring', functionName: 'allowances', args: [address as '0xstring', CMswapUniSmartRoute] })
-                } else {
-                    allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', CMswapUniSmartRoute] })
-                }
-                if (allowanceA < parseEther(amountA)) {
-                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [CMswapUniSmartRoute, parseEther(amountA)] })
-                    const h = await writeContract(config, request)
-                    await waitForTransactionReceipt(config, { hash: h })
-                }
-                const deadline = Math.floor(Date.now() / 1000) + 60 * 10
-
-                let h, r
-
-                if (altRoute === undefined && bestPathArray !== undefined) {
-                    const { result, request } = await simulateContract(config, {
-                        ...CMswapUniSmartRouteContractV2,
-                        functionName: 'swapExactTokensForTokensWithFee',
-                        args: [BigInt(0), parseEther(amountA), parseEther(amountB) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
-                    })
-                    r = result
-                    h = await writeContract(config, request)
-                    await waitForTransactionReceipt(config, { hash: h })
-                    setTxupdate(h)
-                }
-
-            }
-
-        } catch (e) {
-            setErrMsg(e as WriteContractErrorType)
-        }
-        setIsLoading(false)
-    }
-
-    const Udonswap = async () => {
-        setIsLoading(true)
-        try {
-            const deadline = Math.floor(Date.now() / 1000) + 60 * 10
-
-            if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                // token a 
-                let h, r
-
-                if (tokenA.value.toUpperCase() === tokens[0].value.toLocaleUpperCase()) {
-                    const { result, request } = await simulateContract(config, {
-                        ...CMswapUniSmartRouteContractV2,
-                        functionName: 'swapExactETHForTokensWithFee',
-                        value: parseEther(amountA),
-                        args: [BigInt(1), parseEther(amountB) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
-                    })
-                    r = result
-                    h = await writeContract(config, request)
-
-                } else {
-                    const route = bestPathArray as readonly `0x${string}`[];
-                    const { result, request } = await simulateContract(config, {
-                        ...CMswapUniSmartRouteContractV2,
-                        functionName: 'swapExactTokensForTokensWithFee',
-                        args: [
-                            BigInt(1),
-                            parseEther(amountA),
-                            parseEther(amountB) * BigInt(95) / BigInt(100),
-                            route,
-                            address as `0x${string}`,
-                            BigInt(deadline)
-                        ]
-                    });
-
-                    r = result;
-                    h = await writeContract(config, request);
-                    await waitForTransactionReceipt(config, { hash: h })
-                    setTxupdate(h)
-                }
-
-
-            } else if (tokenA.value.toUpperCase() !== tokens[0].value.toLocaleUpperCase()) {
-                // token A = Normal ERC20
-                let allowanceA;
-                if (tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {
-                    allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value as '0xstring', functionName: 'allowances', args: [address as '0xstring', CMswapUniSmartRoute] })
-                } else {
-                    allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', CMswapUniSmartRoute] })
-                }
-                if (allowanceA < parseEther(amountA)) {
-                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [CMswapUniSmartRoute, parseEther(amountA)] })
-                    const h = await writeContract(config, request)
-                    await waitForTransactionReceipt(config, { hash: h })
-                }
-                const deadline = Math.floor(Date.now() / 1000) + 60 * 10
-
-                let h, r
-
-                if (altRoute === undefined && bestPathArray !== undefined) {
-                    const { result, request } = await simulateContract(config, {
-                        ...CMswapUniSmartRouteContractV2,
-                        functionName: 'swapExactTokensForTokensWithFee',
-                        args: [BigInt(1), parseEther(amountA), parseEther(amountB) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
-                    })
-                    r = result
-                    h = await writeContract(config, request)
-                    await waitForTransactionReceipt(config, { hash: h })
-                    setTxupdate(h)
-                }
-
-            }
-
         } catch (e) {
             setErrMsg(e as WriteContractErrorType)
         }
@@ -574,16 +317,8 @@ export default function Swap96({
             const pair100 = stateB[5].result !== undefined ? stateB[5].result as '0xstring' : '' as '0xstring'
 
             const updateCMswapTvlKey = (key: keyof typeof CMswapTVL, value: number) => { setCMswapTVL(prevTvl => ({ ...prevTvl, [key]: value >= 1e-9 ? value.toString() : '0', })); };
-            const updateDMswapTvlKey = (value: number) => { setDMswapTVL(prevTvl => ({ ...prevTvl, tvl10000: value >= 1e-9 ? value.toString() : '0', })); };
-            const updateUdonswapTvlKey = (value: number) => { setUdonTVL(prevTvl => ({ ...prevTvl, tvl10000: value >= 1e-9 ? value.toString() : '0', })); };
             const updateExchangeRateCMswapTVL = (feeAmount: number, exchangeRate: number) => {
                 setCMswapTVL(prevTvl => ({ ...prevTvl, exchangeRate: feeSelect === feeAmount ? exchangeRate.toString() : prevTvl.exchangeRate }));
-            };
-            const updateExchangeRateDMswapTVL = (exchangeRate: number) => {
-                setDMswapTVL(prevTvl => ({ ...prevTvl, exchangeRate: exchangeRate.toString() }));
-            };
-            const updateExchangeRateUdonswapTVL = (exchangeRate: number) => {
-                setUdonTVL(prevTvl => ({ ...prevTvl, exchangeRate: exchangeRate.toString() }));
             };
 
             if (tokenA.name !== 'Choose Token' && tokenB.name !== 'Choose Token') {
@@ -828,72 +563,6 @@ export default function Swap96({
                     } catch {
                         updateExchangeRateCMswapTVL(feeSelect, 0)
                     }
-                    //** DiamonFinance */
-
-                    try {
-                        setAltRoute(undefined)
-
-                        const getPairAddr = await readContracts(config, { contracts: [{ ...CMswapUniSmartRouteContractV2, functionName: 'getPairAddress', args: [BigInt(0), tokenAvalue, tokenBvalue], }] })
-                        const DiamonPair = getPairAddr[0].result !== undefined ? getPairAddr[0].result as '0xstring' : '' as '0xstring'
-                        const getPoolState = await readContracts(config, {
-                            contracts: [
-                                { ...erc20ABI, address: tokenAvalue, functionName: 'balanceOf', args: [DiamonPair] },
-                                { ...erc20ABI, address: tokenBvalue, functionName: 'balanceOf', args: [DiamonPair] },
-                                { ...UniswapPairv2PoolABI, address: DiamonPair, functionName: 'token0' }
-                            ]
-                        })
-
-                        let tvlDM = 0;
-                        let exchangeRateDM = 0;
-                        if (DiamonPair !== "0x0000000000000000000000000000000000000000" as '0xstring') {
-                            const tokenAamount = BigInt(getPoolState[0].result || 0);
-                            const tokenBamount = BigInt(getPoolState[1].result || 0);
-                            const currPriceDM = getPoolState[2].result !== undefined   ? Number(tokenAamount) / Number(tokenBamount) : 0
-
-                            tvlDM = currPriceDM !== 0 && currPriceDM !== Infinity ? (Number(formatEther(tokenAamount)) * (1 / currPriceDM)) + Number(formatEther(tokenBamount)) : 0
-                            exchangeRateDM = tvlDM < 1e-9 ? 0 : currPriceDM
-                            currPriceDM !== Infinity && poolSelect === "DiamonSwap" && setFixedExchangeRate(Number(currPriceDM).toString())
-
-                        }
-
-                        updateDMswapTvlKey(tvlDM)
-                        updateExchangeRateDMswapTVL(exchangeRateDM)
-                    } catch (error) {
-                        updateExchangeRateDMswapTVL(0)
-                    }
-
-                    //** UdonSwap */
-
-                    try {
-                        setAltRoute(undefined)
-
-                        const getPairAddr = await readContracts(config, { contracts: [{ ...CMswapUniSmartRouteContractV2, functionName: 'getPairAddress', args: [BigInt(1), tokenAvalue, tokenBvalue], }] })
-                        const UdonPair = getPairAddr[0].result !== undefined ? getPairAddr[0].result as '0xstring' : '' as '0xstring'
-                        const getPoolState = await readContracts(config, {
-                            contracts: [
-                                { ...erc20ABI, address: tokenAvalue, functionName: 'balanceOf', args: [UdonPair] },
-                                { ...erc20ABI, address: tokenBvalue, functionName: 'balanceOf', args: [UdonPair] },
-                                { ...UniswapPairv2PoolABI, address: UdonPair, functionName: 'token0' }
-                            ]
-                        })
-                        let tvlUdon = 0;
-                        let exchangeRateUdon = 0;
-                        if (UdonPair !== "0x0000000000000000000000000000000000000000" as '0xstring') {
-                            const tokenAamount = getPoolState[0].result !== undefined ? getPoolState[0].result : BigInt(0)
-                            const tokenBamount = getPoolState[1].result !== undefined ? getPoolState[1].result : BigInt(0)
-                            //const currPriceUdon = Number(tokenAamount) / Number(tokenBamount);
-                            const currPriceUdon =  getPoolState[2].result !== undefined   ? Number(tokenAamount) / Number(tokenBamount) : 0
-
-                            tvlUdon = (Number(formatEther(tokenAamount)) * (1 / currPriceUdon)) + Number(formatEther(tokenBamount));
-                            exchangeRateUdon = tvlUdon < 1e-9 ? 0 : currPriceUdon
-                            currPriceUdon !== Infinity && poolSelect === "UdonSwap" && setFixedExchangeRate(Number(currPriceUdon).toString())
-
-                        }
-                        updateUdonswapTvlKey(tvlUdon)
-                        updateExchangeRateUdonswapTVL(exchangeRateUdon)
-                    } catch (error) {
-                        updateExchangeRateUdonswapTVL(0)
-                    }
                     setExchangeRate("0")
                 }
             }
@@ -902,9 +571,7 @@ export default function Swap96({
         setAmountA("")
         setAmountB("")
         if (hasInitializedFromParams) {
-            checkBitkubEVMKycLevel().then(() => {
-                fetch0()
-            })
+            fetch0()
         }
     }, [config, address, tokenA, tokenB, feeSelect, txupdate,hasInitializedFromParams])
 
@@ -932,12 +599,6 @@ export default function Swap96({
             if (poolSelect === "CMswap") {
                 setExchangeRate(CMswapTVL.exchangeRate);
                 console.log('Fallback Quote Price CMswap', CMswapTVL.exchangeRate);
-            } else if (poolSelect === "DiamonSwap") {
-                setExchangeRate(DMswapTVL.exchangeRate);
-                console.log('Fallback Quote Price DiamonSwap', DMswapTVL.exchangeRate);
-            } else if (poolSelect === "UdonSwap") {
-                setExchangeRate(UdonTVL.exchangeRate);
-                console.log('Fallback Quote Price UdonSwap', UdonTVL.exchangeRate);
             }
         };
 
@@ -955,18 +616,8 @@ export default function Swap96({
                         ? Number(quote?.CMswapRate)
                         : Number(CMswapTVL?.exchangeRate || 0);
 
-                    const DMRate = Number(quote?.DiamonSwapRate) > 0
-                        ? Number(quote?.DiamonSwapRate)
-                        : Number(DMswapTVL?.exchangeRate || 0);
-
-                    const UdonRate = Number(quote?.UdonswapRate) > 0
-                        ? Number(quote?.UdonswapRate)
-                        : Number(UdonTVL?.exchangeRate || 0);
-
                     const rates = {
                         CMswap: CMRate,
-                        DiamonSwap: DMRate,
-                        UdonSwap: UdonRate,
                     };
 
                     console.log("Computed rates:", rates);
@@ -1213,12 +864,7 @@ export default function Swap96({
                     )}
                 </div>
             }
-            {((tokenB.value === '0xnative' as '0xstring' && tokenA.value.toLowerCase() === '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5')) && !isAccountKYC ? (
-                <div className="text-red-500 mt-4 text-sm font-mono">
-                    <span>Please </span><a href="https://kkub-otp.bitkubchain.com/" target="_blank" className="underline text-blue-400">
-                        KYC your address</a><span> before UNWRAP</span>
-                </div>
-            ) : (tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountB) !== 0 ? (
+            {(tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountB) !== 0 ? (
                 <Button
                     className="w-full bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4 cursor-pointer"
                     onClick={handleSwap}

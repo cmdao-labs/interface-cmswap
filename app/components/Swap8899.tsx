@@ -359,7 +359,7 @@ export default function Swap8899({
                         fee: feeSelect,
                         recipient: address as '0xstring',
                         amountIn: parseEther(amountA),
-                        amountOutMinimum: parseEther(String(Number(amountB) * 0.95)),
+                        amountOutMinimum: parseEther(amountB) * BigInt(95) / BigInt(100),
                         sqrtPriceLimitX96: BigInt(0)
                     }],
                     value: tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() ? parseEther(amountA) : BigInt(0)
@@ -375,7 +375,7 @@ export default function Swap8899({
                         path: route as '0xstring',
                         recipient: address as '0xstring',
                         amountIn: parseEther(amountA),
-                        amountOutMinimum: parseEther(String(Number(amountB) * 0.95))
+                        amountOutMinimum: parseEther(amountB) * BigInt(95) / BigInt(100)
                     }]
                 })
                 r = result
@@ -522,7 +522,7 @@ export default function Swap8899({
                         ...CMswapUniSmartRouteContract,
                         functionName: 'swapExactETHForTokensWithFee',
                         value: parseEther(amountA),
-                        args: [parseEther(String(Number(amountB) * 0.95)), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
+                        args: [parseEther(amountB) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
                     })
                     r = result
                     h = await writeContract(config, request)
@@ -534,7 +534,7 @@ export default function Swap8899({
                         functionName: 'swapExactTokensForTokensWithFee',
                         args: [
                             parseEther(amountA),
-                            parseEther(String(Number(amountB) * 0.95)),
+                            parseEther(amountB) * BigInt(95) / BigInt(100),
                             route,
                             address as `0x${string}`,
                             BigInt(deadline)
@@ -562,7 +562,7 @@ export default function Swap8899({
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContract,
                         functionName: 'swapExactTokensForTokensWithFee',
-                        args: [parseEther(amountA), parseEther(String(Number(amountB) * 0.95)), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
+                        args: [parseEther(amountA), parseEther(amountB) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
                     })
                     r = result
                     h = await writeContract(config, request)

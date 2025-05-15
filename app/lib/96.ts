@@ -35,6 +35,4 @@ export const CMswapUniSmartRouteContractV2 =  { chainId: 96, abi: CMswapUniSmart
 export const UniswapPairv2PoolABI = { chainId: 96, abi: UniswapPair} as const
 export const BitkubEvmKYCContract = {chainId: 96, abi: BitkubEvmKYCABI, address: BitkubEvmKYC} as const
 
-
-
 export const publicClient = createPublicClient({ chain: bitkub, transport: http() })
