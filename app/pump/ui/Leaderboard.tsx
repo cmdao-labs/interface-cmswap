@@ -44,8 +44,8 @@ export default async function Leaderboard({
   let v2routerAddr: string = '';
   if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '') && (token === 'cmm' || token === '')) {
     currencyAddr = '0x9b005000a10ac871947d99001345b01c1cef2790';
-    bkgafactoryAddr = '0xf23b60960b62Cad9921a2Cf2DD8064b73EE3F4E4';
-    _blockcreated = 25213194;
+    bkgafactoryAddr = '0x10d7c3bDc6652bc3Dd66A33b9DD8701944248c62';
+    _blockcreated = 25229488;
     v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
     v2routerAddr = '0x3F7582E36843FF79F173c7DC19f517832496f2D8';
   } else if ((chain === 'kub' || chain === '') && mode === 'pro') {

@@ -27,8 +27,8 @@ export default function Create({
   let facABI: any = null;
   if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '') && (token === 'cmm' || token === '')) {
     currencyAddr = '0x9b005000a10ac871947d99001345b01c1cef2790';
-    bkgafactoryAddr = '0xf23b60960b62Cad9921a2Cf2DD8064b73EE3F4E4';
-    _blockcreated = 25213194;
+    bkgafactoryAddr = '0x10d7c3bDc6652bc3Dd66A33b9DD8701944248c62';
+    _blockcreated = 25229488;
     facABI = ERC20FactoryABI;
   } else if ((chain === 'kub' || chain === '') && mode === 'pro') {
     currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
@@ -70,12 +70,12 @@ export default function Create({
             },
           ],
         });
-        if (Number(formatEther(allowance[0].result!)) < 0.0036) {
+        if (Number(formatEther(allowance[0].result!)) < 6000) {
             writeContract(config, {
                 address: dataofcurr.addr as '0xstring',
                 abi: erc20Abi,
                 functionName: 'approve',
-                args: [bkgafactoryAddr as '0xstring', parseEther('0.0037')],
+                args: [bkgafactoryAddr as '0xstring', parseEther('10000')],
                 chainId: _chainId,
             })
         }
@@ -120,7 +120,7 @@ export default function Create({
           <div className="text-teal-900 pt-2 w-full" role="alert">
             <div className="flex">
               <svg className="fill-current h-4 w-4 text-teal-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/></svg>
-              <p className="font-bold text-xs">Deployment cost: {chain === 'kub' && mode === 'pro' && '0.0036 KUB (not included network fee)'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && '0.0036 CMM (not included network fee)'}</p>
+              <p className="font-bold text-xs">Deployment cost: {chain === 'kub' && mode === 'pro' && '0.0036 KUB (not included network fee)'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && '6,000 CMM (not included network fee)'}</p>
             </div>
           </div>
           {connections && account.address !== undefined && account.chainId === _chainId ? 
