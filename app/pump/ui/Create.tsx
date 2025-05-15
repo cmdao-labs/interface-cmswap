@@ -32,8 +32,8 @@ export default function Create({
     facABI = ERC20FactoryABI;
   } else if ((chain === 'kub' || chain === '') && mode === 'pro') {
     currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
-    bkgafactoryAddr = '0xa4ccd318dA0659DE1BdA6136925b873C2117ef4C';
-    _blockcreated = 25208360;
+    bkgafactoryAddr = '0x8F7402c187b8233054969c504CA14c3AddDF54ba';
+    _blockcreated = 25229691;
     facABI = ERC20FactoryABI;
   }
   const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
@@ -90,7 +90,7 @@ export default function Create({
           ...bkgafactoryContract,
           functionName: 'createToken',
           args: [name, ticker, 'ipfs://' + upload.IpfsHash, desp],
-          value: parseEther('0.0036'),
+          value: parseEther('1'),
         });
       }
       alert("Launch success!, your txn hash: " + (chain === 'kub' && "https://www.kubscan.com/tx/") + result);
@@ -120,7 +120,7 @@ export default function Create({
           <div className="text-teal-900 pt-2 w-full" role="alert">
             <div className="flex">
               <svg className="fill-current h-4 w-4 text-teal-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/></svg>
-              <p className="font-bold text-xs">Deployment cost: {chain === 'kub' && mode === 'pro' && '0.0036 KUB (not included network fee)'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && '6,000 CMM (not included network fee)'}</p>
+              <p className="font-bold text-xs">Deployment cost: {chain === 'kub' && mode === 'pro' && '1 KUB (not included network fee)'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && '6,000 CMM (not included network fee)'}</p>
             </div>
           </div>
           {connections && account.address !== undefined && account.chainId === _chainId ? 

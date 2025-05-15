@@ -37,7 +37,7 @@ export default async function Table({
     v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
   } else if ((chain === 'kub' || chain === '') && mode === 'pro') {
     currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
-    bkgafactoryAddr = '0xa4ccd318dA0659DE1BdA6136925b873C2117ef4C';
+    bkgafactoryAddr = '0x8F7402c187b8233054969c504CA14c3AddDF54ba';
     v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
   }
   const dataofcurr = {addr: currencyAddr};
