@@ -20,12 +20,9 @@ export async function generateMetadata(
     const ticker = searchParams?.ticker || '';
     let chainId = 0;
     let facAddr = '';
-    if (chain === 'unichain') {
-        chainId = 130;
-        facAddr = '0xaA3Caad9e335a133d96EA3D5D73df2dcF9e360d4';
-    } else if (chain === 'base') {
-        chainId = 8453;
-        facAddr = '0xaA3Caad9e335a133d96EA3D5D73df2dcF9e360d4';
+    if (chain === 'kub') {
+        chainId = 96;
+        facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
     }
     const result = await readContracts(config, {
         contracts: [
@@ -57,6 +54,7 @@ export default async function Ticker(props: {
       chain?: string;
       ticker?: string;
       lp?: string;
+      token?: string;
     }>;
   }) {
     const searchParams = await props.searchParams;
@@ -64,8 +62,9 @@ export default async function Ticker(props: {
     const chain = searchParams?.chain || '';
     const ticker = searchParams?.ticker || '';
     const lp = searchParams?.lp || '';
+    const token = searchParams?.token || '';
     
     return (
-        <Trade mode={mode} chain={chain} ticker={ticker} lp={lp} />
+        <Trade mode={mode} chain={chain} ticker={ticker} lp={lp} token={token} />
     )
 }

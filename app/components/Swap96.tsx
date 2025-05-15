@@ -44,26 +44,24 @@ export default function Swap96({
     const [isAccountKYC, setAccountKYC] = React.useState(false); //  NEED KYC LEVEL 1 FOR UNWRAPPED KKUB to KUB
     const [hasInitializedFromParams, setHasInitializedFromParams] = React.useState(false)
 
-React.useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search)
-    const tokenAAddress = searchParams.get('tokenA')?.toLowerCase()
-    const tokenBAddress = searchParams.get('tokenB')?.toLowerCase()
+    React.useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search)
+        const tokenAAddress = searchParams.get('tokenA')?.toLowerCase()
+        const tokenBAddress = searchParams.get('tokenB')?.toLowerCase()
 
-    if (tokenAAddress && tokenBAddress) {
-        const foundTokenA = tokens.find(t => t.value.toLowerCase() === tokenAAddress)
-        const foundTokenB = tokens.find(t => t.value.toLowerCase() === tokenBAddress)
+        if (tokenAAddress && tokenBAddress) {
+            const foundTokenA = tokens.find(t => t.value.toLowerCase() === tokenAAddress)
+            const foundTokenB = tokens.find(t => t.value.toLowerCase() === tokenBAddress)
 
-        if (foundTokenA) setTokenA(foundTokenA)
-        if (foundTokenB) setTokenB(foundTokenB)
-    } else {
-        if (tokenA?.value && tokenB?.value) {
-            updateURLWithTokens(tokenA.value, tokenB.value)
+            if (foundTokenA) setTokenA(foundTokenA)
+            if (foundTokenB) setTokenB(foundTokenB)
+        } else {
+            if (tokenA?.value && tokenB?.value) {
+                updateURLWithTokens(tokenA.value, tokenB.value)
+            }
         }
-    }
-    setHasInitializedFromParams(true)
-}, [])
-
-
+        setHasInitializedFromParams(true)
+    }, [])
 
     React.useEffect(() => {
         console.log("hasInitializedFromParams : ",hasInitializedFromParams)
@@ -156,9 +154,7 @@ React.useEffect(() => {
                     setAmountB("")
                 }
             } catch { }
-
             //**--------- DiamonSwap */
-
             try {
                 if (Number(_amount) !== 0) {
                     const getPairAddr = await readContracts(config, { contracts: [{ ...CMswapUniSmartRouteContractV2, functionName: 'getPairAddress', args: [BigInt(0), tokenAvalue, tokenBvalue], }] })
@@ -231,7 +227,6 @@ React.useEffect(() => {
 
             }
 
-
             console.log(`New RATE UPDATED\nCMswap : ${CMswapRate}\nDiamonSwap : ${DiamonSwapRate}\nUdonSwap  :${UdonswapRate} `);
             return { CMswapRate, DiamonSwapRate, UdonswapRate }
         }
@@ -283,6 +278,7 @@ React.useEffect(() => {
         }
         setIsLoading(false)
     }
+
     const CMswap = async () => {
         setIsLoading(true)
         try {
@@ -298,20 +294,18 @@ React.useEffect(() => {
             } else {
                 tokenBvalue = tokenB.value
             }
-            if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                const h = await sendTransaction(config, { to: tokens[1].value, value: parseEther(amountA) })
-                await waitForTransactionReceipt(config, { hash: h })
-            }
-            let allowanceA
-            if (tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {
-                allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value as '0xstring', functionName: 'allowances', args: [address as '0xstring', ROUTER02] })
-            } else {
-                allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', ROUTER02] })
-            }
-            if (allowanceA < parseEther(amountA)) {
-                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [ROUTER02, parseEther(amountA)] })
-                const h = await writeContract(config, request)
-                await waitForTransactionReceipt(config, { hash: h })
+            if (tokenA.value.toUpperCase() !== tokens[0].value.toUpperCase()) {
+                let allowanceA
+                if (tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {
+                    allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value as '0xstring', functionName: 'allowances', args: [address as '0xstring', ROUTER02] })
+                } else {
+                    allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', ROUTER02] })
+                }
+                if (allowanceA < parseEther(amountA)) {
+                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [ROUTER02, parseEther(amountA)] })
+                    const h = await writeContract(config, request)
+                    await waitForTransactionReceipt(config, { hash: h })
+                }
             }
             let h
             let r
@@ -327,7 +321,8 @@ React.useEffect(() => {
                         amountIn: parseEther(amountA),
                         amountOutMinimum: parseEther(String(Number(amountB) * 0.95)),
                         sqrtPriceLimitX96: BigInt(0)
-                    }]
+                    }],
+                    value: tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() ? parseEther(amountA) : BigInt(0)
                 })
                 r = result
                 h = await writeContract(config, request)
@@ -341,7 +336,8 @@ React.useEffect(() => {
                         recipient: address as '0xstring',
                         amountIn: parseEther(amountA),
                         amountOutMinimum: parseEther(String(Number(amountB) * 0.95))
-                    }]
+                    }],
+                    value: tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() ? parseEther(amountA) : BigInt(0)
                 })
                 r = result
                 h = await writeContract(config, request)
@@ -520,8 +516,6 @@ React.useEffect(() => {
     }
 
     React.useEffect(() => {
-
-
         const fetch0 = async () => {
             (tokenA.value.toUpperCase() === tokenB.value.toUpperCase()) && setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
 
@@ -591,7 +585,6 @@ React.useEffect(() => {
             const updateExchangeRateUdonswapTVL = (exchangeRate: number) => {
                 setUdonTVL(prevTvl => ({ ...prevTvl, exchangeRate: exchangeRate.toString() }));
             };
-
 
             if (tokenA.name !== 'Choose Token' && tokenB.name !== 'Choose Token') {
                 if ((tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[1].value.toUpperCase()) || (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenA.value.toUpperCase() === tokens[1].value.toUpperCase())) {
@@ -865,8 +858,6 @@ React.useEffect(() => {
 
                         updateDMswapTvlKey(tvlDM)
                         updateExchangeRateDMswapTVL(exchangeRateDM)
-
-
                     } catch (error) {
                         updateExchangeRateDMswapTVL(0)
                     }
@@ -900,8 +891,6 @@ React.useEffect(() => {
                         }
                         updateUdonswapTvlKey(tvlUdon)
                         updateExchangeRateUdonswapTVL(exchangeRateUdon)
-
-
                     } catch (error) {
                         updateExchangeRateUdonswapTVL(0)
                     }
@@ -917,7 +906,6 @@ React.useEffect(() => {
                 fetch0()
             })
         }
-
     }, [config, address, tokenA, tokenB, feeSelect, txupdate,hasInitializedFromParams])
 
 
@@ -1013,8 +1001,6 @@ React.useEffect(() => {
         setPoolSelect("")
         setFeeSelect(10000)
     }, [tokenA, tokenB])
-
-
 
     return (
         <div className='space-y-2'>
@@ -1197,8 +1183,6 @@ React.useEffect(() => {
                                 {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(UdonTVL['tvl10000']) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(Number(UdonTVL['tvl10000']))}  {(tokenA.name === 'KUSDT' || tokenB.name === 'KUSDT') ? '$' : tokenB.name}</span>}
                             </Button>
                         )}
-
-
                     </div>
 
                     {/** CMswap FEE SELECTION  */}
@@ -1233,7 +1217,6 @@ React.useEffect(() => {
                 <div className="text-red-500 mt-4 text-sm font-mono">
                     <span>Please </span><a href="https://kkub-otp.bitkubchain.com/" target="_blank" className="underline text-blue-400">
                         KYC your address</a><span> before UNWRAP</span>
-
                 </div>
             ) : (tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountB) !== 0 ? (
                 <Button

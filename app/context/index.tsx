@@ -2,7 +2,7 @@
 import { wagmiAdapter, projectId } from '@/app/config'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createAppKit } from '@reown/appkit/react'
-import { jbc, bsc, bitkub, unichain, base } from '@reown/appkit/networks'
+import { jbc, bsc, bitkub } from '@reown/appkit/networks'
 import React, { type ReactNode } from 'react'
 import { cookieToInitialState, WagmiProvider, type Config } from 'wagmi'
 
@@ -21,7 +21,7 @@ const metadata = {
 
 const modal = createAppKit({
   adapters: [wagmiAdapter],
-    networks: [jbc, bitkub, bsc, unichain, base],
+    networks: [jbc, bitkub, bsc],
     projectId,
     themeMode: 'dark',
     themeVariables: {

@@ -3,73 +3,56 @@ import { connection } from 'next/server';
 import { getBalance, readContracts } from '@wagmi/core';
 import { createPublicClient, http, formatEther, erc20Abi } from 'viem';
 import { config } from '@/app/config';
-import { base } from 'viem/chains';
+import { bitkub } from 'viem/chains';
 import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
 import { UniswapV2FactoryABI } from '@/app/pump/abi/UniswapV2Factory';
 import { UniswapV2PairABI } from '@/app/pump/abi/UniswapV2Pair';
-import { aggregatorV3InterfaceABI } from '@/app/pump/abi/Chainlink';
+import { BKCOracleABI } from '@/app/pump/abi/BKCoracle';
 
 export default async function Dashboard({
-    addr, mode, chain,
+    addr, mode, chain, token,
   }: {
     addr: string;
     mode: string;
     chain: string;
+    token: string;
   }) {
   await connection();
 
-  let priceFeed: any = [];
-  if (mode === 'pro') {
-    const publicClientOracle = createPublicClient({ 
-      chain: base,
-      transport: http(process.env.BASE_RPC as string)
-    });
-    priceFeed = await publicClientOracle.readContract({
-      address: '0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70',
-      abi: aggregatorV3InterfaceABI,
-      functionName: 'latestRoundData',
-    });
+  let priceFeed: any = [1, 1];
+  if (mode === 'pro' && chain === 'kub') {
+    // const publicClientOracle = createPublicClient({ 
+    //   chain: bitkub,
+    //   transport: http()
+    // });
+    // priceFeed = await publicClientOracle.readContract({
+    //   address: '0x775eeFF3f80f110C2f7ac9127041915489c275f4',
+    //   abi: BKCOracleABI,
+    //   functionName: 'latestAnswer',
+    // });
   }
   let _chainId = 0;
   let _explorer = '';
-  if (chain === 'unichain' || chain === '') {
-    _chainId = 130;
-    _explorer = 'https://unichain.blockscout.com/';
-  } else if (chain === 'base') {
-    _chainId = 8453;
-    _explorer = 'https://base.blockscout.com/';
+  if (chain === 'kub' || chain === '') {
+    _chainId = 96;
+    _explorer = 'https://www.kubscan.com/';
   }
   let currencyAddr: string = '';
   let bkgafactoryAddr: string = '';
   let _blockcreated: number = 1;
   let v2facAddr: string = '';
-  let currencyLp: string = '';
-  if ((chain === 'unichain' || chain === '') && (mode === 'lite' || mode === '')) {
-    currencyAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
-    bkgafactoryAddr = '0xaA3Caad9e335a133d96EA3D5D73df2dcF9e360d4';
-    _blockcreated = 8581591;
-    v2facAddr = '0x1f98400000000000000000000000000000000002';
-    currencyLp = '0x8E2D7f0F8b3A4DEFa2e00f85254C77F3FcD26053';
-  } else if ((chain === 'unichain' || chain === '') && mode === 'pro') {
-    currencyAddr = '0x4200000000000000000000000000000000000006';
-    bkgafactoryAddr = '0xf9ACe692e54183acdaB6341DcCde4e457aEf37Dd';
-    _blockcreated = 8581591;
-    v2facAddr = '0x1f98400000000000000000000000000000000002';
-    currencyLp = '0x8E2D7f0F8b3A4DEFa2e00f85254C77F3FcD26053';
-  } else if (chain === 'base' && (mode === 'lite' || mode === '')) {
-    currencyAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
-    bkgafactoryAddr = '0xaA3Caad9e335a133d96EA3D5D73df2dcF9e360d4';
-    _blockcreated = 26462082;
-    v2facAddr = '0x8909Dc15e40173Ff4699343b6eB8132c65e18eC6';
-    currencyLp = '0x656D7c47e9Dd3035784d5e56b7F2b118BBA7E324';
-  } else if (chain === 'base' && mode === 'pro') {
-    currencyAddr = '0x4200000000000000000000000000000000000006';
-    bkgafactoryAddr = '0xf9ACe692e54183acdaB6341DcCde4e457aEf37Dd';
-    _blockcreated = 26462082;
-    v2facAddr = '0x8909Dc15e40173Ff4699343b6eB8132c65e18eC6';
-    currencyLp = '0x656D7c47e9Dd3035784d5e56b7F2b118BBA7E324';
+  if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '') && (token === 'cmm' || token === '')) {
+    currencyAddr = '0x9b005000a10ac871947d99001345b01c1cef2790';
+    bkgafactoryAddr = '0xf23b60960b62Cad9921a2Cf2DD8064b73EE3F4E4';
+    _blockcreated = 25213194;
+    v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
+  } else if ((chain === 'kub' || chain === '') && mode === 'pro') {
+    currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
+    bkgafactoryAddr = '0xa4ccd318dA0659DE1BdA6136925b873C2117ef4C';
+    _blockcreated = 25208360;
+    v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
   }
-  const dataofcurr = {addr: currencyAddr, lp: currencyLp, blockcreated: _blockcreated};
+  const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
   const dataofuniv2factory = {addr: v2facAddr};
   const bkgafactoryContract = {
     address: bkgafactoryAddr as '0xstring',
@@ -117,8 +100,8 @@ export default async function Dashboard({
         },
         {
             ...univ2factoryContract,
-            functionName: 'getPair',
-            args: [res.result!, dataofcurr.addr as '0xstring'],
+            functionName: 'getPool',
+            args: [res.result!, dataofcurr.addr as '0xstring', 10000],
         },
         {
             address: res.result!,
@@ -147,9 +130,9 @@ export default async function Dashboard({
     chainId: _chainId,
   })
   if (mode === 'pro') {
-    result44.push([{result: 'ETH'}, {result: 'ipfs://bafkreiejfw35g5qdgzw5mv42py5a3cya2mknerishahx24lzgtowajvivm'}, {result: dataofcurr.lp}, {result: ethBal.value}]);
+    // result44.push([{result: 'ETH'}, {result: 'ipfs://bafkreiejfw35g5qdgzw5mv42py5a3cya2mknerishahx24lzgtowajvivm'}, {result: dataofcurr.lp}, {result: ethBal.value}]);
   } else {
-    result44.push([{result: '$THB'}, {result: 'ipfs://bafkreiap46j6naouhp6l2qhlfb3tq2pltinynqv3aog5l5n5k7fwhxpzeu'}, {result: dataofcurr.lp}, {result: thbData[0].result}]);
+    // result44.push([{result: '$THB'}, {result: 'ipfs://bafkreiap46j6naouhp6l2qhlfb3tq2pltinynqv3aog5l5n5k7fwhxpzeu'}, {result: dataofcurr.lp}, {result: thbData[0].result}]);
   }
   const result5 = result44.map(async (res: any) => {
     return await readContracts(config, {
@@ -157,7 +140,7 @@ export default async function Dashboard({
         {
             address: res[2].result!,
             abi: UniswapV2PairABI,
-            functionName: 'getReserves',
+            functionName: 'slot0',
             chainId: _chainId,
         },
         {
@@ -171,10 +154,10 @@ export default async function Dashboard({
   });
   const result55 = await Promise.all(result5);
   const resultfinal = result44.map((item: any, index: any) => {
-    const price = result55[index][1].result!.toUpperCase() === dataofcurr.addr.toUpperCase() ? 
-      Number((Number(formatEther(result55[index][0].result![0])) / Number(formatEther(result55[index][0].result![1])))) :
-      Number((Number(formatEther(result55[index][0].result![1])) / Number(formatEther(result55[index][0].result![0]))));
-    return [{result: item[0].result}, {result: item[1].result}, {result: Number(formatEther(item[3].result as bigint))}, {result: (item[0].result === '$THB' || item[0].result === 'ETH') ? item[0].result === 'ETH' ? Number(priceFeed[1] / BigInt(1e8)) : 1 : price}, {result: (item[0].result === '$THB' || item[0].result === 'ETH') ? dataofcurr.addr : result[index].result}]
+    const price = result55[index][1].result!.toUpperCase() !== dataofcurr.addr.toUpperCase() ? 
+      ((Number(result55[index][0].result![0]) / (2 ** 96)) ** 2) : 
+      (1 / ((Number(result55[index][0].result![0]) / (2 ** 96)) ** 2));
+    return [{result: item[0].result}, {result: item[1].result}, {result: Number(formatEther(item[3].result as bigint))}, {result: price}, {result: (item[0].result === '$THB' || item[0].result === 'ETH') ? dataofcurr.addr : result[index].result}]
   })
   const allvalue = resultfinal.map((res: any) => {return res[2].result * res[3].result}).reduce((a: any, b: any) => a + b, 0);
 
@@ -184,7 +167,7 @@ export default async function Dashboard({
             <div className="flex flex-row gap-2 items-center">
                 <span>{addr.slice(0, 5) + '...' + addr.slice(37)}</span>
             </div>
-            <span className="font-bold">{(mode === 'pro' ? '$' : '฿') + Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(allvalue)}</span>
+            <span className="font-bold">{(chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(allvalue)}</span>
         </div>
         <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
             <div className="w-1/3">
@@ -210,8 +193,8 @@ export default async function Dashboard({
                 </div>
                 <div className="w-3/4 flex flex-row items-center justify-end sm:gap-10">
                     <span className="text-right w-[50px] sm:w-[200px]">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result)}</span>
-                    <span className={"text-right w-[100px] sm:w-[200px] " + (mode === 'pro' ? 'text-xs' : '')}>{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[3].result)} {mode === 'pro' ? '$USD' : '$THB'}</span>
-                    <span className="font-bold text-right w-[100px] sm:w-[200px]">{(mode === 'pro' ? '$' : '฿') + Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result * res[3].result)}</span>
+                    <span className={"text-right w-[100px] sm:w-[200px] " + (mode === 'pro' ? 'text-xs' : '')}>{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[3].result)} {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}</span>
+                    <span className="font-bold text-right w-[100px] sm:w-[200px]">{(chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') +  Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result * res[3].result)}</span>
                 </div>
             </div>
         )}
