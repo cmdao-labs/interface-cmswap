@@ -32,8 +32,8 @@ export default function Create({
     facABI = ERC20FactoryABI;
   } else if ((chain === 'kub' || chain === '') && mode === 'pro') {
     currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
-    bkgafactoryAddr = '0x8F7402c187b8233054969c504CA14c3AddDF54ba';
-    _blockcreated = 25229691;
+    bkgafactoryAddr = '0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56';
+    _blockcreated = 25232899;
     facABI = ERC20FactoryABI;
   }
   const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};

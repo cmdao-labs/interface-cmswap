@@ -51,8 +51,8 @@ export default function Trade({
         v3qouterAddr = '0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f';
     } else if ((chain === 'kub' || chain === '') && mode === 'pro') {
         currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
-        bkgafactoryAddr = '0x8F7402c187b8233054969c504CA14c3AddDF54ba';
-        _blockcreated = 25229691;
+        bkgafactoryAddr = '0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56';
+        _blockcreated = 25232899;
         v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
         v2routerAddr = '0x3F7582E36843FF79F173c7DC19f517832496f2D8';
         v3qouterAddr = '0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f';
@@ -531,7 +531,7 @@ export default function Trade({
                                         )
                                     }%</span>
                                     <div className='has-tooltip'>
-                                        <span className='tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs'>{'When the market cap reaches 1 billion ' + (chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + ', 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.'}</span>
+                                        <span className='tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs'>{'When the market cap reaches 1 ' + (chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + ', 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.'}</span>
                                     </div>
                                 </div>
                                 <div className="ml-[20px] mr-[20px] h-6 bg-gray-400 rounded-lg overflow-hidden">
