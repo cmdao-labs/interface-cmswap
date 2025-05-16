@@ -4,9 +4,9 @@ import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3st
 
 // swap
 export const tokens: {name: string, value: '0xstring', logo: string}[] = [
-    { name: 'MON', value: '0xnative' as '0xstring', logo: './monad.jpg' },
-    { name: 'WMON', value: '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701' as '0xstring', logo: './monad.jpg' },
-    { name: 'WETH', value: '0xb5a30b0fdc5ea94a52fdc42e3e9760cb8449fb37' as '0xstring', logo: './weth.png' },
+    { name: 'MON', value: '0xnative' as '0xstring', logo: '/monad.jpg' },
+    { name: 'WMON', value: '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701' as '0xstring', logo: '/monad.jpg' },
+    { name: 'WETH', value: '0xb5a30b0fdc5ea94a52fdc42e3e9760cb8449fb37' as '0xstring', logo: '/weth.png' },
     // can PR listing here
 ]
 export const V3_FACTORY = '0x399fe73bb0ee60670430fd92fe25a0fdd308e142' as '0xstring'
