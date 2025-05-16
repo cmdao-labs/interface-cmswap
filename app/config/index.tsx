@@ -18,7 +18,7 @@ export const wagmiAdapter = new WagmiAdapter({
     projectId,
     networks,
     transports: {
-        [monadTestnet.id]: http(process.env.BASE_RPC as string),
+        [monadTestnet.id]: http(process.env.NEXT_PUBLIC_MONAD_RPC as string),
     },
 })
 

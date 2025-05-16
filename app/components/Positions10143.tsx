@@ -1,14 +1,14 @@
 import React from "react"
 import { useAccount } from "wagmi"
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core'
-import { formatEther, parseEther } from "viem"
+import { formatEther, formatUnits, parseUnits } from "viem"
 import { Token, BigintIsh } from "@uniswap/sdk-core"
 import { Pool, Position } from "@uniswap/v3-sdk"
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative } from '@/app/lib/10143'
+import { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, wrappedNative } from '@/app/lib/10143'
 import { config } from '@/app/config'
 
 type MyPosition = {
@@ -41,10 +41,10 @@ export default function Positions10143({
 }) {
     const { address } = useAccount()
     const [txupdate, setTxupdate] = React.useState("")
-    const [tokenA, setTokenA] = React.useState<{name: string, value: '0xstring', logo: string}>(tokens[0])
+    const [tokenA, setTokenA] = React.useState<{name: string, value: '0xstring', logo: string, decimal: number}>(tokens[0])
     const [tokenABalance, setTokenABalance] = React.useState("")
     const [amountA, setAmountA] = React.useState("")
-    const [tokenB, setTokenB] = React.useState<{name: string, value: '0xstring', logo: string}>({name: 'Choose Token', value: '' as '0xstring', logo: '../favicon.ico'})
+    const [tokenB, setTokenB] = React.useState<{name: string, value: '0xstring', logo: string, decimal: number}>({name: 'Choose Token', value: '' as '0xstring', logo: '../favicon.ico', decimal: 18})
     const [tokenBBalance, setTokenBBalance] = React.useState("")
     const [amountB, setAmountB] = React.useState("")
     const [feeSelect, setFeeSelect] = React.useState(10000)
@@ -107,6 +107,18 @@ export default function Positions10143({
     }
 
     const setAlignedAmountB = useDebouncedCallback(async (_amountA: string) => {
+        let tokenAvalue
+        let tokenBvalue
+        if (tokenA.value === tokens[0].value) {
+            tokenAvalue = tokens[1].value
+        } else {
+            tokenAvalue = tokenA.value
+        }
+        if (tokenB.value === tokens[0].value) {
+            tokenBvalue = tokens[1].value
+        } else {
+            tokenBvalue = tokenB.value
+        }
         const poolState = await readContracts(config, {
             contracts: [
                 { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'token0' },
@@ -115,11 +127,17 @@ export default function Positions10143({
             ]
         })
         const token0 = poolState[0].result !== undefined ? poolState[0].result : "" as '0xstring'
+        const gettokendecimal = await readContracts(config, {
+            contracts: [
+                { ...erc20ABI, address: token0, functionName: 'decimals' },
+            ]
+        })
+        const tokendecimal = gettokendecimal[0].result !== undefined ? Number(gettokendecimal[0].result) : 18
         const sqrtPriceX96 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
         const tick = poolState[1].result !== undefined ? poolState[1].result[1] : 0
         const liquidity = poolState[2].result !== undefined ? poolState[2].result : BigInt(0)
-        const Token0 = new Token(96, token0, 18)
-        const Token1 = String(token0).toUpperCase() === tokenA.value.toUpperCase() ? new Token(96, tokenB.value, 18) : new Token(96, tokenA.value, 18)
+        const Token0 = new Token(10143, token0, tokendecimal)
+        const Token1 = String(token0).toUpperCase() === tokenAvalue.toUpperCase() ? new Token(10143, tokenBvalue, tokenB.decimal) : new Token(10143, tokenAvalue, tokenA.decimal)
         const pool = new Pool(
             Token0,
             Token1,
@@ -128,12 +146,12 @@ export default function Positions10143({
             liquidity.toString(),
             tick
         )
-        if (String(token0).toUpperCase() === tokenA.value.toUpperCase()) {
+        if (String(token0).toUpperCase() === tokenAvalue.toUpperCase()) {
             const singleSidePositionToken1 = Position.fromAmount1({
                 pool, 
                 tickLower: Number(lowerTick), 
                 tickUpper: Number(upperTick), 
-                amount1: String(parseEther(_amountA)) as BigintIsh,
+                amount1: String(parseUnits(_amountA, tokenA.decimal)) as BigintIsh,
             })
             setAmountB(formatEther(singleSidePositionToken1.mintAmounts.amount0 as unknown as bigint))
         } else {
@@ -141,7 +159,7 @@ export default function Positions10143({
                 pool, 
                 tickLower: Number(lowerTick), 
                 tickUpper: Number(upperTick), 
-                amount0: String(parseEther(_amountA)) as BigintIsh,
+                amount0: String(parseUnits(_amountA, tokenA.decimal)) as BigintIsh,
                 useFullPrecision: true
             })
             setAmountB(formatEther(singleSidePositionToken0.mintAmounts.amount1 as unknown as bigint))
@@ -149,6 +167,18 @@ export default function Positions10143({
     }, 700)
 
     const setAlignedAmountA = useDebouncedCallback(async (_amountB: string) => {
+        let tokenAvalue
+        let tokenBvalue
+        if (tokenA.value === tokens[0].value) {
+            tokenAvalue = tokens[1].value
+        } else {
+            tokenAvalue = tokenA.value
+        }
+        if (tokenB.value === tokens[0].value) {
+            tokenBvalue = tokens[1].value
+        } else {
+            tokenBvalue = tokenB.value
+        }
         const poolState = await readContracts(config, {
             contracts: [
                 { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'token0' },
@@ -157,11 +187,17 @@ export default function Positions10143({
             ]
         })
         const token0 = poolState[0].result !== undefined ? poolState[0].result : "" as '0xstring'
+        const gettokendecimal = await readContracts(config, {
+            contracts: [
+                { ...erc20ABI, address: token0, functionName: 'decimals' },
+            ]
+        })
+        const tokendecimal = gettokendecimal[0].result !== undefined ? Number(gettokendecimal[0].result) : 18
         const sqrtPriceX96 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
         const tick = poolState[1].result !== undefined ? poolState[1].result[1] : 0
         const liquidity = poolState[2].result !== undefined ? poolState[2].result : BigInt(0)
-        const Token0 = new Token(96, token0, 18)
-        const Token1 = String(token0).toUpperCase() === tokenA.value.toUpperCase() ? new Token(96, tokenB.value, 18) : new Token(96, tokenA.value, 18)
+        const Token0 = new Token(10143, token0, tokendecimal)
+        const Token1 = String(token0).toUpperCase() === tokenAvalue.toUpperCase() ? new Token(10143, tokenBvalue, tokenB.decimal) : new Token(10143, tokenAvalue, tokenA.decimal)
         const pool = new Pool(
             Token0,
             Token1,
@@ -170,12 +206,12 @@ export default function Positions10143({
             liquidity.toString(),
             tick
         )
-        if (String(token0).toUpperCase() === tokenA.value.toUpperCase()) {
+        if (String(token0).toUpperCase() === tokenAvalue.toUpperCase()) {
             const singleSidePositionToken0 = Position.fromAmount0({
                 pool, 
                 tickLower: Number(lowerTick), 
                 tickUpper: Number(upperTick), 
-                amount0: String(parseEther(_amountB)) as BigintIsh,
+                amount0: String(parseUnits(_amountB, tokenB.decimal)) as BigintIsh,
                 useFullPrecision: true
             })
             setAmountA(formatEther(singleSidePositionToken0.mintAmounts.amount1 as unknown as bigint))
@@ -184,7 +220,7 @@ export default function Positions10143({
                 pool, 
                 tickLower: Number(lowerTick), 
                 tickUpper: Number(upperTick), 
-                amount1: String(parseEther(_amountB)) as BigintIsh,
+                amount1: String(parseUnits(_amountB, tokenB.decimal)) as BigintIsh,
             })
             setAmountA(formatEther(singleSidePositionToken1.mintAmounts.amount0 as unknown as bigint))
         }
@@ -196,45 +232,37 @@ export default function Positions10143({
             contracts: [
                 { ...erc20ABI, address: _tokenAvalue, functionName: 'balanceOf', args: [address as '0xstring'] },
                 { ...erc20ABI, address: _tokenBvalue, functionName: 'balanceOf', args: [address as '0xstring'] },
+                { ...erc20ABI, address: _tokenAvalue, functionName: 'decimals' },
+                { ...erc20ABI, address: _tokenBvalue, functionName: 'decimals' },
             ]
         })
         _tokenAvalue.toUpperCase() === tokens[0].value.toUpperCase() ? 
             setTokenABalance(formatEther(nativeBal.value)) :
-            bal[0].result !== undefined && setTokenABalance(formatEther(bal[0].result))
+            bal[0].result !== undefined && setTokenABalance(formatUnits(bal[0].result, bal[2].result as number))
         _tokenBvalue.toUpperCase() === tokens[0].value.toUpperCase() ? 
             setTokenBBalance(formatEther(nativeBal.value)) :
-            bal[1].result !== undefined && setTokenBBalance(formatEther(bal[1].result))
+            bal[1].result !== undefined && setTokenBBalance(formatUnits(bal[1].result, bal[3].result as number))
     }
 
     const increaseLiquidity = async (_tokenId: bigint) => {
         setIsLoading(true)
         try {
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                const h = await sendTransaction(config, {to: tokens[0].value, value: parseEther(amountB)})
+                const h = await sendTransaction(config, {to: tokens[0].value, value: parseUnits(amountB, tokenB.decimal)})
                 await waitForTransactionReceipt(config, { hash: h })
             } else if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                const h = await sendTransaction(config, {to: tokens[0].value, value: parseEther(amountA)})
+                const h = await sendTransaction(config, {to: tokens[0].value, value: parseUnits(amountA, tokenA.decimal)})
                 await waitForTransactionReceipt(config, { hash: h })
             }
-            let allowanceA
-            if (tokenA.value.toUpperCase() === tokens[1].value.toUpperCase()) {
-                allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
-            } else {
-                allowanceA = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
-            }
-            if (allowanceA < parseEther(amountA)) {
-                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountA)] })
+            let allowanceA = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+            if (allowanceA < parseUnits(amountA, tokenA.decimal)) {
+                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'approve', args: [POSITION_MANAGER, parseUnits(amountA, tokenA.decimal)] })
                 const h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
-            let allowanceB
-            if (tokenB.value.toUpperCase() === tokens[1].value.toUpperCase()) {
-                allowanceB = await readContract(config, { ...kap20ABI, address: tokenA.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
-            } else {
-                allowanceB = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
-            }
-            if (allowanceB < parseEther(amountB)) {
-                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountB)] })
+            let allowanceB = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+            if (allowanceB < parseUnits(amountB, tokenB.decimal)) {
+                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'approve', args: [POSITION_MANAGER, parseUnits(amountB, tokenB.decimal)] })
                 const h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
@@ -243,8 +271,8 @@ export default function Positions10143({
                 functionName: 'increaseLiquidity',
                 args: [{
                     tokenId: _tokenId, 
-                    amount0Desired: parseEther(amountA),
-                    amount1Desired: parseEther(amountB),
+                    amount0Desired: parseUnits(amountA, tokenA.decimal),
+                    amount1Desired: parseUnits(amountB, tokenB.decimal),
                     amount0Min: BigInt(0),
                     amount1Min: BigInt(0),
                     deadline: BigInt(Math.floor(Date.now() / 1000) + 60 * 10),
@@ -479,7 +507,7 @@ export default function Positions10143({
     }, [config, address, tokenA, tokenB, feeSelect, txupdate])
     const clearState = () => {
         setTokenA(tokens[0])
-        setTokenB({name: 'Choose Token', value: '' as '0xstring', logo: '../favicon.ico'})
+        setTokenB({name: 'Choose Token', value: '' as '0xstring', logo: '../favicon.ico', decimal: 18})
         setFeeSelect(10000)
         setLowerTick("") 
         setUpperTick("")
@@ -519,8 +547,8 @@ export default function Positions10143({
                                             className="bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md cursor-pointer" 
                                             onClick={() => {
                                                 setPositionSelected(obj)
-                                                setTokenA({name: "", logo: "", value: obj.Token0Addr as '0xstring'})
-                                                setTokenB({name: "", logo: "", value: obj.Token1Addr as '0xstring'})
+                                                setTokenA({name: "", logo: "", value: obj.Token0Addr as '0xstring', decimal: 18})
+                                                setTokenB({name: "", logo: "", value: obj.Token1Addr as '0xstring', decimal: 18})
                                                 getBalanceOfAB(obj.Token1Addr as '0xstring', obj.Token0Addr as '0xstring')
                                                 setPairDetect(obj.Pair); setFeeSelect(obj.FeeTier)
                                                 setLowerTick(obj.LowerTick.toString())
