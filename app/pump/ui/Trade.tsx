@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link"; 
 import { useState, useEffect } from 'react';
 import { useConnections, useAccount, useReadContracts, useBalance } from 'wagmi';
-import { readContracts, writeContract, simulateContract } from '@wagmi/core';
+import { readContracts, writeContract, simulateContract, waitForTransactionReceipt } from '@wagmi/core';
 import { useDebouncedCallback } from 'use-debounce';
 import { formatEther, parseEther, erc20Abi, createPublicClient, http } from 'viem';
 import { bitkub } from 'viem/chains';
@@ -320,13 +320,15 @@ export default function Trade({
                     ],
                 });
                 if (Number(formatEther(allowance[0].result!)) < Number(inputBalance)) {
-                    writeContract(config, {
+                    const { request } = await simulateContract(config, {
                         address: ticker as '0xstring',
                         abi: erc20Abi,
                         functionName: 'approve',
                         args: [dataofuniv2router.addr as '0xstring', parseEther(String(Number(inputBalance) + 1))],
                         chainId: _chainId,
                     })
+                    const h = await writeContract(config, request)
+                    await waitForTransactionReceipt(config, { hash: h })
                 }
             }
             result = await writeContract(config, {
@@ -356,13 +358,15 @@ export default function Trade({
                 ],
             });
             if (Number(formatEther(allowance[0].result!)) < Number(inputBalance)) {
-                writeContract(config, {
+                const { request } = await simulateContract(config, {
                     address: trademode ? dataofcurr.addr as '0xstring' : ticker as '0xstring',
                     abi: erc20Abi,
                     functionName: 'approve',
                     args: [dataofuniv2router.addr as '0xstring', parseEther(String(Number(inputBalance) + 1))],
                     chainId: _chainId,
                 })
+                const h = await writeContract(config, request)
+                await waitForTransactionReceipt(config, { hash: h })
             }
             result = await writeContract(config, {
                 ...univ2RouterContract,
