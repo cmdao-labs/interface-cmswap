@@ -417,7 +417,7 @@ export default function Swap96({
 
                 let h, r
 
-                if (altRoute === undefined && bestPathArray !== undefined) {
+                if (altRoute === undefined || bestPathArray !== undefined) {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
                         functionName: 'swapExactTokensForTokensWithFee',
@@ -495,7 +495,7 @@ export default function Swap96({
 
                 let h, r
 
-                if (altRoute === undefined && bestPathArray !== undefined) {
+                if (altRoute === undefined || bestPathArray !== undefined) {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
                         functionName: 'swapExactTokensForTokensWithFee',
