@@ -417,7 +417,7 @@ export default function Swap96({
 
                 let h, r
 
-                if (altRoute === undefined && bestPathArray !== undefined) {
+                if (altRoute === undefined || bestPathArray !== undefined) {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
                         functionName: 'swapExactTokensForTokensWithFee',
@@ -495,7 +495,7 @@ export default function Swap96({
 
                 let h, r
 
-                if (altRoute === undefined && bestPathArray !== undefined) {
+                if (altRoute === undefined || bestPathArray !== undefined) {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
                         functionName: 'swapExactTokensForTokensWithFee',
@@ -619,7 +619,18 @@ export default function Swap96({
                         const sqrtPriceX96_10000 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
                         const tokenAamount_10000 = poolState[2].result !== undefined ? poolState[2].result : BigInt(0)
                         const tokenBamount_10000 = poolState[3].result !== undefined ? poolState[3].result : BigInt(0)
-                        const currPrice_10000 = token0_10000.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2))
+
+                        let currPrice_10000; // temp handle issue for kkub/kusdt wrong quote price
+                        if(
+                            tokenAvalue === '0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5' as '0xstring' && tokenBvalue === '0x7d984C24d2499D840eB3b7016077164e15E5faA6' as '0xstring'
+                            ||
+                            tokenAvalue === '0x7d984C24d2499D840eB3b7016077164e15E5faA6' as '0xstring' && tokenBvalue === '0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5' as '0xstring'
+                        ){
+                            currPrice_10000 = token0_10000.toUpperCase() !== tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2))
+                        }else{
+                            currPrice_10000 = token0_10000.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2))
+                        }
+
                         console.warn(`Token0 \n${token0_10000}\nTokenB \n${tokenBvalue}\n${token0_10000.toUpperCase() !== tokenBvalue.toUpperCase()}\nPrice : ${currPrice_10000}`)
                         const tvl_10000 = currPrice_10000 !== 0 && currPrice_10000 !== Infinity ? (Number(formatEther(tokenAamount_10000)) * (1 / currPrice_10000)) + Number(formatEther(tokenBamount_10000)) : 0
                         feeSelect === 10000 && currPrice_10000 !== Infinity && updateExchangeRateCMswapTVL(10000, Number(currPrice_10000.toString()))
@@ -674,6 +685,7 @@ export default function Swap96({
                         const tokenAamount_3000 = poolState[6].result !== undefined ? poolState[6].result : BigInt(0)
                         const tokenBamount_3000 = poolState[7].result !== undefined ? poolState[7].result : BigInt(0)
                         const currPrice_3000 = token0_3000.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2))
+                        
                         const tvl_3000 = currPrice_3000 !== 0 && currPrice_3000 !== Infinity ? (Number(formatEther(tokenAamount_3000)) * (1 / currPrice_3000)) + Number(formatEther(tokenBamount_3000)) : 0
                         feeSelect === 3000 && currPrice_3000 !== Infinity && updateExchangeRateCMswapTVL(3000, Number(currPrice_3000.toString()))
                         feeSelect === 3000 && currPrice_3000 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2).toString())
