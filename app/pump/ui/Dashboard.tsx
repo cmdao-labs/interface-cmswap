@@ -43,13 +43,13 @@ export default async function Dashboard({
   let v2facAddr: string = '';
   if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '') && (token === 'cmm' || token === '')) {
     currencyAddr = '0x9b005000a10ac871947d99001345b01c1cef2790';
-    bkgafactoryAddr = '0xf23b60960b62Cad9921a2Cf2DD8064b73EE3F4E4';
-    _blockcreated = 25213194;
+    bkgafactoryAddr = '0x10d7c3bDc6652bc3Dd66A33b9DD8701944248c62';
+    _blockcreated = 25229488;
     v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
   } else if ((chain === 'kub' || chain === '') && mode === 'pro') {
     currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
-    bkgafactoryAddr = '0xa4ccd318dA0659DE1BdA6136925b873C2117ef4C';
-    _blockcreated = 25208360;
+    bkgafactoryAddr = '0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56';
+    _blockcreated = 25232899;
     v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
   }
   const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};

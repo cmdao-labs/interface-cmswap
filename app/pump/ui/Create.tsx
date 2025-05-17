@@ -6,7 +6,6 @@ import { formatEther, parseEther, erc20Abi } from 'viem';
 import { writeContract, readContracts } from '@wagmi/core';
 import { config } from '@/app/config';
 import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
-import { ERC20FactoryETHABI } from '@/app/pump/abi/ERC20FactoryETH';
 
 export default function Create({
   mode, chain, token,
@@ -20,26 +19,25 @@ export default function Create({
   let _chainId = 0;
   if (chain === 'kub' || chain === '') {
     _chainId = 96;
-  }
+  } else if (chain === 'monad') {
+    _chainId = 10143;
+  } // add chain here
   let currencyAddr: string = '';
   let bkgafactoryAddr: string = '';
-  let _blockcreated: number = 1;
-  let facABI: any = null;
   if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '') && (token === 'cmm' || token === '')) {
     currencyAddr = '0x9b005000a10ac871947d99001345b01c1cef2790';
-    bkgafactoryAddr = '0xf23b60960b62Cad9921a2Cf2DD8064b73EE3F4E4';
-    _blockcreated = 25213194;
-    facABI = ERC20FactoryABI;
+    bkgafactoryAddr = '0x10d7c3bDc6652bc3Dd66A33b9DD8701944248c62';
   } else if ((chain === 'kub' || chain === '') && mode === 'pro') {
     currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
-    bkgafactoryAddr = '0xa4ccd318dA0659DE1BdA6136925b873C2117ef4C';
-    _blockcreated = 25208360;
-    facABI = ERC20FactoryABI;
-  }
-  const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
+    bkgafactoryAddr = '0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56';
+  } else if (chain === 'monad' && mode === 'pro') {
+    currencyAddr = '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701';
+    bkgafactoryAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
+  } // add chain and mode here
+  const dataofcurr = {addr: currencyAddr};
   const bkgafactoryContract = {
     address: bkgafactoryAddr as '0xstring',
-    abi: facABI,
+    abi: ERC20FactoryABI,
     chainId: _chainId,
   } as const
 
@@ -70,12 +68,12 @@ export default function Create({
             },
           ],
         });
-        if (Number(formatEther(allowance[0].result!)) < 0.0036) {
+        if (Number(formatEther(allowance[0].result!)) < 6000) {
             writeContract(config, {
                 address: dataofcurr.addr as '0xstring',
                 abi: erc20Abi,
                 functionName: 'approve',
-                args: [bkgafactoryAddr as '0xstring', parseEther('0.0037')],
+                args: [bkgafactoryAddr as '0xstring', parseEther('10000')],
                 chainId: _chainId,
             })
         }
@@ -90,10 +88,10 @@ export default function Create({
           ...bkgafactoryContract,
           functionName: 'createToken',
           args: [name, ticker, 'ipfs://' + upload.IpfsHash, desp],
-          value: parseEther('0.0036'),
+          value: parseEther('1'),
         });
       }
-      alert("Launch success!, your txn hash: " + (chain === 'kub' && "https://www.kubscan.com/tx/") + result);
+      alert("Launch success!, your txn hash: " + (chain === 'kub' && "https://www.kubscan.com/tx/") + (chain === 'monad' && "https://monad-testnet.socialscan.io/") + result);
     } catch (e) {
       console.log(e);
       alert("Launch failed");
@@ -120,7 +118,7 @@ export default function Create({
           <div className="text-teal-900 pt-2 w-full" role="alert">
             <div className="flex">
               <svg className="fill-current h-4 w-4 text-teal-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/></svg>
-              <p className="font-bold text-xs">Deployment cost: {chain === 'kub' && mode === 'pro' && '0.0036 KUB (not included network fee)'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && '0.0036 CMM (not included network fee)'}</p>
+              <p className="font-bold text-xs">Deployment cost: {chain === 'kub' && mode === 'pro' && '1 KUB (not included network fee)'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && '6,000 CMM (not included network fee)'}{chain === 'monad' && mode === 'pro' && '1 MON (not included network fee)'}</p>
             </div>
           </div>
           {connections && account.address !== undefined && account.chainId === _chainId ? 

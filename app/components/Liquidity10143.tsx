@@ -1,7 +1,7 @@
 import React from "react"
 import { useAccount } from "wagmi"
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core'
-import { formatEther, parseEther } from "viem"
+import { formatEther, formatUnits, parseUnits } from "viem"
 import { Token, BigintIsh } from "@uniswap/sdk-core"
 import { TickMath, encodeSqrtRatioX96, Pool, Position } from "@uniswap/v3-sdk"
 import { ChevronDown } from 'lucide-react'
@@ -9,11 +9,10 @@ import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI } from '@/app/lib/8899'
+import { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI } from '@/app/lib/10143'
 import { config } from '@/app/config'
-import { useSearchParams } from 'next/navigation'
 
-export default function Liquidity8899({ 
+export default function Liquidity10143({ 
     setIsLoading, setErrMsg, 
 }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
@@ -21,10 +20,10 @@ export default function Liquidity8899({
 }) {
     const { address } = useAccount()
     const [txupdate, setTxupdate] = React.useState("")
-    const [tokenA, setTokenA] = React.useState<{name: string, value: '0xstring', logo: string}>(tokens[0])
+    const [tokenA, setTokenA] = React.useState<{name: string, value: '0xstring', logo: string, decimal: number}>(tokens[0])
     const [tokenABalance, setTokenABalance] = React.useState("")
     const [amountA, setAmountA] = React.useState("")
-    const [tokenB, setTokenB] = React.useState<{name: string, value: '0xstring', logo: string}>({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
+    const [tokenB, setTokenB] = React.useState<{name: string, value: '0xstring', logo: string, decimal: number}>({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18})
     const [tokenBBalance, setTokenBBalance] = React.useState("")
     const [amountB, setAmountB] = React.useState("")
     const [feeSelect, setFeeSelect] = React.useState(10000)
@@ -40,8 +39,6 @@ export default function Liquidity8899({
     const [rangePercentage, setRangePercentage] = React.useState(0.15)
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
-    const [mode,setMode] = React.useState("Manual") // Use to declare Manual Mode ( 2 Tokens ) or Auto Mode ( 1 Token )
-
 
     React.useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search)
@@ -66,7 +63,8 @@ export default function Liquidity8899({
         if (!tokenAValue) {url.searchParams.delete('tokenA')}
         if (!tokenBValue) {url.searchParams.delete('tokenB')}
         window.history.replaceState({}, '', url.toString())
-    }
+        }
+
 
     const setAlignedLowerTick = useDebouncedCallback((_lowerPrice: string) => {
         setAmountA("")
@@ -125,11 +123,17 @@ export default function Liquidity8899({
             ]
         })
         const token0 = poolState[0].result !== undefined ? poolState[0].result : "" as '0xstring'
+        const gettokendecimal = await readContracts(config, {
+            contracts: [
+                { ...erc20ABI, address: token0, functionName: 'decimals' },
+            ]
+        })
+        const tokendecimal = gettokendecimal[0].result !== undefined ? Number(gettokendecimal[0].result) : 18
         const sqrtPriceX96 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
         const tick = poolState[1].result !== undefined ? poolState[1].result[1] : 0
         const liquidity = poolState[2].result !== undefined ? poolState[2].result : BigInt(0)
-        const Token0 = new Token(8899, token0, 18)
-        const Token1 = String(token0).toUpperCase() === tokenAvalue.toUpperCase() ? new Token(8899, tokenBvalue, 18) : new Token(8899, tokenAvalue, 18)
+        const Token0 = new Token(10143, token0, tokendecimal)
+        const Token1 = String(token0).toUpperCase() === tokenAvalue.toUpperCase() ? new Token(10143, tokenBvalue, tokenB.decimal) : new Token(10143, tokenAvalue, tokenA.decimal)
         const pool = new Pool(
             Token0,
             Token1,
@@ -143,18 +147,18 @@ export default function Liquidity8899({
                 pool, 
                 tickLower: Number(lowerTick), 
                 tickUpper: Number(upperTick), 
-                amount0: String(parseEther(_amountA)) as BigintIsh,
+                amount0: String(parseUnits(_amountA, tokenA.decimal)) as BigintIsh,
                 useFullPrecision: true
             })
-            mode !== "Auto" ?  setAmountB(formatEther(singleSidePositionToken0.mintAmounts.amount1 as unknown as bigint)) : null
+            setAmountB(formatUnits(singleSidePositionToken0.mintAmounts.amount1 as unknown as bigint, tokenB.decimal))
         } else {
             const singleSidePositionToken1 = Position.fromAmount1({
                 pool, 
                 tickLower: Number(lowerTick), 
                 tickUpper: Number(upperTick), 
-                amount1: String(parseEther(_amountA)) as BigintIsh,
+                amount1: String(parseUnits(_amountA, tokenA.decimal)) as BigintIsh,
             })
-            mode !== "Auto" ? setAmountB(formatEther(singleSidePositionToken1.mintAmounts.amount0 as unknown as bigint)) : null
+            setAmountB(formatUnits(singleSidePositionToken1.mintAmounts.amount0 as unknown as bigint, tokenB.decimal))
         }
     }, 700)
 
@@ -187,13 +191,15 @@ export default function Liquidity8899({
 
                 const newPair = await readContract(config, {...v3FactoryContract, functionName: 'getPool', args: [tokenAvalue, tokenBvalue, feeSelect] })
                 getToken0 = await readContract(config, { ...v3PoolABI, address: newPair as '0xstring', functionName: 'token0'})
-                const amount0 = getToken0.toUpperCase() === tokenA.value.toUpperCase() ? amountA : amountB
-                const amount1 = getToken0.toUpperCase() === tokenA.value.toUpperCase() ? amountB : amountA
+                const amount0 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? amountA : amountB
+                const amount1 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? amountB : amountA
+                const decimal0 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenA.decimal : tokenB.decimal
+                const decimal1 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenB.decimal : tokenA.decimal
                 const { request: request1 } = await simulateContract(config, {
                     ...v3PoolABI,
                     address: newPair as '0xstring',
                     functionName: 'initialize',
-                    args: [BigInt(encodeSqrtRatioX96(parseEther(amount1).toString(), parseEther(amount0).toString()).toString())]
+                    args: [BigInt(encodeSqrtRatioX96(parseUnits(amount1, decimal1).toString(), parseUnits(amount0, decimal0).toString()).toString())]
                 })
                 h = await writeContract(config, request1)
                 await waitForTransactionReceipt(config, { hash: h })
@@ -201,17 +207,17 @@ export default function Liquidity8899({
             }
             
             if (tokenA.value.toUpperCase() !== tokens[0].value.toUpperCase()) {
-                const allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
-                if (allowanceA < parseEther(amountA)) {
-                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountA)] })
+                let allowanceA = await readContract(config, { ...erc20ABI, address: tokenAvalue, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+                if (allowanceA < parseUnits(amountA, tokenA.decimal)) {
+                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenAvalue, functionName: 'approve', args: [POSITION_MANAGER, parseUnits(amountA, tokenA.decimal)] })
                     const h = await writeContract(config, request)
                     await waitForTransactionReceipt(config, { hash: h })
                 }
             }
             if (tokenB.value.toUpperCase() !== tokens[0].value.toUpperCase()) {
-                const allowanceB = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
-                if (allowanceB < parseEther(amountB)) {
-                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountB)] })
+                let allowanceB = await readContract(config, { ...erc20ABI, address: tokenBvalue, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+                if (allowanceB < parseUnits(amountB, tokenB.decimal)) {
+                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenBvalue, functionName: 'approve', args: [POSITION_MANAGER, parseUnits(amountB, tokenB.decimal)] })
                     const h = await writeContract(config, request)
                     await waitForTransactionReceipt(config, { hash: h })
                 }
@@ -221,8 +227,10 @@ export default function Liquidity8899({
             const token1check = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenB.value : tokenA.value
             const token0 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenAvalue : tokenBvalue
             const token1 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenBvalue : tokenAvalue
-            const amount0 = getToken0.toUpperCase() === tokenA.value.toUpperCase() ? amountA : amountB
-            const amount1 = getToken0.toUpperCase() === tokenA.value.toUpperCase() ? amountB : amountA
+            const amount0 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? amountA : amountB
+            const amount1 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? amountB : amountA
+            const decimal0 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenA.decimal : tokenB.decimal
+            const decimal1 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenB.decimal : tokenA.decimal
             const { request } = await simulateContract(config, {
                 ...positionManagerContract,
                 functionName: 'mint',
@@ -232,16 +240,16 @@ export default function Liquidity8899({
                     fee: feeSelect,
                     tickLower: Number(lowerTick),
                     tickUpper: Number(upperTick),
-                    amount0Desired: parseEther(amount0),
-                    amount1Desired: parseEther(amount1),
+                    amount0Desired: parseUnits(amount0, decimal0),
+                    amount1Desired: parseUnits(amount1, decimal1),
                     amount0Min: BigInt(0),
                     amount1Min: BigInt(0),
                     recipient: address as '0xstring',
                     deadline: BigInt(Math.floor(Date.now() / 1000) + 60 * 10),
                 }],
                 value: token0check.toUpperCase() === tokens[0].value.toUpperCase() ? 
-                    parseEther(amount0) : 
-                    (token1check.toUpperCase() === tokens[0].value.toUpperCase() ? parseEther(amount1) : BigInt(0))
+                    parseUnits(amount0, decimal0) : 
+                    (token1check.toUpperCase() === tokens[0].value.toUpperCase() ? parseUnits(amount1, decimal1) : BigInt(0))
             })
             const h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
@@ -254,7 +262,7 @@ export default function Liquidity8899({
 
     React.useEffect(() => {
         const fetch1 = async () => {
-            tokenA.value.toUpperCase() === tokenB.value.toUpperCase() && setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
+            tokenA.value.toUpperCase() === tokenB.value.toUpperCase() && setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18})
 
             let tokenAvalue
             let tokenBvalue
@@ -287,23 +295,28 @@ export default function Liquidity8899({
                 value: tokenA.value, 
                 logo: tokens.map(obj => obj.value).indexOf(tokenA.value) !== -1 ? 
                     tokens[tokens.map(obj => obj.value).indexOf(tokenA.value)].logo : 
-                    "../favicon.ico"
+                    "../favicon.ico",
+                decimal: tokens.map(obj => obj.value).indexOf(tokenA.value) !== -1 ?
+                    tokens[tokens.map(obj => obj.value).indexOf(tokenA.value)].decimal :
+                    18
             })
             stateB[0].result !== undefined && tokenB.name === "Choose Token" && setTokenB({
                 name: stateB[0].result, 
                 value: tokenB.value, 
                 logo: tokens.map(obj => obj.value).indexOf(tokenB.value) !== -1 ? 
                     tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].logo : 
-                    "../favicon.ico"
+                    "../favicon.ico",
+                decimal: tokens.map(obj => obj.value).indexOf(tokenB.value) !== -1 ?
+                    tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].decimal :
+                    18
             })
             tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() ? 
                 setTokenABalance(formatEther(nativeBal.value)) :
-                stateA[1].result !== undefined && setTokenABalance(formatEther(stateA[1].result))
+                stateA[1].result !== undefined && setTokenABalance(formatUnits(stateA[1].result, tokenA.decimal))
             tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() ? 
                 setTokenBBalance(formatEther(nativeBal.value)) :
-                stateB[1].result !== undefined && setTokenBBalance(formatEther(stateB[1].result))
+                stateB[1].result !== undefined && setTokenBBalance(formatUnits(stateB[1].result, tokenB.decimal))
             stateB[2].result !== undefined && setPairDetect(stateB[2].result)
-            
             if (stateB[2].result !== undefined && stateB[2].result !== '0x0000000000000000000000000000000000000000') {
                 const poolState = await readContracts(config, {
                     contracts: [
@@ -313,10 +326,12 @@ export default function Liquidity8899({
                     ]
                 })
                 const token0 = poolState[0].result !== undefined ? poolState[0].result : "" as '0xstring'
+                const decimal0 = token0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenA.decimal : tokenB.decimal
+                const decimal1 = token0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenB.decimal : tokenA.decimal
                 const sqrtPriceX96 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
                 const _currPrice = token0.toUpperCase() === tokenBvalue.toUpperCase() ? 
-                    (Number(sqrtPriceX96) / (2 ** 96)) ** 2 : 
-                    (1 / ((Number(sqrtPriceX96) / (2 ** 96)) ** 2));
+                    ((Number(sqrtPriceX96) / (2 ** 96)) ** 2) * (10 ** (decimal0 - decimal1)) : 
+                    (1 / (((Number(sqrtPriceX96) / (2 ** 96)) ** 2) * (10 ** (decimal0 - decimal1))));
                 poolState[1].result !== undefined && setCurrPrice(_currPrice.toString())
                 poolState[2].result !== undefined && setCurrTickSpacing(poolState[2].result.toString())
                 
@@ -367,19 +382,12 @@ export default function Liquidity8899({
         setAmountA("")
         setAmountB("")
         address !== undefined && rangePercentage !== 999 && fetch1()
-    }, [config, address, tokenA, tokenB, feeSelect, rangePercentage, txupdate,mode])
+    }, [config, address, tokenA, tokenB, feeSelect, rangePercentage, txupdate])
     console.log({lowerTick, upperTick}) // for fetch monitoring
-
-    React.useEffect(() =>{
-        setMode("Manual")
-    },[feeSelect,tokenA,tokenB])
 
     return (
         <div className='space-y-2'>
-         
             <div className="p-3 rounded-lg border border-[#00ff9d]/10 p-4">
-      
-        
                 <div className="flex justify-between items-center text-xs mb-1">
                     <div />
                     <input 
@@ -387,16 +395,16 @@ export default function Liquidity8899({
                         value={tokenA.value} 
                         onChange={e => {
                             if (e.target.value !== '0x') {
-                                setTokenA({name: 'Choose Token', value: e.target.value as '0xstring', logo: '../favicon.ico'})
+                                setTokenA({name: 'Choose Token', value: e.target.value as '0xstring', logo: '../favicon.ico', decimal: 18})
                             } else {
-                                setTokenA({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
+                                setTokenA({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18})
                             }
                         }} 
                     />
                 </div>
                 <div className="flex items-center justify-between">
                     {(lowerPrice !== '' && Number(lowerPrice) < Number(currPrice)) ?
-                        <input placeholder="0.00" className="bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountA} onChange={e => {setAmountA(e.target.value); Number(upperPrice) > Number(currPrice) && setAlignedAmountB(e.target.value);}} /> :
+                        <input placeholder="0.0" className="bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountA} onChange={e => {setAmountA(e.target.value); Number(upperPrice) > Number(currPrice) && setAlignedAmountB(e.target.value);}} /> :
                         <div />
                     }
                     <Popover open={open} onOpenChange={setOpen}>
@@ -427,7 +435,6 @@ export default function Liquidity8899({
                                                     setTokenA(token)
                                                     setOpen(false)
                                                     updateURLWithTokens(token.value,tokenB?.value)
-
                                                 }}
                                                 className='cursor-pointer'
                                             >
@@ -446,14 +453,13 @@ export default function Liquidity8899({
                 <div className="flex justify-between items-center mt-2">
                     <span />
                     <div>
-                        <span className="text-gray-400 font-mono text-xs">{tokenA.name !== 'Choose Token' ? Number(tokenABalance).toFixed(4) + ' ' + tokenA.name : '0.0000'}</span>
+                        <span className="text-gray-400 font-mono text-xs">{tokenA.name !== 'Choose Token' ? Number(tokenABalance).toFixed(6) + ' ' + tokenA.name : '0.000000'}</span>
                         {(lowerPrice !== '' && Number(lowerPrice) < Number(currPrice)) &&
                             <Button variant="ghost" size="sm" className="h-6 text-[#00ff9d] font-mono text-xs px-2 cursor-pointer" onClick={() => {setAmountA(tokenABalance); Number(upperPrice) > Number(currPrice) && setAlignedAmountB(tokenABalance);}}>MAX</Button>
                         }
                     </div>
                 </div>
             </div>
-            
             <div className="p-3 rounded-lg border border-[#00ff9d]/10 p-4">
                 <div className="flex justify-between items-center text-xs mb-1">
                     <div />
@@ -462,16 +468,16 @@ export default function Liquidity8899({
                         value={tokenB.value} 
                         onChange={e => {
                             if (e.target.value !== '0x') {
-                                setTokenB({name: 'Choose Token', value: e.target.value as '0xstring', logo: '../favicon.ico'})
+                                setTokenB({name: 'Choose Token', value: e.target.value as '0xstring', logo: '../favicon.ico', decimal: 18})
                             } else {
-                                setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
+                                setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18})
                             }
                         }} 
                     />
                 </div>
                 <div className="flex items-center justify-between">
                     {(upperPrice !== '' || Number(upperPrice) > Number(currPrice)) ?
-                        <input placeholder={mode === "Auto" ? "-" : "0.00"} disabled={mode === "Auto"} className="bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountB} onChange={(e) => setAmountB(e.target.value)} /> :
+                        <input placeholder="0.0" className="bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountB} onChange={(e) => setAmountB(e.target.value)} /> :
                         <div />
                     }
                     <Popover open={open2} onOpenChange={setOpen2}>
@@ -520,7 +526,7 @@ export default function Liquidity8899({
                 <div className="flex justify-between items-center mt-2">
                     <span />
                     {(upperPrice !== '' || Number(upperPrice) > Number(currPrice)) &&
-                        <span className="text-gray-400 font-mono text-xs" onClick={() => setAmountB(tokenBBalance)}>{tokenB.name !== 'Choose Token' ? Number(tokenBBalance).toFixed(4) + ' ' + tokenB.name : '0.0000'}</span>
+                        <span className="text-gray-400 font-mono text-xs" onClick={() => setAmountB(tokenBBalance)}>{tokenB.name !== 'Choose Token' ? Number(tokenBBalance).toFixed(6) + ' ' + tokenB.name : '0.000000'}</span>
                     }
                 </div>
             </div>
@@ -560,31 +566,6 @@ export default function Liquidity8899({
                     <span className="ttext-[10px] mt-1 opacity-60">[-2%, +2%]</span>
                 </Button>
             </div>
-
-
-            { tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && false && pairDetect !== '0x0000000000000000000000000000000000000000' &&
-            <>
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-
-                <Button variant="outline" className={"font-mono h-auto rounded text-xs w-full flex flex-col " + (mode === "Manual" ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setMode("Manual")}>
-                    <span>Manual Pairing</span>
-                </Button>
-                
-                <Button variant="outline" className={"font-mono h-auto rounded text-xs w-full flex flex-col " + (mode === "Auto" ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setMode("Auto")}>
-                    <span>Auto Pairing</span>
-                </Button>
-            </div>
-            {mode === "Auto" && (
-            <div className="text-gray-400 font-mono text-xs text-left">
-                Automated sale of <strong>{tokenA.name}</strong> for <strong>{tokenB.name}</strong> via CMswapV3 LP, followed by liquidity pairing. <br />
-                <span className="text-red-400">Note: Low liquidity may result in slippage or losses during the swap process.</span>
-            </div>
-            )}
-            </>
-
-            }
-          
-
             <div className="space-y-2 mt-4">
                 {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && pairDetect === '0x0000000000000000000000000000000000000000' &&
                     <div className="rounded-lg border border-[#00ff9d]/10 p-3 flex flex-row items-center justify-between">
@@ -608,7 +589,7 @@ export default function Liquidity8899({
             <div className="mt-4 border-t border-[#00ff9d]/10 pt-4">
                 <div className="flex items-center text-gray-500 font-mono text-xs my-2">
                     <span className="mr-1">current price</span>
-                    <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">{Number(currPrice).toFixed(4)} {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && tokenA.name + '/' + tokenB.name}</span>
+                    <span className="text-[#00ff9d] font-mono text-xs px-2 gap-1">{Number(currPrice).toFixed(6)} {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && tokenA.name + '/' + tokenB.name}</span>
                 </div>
             </div>
         </div>

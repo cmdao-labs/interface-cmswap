@@ -5,7 +5,7 @@ import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, Fiel
 // swap
 export const tokens: {name: string, value: '0xstring', logo: string}[] = [
     { name: 'JBC', value: '0xnative' as '0xstring', logo: './jbc.png' },
-    { name: 'WJBC', value: '0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747' as '0xstring', logo: './jbc.png' },
+    { name: 'WJBC', value: '0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747' as '0xstring', logo: '/jbc.png' },
     { name: 'JUSDT', value: '0x24599b658b57f91E7643f4F154B16bcd2884f9ac' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreif3vllg6mwswlqypqgtsh7i7wwap7zgrkvtlhdjoc63zjm7uv6vvi' },
     { name: 'CMJ', value: '0xE67E280f5a354B4AcA15fA7f0ccbF667CF74F97b' as '0xstring', logo: 'https://gateway.commudao.xyz/ipfs/bafkreiabbtn5pc6di4nwfgpqkk3ss6njgzkt2evilc5i2r754pgiru5x4u' },
     { name: 'USDT (JBC Bridge)', value: '0xFD8Ef75c1cB00A594D02df48ADdc27414Bd07F8a' as '0xstring', logo: 'https://jibswap.com/images/tokens/USDT.png' },

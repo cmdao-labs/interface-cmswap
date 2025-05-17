@@ -7,10 +7,13 @@ import { Card } from "@/components/ui/card"
 import ErrorModal from '@/app/components/error-modal'
 import Swap8899 from '../components/Swap8899'
 import Swap96 from '../components/Swap96'
+import Swap10143 from '../components/Swap10143'
 import Liquidity8899 from '../components/Liquidity8899'
 import Liquidity96 from '../components/Liquidity96'
+import Liquidity10143 from '../components/Liquidity10143'
 import Positions8899 from '../components/Positions8899'
 import Positions96 from '../components/Positions96'
+import Positions10143 from '../components/Positions10143'
 
 export default function Page() {
     const [isLoading, setIsLoading] = React.useState(false)
@@ -29,9 +32,21 @@ export default function Page() {
                             <TabsTrigger value="liquidity" className="font-mono text-sm data-[state=active]:bg-[#162638] data-[state=active]:text-[#00ff9d] rounded cursor-pointer">Liquidity</TabsTrigger>
                             <TabsTrigger value="position" className="font-mono text-sm data-[state=active]:bg-[#162638] data-[state=active]:text-[#00ff9d] rounded cursor-pointer">Positions</TabsTrigger>
                         </TabsList>
-                        <TabsContent value="swap">{(chainId === 8899 || chainId === undefined) && <Swap8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}{chainId === 96 && <Swap96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}</TabsContent>
-                        <TabsContent value="liquidity">{(chainId === 8899 || chainId === undefined) && <Liquidity8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}{chainId === 96 && <Liquidity96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}</TabsContent>
-                        <TabsContent value="position">{(chainId === 8899 || chainId === undefined) && <Positions8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}{chainId === 96 && <Positions96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}</TabsContent>
+                        <TabsContent value="swap">
+                            {(chainId === 8899 || chainId === undefined) && <Swap8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                            {chainId === 96 && <Swap96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                            {chainId === 10143 && <Swap10143 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                        </TabsContent>
+                        <TabsContent value="liquidity">
+                            {(chainId === 8899 || chainId === undefined) && <Liquidity8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                            {chainId === 96 && <Liquidity96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                            {chainId === 10143 && <Liquidity10143 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                        </TabsContent>
+                        <TabsContent value="position">
+                            {(chainId === 8899 || chainId === undefined) && <Positions8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                            {chainId === 96 && <Positions96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                            {chainId === 10143 && <Positions10143 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                        </TabsContent>
                     </Tabs>
                 </div>
             </Card>

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { connection } from 'next/server';
 import { readContracts } from '@wagmi/core';
 import { createPublicClient, http, formatEther, erc20Abi } from 'viem';
-import { bitkub } from 'viem/chains';
+import { bitkub, monadTestnet } from 'viem/chains';
 import { config } from '@/app/config';
 import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
 import { UniswapV2FactoryABI } from '@/app/pump/abi/UniswapV2Factory';
@@ -20,14 +20,20 @@ export default async function Event({
     let _chain: any = null;
     let _chainId = 0;
     let _explorer = '';
+    let _rpc = '';
     if (chain === 'kub' || chain === '') {
         _chain = bitkub;
         _chainId = 96;
         _explorer = 'https://www.kubscan.com/';
-    }
+    } else if (chain === 'monad') {
+        _chain = monadTestnet;
+        _chainId = 10143;
+        _explorer = 'https://monad-testnet.socialscan.io/';
+        _rpc = process.env.NEXT_PUBLIC_MONAD_RPC as string;
+    } // add chain here
     const publicClient = createPublicClient({ 
         chain: _chain,
-        transport: http()
+        transport: http(_rpc)
     });
     let currencyAddr: string = '';
     let bkgafactoryAddr: string = '';
@@ -35,15 +41,21 @@ export default async function Event({
     let v2facAddr: string = '';
     if ((chain === 'kub') && (mode === 'lite' || mode === '') && (token === 'cmm' || token === '')) {
         currencyAddr = '0x9b005000a10ac871947d99001345b01c1cef2790';
-        bkgafactoryAddr = '0xf23b60960b62Cad9921a2Cf2DD8064b73EE3F4E4';
-        _blockcreated = 25213194;
+        bkgafactoryAddr = '0x10d7c3bDc6652bc3Dd66A33b9DD8701944248c62';
+        _blockcreated = 25229488;
         v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
     } else if ((chain === 'kub') && mode === 'pro') {
         currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
-        bkgafactoryAddr = '0xa4ccd318dA0659DE1BdA6136925b873C2117ef4C';
-        _blockcreated = 25208360;
+        bkgafactoryAddr = '0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56';
+        _blockcreated = 25232899;
         v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
-    }
+    } else if (chain === 'monad' && mode === 'pro') {
+        currencyAddr = '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701';
+        bkgafactoryAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
+        const blockNumber = await publicClient.getBlockNumber() 
+        _blockcreated = Number(blockNumber - BigInt(400));
+        v2facAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
+    } // add chain and mode here
     const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
     const dataofuniv2factory = {addr: v2facAddr};
     const bkgafactoryContract = {

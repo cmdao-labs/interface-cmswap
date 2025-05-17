@@ -104,6 +104,18 @@ export default function Liquidity96({
     }, 700)
 
     const setAlignedAmountB = useDebouncedCallback(async (_amountA: string) => {
+        let tokenAvalue
+        let tokenBvalue
+        if (tokenA.value === tokens[0].value) {
+            tokenAvalue = tokens[1].value
+        } else {
+            tokenAvalue = tokenA.value
+        }
+        if (tokenB.value === tokens[0].value) {
+            tokenBvalue = tokens[1].value
+        } else {
+            tokenBvalue = tokenB.value
+        }
         const poolState = await readContracts(config, {
             contracts: [
                 { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'token0' },
@@ -116,7 +128,7 @@ export default function Liquidity96({
         const tick = poolState[1].result !== undefined ? poolState[1].result[1] : 0
         const liquidity = poolState[2].result !== undefined ? poolState[2].result : BigInt(0)
         const Token0 = new Token(96, token0, 18)
-        const Token1 = String(token0).toUpperCase() === tokenA.value.toUpperCase() ? new Token(96, tokenB.value, 18) : new Token(96, tokenA.value, 18)
+        const Token1 = String(token0).toUpperCase() === tokenAvalue.toUpperCase() ? new Token(96, tokenBvalue, 18) : new Token(96, tokenAvalue, 18)
         const pool = new Pool(
             Token0,
             Token1,
@@ -125,7 +137,7 @@ export default function Liquidity96({
             liquidity.toString(),
             tick
         )
-        if (String(token0).toUpperCase() === tokenA.value.toUpperCase()) {
+        if (String(token0).toUpperCase() === tokenAvalue.toUpperCase()) {
             const singleSidePositionToken0 = Position.fromAmount0({
                 pool, 
                 tickLower: Number(lowerTick), 
@@ -148,6 +160,18 @@ export default function Liquidity96({
     const placeLiquidity = async () => {
         setIsLoading(true)
         try {
+            let tokenAvalue
+            let tokenBvalue
+            if (tokenA.value === tokens[0].value) {
+                tokenAvalue = tokens[1].value
+            } else {
+                tokenAvalue = tokenA.value
+            }
+            if (tokenB.value === tokens[0].value) {
+                tokenBvalue = tokens[1].value
+            } else {
+                tokenBvalue = tokenB.value
+            }
             let getToken0 = pairDetect !== '0x0000000000000000000000000000000000000000' ? 
                 await readContract(config, { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'token0' }) :
                 ''
@@ -160,10 +184,10 @@ export default function Liquidity96({
                 let h = await writeContract(config, request0)
                 await waitForTransactionReceipt(config, { hash: h })
 
-                const newPair = await readContract(config, {...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, feeSelect] })
+                const newPair = await readContract(config, {...v3FactoryContract, functionName: 'getPool', args: [tokenAvalue, tokenBvalue, feeSelect] })
                 getToken0 = await readContract(config, { ...v3PoolABI, address: newPair as '0xstring', functionName: 'token0'})
-                const amount0 = getToken0.toUpperCase() === tokenA.value.toUpperCase() ? amountA : amountB
-                const amount1 = getToken0.toUpperCase() === tokenA.value.toUpperCase() ? amountB : amountA
+                const amount0 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? amountA : amountB
+                const amount1 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? amountB : amountA
                 const { request: request1 } = await simulateContract(config, {
                     ...v3PoolABI,
                     address: newPair as '0xstring',
@@ -175,46 +199,45 @@ export default function Liquidity96({
                 setTxupdate(h)
             }
             
-            if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                const h = await sendTransaction(config, {to: tokens[0].value, value: parseEther(amountA)})
-                await waitForTransactionReceipt(config, { hash: h })
-            } else if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                const h = await sendTransaction(config, {to: tokens[0].value, value: parseEther(amountB)})
-                await waitForTransactionReceipt(config, { hash: h })
+            if (tokenA.value.toUpperCase() !== tokens[0].value.toUpperCase()) {
+                let allowanceA
+                if (tokenA.value.toUpperCase() === tokens[1].value.toUpperCase()) {
+                    allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
+                } else {
+                    allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+                }
+                if (allowanceA < parseEther(amountA)) {
+                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountA)] })
+                    const h = await writeContract(config, request)
+                    await waitForTransactionReceipt(config, { hash: h })
+                }
             }
-            let allowanceA
-            if (tokenA.value.toUpperCase() === tokens[1].value.toUpperCase()) {
-                allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
-            } else {
-                allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
-            }
-            if (allowanceA < parseEther(amountA)) {
-                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountA)] })
-                const h = await writeContract(config, request)
-                await waitForTransactionReceipt(config, { hash: h })
-            }
-            let allowanceB
-            if (tokenB.value.toUpperCase() === tokens[1].value.toUpperCase()) {
-                allowanceB = await readContract(config, { ...kap20ABI, address: tokenB.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
-            } else {
-                allowanceB = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
-            }
-            if (allowanceB < parseEther(amountB)) {
-                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountB)] })
-                const h = await writeContract(config, request)
-                await waitForTransactionReceipt(config, { hash: h })
+            if (tokenB.value.toUpperCase() !== tokens[0].value.toUpperCase()) {
+                let allowanceB
+                if (tokenB.value.toUpperCase() === tokens[1].value.toUpperCase()) {
+                    allowanceB = await readContract(config, { ...kap20ABI, address: tokenB.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
+                } else {
+                    allowanceB = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+                }
+                if (allowanceB < parseEther(amountB)) {
+                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountB)] })
+                    const h = await writeContract(config, request)
+                    await waitForTransactionReceipt(config, { hash: h })
+                }
             }
             
-            const token0 = getToken0.toUpperCase() === tokenA.value.toUpperCase() ? tokenA : tokenB
-            const token1 = getToken0.toUpperCase() === tokenA.value.toUpperCase() ? tokenB : tokenA
+            const token0check = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenA.value : tokenB.value
+            const token1check = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenB.value : tokenA.value
+            const token0 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenAvalue : tokenBvalue
+            const token1 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenBvalue : tokenAvalue
             const amount0 = getToken0.toUpperCase() === tokenA.value.toUpperCase() ? amountA : amountB
             const amount1 = getToken0.toUpperCase() === tokenA.value.toUpperCase() ? amountB : amountA
             const { request } = await simulateContract(config, {
                 ...positionManagerContract,
                 functionName: 'mint',
                 args: [{
-                    token0: token0.value as '0xstring',
-                    token1: token1.value as '0xstring',
+                    token0: token0,
+                    token1: token1,
                     fee: feeSelect,
                     tickLower: Number(lowerTick),
                     tickUpper: Number(upperTick),
@@ -224,7 +247,10 @@ export default function Liquidity96({
                     amount1Min: BigInt(0),
                     recipient: address as '0xstring',
                     deadline: BigInt(Math.floor(Date.now() / 1000) + 60 * 10),
-                }]
+                }],
+                value: token0check.toUpperCase() === tokens[0].value.toUpperCase() ? 
+                    parseEther(amount0) : 
+                    (token1check.toUpperCase() === tokens[0].value.toUpperCase() ? parseEther(amount1) : BigInt(0))
             })
             const h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
@@ -239,18 +265,30 @@ export default function Liquidity96({
         const fetch1 = async () => {
             tokenA.value.toUpperCase() === tokenB.value.toUpperCase() && setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
 
+            let tokenAvalue
+            let tokenBvalue
+            if (tokenA.value === tokens[0].value) {
+                tokenAvalue = tokens[1].value
+            } else {
+                tokenAvalue = tokenA.value
+            }
+            if (tokenB.value === tokens[0].value) {
+                tokenBvalue = tokens[1].value
+            } else {
+                tokenBvalue = tokenB.value
+            }
             const nativeBal = await getBalance(config, {address: address as '0xstring'})
             const stateA = await readContracts(config, {
                 contracts: [
-                    { ...erc20ABI, address: tokenA.value, functionName: 'symbol' },
-                    { ...erc20ABI, address: tokenA.value, functionName: 'balanceOf', args: [address as '0xstring'] }
+                    { ...erc20ABI, address: tokenAvalue, functionName: 'symbol' },
+                    { ...erc20ABI, address: tokenAvalue, functionName: 'balanceOf', args: [address as '0xstring'] }
                 ]
             })
             const stateB = await readContracts(config, {
                 contracts: [
-                    { ...erc20ABI, address: tokenB.value, functionName: 'symbol' },
-                    { ...erc20ABI, address: tokenB.value, functionName: 'balanceOf', args: [address as '0xstring'] },
-                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenA.value, tokenB.value, feeSelect] }
+                    { ...erc20ABI, address: tokenBvalue, functionName: 'symbol' },
+                    { ...erc20ABI, address: tokenBvalue, functionName: 'balanceOf', args: [address as '0xstring'] },
+                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenAvalue, tokenBvalue, feeSelect] }
                 ]
             })
             stateA[0].result !== undefined && tokenA.name === "Choose Token" && setTokenA({
@@ -285,7 +323,7 @@ export default function Liquidity96({
                 })
                 const token0 = poolState[0].result !== undefined ? poolState[0].result : "" as '0xstring'
                 const sqrtPriceX96 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
-                const _currPrice = token0.toUpperCase() === tokenB.value.toUpperCase() ? 
+                const _currPrice = token0.toUpperCase() === tokenBvalue.toUpperCase() ? 
                     (Number(sqrtPriceX96) / (2 ** 96)) ** 2 : 
                     (1 / ((Number(sqrtPriceX96) / (2 ** 96)) ** 2));
                 poolState[1].result !== undefined && setCurrPrice(_currPrice.toString())
@@ -306,10 +344,10 @@ export default function Liquidity96({
                     alignedLowerTick = poolState[2].result !== undefined ? Math.ceil(TickMath.MIN_TICK / poolState[2].result) * poolState[2].result : 0
                     alignedUpperTick = poolState[2].result !== undefined ? Math.floor(TickMath.MAX_TICK / poolState[2].result) * poolState[2].result : 0
                 }
-                const _lowerPriceShow = token0.toUpperCase() === tokenB.value.toUpperCase() ? 
+                const _lowerPriceShow = token0.toUpperCase() === tokenBvalue.toUpperCase() ? 
                     Math.pow(1.0001, alignedLowerTick) : 
                     1 / Math.pow(1.0001, alignedUpperTick);
-                const _upperPriceShow = token0.toUpperCase() === tokenB.value.toUpperCase() ? 
+                const _upperPriceShow = token0.toUpperCase() === tokenBvalue.toUpperCase() ? 
                     Math.pow(1.0001, alignedUpperTick) : 
                     1 / Math.pow(1.0001, alignedLowerTick);
                 setLowerTick(alignedLowerTick.toString())
