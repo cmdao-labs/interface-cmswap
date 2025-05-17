@@ -189,12 +189,15 @@ export default function BlogLayout({
         <div className="grid grid-rows-[20px_1fr_10px] items-center justify-items-center min-h-screen pb-20 gap-16 p-4 sm:p-10 font-[family-name:var(--font-geist-sans)] bg-slate-900 text-white">
             <header className="mt-[220px] md:mt-[150px] mb-10 row-start-1 flex gap-4 md:gap-8 items-center justify-start md:justify-center text-xs md:text-sm w-full flex-wrap" style={{zIndex: 1}}>
                 <div className="flex flex-row gap-1">
-                    <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2" onClick={() => {if (chain !== 'kub') {handleChain('kub');}}}><Image src="/96.png" alt="bitkub" width={25} height={25} style={{filter: chain !== 'kub' ? "grayscale(1)" : "grayscale(0)"}} /></button>
+                    <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'kub') {handleChain('kub');}}}><Image src="/96.png" alt="" width={25} height={25} style={{filter: chain !== 'kub' ? "grayscale(1)" : "grayscale(0)"}} /></button>
+                    <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'monad') {handleChain('monad');}}}><Image src="/monad.jpg" alt="" width={25} height={25} style={{filter: chain !== 'monad' ? "grayscale(1)" : "grayscale(0)"}} /></button>
                 </div>
                 {connections && account.address !== undefined &&
-                    <Link href={"/pump/launchpad/portfolio?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite") + "&addr=" + account.address} prefetch={false} className="underline text-emerald-300 hover:font-bold">Portfolio</Link>
+                    <>
+                        {chain !== 'monad' && <Link href={"/pump/launchpad/portfolio?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite") + "&addr=" + account.address} prefetch={false} className="underline text-emerald-300 hover:font-bold">Portfolio</Link>}
+                    </>
                 }
-                <Link href={"/pump/launchpad/leaderboard?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")} prefetch={false} className="underline text-emerald-300 hover:font-bold">Leaderboard</Link>
+                {chain !== 'monad' && <Link href={"/pump/launchpad/leaderboard?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")} prefetch={false} className="underline text-emerald-300 hover:font-bold">Leaderboard</Link>}
             </header>
             <div className="w-[100px] h-[100px] sm:w-[500px] sm:h-[500px] absolute top-14 right-0" style={{backgroundImage: mode === 'pro' ? 'radial-gradient(circle farthest-side at 100% 10%,rgb(110 231 183),#8586ad00 58%)' : 'radial-gradient(circle farthest-side at 100% 10%,#8586ad26,#8586ad00 88%)'}}></div>
             <div className="w-[100px] h-[100px] sm:w-[500px] sm:h-[500px] absolute bottom-0 left-0" style={{backgroundImage: mode === 'pro' ? 'radial-gradient(circle closest-corner at 0%,rgb(110 231 183) 1%,#0000)' : 'radial-gradient(circle closest-corner at 0%,#8586ad26 14%,#0000)'}}></div>

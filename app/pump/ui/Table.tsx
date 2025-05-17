@@ -3,7 +3,6 @@ import Link from "next/link";
 import { connection } from 'next/server';
 import { readContracts } from '@wagmi/core';
 import { erc20Abi } from 'viem'
-import { bitkub } from 'viem/chains';
 import { config } from '@/app/config';
 import { ERC20FactoryETHABI } from '@/app/pump/abi/ERC20FactoryETH';
 import { UniswapV2FactoryABI } from '@/app/pump/abi/UniswapV2Factory';
@@ -22,12 +21,12 @@ export default async function Table({
 }) {
   await connection();
 
-  let _chain: any = null;
   let _chainId = 0;
   if (chain === 'kub' || chain === '') {
-    _chain = bitkub;
     _chainId = 96;
-  }
+  } else if (chain === 'monad') {
+    _chainId = 10143;
+  } // add chain here
   let currencyAddr: string = '';
   let bkgafactoryAddr: string = '';
   let v2facAddr: string = '';
@@ -39,7 +38,11 @@ export default async function Table({
     currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
     bkgafactoryAddr = '0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56';
     v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
-  }
+  } else if (chain === 'monad' && mode === 'pro') {
+    currencyAddr = '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701';
+    bkgafactoryAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
+    v2facAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
+  } // add chain and mode here
   const dataofcurr = {addr: currencyAddr};
   const dataofuniv2factory = {addr: v2facAddr};
   const bkgafactoryContract = {
@@ -147,7 +150,7 @@ export default async function Table({
                 </div>
                 <div className="w-1/2 flex flex-col gap-6 item-center justify-center">
                   <span className="font-bold text-2xl truncate">{res[0].result}</span>
-                  <span className="text-emerald-300 font-bold text-xl">{res[5].result} {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}</span>
+                  <span className="text-emerald-300 font-bold text-xl">{res[5].result} {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
                   <span className="text-xs">[CA: {res[8].result!.slice(0, 5)}...{res[8].result!.slice(37)}]</span>
                   <span className="text-xs">
                   Creator: {res[6].result.slice(0, 5)}...{res[6].result.slice(37)} ····· {

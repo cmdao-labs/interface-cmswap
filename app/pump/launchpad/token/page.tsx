@@ -20,10 +20,13 @@ export async function generateMetadata(
     const ticker = searchParams?.ticker || '';
     let chainId = 0;
     let facAddr = '';
-    if (chain === 'kub') {
+    if (chain === 'kub' || chain === '') {
         chainId = 96;
         facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
-    }
+    } else if (chain === 'monad') {
+        chainId = 10143;
+        facAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
+    } // add chain here
     const result = await readContracts(config, {
         contracts: [
             {
