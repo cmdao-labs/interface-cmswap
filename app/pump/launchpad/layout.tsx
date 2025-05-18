@@ -189,8 +189,8 @@ export default function BlogLayout({
         <div className="grid grid-rows-[20px_1fr_10px] items-center justify-items-center min-h-screen pb-20 gap-16 p-4 sm:p-10 font-[family-name:var(--font-geist-sans)] bg-slate-900 text-white">
             <header className="mt-[220px] md:mt-[150px] mb-10 row-start-1 flex gap-4 md:gap-8 items-center justify-start md:justify-center text-xs md:text-sm w-full flex-wrap" style={{zIndex: 1}}>
                 <div className="flex flex-row gap-1">
-                    <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'kub') {handleChain('kub');}}}><Image src="/96.png" alt="" width={25} height={25} style={{filter: chain !== 'kub' ? "grayscale(1)" : "grayscale(0)"}} /></button>
-                    <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'monad') {handleChain('monad');}}}><Image src="/monad.jpg" alt="" width={25} height={25} style={{filter: chain !== 'monad' ? "grayscale(1)" : "grayscale(0)"}} /></button>
+                    <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'kub') {handleChain('kub');}}}><Image src="/96.png" alt="" width={25} height={25} style={{filter: (chain === 'kub' || chain === '') ? "grayscale(0)" : "grayscale(1)"}} /></button>
+                    <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'monad') {handleChain('monad');}}}><Image src="/monad.jpg" alt="" width={25} height={25} style={{filter: chain === 'monad' ? "grayscale(0)" : "grayscale(1)"}} /></button>
                 </div>
                 {connections && account.address !== undefined &&
                     <>
