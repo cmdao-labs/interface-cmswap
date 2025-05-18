@@ -2,7 +2,7 @@ import Image from "next/image";
 import Jazzicon from '@raugfer/jazzicon';
 import { connection } from 'next/server';
 import { createPublicClient, http, formatEther, erc20Abi } from 'viem';
-import { bitkub } from 'viem/chains';
+import { bitkub, monadTestnet } from 'viem/chains';
 import { config } from '@/app/config';
 import { readContracts, getBalance } from '@wagmi/core';
 import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
@@ -23,19 +23,24 @@ export default async function Leaderboard({
 }) {
   await connection();
 
-  let priceFeed: any = [0, 1];
-
+  // let priceFeed: any = [0, 1];
   let _chain: any = null;
   let _chainId = 0;
   let _explorer = '';
+  let _rpc = '';
   if (chain === 'kub' || chain === '') {
-      _chain = bitkub;
-      _chainId = 96;
-      _explorer = 'https://www.kubscan.com/';
-  }
+    _chain = bitkub;
+    _chainId = 96;
+    _explorer = 'https://www.kubscan.com/';
+  } else if (chain === 'monad') {
+    _chain = monadTestnet;
+    _chainId = 10143;
+    _explorer = 'https://monad-testnet.socialscan.io/';
+    _rpc = process.env.NEXT_PUBLIC_MONAD_RPC as string;
+  } // add chain here
   const publicClient = createPublicClient({ 
-      chain: _chain,
-      transport: http()
+    chain: _chain,
+    transport: http(_rpc)
   });
   let currencyAddr: string = '';
   let bkgafactoryAddr: string = '';
@@ -54,10 +59,16 @@ export default async function Leaderboard({
     _blockcreated = 25232899;
     v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
     v2routerAddr = '0x3F7582E36843FF79F173c7DC19f517832496f2D8';
-  }
+  } else if (chain === 'monad' && mode === 'pro') {
+    currencyAddr = '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701';
+    bkgafactoryAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
+    _blockcreated = 16912084;
+    v2facAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
+    v2routerAddr = '0x5a16536bb85a2fa821ec774008d6068eced79c96'
+  } // add chain and mode here
   const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
   const dataofuniv2factory = {addr: v2facAddr};
-  const dataofuniv2router = {addr: v2routerAddr};
+  // const dataofuniv2router = {addr: v2routerAddr};
   const bkgafactoryContract = {
     address: bkgafactoryAddr as '0xstring',
     abi: ERC20FactoryABI,
@@ -118,52 +129,179 @@ export default async function Leaderboard({
       );
     }
     const fetchtoken0: any = await readContracts(config, init2);
-    rank = Object.values((await publicClient.getContractEvents({
-      abi: UniswapV2PairABI,
-      address: lpList2,
-      eventName: 'Swap',
-      fromBlock: BigInt(dataofcurr.blockcreated),
-      toBlock: 'latest',
-    })).map((res) => {
-      if (fetchtoken0[lpList2UpperCase.indexOf(res.address.toUpperCase())].result.toUpperCase() === currencyAddr.toUpperCase()) {
-        return {addr: res.args.recipient, value: Number(formatEther(res.args.amount0 as bigint)) < 0 ? Number(formatEther(res.args.amount0 as bigint)) / (mode !== 'pro' ? 1 : 1) * -1 : Number(formatEther(res.args.amount0 as bigint)) / (mode !== 'pro' ? 1 : 1)};
-      } else {
-        return {addr: res.args.recipient, value: Number(formatEther(res.args.amount1 as bigint)) < 0 ? Number(formatEther(res.args.amount1 as bigint)) / (mode !== 'pro' ? 1 : 1) * -1 : Number(formatEther(res.args.amount1 as bigint)) / (mode !== 'pro' ? 1 : 1)};
-      }
-    }).reduce((a: any, b: any) => {
-      if (a[b.addr.toUpperCase()]) {
-        a[b.addr.toUpperCase()].value += b.value
-      } else {
-        a[b.addr.toUpperCase()] = b
-      }
-      return a
-    }, {})).map((res: any) => {
-      let questxp = 0;
-      if (dataxp.map(i => i.addr).indexOf(res.addr.toUpperCase()) !== -1) {
-        questxp += dataxp[dataxp.map(i => i.addr).indexOf(res.addr.toUpperCase())].xp;
-      }
-      let lvl = 1;
-      if (res.value + questxp >= 25900) {
-        lvl = 10;
-      } else if (res.value + questxp >= 20900) {
-        lvl = 9;
-      } else if (res.value + questxp >= 16350) {
-        lvl = 8;
-      } else if (res.value + questxp >= 12150) {
-        lvl = 7;
-      } else if (res.value + questxp >= 8350) {
-        lvl = 6;
-      } else if (res.value + questxp >= 5150) {
-        lvl = 5;
-      } else if (res.value + questxp >= 2950) {
-        lvl = 4;
-      } else if (res.value + questxp >= 1450) {
-        lvl = 3;
-      } else if (res.value + questxp >= 550) {
-        lvl = 2;
-      }
-      return {addr: res.addr, value: Number(res.value + questxp).toFixed(2), lvl: lvl}
-    }).sort((a: any, b: any) => {return b.value - a.value});
+    if (chain === 'monad') {
+      let fulldata: any[] = []
+      const headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
+      const body = JSON.stringify({
+          id: 1,
+          jsonrpc: "2.0",
+          method: "alchemy_getAssetTransfers",
+          params: [
+              {
+                  fromBlock: '0x' + Number(dataofcurr.blockcreated).toString(16),
+                  toBlock: "latest",
+                  toAddress: v2routerAddr,
+                  excludeZeroValue: true,
+                  category: ["external"]
+              }
+          ]
+      })
+      const response = await fetch(_rpc, {method: 'POST', headers: headers, body: body})
+      const data = await response.json()
+      data.result.transfers.map((res: any) => {
+          fulldata.push({value: Number(formatEther(BigInt(res.rawContract.value))), addr: res.from})
+      });
+      const body2 = JSON.stringify({
+          id: 2,
+          jsonrpc: "2.0",
+          method: "alchemy_getAssetTransfers",
+          params: [
+              {
+                  fromBlock: '0x' + Number(dataofcurr.blockcreated).toString(16),
+                  toBlock: "latest",
+                  fromAddress: v2routerAddr,
+                  excludeZeroValue: true,
+                  category: ["external"]
+              }
+          ]
+      })
+      const response2 = await fetch(_rpc, {method: 'POST', headers: headers, body: body2})
+      const data2 = await response2.json()
+      data2.result.transfers.map((res: any) => {
+          fulldata.push({value: Number(formatEther(BigInt(res.rawContract.value))), addr: res.to})
+      });
+      rank = Object.values(fulldata.reduce((a: any, b: any) => {
+        if (a[b.addr.toUpperCase()]) {
+          a[b.addr.toUpperCase()].value += b.value
+        } else {
+          a[b.addr.toUpperCase()] = b
+        }
+        return a
+      }, {})).map((res: any) => {
+        let questxp = 0;
+        if (dataxp.map(i => i.addr).indexOf(res.addr.toUpperCase()) !== -1) {
+          questxp += dataxp[dataxp.map(i => i.addr).indexOf(res.addr.toUpperCase())].xp;
+        }
+        let lvl = 1;
+        if (res.value + questxp >= 25900) {
+          lvl = 10;
+        } else if (res.value + questxp >= 20900) {
+          lvl = 9;
+        } else if (res.value + questxp >= 16350) {
+          lvl = 8;
+        } else if (res.value + questxp >= 12150) {
+          lvl = 7;
+        } else if (res.value + questxp >= 8350) {
+          lvl = 6;
+        } else if (res.value + questxp >= 5150) {
+          lvl = 5;
+        } else if (res.value + questxp >= 2950) {
+          lvl = 4;
+        } else if (res.value + questxp >= 1450) {
+          lvl = 3;
+        } else if (res.value + questxp >= 550) {
+          lvl = 2;
+        }
+        return {addr: res.addr, value: Number(res.value + questxp).toFixed(2), lvl: lvl}
+      }).sort((a: any, b: any) => {return b.value - a.value});
+      // for (const addr of lpList2) {
+      //   const individualBody = JSON.stringify({
+      //     id: 1,
+      //     jsonrpc: "2.0",
+      //     method: "alchemy_getAssetTransfers",
+      //     params: [
+      //       {
+      //         fromBlock: '0x' + Number(dataofcurr.blockcreated).toString(16),
+      //         toBlock: "latest",
+      //         toAddress: addr,
+      //         contractAddresses: [dataofcurr.addr],
+      //         excludeZeroValue: true,
+      //         category: ["erc20"]
+      //       }
+      //     ]
+      //   })
+      //   const individualResponse = await fetch(_rpc, {
+      //     method: 'POST', 
+      //     headers: headers, 
+      //     body: individualBody
+      //   })
+      //   const individualData = await individualResponse.json()
+      //   individualData.result.transfers.map((res: any) => {
+      //     fulldata.push({value: Number(formatEther(BigInt(res.rawContract.value))), addr: res.from})
+      //   })
+      //   const individualBody2 = JSON.stringify({
+      //     id: 2,
+      //     jsonrpc: "2.0",
+      //     method: "alchemy_getAssetTransfers",
+      //     params: [
+      //       {
+      //         fromBlock: '0x' + Number(dataofcurr.blockcreated).toString(16),
+      //         toBlock: "latest",
+      //         fromAddress: addr,
+      //         contractAddresses: [dataofcurr.addr],
+      //         excludeZeroValue: true,
+      //         category: ["erc20"]
+      //       }
+      //     ]
+      //   })
+      //   const individualResponse2 = await fetch(_rpc, {
+      //     method: 'POST', 
+      //     headers: headers, 
+      //     body: individualBody2
+      //   })
+      //   const individualData2 = await individualResponse2.json()
+      //   individualData2.result.transfers.map((res: any) => {
+      //     fulldata.push({value: Number(formatEther(BigInt(res.rawContract.value))), addr: res.to})
+      //   })
+      // }
+    } else {
+      rank = Object.values((await publicClient.getContractEvents({
+        abi: UniswapV2PairABI,
+        address: lpList2,
+        eventName: 'Swap',
+        fromBlock: BigInt(dataofcurr.blockcreated),
+        toBlock: 'latest',
+      })).map((res) => {
+        if (fetchtoken0[lpList2UpperCase.indexOf(res.address.toUpperCase())].result.toUpperCase() === currencyAddr.toUpperCase()) {
+          return {addr: res.args.recipient, value: Number(formatEther(res.args.amount0 as bigint)) < 0 ? Number(formatEther(res.args.amount0 as bigint)) / (mode !== 'pro' ? 1 : 1) * -1 : Number(formatEther(res.args.amount0 as bigint)) / (mode !== 'pro' ? 1 : 1)};
+        } else {
+          return {addr: res.args.recipient, value: Number(formatEther(res.args.amount1 as bigint)) < 0 ? Number(formatEther(res.args.amount1 as bigint)) / (mode !== 'pro' ? 1 : 1) * -1 : Number(formatEther(res.args.amount1 as bigint)) / (mode !== 'pro' ? 1 : 1)};
+        }
+      }).reduce((a: any, b: any) => {
+        if (a[b.addr.toUpperCase()]) {
+          a[b.addr.toUpperCase()].value += b.value
+        } else {
+          a[b.addr.toUpperCase()] = b
+        }
+        return a
+      }, {})).map((res: any) => {
+        let questxp = 0;
+        if (dataxp.map(i => i.addr).indexOf(res.addr.toUpperCase()) !== -1) {
+          questxp += dataxp[dataxp.map(i => i.addr).indexOf(res.addr.toUpperCase())].xp;
+        }
+        let lvl = 1;
+        if (res.value + questxp >= 25900) {
+          lvl = 10;
+        } else if (res.value + questxp >= 20900) {
+          lvl = 9;
+        } else if (res.value + questxp >= 16350) {
+          lvl = 8;
+        } else if (res.value + questxp >= 12150) {
+          lvl = 7;
+        } else if (res.value + questxp >= 8350) {
+          lvl = 6;
+        } else if (res.value + questxp >= 5150) {
+          lvl = 5;
+        } else if (res.value + questxp >= 2950) {
+          lvl = 4;
+        } else if (res.value + questxp >= 1450) {
+          lvl = 3;
+        } else if (res.value + questxp >= 550) {
+          lvl = 2;
+        }
+        return {addr: res.addr, value: Number(res.value + questxp).toFixed(2), lvl: lvl}
+      }).sort((a: any, b: any) => {return b.value - a.value});
+    }
   } 
 //   else if (rankby === 'networth') {
 //     let lpListLite: any = [];

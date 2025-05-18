@@ -52,8 +52,7 @@ export default async function Event({
     } else if (chain === 'monad' && mode === 'pro') {
         currencyAddr = '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701';
         bkgafactoryAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
-        const blockNumber = await publicClient.getBlockNumber() 
-        _blockcreated = Number(blockNumber - BigInt(400));
+       _blockcreated = 16912084;
         v2facAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
     } // add chain and mode here
     const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
@@ -116,40 +115,100 @@ export default async function Event({
         lparr.push(lplist[i].lp);
     }
     const tokenlist = result.map((res: any) => {return res.result.toUpperCase()});
-    const result4 = await publicClient.getContractEvents({
-        abi: erc20Abi,
-        eventName: 'Transfer',
-        args: { 
-            to: lparr,
-        },
-        fromBlock: BigInt(dataofcurr.blockcreated),
-        toBlock: 'latest',
-    });
-    const result5 = await Promise.all(result4);
-    const fulldatasell = result5.filter((res) => {
-        return tokenlist.indexOf(res.address.toUpperCase()) !== -1;
-    }).map((res: any) => {
-        return {action: 'sell', value: Number(formatEther(res.args.value)), hash: res.transactionHash, block: res.blockNumber, ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.to.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.to.toUpperCase())].logo}
-    }).filter((res) => {
-        return res.value !== 1000000000;
-    });
-    const result6 = await publicClient.getContractEvents({
-        abi: erc20Abi,
-        eventName: 'Transfer',
-        args: { 
-            from: lparr,
-        },
-        fromBlock: BigInt(dataofcurr.blockcreated),
-        toBlock: 'latest',
-    });
-    const result7 = await Promise.all(result6);
-    const fulldatabuy = result7.filter((res) => {
-        return tokenlist.indexOf(res.address.toUpperCase()) !== -1;
-    }).map((res: any) => {
-        return {action: Number(formatEther(res.args.value)) === 90661089.38801491 ? 'launch' : 'buy', value: Number(formatEther(res.args.value)), hash: res.transactionHash, block: res.blockNumber, ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.from.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.from.toUpperCase())].logo}
-    });
+    let fulldatabuy: any[]
+    let fulldatasell: any[]
+    if (chain === 'monad') {
+        const headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
+        fulldatabuy = []
+        fulldatasell = []
+        for (const address of lparr) {
+            const individualBody = JSON.stringify({
+                id: 1,
+                jsonrpc: "2.0",
+                method: "alchemy_getAssetTransfers",
+                params: [
+                    {
+                        fromBlock: '0x' + Number(dataofcurr.blockcreated).toString(16),
+                        toBlock: "latest",
+                        fromAddress: address,
+                        excludeZeroValue: true,
+                        category: ["erc20"]
+                    }
+                ]
+            })
+            const individualResponse = await fetch(_rpc, {
+                method: 'POST', 
+                headers: headers, 
+                body: individualBody
+            })
+            const individualData = await individualResponse.json()
+            individualData.result.transfers.filter((res: any) => {
+                return tokenlist.indexOf(res.rawContract.address.toUpperCase()) !== -1;
+            }).map((res: any) => {
+                fulldatabuy.push({action: 'buy', value: Number(formatEther(BigInt(res.rawContract.value))), hash: res.hash, block: Number(res.blockNum), ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.from.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.from.toUpperCase())].logo})
+            })
+            const individualBody2 = JSON.stringify({
+                id: 2,
+                jsonrpc: "2.0",
+                method: "alchemy_getAssetTransfers",
+                params: [
+                    {
+                        fromBlock: '0x' + Number(dataofcurr.blockcreated).toString(16),
+                        toBlock: "latest",
+                        toAddress: address,
+                        excludeZeroValue: true,
+                        category: ["erc20"]
+                    }
+                ]
+            })
+            const individualResponse2 = await fetch(_rpc, {
+                method: 'POST', 
+                headers: headers, 
+                body: individualBody2
+            })
+            const individualData2 = await individualResponse2.json()
+            individualData2.result.transfers.filter((res: any) => {
+                return tokenlist.indexOf(res.rawContract.address.toUpperCase()) !== -1;
+            }).map((res: any) => {
+                fulldatasell.push({action: formatEther(BigInt(res.rawContract.value)) === '999999999.999999999999968705' ? 'launch' : 'sell', value: Number(formatEther(BigInt(res.rawContract.value))), hash: res.hash, block: Number(res.blockNum), ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.to.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.to.toUpperCase())].logo})
+            })
+        }
+    } else {
+        const result4 = await publicClient.getContractEvents({
+            abi: erc20Abi,
+            eventName: 'Transfer',
+            args: { 
+                to: lparr,
+            },
+            fromBlock: BigInt(dataofcurr.blockcreated),
+            toBlock: 'latest',
+        });
+        const result5 = await Promise.all(result4);
+        fulldatasell = result5.filter((res) => {
+            return tokenlist.indexOf(res.address.toUpperCase()) !== -1;
+        }).map((res: any) => {
+            return {action: 'sell', value: Number(formatEther(res.args.value)), hash: res.transactionHash, block: res.blockNumber, ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.to.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.to.toUpperCase())].logo}
+        }).filter((res) => {
+            return res.value !== 1000000000;
+        });
+        const result6 = await publicClient.getContractEvents({
+            abi: erc20Abi,
+            eventName: 'Transfer',
+            args: { 
+                from: lparr,
+            },
+            fromBlock: BigInt(dataofcurr.blockcreated),
+            toBlock: 'latest',
+        });
+        const result7 = await Promise.all(result6);
+        fulldatabuy = result7.filter((res) => {
+            return tokenlist.indexOf(res.address.toUpperCase()) !== -1;
+        }).map((res: any) => {
+            return {action: Number(formatEther(res.args.value)) === 90661089.38801491 ? 'launch' : 'buy', value: Number(formatEther(res.args.value)), hash: res.transactionHash, block: res.blockNumber, ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.from.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.from.toUpperCase())].logo}
+        });
+    }
     const mergedata = fulldatasell.concat(fulldatabuy);
-    const _timestamparr = mergedata.map(async (res) => {
+    const _timestamparr = mergedata.map(async (res: any) => {
         return await publicClient.getBlock({ 
             blockNumber: res.block,
         })
@@ -158,7 +217,7 @@ export default async function Event({
     const restimestamp = timestamparr.map((res) => {
         return Number(res.timestamp) * 1000;
     })
-    const theresult = mergedata.map((res, index) => {
+    const theresult = mergedata.map((res: any, index: any) => {
         return {action: res.action, value: res.value, hash: res.hash, timestamp: restimestamp[index], ticker: res.ticker, logo: res.logo}
     }).sort((a: any, b: any) => {return b.timestamp - a.timestamp}).slice(0, 9);
 

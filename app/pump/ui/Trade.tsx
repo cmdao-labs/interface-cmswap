@@ -65,6 +65,7 @@ export default function Trade({
     } else if (chain === 'monad' && mode === 'pro') {
         currencyAddr = '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701';
         bkgafactoryAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
+        _blockcreated = 16912084;
         v2facAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
         v2routerAddr = '0x5a16536bb85a2fa821ec774008d6068eced79c96';
         v3qouterAddr = '0x555756bd5b347853af6f713a2af6231414bedefc';
