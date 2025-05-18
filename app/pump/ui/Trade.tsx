@@ -150,6 +150,16 @@ export default function Trade({
                 functionName: 'isGraduate',
                 args: [lp as '0xstring']
             },
+            {
+                ...bkgafactoryContract,
+                functionName: 'creator',
+                args: [ticker as '0xstring'],
+            },
+            {
+                ...bkgafactoryContract,
+                functionName: 'createdTime',
+                args: [ticker as '0xstring'],
+            },
         ],
     })
     const ethBal = useBalance({
@@ -173,8 +183,6 @@ export default function Trade({
         ],
     })
 
-    const [creator, setCreator] = useState('');
-    const [createAt, setCreateAt] = useState(0);
     const [holder, setHolder] = useState([] as { addr: string; value: number; }[]);
     const [hx, setHx] = useState([] as { action: string; value: number; from: any; hash: any; timestamp: number; }[]);
  
@@ -194,22 +202,10 @@ export default function Trade({
                 fromBlock: BigInt(dataofcurr.blockcreated),
                 toBlock: 'latest',
             });
-            console.log(res)
-            const res2 = await publicClient.getTransaction({ 
-                hash: res[0].transactionHash,
-            });
-            const res3 = await publicClient.getBlock({ 
-                blockNumber: res2.blockNumber,
-            })
-            setCreator(res2.from);
-            setCreateAt(Number(res3.timestamp));
             const result4 = await publicClient.getContractEvents({
                 abi: erc20Abi,
                 address: ticker as '0xstring',
                 eventName: 'Transfer',
-                args: { 
-                    from: lp as '0xstring',
-                },
                 fromBlock: BigInt(dataofcurr.blockcreated),
                 toBlock: 'latest',
             });
@@ -443,25 +439,27 @@ export default function Trade({
                             :
                             'Fetching...'
                     }</span> {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
-                    <span>
-                        Creator: {creator.slice(0, 5)}...{creator.slice(37)} ····· {
-                            Number(Number(Date.now() / 1000).toFixed(0)) - Number(createAt) < 60 && rtf.format(Number(createAt) - Number(Number(Date.now() / 1000).toFixed(0)), 'second')
-                        }
-                        {
-                            Number(Number(Date.now() / 1000).toFixed(0)) - Number(createAt) >= 60 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(createAt) < 3600 && rtf.format(Number(Number((Number(createAt) - Number(Number(Date.now() / 1000).toFixed(0))) / 60).toFixed(0)), 'minute')
-                        }
-                        {
-                            Number(Number(Date.now() / 1000).toFixed(0)) - Number(createAt) >= 3600 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(createAt) < 86400 && rtf.format(Number(Number((Number(createAt) - Number(Number(Date.now() / 1000).toFixed(0))) / 3600).toFixed(0)), 'hour')
-                        }
-                        {
-                            Number(Number(Date.now() / 1000).toFixed(0)) - Number(createAt) >= 86400 && rtf.format(Number(Number((Number(createAt) - Number(Number(Date.now() / 1000).toFixed(0))) / 86400).toFixed(0)), 'day')
-                        }
-                    </span>
+                    {result2.status === 'success' &&
+                        <span>
+                            Creator: {result2.data![8].result.slice(0, 5)}...{result2.data![8].result.slice(37)} ····· {
+                                Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![9].result) < 60 && rtf.format(Number(result2.data![9].result) - Number(Number(Date.now() / 1000).toFixed(0)), 'second')
+                            }
+                            {
+                                Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![9].result) >= 60 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![9].result) < 3600 && rtf.format(Number(Number((Number(result2.data![9].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 60).toFixed(0)), 'minute')
+                            }
+                            {
+                                Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![9].result) >= 3600 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![9].result) < 86400 && rtf.format(Number(Number((Number(result2.data![9].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 3600).toFixed(0)), 'hour')
+                            }
+                            {
+                                Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![9].result) >= 86400 && rtf.format(Number(Number((Number(result2.data![9].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 86400).toFixed(0)), 'day')
+                            }
+                        </span>
+                    }
                 </div>
             </div>
             <div className="w-full flex flex-row flex-wrap-reverse gap-12 items-center xl:items-start justify-around">
                 <div className="w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start" style={{zIndex: 1}}>
-                    <iframe height="100%" width="100%" id="geckoterminal-embed" title="GeckoTerminal Embed" src={"https://www.geckoterminal.com/" + (chain === "KUB" && "bitkub_chain") + "/pools/" + lp + "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"} allow="clipboard-write"></iframe>
+                    <iframe height="100%" width="100%" id="geckoterminal-embed" title="GeckoTerminal Embed" src={"https://www.geckoterminal.com/" + (chain === "kub" ? "bitkub_chain" : chain === "monad" ? "monad-testnet" : '') + "/pools/" + lp + "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"} allow="clipboard-write"></iframe>
                     {chain !== 'monad' ?
                         <>
                             <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
@@ -584,7 +582,7 @@ export default function Trade({
                                 <div className="w-full h-[50px] flex flex-row items-center justify-between text-xs lg:text-md py-2 border-b border-gray-800" key={index}>
                                     <div className="w-3/4 flex flex-row items-center justify-start gap-6 overflow-hidden">
                                         <span>{index + 1}.</span>
-                                        <span className={"font-bold " + (res.addr.toUpperCase() === creator.toUpperCase() ? "text-emerald-300" : "")}>{res.addr.slice(0, 5) + '...' + res.addr.slice(37)} {res.addr.toUpperCase() === creator.toUpperCase() && '[Creator 🧑‍💻]'}</span>
+                                        {result2.status === 'success' && <span className={"font-bold " + ((res.addr.toUpperCase() === result2.data![8].result.toUpperCase() || res.addr.toUpperCase() === lp.toUpperCase()) ? "text-emerald-300" : "")}>{res.addr.slice(0, 5) + '...' + res.addr.slice(37)} {res.addr.toUpperCase() === result2.data![8].result.toUpperCase() && '[Creator 🧑‍💻]'}{res.addr.toUpperCase() === lp.toUpperCase() && '[Bonding curve]'}</span>}
                                     </div>
                                     <span className="w-1/4 text-right w-[50px] sm:w-[200px]">{res.value.toFixed(4)}%</span>
                                 </div>
