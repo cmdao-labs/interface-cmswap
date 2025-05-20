@@ -22,9 +22,9 @@ export default function Swap96({
     const [exchangeRate, setExchangeRate] = React.useState("")
     const [fixedExchangeRate, setFixedExchangeRate] = React.useState("")
     const [altRoute, setAltRoute] = React.useState<{ a: '0xstring', b: '0xstring', c: '0xstring' }>()
-    const [CMswapTVL, setCMswapTVL] = React.useState<{ tvl10000: string; tvl3000: string; tvl500: string; tvl100: string; exchangeRate: string; }>({ tvl10000: "", tvl3000: "", tvl500: "", tvl100: "", exchangeRate: "" });
-    const [DMswapTVL, setDMswapTVL] = React.useState<{ tvl10000: string; tvl3000: string; tvl500: string; tvl100: string; exchangeRate: string; }>({ tvl10000: "", tvl3000: "", tvl500: "", tvl100: "", exchangeRate: "" });
-    const [UdonTVL, setUdonTVL] = React.useState<{ tvl10000: string; exchangeRate: string; }>({ tvl10000: "", exchangeRate: "" });
+    const [CMswapTVL, setCMswapTVL] = React.useState<{ tvl10000: string; tvl3000: string; tvl500: string; tvl100: string; exchangeRate: string; isReverted: boolean }>({ tvl10000: "", tvl3000: "", tvl500: "", tvl100: "", exchangeRate: "", isReverted: false });
+    const [DMswapTVL, setDMswapTVL] = React.useState<{ tvl10000: string; tvl3000: string; tvl500: string; tvl100: string; exchangeRate: string; isReverted: boolean }>({ tvl10000: "", tvl3000: "", tvl500: "", tvl100: "", exchangeRate: "", isReverted: false });
+    const [UdonTVL, setUdonTVL] = React.useState<{ tvl10000: string; exchangeRate: string; isReverted: boolean }>({ tvl10000: "", exchangeRate: "", isReverted: false });
     const [bestPool, setBestPool] = React.useState("")
     const [poolSelect, setPoolSelect] = React.useState("")
     const [bestPathArray, setBestPathArray] = React.useState<string[] | null>(null)
@@ -516,6 +516,7 @@ export default function Swap96({
     }
 
     React.useEffect(() => {
+
         const fetch0 = async () => {
             (tokenA.value.toUpperCase() === tokenB.value.toUpperCase()) && setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
 
@@ -923,6 +924,7 @@ export default function Swap96({
 
     React.useEffect(() => {
         const updateRate = async () => {
+            setAltRoute(undefined)
             /*             if (Number(amountA) !== 0) {
                             const quote = await getQoute(amountA);
                             if (poolSelect === "CMswap" && quote?.CMswapRate) {
