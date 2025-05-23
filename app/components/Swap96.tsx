@@ -223,6 +223,8 @@ export default function Swap96({
                         const newReserveA = Number(formatEther(reserveUdonA)) + Number(_amount)
                         const newReserveB = Number(formatEther(reserveUdonB)) - Number(formatEther(bestAmountOut))
                         const newprice = newReserveA/newReserveB
+                        const exrate = Number(formatEther(bestAmountOut)) / Number(_amount)
+                        setExchangeRate(exrate.toString());
                         setNewPrice((newprice).toFixed(6));
                         setAmountB(formatEther(bestAmountOut))
                     }
@@ -1089,12 +1091,13 @@ export default function Swap96({
                 fetch0()
             })
         }
-    }, [config, address, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, poolSelect])
+    }, [config, address, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams])
 
-    console.log({udonOldPrice: fixedExchangeRate})
-    console.log({udonNewPrice: newPrice})
+
     React.useEffect(() => {
         console.log("New price set:", newPrice);
+        console.log({udonOldPrice: fixedExchangeRate})
+        console.log({udonNewPrice: newPrice})
     },[newPrice])
 
     React.useEffect(() => {
