@@ -9,7 +9,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useDebouncedCallback } from 'use-debounce'
 import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI, CMswapUniSmartRoute, BitkubEvmKYCContract } from '@/app/lib/96'
 import { config } from '@/app/config'
-import { useSearchParams } from 'next/navigation'
 
 export default function Swap96({
     setIsLoading, setErrMsg,
@@ -45,7 +44,6 @@ export default function Swap96({
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
     const [swapDirection, setSwapDirection] = React.useState(true) // false = A->B, true = B->A
-    const [CMswapToken0, setCMswapToken0] = React.useState("");
     const [isAccountKYC, setAccountKYC] = React.useState(false); //  NEED KYC LEVEL 1 FOR UNWRAPPED KKUB to KUB
     const [hasInitializedFromParams, setHasInitializedFromParams] = React.useState(false)
 
@@ -139,6 +137,7 @@ export default function Swap96({
                             setAmountB(formatEther(qouteOutput.result[0]))
                             let newPrice = CMswapTVL.isReverted ? 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2) : Number(qouteOutput.result[1]) / (2 ** 96)
                             setNewPrice(newPrice.toString())
+                            setExchangeRate(CMswapTVL.exchangeRate)
                         }
                         CMswapRate = qouteOutput.result[0] !== undefined ? Number(formatEther(qouteOutput.result[0])) : 0  
                     } else {
@@ -152,10 +151,9 @@ export default function Swap96({
                             setAmountB(formatEther(qouteOutput.result[0]))
                             let newPrice =  CMswapTVL.isReverted ? 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2) : Number(qouteOutput.result[1]) / (2 ** 96)
                             setNewPrice(newPrice.toString())
-                            setExchangeRate(CMswapTVL.exchangeRate);
+                            setExchangeRate(CMswapTVL.exchangeRate)
                         }
                         CMswapRate = qouteOutput.result[0] !== undefined ? Number(formatEther(qouteOutput.result[0])) : 0
-
                     }
                 } else {
                     setAmountB("")
@@ -754,22 +752,21 @@ export default function Swap96({
                             tokenAvalue === '0x7d984C24d2499D840eB3b7016077164e15E5faA6' as '0xstring' && tokenBvalue === '0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5' as '0xstring'
                         ){
                             currPrice_10000 = token0_10000.toUpperCase() !== tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2))
-                            if(feeSelect === 10000){
+                            if (feeSelect === 10000) {
                                 isReverted = token0_10000.toUpperCase() !== tokenBvalue.toUpperCase() ? false : true
-                            setExchangeRate(currPrice_10000.toString());
+                                setExchangeRate(currPrice_10000.toString());
                             }
-                        }else{
+                        } else {
                             currPrice_10000 = token0_10000.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2))
-                             if(feeSelect === 10000){
+                            if (feeSelect === 10000) {
                                 isReverted = token0_10000.toUpperCase() === tokenBvalue.toUpperCase() ?  false : true
-                            setExchangeRate(currPrice_10000.toString());
+                                setExchangeRate(currPrice_10000.toString());
                             }   
                         }
 
                         console.warn(`Token0 \n${token0_10000}\nTokenB \n${tokenBvalue}\n${token0_10000.toUpperCase() !== tokenBvalue.toUpperCase()}\nPrice : ${currPrice_10000}`)
                         const tvl_10000 = currPrice_10000 !== 0 && currPrice_10000 !== Infinity ? (Number(formatEther(tokenAamount_10000)) * (1 / currPrice_10000)) + Number(formatEther(tokenBamount_10000)) : 0
                         feeSelect === 10000 && currPrice_10000 !== Infinity && updateExchangeRateCMswapTVL(10000, Number(currPrice_10000.toString()))
-                        feeSelect === 10000 && currPrice_10000 !== Infinity && setCMswapTVL({ ...CMswapTVL, FixedExchangeRate: ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2).toString() })
                         feeSelect === 10000 && currPrice_10000 !== Infinity && tvl_10000 < 1e-9 && updateExchangeRateCMswapTVL(10000, 0)
                         updateCMswapTvlKey('tvl10000', tvl_10000,isReverted)
                    
@@ -824,7 +821,6 @@ export default function Swap96({
                         
                         const tvl_3000 = currPrice_3000 !== 0 && currPrice_3000 !== Infinity ? (Number(formatEther(tokenAamount_3000)) * (1 / currPrice_3000)) + Number(formatEther(tokenBamount_3000)) : 0
                         feeSelect === 3000 && currPrice_3000 !== Infinity && updateExchangeRateCMswapTVL(3000, Number(currPrice_3000.toString()))
-                        feeSelect === 3000 && currPrice_3000 !== Infinity  && setCMswapTVL({ ...CMswapTVL, FixedExchangeRate: ((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2).toString() })
                         feeSelect === 3000 && currPrice_3000 !== Infinity && tvl_3000 < 1e-9 && updateExchangeRateCMswapTVL(3000, 0)
                         //tvl_3000 >= 1e-9 ? setTvl3000(tvl_3000.toString()) : setTvl3000('0')
                         updateCMswapTvlKey('tvl3000', tvl_3000,isReverted);
@@ -875,7 +871,6 @@ export default function Swap96({
                         const currPrice_500 = token0_500.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_500) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2))
                         const tvl_500 = currPrice_500 !== 0 && currPrice_500 !== Infinity ? (Number(formatEther(tokenAamount_500)) * (1 / currPrice_500)) + Number(formatEther(tokenBamount_500)) : 0
                         feeSelect === 500 && currPrice_500 !== Infinity && updateExchangeRateCMswapTVL(500, Number(currPrice_500.toString()))
-                        feeSelect === 500 && currPrice_500 !== Infinity  && setCMswapTVL({ ...CMswapTVL, FixedExchangeRate: ((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2).toString() })
                         feeSelect === 500 && currPrice_500 !== Infinity && tvl_500 < 1e-9 && updateExchangeRateCMswapTVL(500, 0)
                         if(feeSelect === 500){
                             isReverted = token0_500.toUpperCase() === tokenBvalue.toUpperCase() ? false : true
@@ -928,7 +923,6 @@ export default function Swap96({
                         const currPrice_100 = token0_100.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_100) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_100) / (2 ** 96)) ** 2))
                         const tvl_100 = currPrice_100 !== 0 && currPrice_100 !== Infinity ? (Number(formatEther(tokenAamount_100)) * (1 / currPrice_100)) + Number(formatEther(tokenBamount_100)) : 0
                         feeSelect === 100 && currPrice_100 !== Infinity && updateExchangeRateCMswapTVL(100, Number(currPrice_100.toString()))
-                        feeSelect === 100 && currPrice_100 !== Infinity && setCMswapTVL({ ...CMswapTVL, FixedExchangeRate: ((Number(sqrtPriceX96_100) / (2 ** 96)) ** 2).toString() })
                         feeSelect === 100 && currPrice_100 !== Infinity && tvl_100 < 1e-9 && updateExchangeRateCMswapTVL(100, 0)
                         if(feeSelect === 100){
                             isReverted = token0_100.toUpperCase() === tokenBvalue.toUpperCase() ? false : true
@@ -1078,8 +1072,6 @@ export default function Swap96({
                     } catch (error) {
                         updateExchangeRatePonderTVL(0)
                     }
-
-                    setExchangeRate("0")
                 }
             }
         }
@@ -1101,37 +1093,36 @@ export default function Swap96({
     },[newPrice])
 
     React.useEffect(() => {
-    const updateRate = async () => {
-        setAltRoute(undefined);
+        const updateRate = async () => {
+            setAltRoute(undefined);
 
-        const poolMap = {
-        CMswap: CMswapTVL,
-        DiamonSwap: DMswapTVL,
-        UdonSwap: UdonTVL,
-        ponder: ponderTVL,
-        } as const;
+            const poolMap = {
+                CMswap: CMswapTVL,
+                DiamonSwap: DMswapTVL,
+                UdonSwap: UdonTVL,
+                ponder: ponderTVL,
+            } as const;
 
-        type PoolKey = keyof typeof poolMap;
+            type PoolKey = keyof typeof poolMap;
 
-        if (poolSelect in poolMap) {
-        const selectedPool = poolMap[poolSelect as PoolKey];
+            if (poolSelect in poolMap) {
+                const selectedPool = poolMap[poolSelect as PoolKey];
 
-        if (amountA === "") {
-            setExchangeRate(selectedPool.exchangeRate);
-            console.log(`Quote Price ${poolSelect}`, selectedPool.exchangeRate);
-        }
+                if (amountA === "") {
+                    setExchangeRate(selectedPool.exchangeRate);
+                    console.log(`Quote Price ${poolSelect}`, selectedPool.exchangeRate);
+                }
 
-        setFixedExchangeRate(selectedPool.FixedExchangeRate);
-        console.log(`Fix price set for ${poolSelect} :`, selectedPool.FixedExchangeRate);
-        } else {
-        setExchangeRate("0");
-        console.log("No valid pool selected");
-        }
-    };
+                setFixedExchangeRate(selectedPool.FixedExchangeRate);
+                console.log(`Fix price set for ${poolSelect} :`, selectedPool.FixedExchangeRate);
+            } else {
+                setExchangeRate("0");
+                console.log("No valid pool selected");
+            }
+        };
 
-    if (!wrappedRoute) updateRate();
+        if (!wrappedRoute) updateRate();
     }, [amountA, poolSelect, CMswapTVL, DMswapTVL, UdonTVL, ponderTVL, txupdate]);
-
 
     React.useEffect(() => {
         const fetchQuoteAndSetPool = async () => {

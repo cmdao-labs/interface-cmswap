@@ -124,11 +124,11 @@ export default function BridgeInterface() {
     }
 
     return (
-        <div className="min-h-screen bg-[#0a0b1e] p-4 font-mono bg-gradient-to-br from-gray-950 via-indigo-950 to-slate-900">
+        <div className="min-h-screen bg-[#0a0b1e] p-4 font-mono bg-gradient-to-br from-slate-700 via-black to-emerald-900">
             {isLoading && <div className="w-full h-full fixed backdrop-blur-[12px] z-999" />}
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
             <div className="max-w-md mx-auto">
-                <div className="rounded-lg border border-[#00ff9d]/10 bg-black/70 backdrop-blur-sm p-4 mt-[100px]">
+                <div className="rounded-lg border border-[#00ff9d]/10 bg-water-200 bg-opacity-[0.07] backdrop-blur-sm p-4 mt-[100px]">
                     <div className="flex space-x-1 mb-6">
                         <button className="w-full text-left flex-1 py-2 text-sm roundedbg-[#162638] text-[#00ff9d]">Bridge</button>
                     </div>

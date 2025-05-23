@@ -152,7 +152,7 @@ export default function Page() {
     }, [])
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-950 via-indigo-950 to-slate-900 relative overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-slate-700 via-black to-emerald-900 relative overflow-hidden">
             <div className="absolute inset-0 z-0"><div className="grid-background w-full h-full" /></div>
             <div className="absolute top-[25%] right-[10%] w-24 h-24 md:w-32 md:h-32 floating-element floating-element-1 opacity-30">
                 <div className="relative w-full h-full">
@@ -195,7 +195,7 @@ export default function Page() {
                             <span className="text-[#00FF41] glitch-heading">COMMUNITY</span>
                         </h1>
                         <div className="mt-16 max-w-4xl mx-auto">
-                            <div className="bg-black/50 rounded-lg overflow-hidden border border-[#00FF41]/20 relative">
+                            <div className="bg-water-200 bg-opacity-[0.07] rounded-lg overflow-hidden border border-[#00FF41]/20 relative">
                                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle, rgba(0, 255, 150, 0.1) 1px, transparent 1px)", backgroundSize: "20px 20px",}} />
                                 <div className="flex flex-col md:flex-row relative z-10">
                                     <div className="w-full md:w-1/4 p-6 flex flex-col justify-center border-b md:border-b-0 md:border-r border-[#00FF41]/10">

@@ -7,7 +7,7 @@ export default function Footer() {
             <div className="container mx-auto px-4 py-6">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex items-center gap-4">
-                        <span className="text-xs font-mono">CMswap_v0.1.0</span>
+                        <span className="text-xs font-mono">CMswap_v0.1.1</span>
                         <div className="h-4 w-px bg-[#32ffa7]/20" />
                         <Link href="https://github.com/coshi190/contracts-openbbq" target="_blank" rel="noreferrer" className="text-white/60 hover:text-[#32ffa7] text-xs flex items-center gap-1 font-mono">
                             <Github className="w-4 h-4" /><span>CONTRACTS</span>
