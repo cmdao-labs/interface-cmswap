@@ -28,6 +28,8 @@ export default function Swap96({
     const [ponderTVL, setPonderTVL] = React.useState<{ tvl10000: string; tvl3000: string; tvl500: string; tvl100: string; exchangeRate: string; isReverted: boolean; FixedExchangeRate: string;  }>({ tvl10000: "", tvl3000: "", tvl500: "", tvl100: "", exchangeRate: "", isReverted: false, FixedExchangeRate: "" });
     const [UdonTVL, setUdonTVL] = React.useState<{ tvl10000: string; exchangeRate: string; isReverted: boolean; FixedExchangeRate: string;  }>({ tvl10000: "", exchangeRate: "", isReverted: false, FixedExchangeRate: "" });
     
+    const [reserveUdonA, setReserveUdonA] = React.useState(BigInt(0))
+    const [reserveUdonB, setReserveUdonB] = React.useState(BigInt(0))
     const [bestPool, setBestPool] = React.useState("")
     const [poolSelect, setPoolSelect] = React.useState("")
     const [bestPathArray, setBestPathArray] = React.useState<string[] | null>(null)
@@ -208,26 +210,23 @@ export default function Swap96({
                             { ...UniswapPairv2PoolABI, address: UdonPair, functionName: 'token0' }
                         ]
                     });
-
                     const result = getBestPrice[0].result;
                     const bestAmountOut = result !== undefined ? result[0] as bigint : BigInt(0);
                     const bestPath = result !== undefined ? result[1] : [];
                     const bestPathArray: string[] = bestPath.map((addr: `0x${string}`) => addr); // แปลง readonly `0x${string}`[] เป็น string[]
-
                     if (bestPathArray.length > 2 && poolSelect === "UdonSwap") {
                         console.log("UDON ROUTED : ", bestPathArray)
                         setAltRoute({ a: bestPathArray[0] as '0xstring', b: bestPathArray[1] as '0xstring', c: bestPathArray[2] as '0xstring' })
                     }
-
                     if (poolSelect === "UdonSwap" && Number(_amount) > 0 && bestAmountOut > 0) {
                         setBestPathArray(bestPathArray)
-                        const price = UdonTVL.isReverted ? amountIn / Number(formatEther(bestAmountOut)) : Number(formatEther(bestAmountOut)) / amountIn
-                        setNewPrice((price).toFixed(6));
-                        setExchangeRate(price.toString());
+                        const newReserveA = Number(formatEther(reserveUdonA)) + Number(_amount)
+                        const newReserveB = Number(formatEther(reserveUdonB)) - Number(formatEther(bestAmountOut))
+                        const newprice = newReserveA/newReserveB
+                        setNewPrice((newprice).toFixed(6));
                         setAmountB(formatEther(bestAmountOut))
                     }
                         UdonswapRate = Number(formatEther(bestAmountOut))
-
                 }
             } catch (error) {
                 console.error("Error in getting UdonSwap quote:", error);
@@ -1012,10 +1011,8 @@ export default function Swap96({
                     }
 
                     //** UdonSwap */
-
                     try {
                         setAltRoute(undefined)
-
                         const getPairAddr = await readContracts(config, { contracts: [{ ...CMswapUniSmartRouteContractV2, functionName: 'getPairAddress', args: [BigInt(1), tokenAvalue, tokenBvalue], }] })
                         const UdonPair = getPairAddr[0].result !== undefined ? getPairAddr[0].result as '0xstring' : '' as '0xstring'
                         const getPoolState = await readContracts(config, {
@@ -1030,9 +1027,9 @@ export default function Swap96({
                         if (UdonPair !== "0x0000000000000000000000000000000000000000" as '0xstring') {
                             const tokenAamount = getPoolState[0].result !== undefined ? getPoolState[0].result : BigInt(0)
                             const tokenBamount = getPoolState[1].result !== undefined ? getPoolState[1].result : BigInt(0)
-                            //const currPriceUdon = Number(tokenAamount) / Number(tokenBamount);
-                            const currPriceUdon =  getPoolState[2].result !== undefined   ? Number(tokenAamount) / Number(tokenBamount) : 0
-
+                            const currPriceUdon =  getPoolState[2].result !== undefined ? Number(tokenAamount) / Number(tokenBamount) : 0
+                            setReserveUdonA(tokenAamount)
+                            setReserveUdonB(tokenBamount)
                             tvlUdon = (Number(formatEther(tokenAamount)) * (1 / currPriceUdon)) + Number(formatEther(tokenBamount));
                             exchangeRateUdon = tvlUdon < 1e-9 ? 0 : currPriceUdon
                             currPriceUdon !== Infinity && setUdonTVL({ ...UdonTVL, FixedExchangeRate: Number(exchangeRateUdon).toString() })
@@ -1092,8 +1089,10 @@ export default function Swap96({
                 fetch0()
             })
         }
-    }, [config, address, tokenA, tokenB, feeSelect, txupdate,hasInitializedFromParams])
+    }, [config, address, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, poolSelect])
 
+    console.log({udonOldPrice: fixedExchangeRate})
+    console.log({udonNewPrice: newPrice})
     React.useEffect(() => {
         console.log("New price set:", newPrice);
     },[newPrice])
@@ -1455,12 +1454,20 @@ export default function Swap96({
                             }
                             {!wrappedRoute && Number(amountB) > 0 &&
                                 <span>[PI: {
-                                    ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 <= 100 ?
-                                        ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 > 0 ?
-                                            ((100 - ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate)))) * -1).toFixed(4) :
-                                            (100 - ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate)))).toFixed(4)
+                                    poolSelect === 'CMswap' ?
+                                        ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 <= 100 ?
+                                            ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 > 0 ?
+                                                ((100 - ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate)))) * -1).toFixed(4) :
+                                                (100 - ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate)))).toFixed(4)
+                                            :
+                                            ">100"
                                         :
-                                        ">100"
+                                        ((Number(newPrice) * 100) / Number(fixedExchangeRate)) - 100 <= 100 ?
+                                            ((Number(newPrice) * 100) / Number(fixedExchangeRate)) - 100 > 0 ?
+                                                ((((Number(fixedExchangeRate) - Number(newPrice)) * 100) / Number(fixedExchangeRate)) * -1).toFixed(4) :
+                                                (((Number(fixedExchangeRate) - Number(newPrice)) * 100) / Number(fixedExchangeRate)).toFixed(4)
+                                            :
+                                            ">100"
                                 }%]</span>
                             }
                         </div>

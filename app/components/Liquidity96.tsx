@@ -37,7 +37,7 @@ export default function Liquidity96({
     const [currTickSpacing, setCurrTickSpacing] = React.useState("")
     const [lowerTick, setLowerTick] = React.useState("")
     const [upperTick, setUpperTick] = React.useState("")
-    const [rangePercentage, setRangePercentage] = React.useState(0.15)
+    const [rangePercentage, setRangePercentage] = React.useState(1)
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
 
@@ -366,10 +366,37 @@ export default function Liquidity96({
                         { ...v3FactoryContract, functionName: 'feeAmountTickSpacing', args: [100] },
                     ]
                 })
-                getTickSpacing[0].status === 'success' && feeSelect === 10000 && setCurrTickSpacing(getTickSpacing[0].result.toString())
-                getTickSpacing[1].status === 'success' && feeSelect === 3000 && setCurrTickSpacing(getTickSpacing[1].result.toString())
-                getTickSpacing[2].status === 'success' && feeSelect === 500 && setCurrTickSpacing(getTickSpacing[2].result.toString())
-                getTickSpacing[3].status === 'success' && feeSelect === 100 && setCurrTickSpacing(getTickSpacing[3].result.toString())
+                let currTickSpacing
+                if (getTickSpacing[0].status === 'success' && feeSelect === 10000) {
+                    setCurrTickSpacing(getTickSpacing[0].result.toString())
+                    currTickSpacing = getTickSpacing[0].result.toString()
+                } else if (getTickSpacing[1].status === 'success' && feeSelect === 3000) {
+                    setCurrTickSpacing(getTickSpacing[1].result.toString())
+                    currTickSpacing = getTickSpacing[1].result.toString()
+                } else if (getTickSpacing[2].status === 'success' && feeSelect === 500) {
+                    setCurrTickSpacing(getTickSpacing[2].result.toString())
+                    currTickSpacing = getTickSpacing[2].result.toString()
+                } else if (getTickSpacing[3].status === 'success' && feeSelect === 100) {
+                    setCurrTickSpacing(getTickSpacing[3].result.toString())
+                    currTickSpacing = getTickSpacing[3].result.toString()
+                }
+                if (rangePercentage === 1) {
+                    const alignedUpperTick = Math.floor(TickMath.MAX_TICK / Number(currTickSpacing)) * Number(currTickSpacing)
+                    setUpperTick(alignedUpperTick.toString())
+                    setUpperPrice("Infinity")
+                    setUpperPercentage('+♾️')
+                    const alignedLowerTick = Math.ceil(TickMath.MIN_TICK / Number(currTickSpacing)) * Number(currTickSpacing)
+                    setLowerTick(alignedLowerTick.toString())
+                    setLowerPrice("0")
+                    setLowerPercentage('-100')
+                } else {
+                    setUpperTick("")
+                    setUpperPrice("")
+                    setUpperPercentage('0')
+                    setLowerTick("")
+                    setLowerPrice("")
+                    setLowerPercentage('0')
+                }
             }
         }
 
@@ -397,7 +424,7 @@ export default function Liquidity96({
                     />
                 </div>
                 <div className="flex items-center justify-between">
-                    {(lowerPrice !== '' && Number(lowerPrice) < Number(currPrice)) ?
+                    {currPrice === "" || (lowerPrice !== '' && Number(lowerPrice) < Number(currPrice)) ?
                         <input placeholder="0.0" className="bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountA} onChange={e => {setAmountA(e.target.value); Number(upperPrice) > Number(currPrice) && setAlignedAmountB(e.target.value);}} /> :
                         <div />
                     }
@@ -470,7 +497,7 @@ export default function Liquidity96({
                     />
                 </div>
                 <div className="flex items-center justify-between">
-                    {(upperPrice !== '' || Number(upperPrice) > Number(currPrice)) ?
+                    {currPrice === "" || (upperPrice !== '' && Number(upperPrice) > Number(currPrice)) ?
                         <input placeholder="0.0" className="bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountB} onChange={(e) => setAmountB(e.target.value)} /> :
                         <div />
                     }
@@ -573,7 +600,7 @@ export default function Liquidity96({
                 </div>
                 <div className="rounded-lg border border-[#00ff9d]/10 p-3 flex flex-row items-center justify-between">
                     <input className="font-mono bg-[#0a0b1e]/50 border-[#00ff9d]/10 text-white placeholder:text-gray-600 focus:border-0 focus:outline focus:outline-0"  placeholder="Upper Price" value={upperPrice} onChange={e => {setUpperPrice(e.target.value); setAlignedUpperTick(e.target.value); setRangePercentage(999);}} />
-                    <span className="text-gray-500 font-mono text-xs">{tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && tokenA.name + '/' + tokenB.name + (Number(currPrice) > 0 ? ' (+' + Number(upperPercentage).toFixed(2) + '%)' : '')}</span>
+                    <span className="text-gray-500 font-mono text-xs">{tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && tokenA.name + '/' + tokenB.name + (Number(currPrice) > 0 ? ' (+' + (upperPercentage === '+♾️' ? '♾️' : Number(upperPercentage).toFixed(2)) + '%)' : '')}</span>
                 </div>
             </div>
             {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) <= Number(tokenABalance) && Number(amountB) <= Number(tokenBBalance) ?

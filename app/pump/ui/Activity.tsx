@@ -3,7 +3,7 @@ import Link from "next/link";
 import { connection } from 'next/server';
 import { readContracts } from '@wagmi/core';
 import { createPublicClient, http, formatEther, erc20Abi } from 'viem'
-import { bitkub } from 'viem/chains';
+import { bitkub, monadTestnet } from 'viem/chains';
 import { config } from '@/app/config'
 import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
 import { UniswapV2FactoryABI } from '@/app/pump/abi/UniswapV2Factory';
@@ -21,14 +21,20 @@ export default async function Activity({
     let _chain: any = null;
     let _chainId = 0;
     let _explorer = '';
+    let _rpc = '';
     if (chain === 'kub' || chain === '') {
         _chain = bitkub;
         _chainId = 96;
         _explorer = 'https://www.kubscan.com/';
-    }
+    } else if (chain === 'monad') {
+        _chain = monadTestnet;
+        _chainId = 10143;
+        _explorer = 'https://monad-testnet.socialscan.io/';
+        _rpc = process.env.NEXT_PUBLIC_MONAD_RPC as string;
+    } // add chain here
     const publicClient = createPublicClient({ 
         chain: _chain,
-        transport: http()
+        transport: http(_rpc)
     });
     let currencyAddr: string = '';
     let bkgafactoryAddr: string = '';
@@ -44,7 +50,12 @@ export default async function Activity({
         bkgafactoryAddr = '0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56';
         _blockcreated = 25232899;
         v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
-    }
+    } else if (chain === 'monad' && mode === 'pro') {
+        currencyAddr = '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701';
+        bkgafactoryAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
+       _blockcreated = 16912084;
+        v2facAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
+    } // add chain and mode here
     const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
     const dataofuniv2factory = {addr: v2facAddr};
     const bkgafactoryContract = {
@@ -106,38 +117,100 @@ export default async function Activity({
         lparr.push(lplist[i].lp);
     }
     const tokenlist = result.map((res: any) => {return res.result.toUpperCase()});
-    const result4 = await publicClient.getContractEvents({
-        abi: erc20Abi,
-        eventName: 'Transfer',
-        args: { 
-            from: addr as '0xstring',
-            to: lparr,
-        },
-        fromBlock: BigInt(dataofcurr.blockcreated),
-        toBlock: 'latest',
-    });
-    const result5 = await Promise.all(result4);
-    const fulldatasell = result5.filter((res) => {
-        return tokenlist.indexOf(res.address.toUpperCase()) !== -1;
-    }).map((res: any) => {
-        return {action: 'sell', value: Number(formatEther(res.args.value)), hash: res.transactionHash, block: res.blockNumber, ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.to.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.to.toUpperCase())].logo}
-    });
-    const result6 = await publicClient.getContractEvents({
-        abi: erc20Abi,
-        eventName: 'Transfer',
-        args: { 
-            from: lparr,
-            to: addr as '0xstring',
-        },
-        fromBlock: BigInt(dataofcurr.blockcreated),
-        toBlock: 'latest',
-    });
-    const result7 = await Promise.all(result6);
-    const fulldatabuy = result7.filter((res) => {
-        return tokenlist.indexOf(res.address.toUpperCase()) !== -1;
-    }).map((res: any) => {
-        return {action: (Number(formatEther(res.args.value)) === 90661089.38801491 || Number(formatEther(res.args.value)) === 99729918.975692707812343703) ? 'launch' : 'buy', value: Number(formatEther(res.args.value)), hash: res.transactionHash, block: res.blockNumber, ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.from.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.from.toUpperCase())].logo}
-    });
+    let fulldatabuy: any[]
+    let fulldatasell: any[]
+    if (chain === 'monad') {
+        const headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
+        fulldatabuy = []
+        fulldatasell = []
+        for (const address of lparr) {
+            const individualBody = JSON.stringify({
+                id: 1,
+                jsonrpc: "2.0",
+                method: "alchemy_getAssetTransfers",
+                params: [
+                    {
+                        fromBlock: '0x' + Number(dataofcurr.blockcreated).toString(16),
+                        toBlock: "latest",
+                        fromAddress: address,
+                        toAddress: addr as '0xstring',
+                        excludeZeroValue: true,
+                        category: ["erc20"]
+                    }
+                ]
+            })
+            const individualResponse = await fetch(_rpc, {
+                method: 'POST', 
+                headers: headers, 
+                body: individualBody
+            })
+            const individualData = await individualResponse.json()
+            individualData.result.transfers.filter((res: any) => {
+                return tokenlist.indexOf(res.rawContract.address.toUpperCase()) !== -1;
+            }).map((res: any) => {
+                fulldatabuy.push({action: 'buy', value: Number(formatEther(BigInt(res.rawContract.value))), hash: res.hash, block: Number(res.blockNum), ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.from.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.from.toUpperCase())].logo})
+            })
+            const individualBody2 = JSON.stringify({
+                id: 2,
+                jsonrpc: "2.0",
+                method: "alchemy_getAssetTransfers",
+                params: [
+                    {
+                        fromBlock: '0x' + Number(dataofcurr.blockcreated).toString(16),
+                        toBlock: "latest",
+                        fromAddress: addr as '0xstring',
+                        toAddress: address,
+                        excludeZeroValue: true,
+                        category: ["erc20"]
+                    }
+                ]
+            })
+            const individualResponse2 = await fetch(_rpc, {
+                method: 'POST', 
+                headers: headers, 
+                body: individualBody2
+            })
+            const individualData2 = await individualResponse2.json()
+            individualData2.result.transfers.filter((res: any) => {
+                return tokenlist.indexOf(res.rawContract.address.toUpperCase()) !== -1;
+            }).map((res: any) => {
+                fulldatasell.push({action: 'sell', value: Number(formatEther(BigInt(res.rawContract.value))), hash: res.hash, block: Number(res.blockNum), ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.to.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.to.toUpperCase())].logo})
+            })
+        }
+    } else {
+        const result4 = await publicClient.getContractEvents({
+            abi: erc20Abi,
+            eventName: 'Transfer',
+            args: { 
+                from: addr as '0xstring',
+                to: lparr,
+            },
+            fromBlock: BigInt(dataofcurr.blockcreated),
+            toBlock: 'latest',
+        });
+        const result5 = await Promise.all(result4);
+        fulldatasell = result5.filter((res) => {
+            return tokenlist.indexOf(res.address.toUpperCase()) !== -1;
+        }).map((res: any) => {
+            return {action: 'sell', value: Number(formatEther(res.args.value)), hash: res.transactionHash, block: res.blockNumber, ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.to.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.to.toUpperCase())].logo}
+        });
+        const result6 = await publicClient.getContractEvents({
+            abi: erc20Abi,
+            eventName: 'Transfer',
+            args: { 
+                from: lparr,
+                to: addr as '0xstring',
+            },
+            fromBlock: BigInt(dataofcurr.blockcreated),
+            toBlock: 'latest',
+        });
+        const result7 = await Promise.all(result6);
+        fulldatabuy = result7.filter((res) => {
+            return tokenlist.indexOf(res.address.toUpperCase()) !== -1;
+        }).map((res: any) => {
+            return {action: (Number(formatEther(res.args.value)) === 90661089.38801491 || Number(formatEther(res.args.value)) === 99729918.975692707812343703) ? 'launch' : 'buy', value: Number(formatEther(res.args.value)), hash: res.transactionHash, block: res.blockNumber, ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.from.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.from.toUpperCase())].logo}
+        });
+    }
     const mergedata = fulldatasell.concat(fulldatabuy);
     const _timestamparr = mergedata.map(async (res) => {
         return await publicClient.getBlock({ 

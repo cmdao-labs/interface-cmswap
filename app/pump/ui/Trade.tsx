@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useConnections, useAccount, useReadContracts, useBalance } from 'wagmi';
 import { readContracts, writeContract, simulateContract, waitForTransactionReceipt } from '@wagmi/core';
 import { useDebouncedCallback } from 'use-debounce';
-import { formatEther, parseEther, erc20Abi, createPublicClient, http } from 'viem';
+import { formatEther, parseEther, erc20Abi, createPublicClient, http, parseAbiItem } from 'viem';
 import { bitkub, monadTestnet } from 'viem/chains';
 import { config } from '@/app/config';
 import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
@@ -65,6 +65,7 @@ export default function Trade({
     } else if (chain === 'monad' && mode === 'pro') {
         currencyAddr = '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701';
         bkgafactoryAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
+        _blockcreated = 16912084;
         v2facAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
         v2routerAddr = '0x5a16536bb85a2fa821ec774008d6068eced79c96';
         v3qouterAddr = '0x555756bd5b347853af6f713a2af6231414bedefc';
@@ -150,6 +151,16 @@ export default function Trade({
                 functionName: 'isGraduate',
                 args: [lp as '0xstring']
             },
+            {
+                ...bkgafactoryContract,
+                functionName: 'creator',
+                args: [ticker as '0xstring'],
+            },
+            {
+                ...bkgafactoryContract,
+                functionName: 'createdTime',
+                args: [ticker as '0xstring'],
+            },
         ],
     })
     const ethBal = useBalance({
@@ -173,59 +184,60 @@ export default function Trade({
         ],
     })
 
-    const [creator, setCreator] = useState('');
-    const [createAt, setCreateAt] = useState(0);
     const [holder, setHolder] = useState([] as { addr: string; value: number; }[]);
     const [hx, setHx] = useState([] as { action: string; value: number; from: any; hash: any; timestamp: number; }[]);
  
     useEffect(() => {
         const fetchLogs = async () => {
-            if (chain === 'monad' && mode === 'pro') {
-                const blockNumber = await publicClient.getBlockNumber() 
-                dataofcurr.blockcreated = Number(blockNumber - BigInt(400));
+            // if (chain === 'monad' && mode === 'pro') {
+            //     const blockNumber = await publicClient.getBlockNumber() 
+            //     dataofcurr.blockcreated = Number(blockNumber - BigInt(400));
+            // }
+            let result5removedup
+            if (chain === 'monad') {
+                const headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
+                const body = JSON.stringify({
+                    id: 1,
+                    jsonrpc: "2.0",
+                    method: "alchemy_getAssetTransfers",
+                    params: [
+                        {
+                            fromBlock: "0x0",
+                            toBlock: "latest",
+                            contractAddresses: [ticker as '0xstring'],
+                            excludeZeroValue: true,
+                            category: ["erc20"]
+                        }
+                    ]
+                })
+                const response = await fetch(_rpc, {method: 'POST', headers: headers, body: body})
+                const data = await response.json()
+                const _holder = data.result.transfers.map(async (res: any) => {
+                    return res.to
+                })
+                result5removedup = [...new Set(await Promise.all(_holder))];
+            } else {
+                const result4 = await publicClient.getContractEvents({
+                    abi: erc20Abi,
+                    address: ticker as '0xstring',
+                    eventName: 'Transfer',
+                    fromBlock: BigInt(dataofcurr.blockcreated),
+                    toBlock: 'latest',
+                });
+                const result5 = (await Promise.all(result4)).map((res) => {return res.args.to});
+                result5removedup = [...new Set(result5)];
             }
-            const res = await publicClient.getContractEvents({
-                abi: erc20Abi,
-                address: ticker as '0xstring',
-                eventName: 'Transfer',
-                args: { 
-                    from: '0x0000000000000000000000000000000000000000',
-                },
-                fromBlock: BigInt(dataofcurr.blockcreated),
-                toBlock: 'latest',
-            });
-            console.log(res)
-            const res2 = await publicClient.getTransaction({ 
-                hash: res[0].transactionHash,
-            });
-            const res3 = await publicClient.getBlock({ 
-                blockNumber: res2.blockNumber,
-            })
-            setCreator(res2.from);
-            setCreateAt(Number(res3.timestamp));
-            const result4 = await publicClient.getContractEvents({
-                abi: erc20Abi,
-                address: ticker as '0xstring',
-                eventName: 'Transfer',
-                args: { 
-                    from: lp as '0xstring',
-                },
-                fromBlock: BigInt(dataofcurr.blockcreated),
-                toBlock: 'latest',
-            });
-            const result5 = (await Promise.all(result4)).map((res) => {return res.args.to});
-            const result5removedup = [...new Set(result5)];
             const result6 = result5removedup.map(async (res) => {
                 return await readContracts(config, {
-                  contracts: [
-                    {
-                      address: ticker as '0xstring',
-                      abi: erc20Abi,
-                      functionName: 'balanceOf',
-                      args: [res as '0xstring'],
-                      chainId: _chainId,
-                    },
-                  ],
+                    contracts: [
+                        {
+                            address: ticker as '0xstring',
+                            abi: erc20Abi,
+                            functionName: 'balanceOf',
+                            args: [res as '0xstring'],
+                            chainId: _chainId,
+                        },
+                    ],
                 });
             })
             const result7 = await Promise.all(result6);
@@ -235,34 +247,95 @@ export default function Trade({
                 (res) => {return res.value !== 0}
             );
             setHolder(result8);
-            const result9 = await publicClient.getContractEvents({
-                address: ticker as '0xstring',
-                abi: erc20Abi,
-                eventName: 'Transfer',
-                args: { 
-                    from: lp as '0xstring',
-                },
-                fromBlock: BigInt(dataofcurr.blockcreated),
-                toBlock: 'latest',
-            });
-            const fulldatabuy = result9.map((res: any) => {
-                return {action: Number(formatEther(res.args.value)) === 90661089.38801491 ? 'launch' : 'buy', value: Number(formatEther(res.args.value)), from: res.args.to, hash: res.transactionHash, block: res.blockNumber}
-            });
-            const result10 = await publicClient.getContractEvents({
-                address: ticker as '0xstring',
-                abi: erc20Abi,
-                eventName: 'Transfer',
-                args: { 
-                    to: lp as '0xstring',
-                },
-                fromBlock: BigInt(dataofcurr.blockcreated),
-                toBlock: 'latest',
-            });            
-            const fulldatasell = result10.map((res: any) => {
-                return {action: 'sell', value: Number(formatEther(res.args.value)), from: res.args.from, hash: res.transactionHash, block: res.blockNumber}
-            });
+            let fulldatabuy
+            let fulldatasell
+            if (chain === 'monad') {
+                const headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
+                const body = JSON.stringify({
+                    id: 2,
+                    jsonrpc: "2.0",
+                    method: "alchemy_getAssetTransfers",
+                    params: [
+                        {
+                            fromBlock: "0x0",
+                            toBlock: "latest",
+                            fromAddress: lp as '0xstring',
+                            contractAddresses: [ticker as '0xstring'],
+                            excludeZeroValue: true,
+                            category: ["erc20"]
+                        }
+                    ]
+                })
+                const response = await fetch(_rpc, {method: 'POST', headers: headers, body: body})
+                const data = await response.json()
+                fulldatabuy = data.result.transfers.map((res: any) => {
+                    return {action: 'buy', value: Number(formatEther(BigInt(res.rawContract.value))), from: res.to, hash: res.hash, block: Number(res.blockNum)}
+                });
+                const body2 = JSON.stringify({
+                    id: 3,
+                    jsonrpc: "2.0",
+                    method: "alchemy_getAssetTransfers",
+                    params: [
+                        {
+                            fromBlock: "0x0",
+                            toBlock: "latest",
+                            toAddress: lp as '0xstring',
+                            contractAddresses: [ticker as '0xstring'],
+                            excludeZeroValue: true,
+                            category: ["erc20"]
+                        }
+                    ]
+                })
+                const response2 = await fetch(_rpc, {method: 'POST', headers: headers, body: body2})
+                const data2 = await response2.json()
+                fulldatasell = data2.result.transfers.map((res: any) => {
+                    return {action: 'sell', value: Number(formatEther(BigInt(res.rawContract.value))), from: res.from, hash: res.hash, block: Number(res.blockNum)}
+                });
+            } else {
+                const result9 = await publicClient.getContractEvents({
+                    address: ticker as '0xstring',
+                    abi: erc20Abi,
+                    eventName: 'Transfer',
+                    args: { 
+                        from: lp as '0xstring',
+                    },
+                    fromBlock: BigInt(dataofcurr.blockcreated),
+                    toBlock: 'latest',
+                });
+                fulldatabuy = result9.map((res: any) => {
+                    return {action: Number(formatEther(res.args.value)) === 90661089.38801491 ? 'launch' : 'buy', value: Number(formatEther(res.args.value)), from: res.args.to, hash: res.transactionHash, block: res.blockNumber}
+                });
+                const result10 = await publicClient.getContractEvents({
+                    address: ticker as '0xstring',
+                    abi: erc20Abi,
+                    eventName: 'Transfer',
+                    args: { 
+                        to: lp as '0xstring',
+                    },
+                    fromBlock: BigInt(dataofcurr.blockcreated),
+                    toBlock: 'latest',
+                });            
+                fulldatasell = result10.map((res: any) => {
+                    return {action: 'sell', value: Number(formatEther(res.args.value)), from: res.args.from, hash: res.transactionHash, block: res.blockNumber}
+                });
+                const resGraduate = (await publicClient.getContractEvents({
+                    abi: erc20Abi,
+                    address: lp as '0xstring',
+                    eventName: 'Transfer',
+                    args: { 
+                        to: '0x0000000000000000000000000000000000000000',
+                    },
+                    fromBlock: BigInt(dataofcurr.blockcreated),
+                    toBlock: 'latest',
+                })).filter((res) => {
+                    return res.args.value === BigInt('12405643876881199591159421');
+                });
+                if (resGraduate[0] !== undefined) {
+                    setGradHash(resGraduate[0].transactionHash);
+                }
+            }
             const mergedata = fulldatasell.slice(1).concat(fulldatabuy);
-            const _timestamparr = mergedata.map(async (res) => {
+            const _timestamparr = mergedata.map(async (res: any) => {
                 return await publicClient.getBlock({ 
                     blockNumber: res.block,
                 })
@@ -271,25 +344,10 @@ export default function Trade({
             const restimestamp = timestamparr.map((res) => {
                 return Number(res.timestamp) * 1000;
             })
-            const theresult = mergedata.map((res, index) => {
+            const theresult = mergedata.map((res: any, index: any) => {
                 return {action: res.action, value: res.value, from: res.from, hash: res.hash, timestamp: restimestamp[index]}
             }).sort((a: any, b: any) => {return b.timestamp - a.timestamp});
             setHx(theresult);
-            const resGraduate = (await publicClient.getContractEvents({
-                abi: erc20Abi,
-                address: lp as '0xstring',
-                eventName: 'Transfer',
-                args: { 
-                    to: '0x0000000000000000000000000000000000000000',
-                },
-                fromBlock: BigInt(dataofcurr.blockcreated),
-                toBlock: 'latest',
-            })).filter((res) => {
-                return res.args.value === BigInt('12405643876881199591159421');
-            });
-            if (resGraduate[0] !== undefined) {
-                setGradHash(resGraduate[0].transactionHash);
-            }
         }
         if (hash === '') {
             fetchLogs();
@@ -443,56 +501,53 @@ export default function Trade({
                             :
                             'Fetching...'
                     }</span> {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
-                    <span>
-                        Creator: {creator.slice(0, 5)}...{creator.slice(37)} ····· {
-                            Number(Number(Date.now() / 1000).toFixed(0)) - Number(createAt) < 60 && rtf.format(Number(createAt) - Number(Number(Date.now() / 1000).toFixed(0)), 'second')
-                        }
-                        {
-                            Number(Number(Date.now() / 1000).toFixed(0)) - Number(createAt) >= 60 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(createAt) < 3600 && rtf.format(Number(Number((Number(createAt) - Number(Number(Date.now() / 1000).toFixed(0))) / 60).toFixed(0)), 'minute')
-                        }
-                        {
-                            Number(Number(Date.now() / 1000).toFixed(0)) - Number(createAt) >= 3600 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(createAt) < 86400 && rtf.format(Number(Number((Number(createAt) - Number(Number(Date.now() / 1000).toFixed(0))) / 3600).toFixed(0)), 'hour')
-                        }
-                        {
-                            Number(Number(Date.now() / 1000).toFixed(0)) - Number(createAt) >= 86400 && rtf.format(Number(Number((Number(createAt) - Number(Number(Date.now() / 1000).toFixed(0))) / 86400).toFixed(0)), 'day')
-                        }
-                    </span>
+                    {result2.status === 'success' &&
+                        <span>
+                            Creator: {result2.data![8].result.slice(0, 5)}...{result2.data![8].result.slice(37)} ····· {
+                                Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![9].result) < 60 && rtf.format(Number(result2.data![9].result) - Number(Number(Date.now() / 1000).toFixed(0)), 'second')
+                            }
+                            {
+                                Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![9].result) >= 60 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![9].result) < 3600 && rtf.format(Number(Number((Number(result2.data![9].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 60).toFixed(0)), 'minute')
+                            }
+                            {
+                                Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![9].result) >= 3600 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![9].result) < 86400 && rtf.format(Number(Number((Number(result2.data![9].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 3600).toFixed(0)), 'hour')
+                            }
+                            {
+                                Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![9].result) >= 86400 && rtf.format(Number(Number((Number(result2.data![9].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 86400).toFixed(0)), 'day')
+                            }
+                        </span>
+                    }
                 </div>
             </div>
             <div className="w-full flex flex-row flex-wrap-reverse gap-12 items-center xl:items-start justify-around">
                 <div className="w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start" style={{zIndex: 1}}>
-                    <iframe height="100%" width="100%" id="geckoterminal-embed" title="GeckoTerminal Embed" src={"https://www.geckoterminal.com/" + (chain === "KUB" && "bitkub_chain") + "/pools/" + lp + "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"} allow="clipboard-write"></iframe>
-                    {chain !== 'monad' ?
-                        <>
-                            <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
-                                <div className="w-1/5 sm:w-1/3">Timestamp</div>
-                                <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-start gap-10">
-                                    <span className="text-right w-[30px] xl:w-[200px]">From</span>
-                                    <span className="text-right w-[70px] xl:w-[200px]">Asset</span>
-                                    <span className="text-right w-[30px] xl:w-[200px]">Amount</span>
-                                    <span className="text-right w-[30px] xl:w-[200px]">Txn</span>
-                                </div>
+                    <iframe height="100%" width="100%" id="geckoterminal-embed" title="GeckoTerminal Embed" src={"https://www.geckoterminal.com/" + (chain === "kub" ? "bitkub_chain" : chain === "monad" ? "monad-testnet" : '') + "/pools/" + lp + "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"} allow="clipboard-write"></iframe>
+                        <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
+                            <div className="w-1/5 sm:w-1/3">Timestamp</div>
+                            <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-start gap-10">
+                                <span className="text-right w-[30px] xl:w-[200px]">From</span>
+                                <span className="text-right w-[70px] xl:w-[200px]">Asset</span>
+                                <span className="text-right w-[30px] xl:w-[200px]">Amount</span>
+                                <span className="text-right w-[30px] xl:w-[200px]">Txn</span>
                             </div>
-                            <div className="w-full h-[950px] pr-4 flex flex-col items-center sm:items-start overflow-y-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-neutral-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-sky-500" style={{zIndex: 1}}>
-                                {hx.map((res: any, index: any) =>
-                                    <div className="w-full h-[10px] flex flex-row items-center justify-around text-xs md:text-sm py-6 border-b border-gray-800" key={index}>
-                                        <span className="w-1/5 sm:w-1/3 text-gray-500 text-xs">{new Intl.DateTimeFormat('en-GB', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Bangkok', }).format(new Date(res.timestamp))}</span>
-                                        <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-end gap-10 text-xs sm:text-sm">
-                                            <span className="text-right w-[30px] xl:w-[200px]">{res.from.slice(0, 5) + '...' + res.from.slice(37)}</span>
-                                            <div className="text-right w-[70px] xl:w-[200px] flex flex-row gap-2 items-center justify-end overflow-hidden">
-                                                {res.action === 'buy' && <span className="text-green-500 font-bold">{res.action.toUpperCase()}</span>}
-                                                {res.action === 'sell' && <span className="text-red-500 font-bold">{res.action.toUpperCase()}</span>}
-                                                {res.action === 'launch' && <span className="text-emerald-300 font-bold">🚀 {res.action.toUpperCase()} & BUY</span>}
-                                            </div>
-                                            <span className="text-right w-[30px] xl:w-[200px]">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res.value)}</span>
-                                            <Link href={_explorer + "tx/" + res.hash} rel="noopener noreferrer" target="_blank" prefetch={false} className="font-bold text-right w-[30px] xl:w-[200px] underline truncate">{res.hash.slice(0, 5) + '...' + res.hash.slice(61)}</Link>
+                        </div>
+                        <div className="w-full h-[950px] pr-4 flex flex-col items-center sm:items-start overflow-y-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-neutral-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-sky-500" style={{zIndex: 1}}>
+                            {hx.map((res: any, index: any) =>
+                                <div className="w-full h-[10px] flex flex-row items-center justify-around text-xs md:text-sm py-6 border-b border-gray-800" key={index}>
+                                    <span className="w-1/5 sm:w-1/3 text-gray-500 text-xs">{new Intl.DateTimeFormat('en-GB', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Bangkok', }).format(new Date(res.timestamp))}</span>
+                                    <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-end gap-10 text-xs sm:text-sm">
+                                        <span className="text-right w-[30px] xl:w-[200px]">{res.from.slice(0, 5) + '...' + res.from.slice(37)}</span>
+                                        <div className="text-right w-[70px] xl:w-[200px] flex flex-row gap-2 items-center justify-end overflow-hidden">
+                                            {res.action === 'buy' && <span className="text-green-500 font-bold">{res.action.toUpperCase()}</span>}
+                                            {res.action === 'sell' && <span className="text-red-500 font-bold">{res.action.toUpperCase()}</span>}
+                                            {res.action === 'launch' && <span className="text-emerald-300 font-bold">🚀 {res.action.toUpperCase()} & BUY</span>}
                                         </div>
+                                        <span className="text-right w-[30px] xl:w-[200px]">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res.value)}</span>
+                                        <Link href={_explorer + "tx/" + res.hash} rel="noopener noreferrer" target="_blank" prefetch={false} className="font-bold text-right w-[30px] xl:w-[200px] underline truncate">{res.hash.slice(0, 5) + '...' + res.hash.slice(61)}</Link>
                                     </div>
-                                )}
-                            </div>
-                        </> :
-                        <div className="h-[1000px] w-full" />
-                    }
+                                </div>
+                            )}
+                        </div>
                 </div>
                 <div className="w-full xl:w-1/4 h-fit xl:h-[1500px] flex flex-col gap-8">
                     <div className="w-full h-[300px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900" style={{zIndex: 1}}>
@@ -573,24 +628,22 @@ export default function Trade({
                             </>
                         }
                     </div>
-                    {chain !== 'monad' && 
-                        <div className="w-full h-[780px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center">
-                            <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">
-                                {holder.length} Holders
-                            </span>
-                            {holder.sort(
-                                (a, b) => {return b.value - a.value}
-                            ).map((res, index) =>
-                                <div className="w-full h-[50px] flex flex-row items-center justify-between text-xs lg:text-md py-2 border-b border-gray-800" key={index}>
-                                    <div className="w-3/4 flex flex-row items-center justify-start gap-6 overflow-hidden">
-                                        <span>{index + 1}.</span>
-                                        <span className={"font-bold " + (res.addr.toUpperCase() === creator.toUpperCase() ? "text-emerald-300" : "")}>{res.addr.slice(0, 5) + '...' + res.addr.slice(37)} {res.addr.toUpperCase() === creator.toUpperCase() && '[Creator 🧑‍💻]'}</span>
-                                    </div>
-                                    <span className="w-1/4 text-right w-[50px] sm:w-[200px]">{res.value.toFixed(4)}%</span>
+                    <div className="w-full h-[780px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center">
+                        <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">
+                            {holder.length} Holders
+                        </span>
+                        {holder.sort(
+                            (a, b) => {return b.value - a.value}
+                        ).map((res, index) =>
+                            <div className="w-full h-[50px] flex flex-row items-center justify-between text-xs lg:text-md py-2 border-b border-gray-800" key={index}>
+                                <div className="w-3/4 flex flex-row items-center justify-start gap-6 overflow-hidden">
+                                    <span>{index + 1}.</span>
+                                    {result2.status === 'success' && <span className={"font-bold " + ((res.addr.toUpperCase() === result2.data![8].result.toUpperCase() || res.addr.toUpperCase() === lp.toUpperCase()) ? "text-emerald-300" : "")}>{res.addr.slice(0, 5) + '...' + res.addr.slice(37)} {res.addr.toUpperCase() === result2.data![8].result.toUpperCase() && '[Creator 🧑‍💻]'}{res.addr.toUpperCase() === lp.toUpperCase() && '[Bonding curve]'}</span>}
                                 </div>
-                            )}
-                        </div>
-                    }
+                                <span className="w-1/4 text-right w-[50px] sm:w-[200px]">{res.value.toFixed(4)}%</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </main>

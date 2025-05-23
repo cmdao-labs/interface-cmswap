@@ -217,7 +217,7 @@ export default function Positions96({
                 await waitForTransactionReceipt(config, { hash: h })
             }
             let allowanceA
-            if (tokenA.value.toUpperCase() === tokens[1].value.toUpperCase()) {
+            if (tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {
                 allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
             } else {
                 allowanceA = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
@@ -228,7 +228,7 @@ export default function Positions96({
                 await waitForTransactionReceipt(config, { hash: h })
             }
             let allowanceB
-            if (tokenB.value.toUpperCase() === tokens[1].value.toUpperCase()) {
+            if (tokenB.value.toUpperCase() === tokens[2].value.toUpperCase()) {
                 allowanceB = await readContract(config, { ...kap20ABI, address: tokenA.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
             } else {
                 allowanceB = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })

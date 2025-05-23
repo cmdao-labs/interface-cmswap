@@ -3,11 +3,10 @@ import { connection } from 'next/server';
 import { getBalance, readContracts } from '@wagmi/core';
 import { createPublicClient, http, formatEther, erc20Abi } from 'viem';
 import { config } from '@/app/config';
-import { bitkub } from 'viem/chains';
 import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
 import { UniswapV2FactoryABI } from '@/app/pump/abi/UniswapV2Factory';
 import { UniswapV2PairABI } from '@/app/pump/abi/UniswapV2Pair';
-import { BKCOracleABI } from '@/app/pump/abi/BKCoracle';
+// import { BKCOracleABI } from '@/app/pump/abi/BKCoracle';
 
 export default async function Dashboard({
     addr, mode, chain, token,
@@ -19,24 +18,24 @@ export default async function Dashboard({
   }) {
   await connection();
 
-  let priceFeed: any = [1, 1];
-  if (mode === 'pro' && chain === 'kub') {
-    // const publicClientOracle = createPublicClient({ 
-    //   chain: bitkub,
-    //   transport: http()
-    // });
-    // priceFeed = await publicClientOracle.readContract({
-    //   address: '0x775eeFF3f80f110C2f7ac9127041915489c275f4',
-    //   abi: BKCOracleABI,
-    //   functionName: 'latestAnswer',
-    // });
-  }
+  // let priceFeed: any = [1, 1];
+  // if (mode === 'pro' && chain === 'kub') {
+  //   const publicClientOracle = createPublicClient({ 
+  //     chain: bitkub,
+  //     transport: http()
+  //   });
+  //   priceFeed = await publicClientOracle.readContract({
+  //     address: '0x775eeFF3f80f110C2f7ac9127041915489c275f4',
+  //     abi: BKCOracleABI,
+  //     functionName: 'latestAnswer',
+  //   });
+  // }
   let _chainId = 0;
-  let _explorer = '';
   if (chain === 'kub' || chain === '') {
     _chainId = 96;
-    _explorer = 'https://www.kubscan.com/';
-  }
+  } else if (chain === 'monad') {
+    _chainId = 10143;
+  } // add chain here
   let currencyAddr: string = '';
   let bkgafactoryAddr: string = '';
   let _blockcreated: number = 1;
@@ -51,7 +50,12 @@ export default async function Dashboard({
     bkgafactoryAddr = '0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56';
     _blockcreated = 25232899;
     v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
-  }
+  } else if (chain === 'monad' && mode === 'pro') {
+    currencyAddr = '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701';
+    bkgafactoryAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
+    _blockcreated = 16912084;
+    v2facAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
+  } // add chain and mode here
   const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
   const dataofuniv2factory = {addr: v2facAddr};
   const bkgafactoryContract = {
@@ -77,9 +81,9 @@ export default async function Dashboard({
   for (let i = 0; i <= Number(indexCount[0].result) - 1; i++) {
     init.contracts.push(
         {
-            ...bkgafactoryContract,
-            functionName: 'index',
-            args: [BigInt(i + 1)],
+          ...bkgafactoryContract,
+          functionName: 'index',
+          args: [BigInt(i + 1)],
         }
     );
   }
@@ -88,52 +92,52 @@ export default async function Dashboard({
     return await readContracts(config, {
       contracts: [
         {
-            address: res.result!,
-            abi: erc20Abi,
-            functionName: 'symbol',
-            chainId: _chainId,
+          address: res.result!,
+          abi: erc20Abi,
+          functionName: 'symbol',
+          chainId: _chainId,
         },
         {
-            ...bkgafactoryContract,
-            functionName: 'logo',
-            args: [res.result!],
+          ...bkgafactoryContract,
+          functionName: 'logo',
+          args: [res.result!],
         },
         {
-            ...univ2factoryContract,
-            functionName: 'getPool',
-            args: [res.result!, dataofcurr.addr as '0xstring', 10000],
+          ...univ2factoryContract,
+          functionName: 'getPool',
+          args: [res.result!, dataofcurr.addr as '0xstring', 10000],
         },
         {
-            address: res.result!,
-            abi: erc20Abi,
-            functionName: 'balanceOf',
-            args: [addr as '0xstring'],
-            chainId: _chainId,
+          address: res.result!,
+          abi: erc20Abi,
+          functionName: 'balanceOf',
+          args: [addr as '0xstring'],
+          chainId: _chainId,
         },
       ],
     });
   })
   const result44: any = await Promise.all(result4);
-  const thbData = await readContracts(config, {
-    contracts: [
-        {
-            address: dataofcurr.addr as '0xstring',
-            abi: erc20Abi,
-            functionName: 'balanceOf',
-            args: [addr as '0xstring'],
-            chainId: _chainId,
-        },
-    ],
-  });
-  const ethBal = await getBalance(config, {
-    address: addr as '0xstring',
-    chainId: _chainId,
-  })
-  if (mode === 'pro') {
-    // result44.push([{result: 'ETH'}, {result: 'ipfs://bafkreiejfw35g5qdgzw5mv42py5a3cya2mknerishahx24lzgtowajvivm'}, {result: dataofcurr.lp}, {result: ethBal.value}]);
-  } else {
-    // result44.push([{result: '$THB'}, {result: 'ipfs://bafkreiap46j6naouhp6l2qhlfb3tq2pltinynqv3aog5l5n5k7fwhxpzeu'}, {result: dataofcurr.lp}, {result: thbData[0].result}]);
-  }
+  // const thbData = await readContracts(config, {
+  //   contracts: [
+  //       {
+  //           address: dataofcurr.addr as '0xstring',
+  //           abi: erc20Abi,
+  //           functionName: 'balanceOf',
+  //           args: [addr as '0xstring'],
+  //           chainId: _chainId,
+  //       },
+  //   ],
+  // });
+  // const ethBal = await getBalance(config, {
+  //   address: addr as '0xstring',
+  //   chainId: _chainId,
+  // })
+  // if (mode === 'pro') {
+  //   result44.push([{result: 'ETH'}, {result: 'ipfs://bafkreiejfw35g5qdgzw5mv42py5a3cya2mknerishahx24lzgtowajvivm'}, {result: dataofcurr.lp}, {result: ethBal.value}]);
+  // } else {
+  //   result44.push([{result: '$THB'}, {result: 'ipfs://bafkreiap46j6naouhp6l2qhlfb3tq2pltinynqv3aog5l5n5k7fwhxpzeu'}, {result: dataofcurr.lp}, {result: thbData[0].result}]);
+  // }
   const result5 = result44.map(async (res: any) => {
     return await readContracts(config, {
       contracts: [
@@ -193,8 +197,8 @@ export default async function Dashboard({
                 </div>
                 <div className="w-3/4 flex flex-row items-center justify-end sm:gap-10">
                     <span className="text-right w-[50px] sm:w-[200px]">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result)}</span>
-                    <span className={"text-right w-[100px] sm:w-[200px] " + (mode === 'pro' ? 'text-xs' : '')}>{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[3].result)} {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}</span>
-                    <span className="font-bold text-right w-[100px] sm:w-[200px]">{(chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') +  Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result * res[3].result)}</span>
+                    <span className={"text-right w-[100px] sm:w-[200px] " + (mode === 'pro' ? 'text-xs' : '')}>{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[3].result)} {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
+                    <span className="font-bold text-right w-[100px] sm:w-[200px]">{(chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + (chain === 'monad' && mode === 'pro' ? 'MON' : '') + Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result * res[3].result)}</span>
                 </div>
             </div>
         )}
