@@ -33,18 +33,18 @@ export default function Page() {
                             <TabsTrigger value="position" className="font-mono text-sm data-[state=active]:bg-[#162638] data-[state=active]:text-[#00ff9d] rounded cursor-pointer">Positions</TabsTrigger>
                         </TabsList>
                         <TabsContent value="swap">
-                            {(chainId === 8899 || chainId === undefined) && <Swap8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
-                            {chainId === 96 && <Swap96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                            {chainId === 8899 && <Swap8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                            {(chainId === 96 || chainId === undefined) && <Swap96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
                             {chainId === 10143 && <Swap10143 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
                         </TabsContent>
                         <TabsContent value="liquidity">
-                            {(chainId === 8899 || chainId === undefined) && <Liquidity8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
-                            {chainId === 96 && <Liquidity96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                            {chainId === 8899 && <Liquidity8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                            {(chainId === 96 || chainId === undefined) && <Liquidity96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
                             {chainId === 10143 && <Liquidity10143 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
                         </TabsContent>
                         <TabsContent value="position">
-                            {(chainId === 8899 || chainId === undefined) && <Positions8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
-                            {chainId === 96 && <Positions96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                            {chainId === 8899 && <Positions8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                            {(chainId === 96 || chainId === undefined) && <Positions96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
                             {chainId === 10143 && <Positions10143 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
                         </TabsContent>
                     </Tabs>

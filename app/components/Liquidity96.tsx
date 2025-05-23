@@ -603,9 +603,14 @@ export default function Liquidity96({
                     <span className="text-gray-500 font-mono text-xs">{tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && tokenA.name + '/' + tokenB.name + (Number(currPrice) > 0 ? ' (+' + (upperPercentage === '+♾️' ? '♾️' : Number(upperPercentage).toFixed(2)) + '%)' : '')}</span>
                 </div>
             </div>
-            {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) <= Number(tokenABalance) && Number(amountB) <= Number(tokenBBalance) ?
-                <Button className="w-full bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4 cursor-pointer z-100" onClick={placeLiquidity}>Add Liquidity</Button> :
-                <Button disabled className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4">Add Liquidity</Button>
+            {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) > 0 && Number(amountB) > 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) <= Number(tokenBBalance) ?
+                <Button className="w-full py-6 px-8 font-mono mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
+                    bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
+                    hover:bg-gradient-to-br hover:from-emerald-600 hover:via-emerald-700 hover:to-emerald-900
+                    hover:scale-[1.02]
+                    shadow-lg shadow-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/60
+                    active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" onClick={placeLiquidity}>Add Liquidity</Button> :
+                <Button disabled className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4 uppercase">Add Liquidity</Button>
             }
             <div className="mt-4 border-t border-[#00ff9d]/10 pt-4">
                 <div className="flex items-center text-gray-500 font-mono text-xs my-2">
