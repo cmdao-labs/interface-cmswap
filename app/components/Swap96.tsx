@@ -137,7 +137,6 @@ export default function Swap96({
                             setAmountB(formatEther(qouteOutput.result[0]))
                             let newPrice = CMswapTVL.isReverted ? 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2) : Number(qouteOutput.result[1]) / (2 ** 96)
                             setNewPrice(newPrice.toString())
-                            setExchangeRate(CMswapTVL.exchangeRate)
                         }
                         CMswapRate = qouteOutput.result[0] !== undefined ? Number(formatEther(qouteOutput.result[0])) : 0  
                     } else {
@@ -151,7 +150,6 @@ export default function Swap96({
                             setAmountB(formatEther(qouteOutput.result[0]))
                             let newPrice =  CMswapTVL.isReverted ? 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2) : Number(qouteOutput.result[1]) / (2 ** 96)
                             setNewPrice(newPrice.toString())
-                            setExchangeRate(CMswapTVL.exchangeRate)
                         }
                         CMswapRate = qouteOutput.result[0] !== undefined ? Number(formatEther(qouteOutput.result[0])) : 0
                     }
@@ -186,7 +184,6 @@ export default function Swap96({
                         setBestPathArray(bestPathArray)
                         const price = DMswapTVL.isReverted ? amountIn / Number(formatEther(bestAmountOut)) : Number(formatEther(bestAmountOut)) / amountIn
 
-                        setExchangeRate(price.toString());
                         setNewPrice((price).toFixed(6));
                         setAmountB(formatEther(bestAmountOut))
                     }
@@ -222,7 +219,6 @@ export default function Swap96({
                         const newReserveB = Number(formatEther(reserveUdonB)) - Number(formatEther(bestAmountOut))
                         const newprice = newReserveA/newReserveB
                         const exrate = Number(formatEther(bestAmountOut)) / Number(_amount)
-                        setExchangeRate(exrate.toString());
                         setNewPrice((newprice).toFixed(6));
                         setAmountB(formatEther(bestAmountOut))
                     }
@@ -259,7 +255,6 @@ export default function Swap96({
                         setBestPathArray(bestPathArray)
                         const price = ponderTVL.isReverted ? amountIn / Number(formatEther(bestAmountOut)) : Number(formatEther(bestAmountOut)) / amountIn
                         setNewPrice((price).toFixed(6));
-                        setExchangeRate(price.toString());
                         setAmountB(formatEther(bestAmountOut))
                     }
                     ponderRate = Number(formatEther(bestAmountOut))
@@ -1108,10 +1103,8 @@ export default function Swap96({
             if (poolSelect in poolMap) {
                 const selectedPool = poolMap[poolSelect as PoolKey];
 
-                if (amountA === "") {
-                    setExchangeRate(selectedPool.exchangeRate);
-                    console.log(`Quote Price ${poolSelect}`, selectedPool.exchangeRate);
-                }
+                setExchangeRate(selectedPool.exchangeRate);
+                console.log(`Quote Price ${poolSelect}`, selectedPool.exchangeRate);
 
                 setFixedExchangeRate(selectedPool.FixedExchangeRate);
                 console.log(`Fix price set for ${poolSelect} :`, selectedPool.FixedExchangeRate);
