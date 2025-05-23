@@ -21,10 +21,10 @@ export default function Page() {
     const { chainId } = useAccount()
 
     return (
-        <div className="min-h-screen w-full flex flex-col items-center justify-start text-xs bg-[#0a0b1e] bg-[linear-gradient(to_bottom,rgba(0,0,0,0.8),rgba(0,0,0,0.5))]">
+        <div className="min-h-screen w-full flex flex-col items-center justify-start text-xs bg-gradient-to-br from-gray-950 via-indigo-950 to-slate-900">
             {isLoading && <div className="w-full h-full fixed backdrop-blur-[12px] z-999" />}
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
-            <Card className="w-full max-w-xl mx-auto bg-black/80 border border-[#00ff9d]/20 rounded-lg overflow-hidden py-2 mb-8 mt-[100px]">
+            <Card className="w-full max-w-xl mx-auto bg-black/70 border border-[#00ff9d]/20 rounded-lg overflow-hidden p-2 mb-8 mt-[100px]">
                 <div className="px-4">
                     <Tabs defaultValue="swap" className="w-full sticky">
                         <TabsList className="w-full grid grid-cols-3 bg-[#0a0b1e] rounded-md p-1 mb-4">
