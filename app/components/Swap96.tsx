@@ -1338,7 +1338,6 @@ export default function Swap96({
 
                             return (
                                 <Button variant="outline" className={"font-mono h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "CMswap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("CMswap"); getQoute(amountA);}}>
-                                    <div className='absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent' />
                                     <span className="flex items-center gap-1">
                                         CMswap {bestPool === "CMswap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                     </span>
@@ -1348,7 +1347,6 @@ export default function Swap96({
                         })()}
                         {Number(DMswapTVL['tvl10000']) > 0 && (
                             <Button variant="outline" className={"font-mono h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "DiamonSwap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("DiamonSwap"); getQoute(amountA);}}>
-                                <div className='absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent' />
                                 <span className='flex items-center gap-1'>
                                     Diamon {bestPool === "DiamonSwap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                 </span>
@@ -1357,7 +1355,6 @@ export default function Swap96({
                         )}
                         {Number(UdonTVL['tvl10000']) > 0 && (
                             <Button variant="outline" className={"font-mono h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "UdonSwap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("UdonSwap");; getQoute(amountA);}}>
-                                <div className='absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent' />
                                 <span className='flex items-center gap-1'>
                                     UdonSwap {bestPool === "UdonSwap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                 </span>
@@ -1366,7 +1363,6 @@ export default function Swap96({
                         )}
                         {Number(ponderTVL['tvl10000']) > 0 && (
                             <Button variant="outline" className={"font-mono h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "ponder" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("ponder"); getQoute(amountA);}}>
-                                <div className='absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent' />
                                 <span className='flex items-center gap-1'>
                                     Ponder {bestPool === "ponder" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                 </span>
@@ -1412,9 +1408,8 @@ export default function Swap96({
                 <Button
                     className="w-full py-6 px-8 font-mono mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
                     bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
-                    hover:bg-gradient-to-br hover:from-emerald-600 hover:via-emerald-700 hover:to-emerald-900
-                    hover:scale-[1.02]
-                    shadow-lg shadow-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/60
+                    hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect
+                    shadow-lg shadow-emerald-500/40
                     active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer"
                     onClick={handleSwap}
                 >
