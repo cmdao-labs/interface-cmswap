@@ -140,7 +140,7 @@ export default function BridgeInterface() {
                                 <Popover open={open} onOpenChange={setOpen}>
                                     <PopoverTrigger asChild>
                                         <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
-                                            <div className='gap-2 flex flex-row items-center justify-center overflow-hidden'>
+                                            <div className='gap-2 flex flex-row items-center justify-center'>
                                                 <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                                     <span className="text-[#00ff9d] text-xs">
                                                         {sourceChain.logo !== '../favicon.ico' ?<img alt="" src={sourceChain.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
@@ -213,7 +213,7 @@ export default function BridgeInterface() {
                                 <Popover open={open2} onOpenChange={setOpen2}>
                                     <PopoverTrigger asChild>
                                         <Button variant="outline" role="combobox" aria-expanded={open2} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
-                                            <div className='gap-2 flex flex-row items-center justify-center overflow-hidden'>
+                                            <div className='gap-2 flex flex-row items-center justify-center'>
                                                 <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                                     <span className="text-[#00ff9d] text-xs">
                                                         {destinationChain.logo !== '../favicon.ico' ?<img alt="" src={destinationChain.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
@@ -263,10 +263,10 @@ export default function BridgeInterface() {
                         <div className="p-3 rounded bg-[#0a0b1e]/50 border border-[#00ff9d]/10">
                             <div className="text-xs text-gray-500 mb-1">You send</div>
                             <div className="flex items-center justify-between">
-                                <Input
+                                <input
                                     type="text"
-                                    placeholder="0.00"
-                                    className="border-0 p-0 text-white placeholder:text-gray-600 focus-visible:ring-0 w-[120px]"
+                                    placeholder="0.0"
+                                    className="w-[140px] sm:w-[200px] bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto"
                                     style={{backgroundColor: "transparent"}}
                                     value={depositValue}
                                     onChange={(e) => setDepositValue(e.target.value)}
@@ -274,7 +274,7 @@ export default function BridgeInterface() {
                                 <Popover open={open3} onOpenChange={setOpen3}>
                                     <PopoverTrigger asChild>
                                         <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
-                                            <div className='gap-2 flex flex-row items-center justify-center overflow-hidden'>
+                                            <div className='gap-2 flex flex-row items-center justify-center'>
                                                 <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                                     <span className="text-[#00ff9d] text-xs">
                                                         {tokenA.logo !== '../favicon.ico' ?<img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
@@ -322,10 +322,10 @@ export default function BridgeInterface() {
                         <div className="p-3 rounded bg-[#0a0b1e]/50 border border-[#00ff9d]/10">
                             <div className="text-xs text-gray-500 mb-1">You receive</div>
                             <div className="flex items-center justify-between">
-                                <Input
+                                <input
                                     type="text"
-                                    placeholder="0.00"
-                                    className="bg-transparent border-0 p-0 text-white placeholder:text-gray-600 focus-visible:ring-0 w-[120px]"
+                                    placeholder="0.0"
+                                    className="w-[140px] sm:w-[200px] bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto"
                                     style={{backgroundColor: "transparent"}}
                                     value={Number(depositValue) - Number(bridgeFee) > 0 ? Number(depositValue) - Number(bridgeFee) : ''}
                                     readOnly
@@ -333,7 +333,7 @@ export default function BridgeInterface() {
                                 <Popover open={open4} onOpenChange={setOpen4}>
                                     <PopoverTrigger asChild>
                                         <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
-                                            <div className='gap-2 flex flex-row items-center justify-center overflow-hidden'>
+                                            <div className='gap-2 flex flex-row items-center justify-center'>
                                                 <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                                     <span className="text-[#00ff9d] text-xs">
                                                         {tokenB.logo !== '../favicon.ico' ?<img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
@@ -382,19 +382,28 @@ export default function BridgeInterface() {
                     {sourceChain.id === chainId ?
                         <>
                             {Number(depositValue) <= Number(reserve) ?
-                                <Button className="w-full mt-4 mb-4 bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/20 cursor-pointer" onClick={bridge}>Confirm</Button> :
-                                <Button disabled className="w-full mt-4 mb-4 bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 cursor-pointer">Insufficient escrow</Button>
+                                <Button 
+                                    className="w-full py-6 px-8 font-mono mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
+                                    bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
+                                    hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect
+                                    shadow-lg shadow-emerald-500/40
+                                    active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" 
+                                    onClick={bridge}
+                                >
+                                    Confirm
+                                </Button> :
+                                <Button disabled className="w-full py-6 px-8 mt-4 bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 cursor-pointer">Insufficient escrow</Button>
                             }
                         </> :
                         <>
                             {(sourceChain.id === 96 && destinationChain.id === 56) || (sourceChain.id === 56 && destinationChain.id === 96) ?
-                                <Button disabled className="w-full mt-4 mb-4 bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 cursor-pointer">Not available</Button> :
-                                <Button disabled className="w-full mt-4 mb-4 bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 cursor-pointer">Please switch chain</Button>
+                                <Button disabled className="w-full py-6 px-8 mt-4 bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 cursor-pointer">Not available</Button> :
+                                <Button disabled className="w-full py-6 px-8 mt-4 bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 cursor-pointer">Please switch chain</Button>
                             }
                         </>
                     }
 
-                    <div className="p-3 rounded border border-[#00ff9d]/10">
+                    <div className="mt-6 p-3 rounded border border-[#00ff9d]/10">
                         <div className="flex justify-between items-center mb-2 text-xs">
                             <div className="text-gray-400">Escrow Contract</div>
                             <div className="font-bold">{Intl.NumberFormat("en-US").format(Number(reserve))} {tokenB.name}</div>

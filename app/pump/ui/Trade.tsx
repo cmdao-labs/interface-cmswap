@@ -582,7 +582,7 @@ export default function Trade({
                             }
                         </div>
                         {connections && account.address !== undefined && account.chainId === _chainId ? 
-                            <button className="w-3/4 self-center p-2 my-3 rounded-2xl font-bold bg-emerald-300 text-slate-900 underline hover:bg-sky-500 hover:text-white cursor-pointer" onClick={trade}><span className="self-center">Trade</span></button> :
+                            <button className="w-3/4 self-center p-2 my-3 rounded-2xl font-bold bg-emerald-300 text-slate-900 underline hover-effect hover:text-white cursor-pointer" onClick={trade}><span className="self-center">Trade</span></button> :
                             <button className="w-3/4 self-center p-2 my-3 rounded-2xl font-bold bg-gray-500 cursor-not-allowed" disabled><span className="self-center text-slate-900">Trade</span></button>
                         }
                     </div>

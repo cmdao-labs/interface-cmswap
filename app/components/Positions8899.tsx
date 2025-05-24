@@ -542,7 +542,7 @@ export default function Positions8899({
                                                     </div>
                                                 }
                                                 <DrawerFooter>
-                                                    <Button className="w-full bg-blue-500 text-white hover:text-black cursor-pointer" onClick={() => positionSelected !== undefined && increaseLiquidity(BigInt(positionSelected.Id))}>Increase Liquidity</Button>
+                                                    <Button className="w-full bg-blue-500 text-white cursor-pointer hover-effect" onClick={() => positionSelected !== undefined && increaseLiquidity(BigInt(positionSelected.Id))}>Increase Liquidity</Button>
                                                 </DrawerFooter>
                                             </div>
                                         </DrawerContent>

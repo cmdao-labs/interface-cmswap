@@ -657,7 +657,7 @@ export default function Swap10143({
                     <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
-                                <div className='gap-2 flex flex-row items-center justify-center overflow-hidden'>
+                                <div className='gap-2 flex flex-row items-center justify-center'>
                                     <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                         <span className="text-[#00ff9d] text-xs">
                                             {tokenA.logo !== '../favicon.ico' ? <img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
@@ -730,7 +730,7 @@ export default function Swap10143({
                     <Popover open={open2} onOpenChange={setOpen2}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" aria-expanded={open2} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
-                                <div className='gap-2 flex flex-row items-center justify-center overflow-hidden'>
+                                <div className='gap-2 flex flex-row items-center justify-center'>
                                     <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                         <span className="text-[#00ff9d] text-xs">
                                             {tokenB.logo !== '../favicon.ico' ? <img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
@@ -791,7 +791,7 @@ export default function Swap10143({
                             }
 
                             return (
-                                <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (poolSelect === "CMswap" ? "bg-[#162638] text-[#00ff9d] border-[#00ff9d]/30" : "bg-[#0a0b1e]/80 text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("CMswap"); getQoute(amountA);}}>
+                                <Button variant="outline" className={"font-mono h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "CMswap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("CMswap"); getQoute(amountA);}}>
                                     <span className="flex items-center gap-1">
                                         CMswap {bestPool === "CMswap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                     </span>
@@ -829,8 +829,12 @@ export default function Swap10143({
                 </div>
             }
             {(tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountB) !== 0 ? (
-                <Button
-                    className="w-full bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4 cursor-pointer"
+                <Button 
+                    className="w-full py-6 px-8 font-mono mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
+                    bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
+                    hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect
+                    shadow-lg shadow-emerald-500/40
+                    active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" 
                     onClick={handleSwap}
                 >
                     Swap
@@ -878,8 +882,8 @@ export default function Swap10143({
                             <div className="flex items-center text-gray-500 font-mono text-xs my-2">
                                 <span className="mr-1">token price</span>
                                 {exchangeRate !== '0' && exchangeRate !== '' && <span className="text-white font-mono text-xs px-2 gap-1">
-                                    {tokenA.name === 'KUSDT' && <span>{Number(exchangeRate).toFixed(2)} </span>}
-                                    {tokenB.name === 'KUSDT' && <span>{Number(1 / Number(exchangeRate)).toFixed(2)} </span>}
+                                    {tokenA.name === 'KUSDT' && <span>{Number(exchangeRate).toFixed(4)} </span>}
+                                    {tokenB.name === 'KUSDT' && <span>{Number(1 / Number(exchangeRate)).toFixed(4)} </span>}
                                     $
                                 </span>}
                             </div>

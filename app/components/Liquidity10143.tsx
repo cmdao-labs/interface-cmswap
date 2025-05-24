@@ -437,7 +437,7 @@ export default function Liquidity10143({
                     <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="ghost" role="combobox" aria-expanded={open} className="w-[180px] h-8 text-white hover:bg-[#162638] hover:text-[#00ff9d] font-mono flex items-center justify-between h-10 cursor-pointer">
-                                <div className='gap-2 flex flex-row items-center justify-center overflow-hidden'>
+                                <div className='gap-2 flex flex-row items-center justify-center'>
                                     <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                         <span className="text-[#00ff9d] text-xs">
                                             {tokenA.logo !== '../favicon.ico' ?<img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
@@ -510,7 +510,7 @@ export default function Liquidity10143({
                     <Popover open={open2} onOpenChange={setOpen2}>
                         <PopoverTrigger asChild>
                             <Button variant="ghost" role="combobox" aria-expanded={open} className="w-[180px] h-8 text-white hover:bg-[#162638] hover:text-[#00ff9d] font-mono flex items-center justify-between h-10 cursor-pointer">
-                                <div className='gap-2 flex flex-row items-center justify-center overflow-hidden'>
+                                <div className='gap-2 flex flex-row items-center justify-center'>
                                     <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                         <span className="text-[#00ff9d] text-xs">
                                             {tokenB.logo !== '../favicon.ico' ?<img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
@@ -558,19 +558,19 @@ export default function Liquidity10143({
                 </div>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (feeSelect === 100 ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(100)}>
+                <Button variant="outline" className={"font-mono h-full p-4 rounded-md gap-1 flex flex-col text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (feeSelect === 100 ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(100)}>
                     <span>0.01% fee</span>
                     <span className="text-xs mt-1 opacity-60">best for stable war pairs</span>
                 </Button>
-                <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (feeSelect === 500 ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(500)}>
+                <Button variant="outline" className={"font-mono h-full p-4 rounded-md gap-1 flex flex-col text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (feeSelect === 500 ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(500)}>
                     <span>0.05% fee</span>
                     <span className="text-xs mt-1 opacity-60">best for stable pairs</span>
                 </Button>
-                <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (feeSelect === 3000 ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(3000)}>
+                <Button variant="outline" className={"font-mono h-full p-4 rounded-md gap-1 flex flex-col text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (feeSelect === 3000 ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(3000)}>
                     <span>0.3% fee</span>
                     <span className="text-xs mt-1 opacity-60">best for basic pairs</span>
                 </Button>
-                <Button variant="outline" className={"font-mono h-auto rounded text-xs flex flex-col " + (feeSelect === 10000 ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(10000)}>
+                <Button variant="outline" className={"font-mono h-full p-4 rounded-md gap-1 flex flex-col text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (feeSelect === 10000 ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(10000)}>
                     <span>1% fee</span>
                     <span className="text-xs mt-1 opacity-60">best for exotic pairs</span>
                 </Button>
@@ -609,8 +609,17 @@ export default function Liquidity10143({
                     <span className="text-gray-500 font-mono text-xs">{tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && tokenA.name + '/' + tokenB.name + (Number(currPrice) > 0 ? ' (+' + (upperPercentage === '+♾️' ? '♾️' : Number(upperPercentage).toFixed(2)) + '%)' : '')}</span>
                 </div>
             </div>
-            {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) <= Number(tokenABalance) && Number(amountB) <= Number(tokenBBalance) ?
-                <Button className="w-full bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4 cursor-pointer z-100" onClick={placeLiquidity}>Add Liquidity</Button> :
+            {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) > 0 && Number(amountB) > 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) <= Number(tokenBBalance) ?
+                <Button 
+                    className="w-full py-6 px-8 font-mono mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
+                    bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
+                    hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect
+                    shadow-lg shadow-emerald-500/40
+                    active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" 
+                    onClick={placeLiquidity}
+                >
+                    Add Liquidity
+                </Button> :
                 <Button disabled className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4">Add Liquidity</Button>
             }
             <div className="mt-4 border-t border-[#00ff9d]/10 pt-4">

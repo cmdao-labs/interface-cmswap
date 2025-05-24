@@ -1202,7 +1202,7 @@ export default function Swap96({
                     <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
-                                <div className='gap-2 flex flex-row items-center justify-center overflow-hidden'>
+                                <div className='gap-2 flex flex-row items-center justify-center'>
                                     <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                         <span className="text-[#00ff9d] text-xs">
                                             {tokenA.logo !== '../favicon.ico' ? <img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
@@ -1275,7 +1275,7 @@ export default function Swap96({
                     <Popover open={open2} onOpenChange={setOpen2}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" aria-expanded={open2} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
-                                <div className='gap-2 flex flex-row items-center justify-center overflow-hidden'>
+                                <div className='gap-2 flex flex-row items-center justify-center'>
                                     <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                         <span className="text-[#00ff9d] text-xs">
                                             {tokenB.logo !== '../favicon.ico' ? <img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
@@ -1354,7 +1354,7 @@ export default function Swap96({
                             </Button>
                         )}
                         {Number(UdonTVL['tvl10000']) > 0 && (
-                            <Button variant="outline" className={"font-mono h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "UdonSwap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("UdonSwap");; getQoute(amountA);}}>
+                            <Button variant="outline" className={"font-mono h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "UdonSwap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("UdonSwap");; getQoute(amountA);}}>
                                 <span className='flex items-center gap-1'>
                                     UdonSwap {bestPool === "UdonSwap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                 </span>
@@ -1469,8 +1469,8 @@ export default function Swap96({
                             <div className="flex items-center text-gray-500 font-mono text-xs my-2">
                                 <span className="mr-1">token price</span>
                                 {exchangeRate !== '0' && exchangeRate !== '' && <span className="text-white font-mono text-xs px-2 gap-1">
-                                    {tokenA.name === 'KUSDT' && <span>{Number(exchangeRate).toFixed(2)} </span>}
-                                    {tokenB.name === 'KUSDT' && <span>{Number(1 / Number(exchangeRate)).toFixed(2)} </span>}
+                                    {tokenA.name === 'KUSDT' && <span>{Number(exchangeRate).toFixed(4)} </span>}
+                                    {tokenB.name === 'KUSDT' && <span>{Number(1 / Number(exchangeRate)).toFixed(4)} </span>}
                                     $
                                 </span>}
                             </div>
