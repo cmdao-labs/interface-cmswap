@@ -498,10 +498,7 @@ export default function Trade({
                                             <Check size={16} />
                                             Copied!
                                         </> :
-                                        <>
-                                            <Copy size={16} />
-                                            Copy CA
-                                        </>
+                                        <Copy size={16} />
                                     }
                                 </button>
                                 <Link 
@@ -532,7 +529,7 @@ export default function Trade({
                     }</span> {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
                     {result2.status === 'success' &&
                         <span>
-                            Creator: {result2.data![8].result.slice(0, 5)}...{result2.data![8].result.slice(37)} ····· {
+                            Creator: <Link href={_explorer + "address/" + result2.data![8].result + (chain === 'kub' ? "/?tab=tokens" : "") + (chain === 'monad' ? "#tokens" : "")} rel="noopener noreferrer" target="_blank" prefetch={false} className="text-right w-[30px] xl:w-[200px]">{result2.data![8].result.slice(0, 5)}...{result2.data![8].result.slice(37)}</Link> ····· {
                                 Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![9].result) < 60 && rtf.format(Number(result2.data![9].result) - Number(Number(Date.now() / 1000).toFixed(0)), 'second')
                             }
                             {
@@ -565,7 +562,7 @@ export default function Trade({
                                 <div className="w-full h-[10px] flex flex-row items-center justify-around text-xs md:text-sm py-6 border-b border-gray-800" key={index}>
                                     <span className="w-1/5 sm:w-1/3 text-gray-500 text-xs">{new Intl.DateTimeFormat('en-GB', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Bangkok', }).format(new Date(res.timestamp))}</span>
                                     <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-end gap-10 text-xs sm:text-sm">
-                                        <span className="text-right w-[30px] xl:w-[200px]">{res.from.slice(0, 5) + '...' + res.from.slice(37)}</span>
+                                        <Link href={_explorer + "address/" + res.from + (chain === 'kub' ? "/?tab=tokens" : "") + (chain === 'monad' ? "#tokens" : "")} rel="noopener noreferrer" target="_blank" prefetch={false} className="text-right w-[30px] xl:w-[200px]">{res.from.slice(0, 5) + '...' + res.from.slice(37)}</Link>
                                         <div className="text-right w-[70px] xl:w-[200px] flex flex-row gap-2 items-center justify-end overflow-hidden">
                                             {res.action === 'buy' && <span className="text-green-500 font-bold">{res.action.toUpperCase()}</span>}
                                             {res.action === 'sell' && <span className="text-red-500 font-bold">{res.action.toUpperCase()}</span>}
@@ -669,7 +666,7 @@ export default function Trade({
                             <div className="w-full h-[50px] flex flex-row items-center justify-between text-xs lg:text-md py-2 border-b border-gray-800" key={index}>
                                 <div className="w-3/4 flex flex-row items-center justify-start gap-6 overflow-hidden">
                                     <span>{index + 1}.</span>
-                                    {result2.status === 'success' && <span className={"font-bold " + ((res.addr.toUpperCase() === result2.data![8].result.toUpperCase() || res.addr.toUpperCase() === lp.toUpperCase()) ? "text-emerald-300" : "")}>{res.addr.slice(0, 5) + '...' + res.addr.slice(37)} {res.addr.toUpperCase() === result2.data![8].result.toUpperCase() && '[Creator 🧑‍💻]'}{res.addr.toUpperCase() === lp.toUpperCase() && '[Bonding curve]'}</span>}
+                                    <Link href={_explorer + "address/" + res.addr + (chain === 'kub' ? "/?tab=tokens" : "") + (chain === 'monad' ? "#tokens" : "")} rel="noopener noreferrer" target="_blank" prefetch={false} className={"font-bold " + ((res.addr.toUpperCase() === result2.data![8].result.toUpperCase() || res.addr.toUpperCase() === lp.toUpperCase()) ? "text-emerald-300" : "")}>{res.addr.slice(0, 5) + '...' + res.addr.slice(37)} {res.addr.toUpperCase() === result2.data![8].result.toUpperCase() && '[Creator 🧑‍💻]'}{res.addr.toUpperCase() === lp.toUpperCase() && '[Bonding curve]'}</Link>
                                 </div>
                                 <span className="w-1/4 text-right w-[50px] sm:w-[200px]">{res.value.toFixed(4)}%</span>
                             </div>
