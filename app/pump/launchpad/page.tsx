@@ -33,8 +33,8 @@ export default async function Launchpad(props: {
   const token = searchParams?.token || '';
   
   return (
-    <main className="mt-[100px] w-full h-full flex flex-col gap-4 items-center sm:items-start overflow-hidden">
-        <div className="flex flex-row flex-wrap 2xl:flex-no-wrap gap-14 w-full gap-6 mt-2 mb-6" style={{zIndex: 1}}>
+    <main className="mt-10 w-full flex flex-col gap-2 items-start justify-start overflow-hidden">
+        <div className="flex flex-row flex-wrap 2xl:flex-no-wrap gap-8 w-full" style={{zIndex: 1}}>
           <Sort4 />
           <Link 
             href={"launchpad/launch?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")} 
@@ -48,12 +48,10 @@ export default async function Launchpad(props: {
             <span>Create a token </span> 
             🚀
           </Link>
-        </div>
-        <div className="flex flex-row flex-wrap 2xl:flex-no-wrap gap-14 w-full gap-6 mt-2 mb-6" style={{zIndex: 1}}>
-          {mode === 'lite' && chain === 'kub' && <Sort5 />}
-        </div>
+        </div>        
+        {mode === 'lite' && chain === 'kub' && <div className="flex flex-row flex-wrap 2xl:flex-no-wrap w-full" style={{zIndex: 1}}><Sort5 /></div>}
         <Suspense key={'mode-' + mode + '-chain-' + chain + '-query-' + query + '-sort-' + sort + '-order-' + order} fallback={
-          <div className="w-full h-full flex flex-row flex-wrap items-start justify-start gap-6 overflow-visible" style={{zIndex: 1}}>
+          <div className="w-full flex flex-row flex-wrap items-start justify-start overflow-visible" style={{zIndex: 1}}>
             <div className="flex flex-row items-center sm:items-start gap-6 mt-1 w-full">
               <div className="p-2 mb-4 bg-slate-700 rounded-lg w-[156px] h-[46px] animate-pulse" />
               <div className="p-2 mb-4 bg-slate-700 rounded-lg w-[156px] h-[46px] animate-pulse" />
@@ -122,9 +120,9 @@ export default async function Launchpad(props: {
             </div>
           </div>
         }>
-          <div className="w-full h-full flex flex-row flex-wrap items-start justify-start gap-6 overflow-visible" style={{zIndex: 1}}>
+          <div className="w-full flex flex-row flex-wrap items-start justify-start overflow-visible" style={{zIndex: 1}}>
             <Event mode={mode} chain={chain} token={token} />
-            <div className="flex flex-row flex-wrap 2xl:flex-no-wrap gap-6 w-full">
+            <div className="flex flex-row flex-wrap 2xl:flex-no-wrap gap-2 w-full">
               <Search />
               <Sort />
             </div>

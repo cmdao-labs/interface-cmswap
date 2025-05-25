@@ -519,7 +519,7 @@ export default function Trade({
                     }
                 </div>
             </div>
-            <div className="w-full flex flex-row flex-wrap-reverse gap-12 items-center xl:items-start justify-around">
+            <div className="w-full flex flex-row flex-wrap gap-12 items-center xl:items-start justify-around">
                 <div className="w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start" style={{zIndex: 1}}>
                     <iframe height="35%" width="100%" id="geckoterminal-embed" title="GeckoTerminal Embed" src={"https://www.geckoterminal.com/" + (chain === "kub" ? "bitkub_chain" : chain === "monad" ? "monad-testnet" : '') + "/pools/" + lp + "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"} allow="clipboard-write"></iframe>
                         <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
@@ -587,14 +587,16 @@ export default function Trade({
                         }
                     </div>
                     <div className="w-full h-fit xl:h-[300px] flex flex-col gap-6 item-center justify-start">
-                        <div className="w-1/2 ml-[20px]"><Image src={
-                            result2.status === 'success' ? 
-                                result2.data![3].result!.slice(0, 7) === 'ipfs://' ? "https://gateway.commudao.xyz/ipfs/" + result2.data![3].result!.slice(7) : 
-                                "https://gateway.commudao.xyz/ipfs/" + result2.data![3].result!
-                            :
-                            "https://gateway.commudao.xyz/ipfs/"
-                        } alt="token_waiting_for_approve" width={100} height={100} /></div>
-                        <div className="ml-[20px] h-[190px] mr-[20px]"><span className="text-xs">Description: {result2.status === 'success' && result2.data![2].result}</span></div>
+                        <div className="flex flex-row justify-start">
+                            <div className="ml-[20px]"><Image src={
+                                result2.status === 'success' ? 
+                                    result2.data![3].result!.slice(0, 7) === 'ipfs://' ? "https://gateway.commudao.xyz/ipfs/" + result2.data![3].result!.slice(7) : 
+                                    "https://gateway.commudao.xyz/ipfs/" + result2.data![3].result!
+                                :
+                                "https://gateway.commudao.xyz/ipfs/"
+                            } alt="token_waiting_for_approve" width={120} height={120} /></div>
+                            <div className="ml-[20px] mr-[20px]"><span className="text-xs">Description: {result2.status === 'success' && result2.data![2].result}</span></div>
+                        </div>
                         {(result2.status === 'success' && result2.data[7].result) ?
                             <>
                                 <span className="ml-[20px] text-sm font-bold">🔥 This token has graduated!: {gradHash !== '' && <Link href={_explorer + "tx/" + gradHash} rel="noopener noreferrer" target="_blank" prefetch={false} className="underline text-emerald-300">Txn hash</Link>}</span>

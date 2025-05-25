@@ -224,8 +224,8 @@ export default async function Event({
     return (
         <div className="flex flex-row items-center sm:items-start gap-6 mt-1 w-full" style={{zIndex: 1}}>
             {theresult.map((res: any, index: any) =>
-                <Link href={_explorer + "tx/" + res.hash} rel="noopener noreferrer" target="_blank" prefetch={false} className={"w-[156px] flex flex-row items-center justify-around text-xs md:text-sm p-2 mb-4 bg-slate-700 rounded-lg overflow-hidden "  + (res.action === 'launch' ? "border-double border-4 border-emerald-300 " : "") + (index >= 3 ? "hidden xl:block" : "")} key={index}>
-                    <div className="flex flex-row items-center justify-end gap-2 text-xs sm:text-sm">
+                <Link href={_explorer + "tx/" + res.hash} rel="noopener noreferrer" target="_blank" prefetch={false} className={"w-[156px] flex flex-row items-center justify-around text-xs md:text-sm p-1 mb-4 bg-slate-700 rounded-lg overflow-hidden "  + (res.action === 'launch' ? "border-double border-4 border-emerald-300 " : "") + (index >= 3 ? "hidden xl:block" : "")} key={index}>
+                    <div className="flex flex-row items-center justify-end gap-2 text-xs">
                         <div className="text-right flex flex-row gap-2 items-center justify-end overflow-hidden">
                             {res.action === 'buy' && <span className="text-green-500 font-bold">{res.action.toUpperCase()}</span>}
                             {res.action === 'sell' && <span className="text-red-500 font-bold">{res.action.toUpperCase()}</span>}
