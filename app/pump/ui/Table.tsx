@@ -104,6 +104,11 @@ export default async function Table({
           functionName: 'createdTime',
           args: [res.result!],
         },
+        {
+          ...bkgafactoryContract,
+          functionName: 'desp',
+          args: [res.result!],
+        },
       ],
     });
   })
@@ -131,7 +136,7 @@ export default async function Table({
     const mcap = result55[index][1].result!.toUpperCase() !== dataofcurr.addr.toUpperCase() ? 
       ((Number(result55[index][0].result![0]) / (2 ** 96)) ** 2) * 1000000000 : 
       (1 / ((Number(result55[index][0].result![0]) / (2 ** 96)) ** 2)) * 1000000000;
-    return [{result: item[0].result}, {result: item[1].result}, {result: item[2].result}, {result: mcap}, {result: result55[index][1].result}, {result: Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(mcap)}, {result: item[3].result}, {result: Number(item[4].result)}, {result: result[index].result}]
+    return [{result: item[0].result}, {result: item[1].result}, {result: item[2].result}, {result: mcap}, {result: result55[index][1].result}, {result: Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(mcap)}, {result: item[3].result}, {result: Number(item[4].result)}, {result: result[index].result}, {result: item[5].result}]
   })
 
   return (
@@ -141,30 +146,31 @@ export default async function Table({
         ).sort(
           (a: any, b: any) => {if (sort === 'created' && order === 'ascending') {return Number(b[7].result.timestamp) - Number(a[7].result.timestamp)} else if (sort === 'created' && order === 'descending') {return Number(a[7].result.timestamp) - Number(b[7].result.timestamp)} else if (sort === 'mcap' && order === 'ascending') {return b[3].result - a[3].result} else if (sort === 'mcap' && order === 'descending') {return a[3].result - b[3].result} else {return b[3].result - a[3].result}}
         ).map((res: any, index) => 
-          <div key={index} className="p-2 w-full 2xl:w-1/3">
-              <Link href={"launchpad/token?ticker=" + res[8].result + '&lp=' + res[2].result + '&chain=' + chain + (mode === 'pro' ? '&mode=pro' : '&mode=lite')} prefetch={false} className="group w-full h-[220px] flex flex-row item-center justify-around bg-gray-800 shadow-xl rounded-lg">
+          <div key={index} className="p-2 w-full 2xl:w-1/3 hover:scale-[1.02]">
+              <Link href={"launchpad/token?ticker=" + res[8].result + '&lp=' + res[2].result + '&chain=' + chain + (mode === 'pro' ? '&mode=pro' : '&mode=lite')} prefetch={false} className="w-full h-[220px] flex flex-row item-center justify-around bg-gray-800 shadow-xl rounded-lg">
                 <div className="ml-[10px] sm:ml-[30px] h-[100px] w-[100px] sm:h-[170px] sm:w-[170px] self-center overflow-hidden flex flex-wrap content-center justify-center">
-                  <div className="h-[100px] w-[100px] sm:h-[150px] sm:w-[150px] group-hover:w-[180px] group-hover:h-[180px] relative">
+                  <div className="h-[100px] w-[100px] sm:h-[150px] sm:w-[150px] relative">
                     <Image src={res[1].result!.slice(0, 7) === 'ipfs://' ? "https://gateway.commudao.xyz/ipfs/" + res[1].result!.slice(7) : "https://gateway.commudao.xyz/ipfs/" + res[1].result!} alt="token_waiting_for_approve" fill />
                   </div>
                 </div>
-                <div className="w-1/2 flex flex-col gap-6 item-center justify-center">
-                  <span className="font-bold text-2xl truncate">{res[0].result}</span>
+                <div className="w-1/2 flex flex-col gap-4 item-center justify-center">
+                  <span className="font-mono font-bold text-2xl truncate">{res[0].result}</span>
                   <span className="text-emerald-300 font-bold text-xl">{res[5].result} {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
+                  <span className="text-xs text-gray-500">{res[9].result}</span>
                   <span className="text-xs">[CA: {res[8].result!.slice(0, 5)}...{res[8].result!.slice(37)}]</span>
                   <span className="text-xs">
-                  Creator: {res[6].result.slice(0, 5)}...{res[6].result.slice(37)} ····· {
-                    Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) < 60 && rtf.format(Number(res[7].result) - Number(Number(Date.now() / 1000).toFixed(0)), 'second')
-                  }
-                  {
-                    Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) >= 60 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) < 3600 && rtf.format(Number(Number((Number(res[7].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 60).toFixed(0)), 'minute')
-                  }
-                  {
-                    Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) >= 3600 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) < 86400 && rtf.format(Number(Number((Number(res[7].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 3600).toFixed(0)), 'hour')
-                  }
-                  {
-                    Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) >= 86400 && rtf.format(Number(Number((Number(res[7].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 86400).toFixed(0)), 'day')
-                  }
+                    Creator: {res[6].result.slice(0, 5)}...{res[6].result.slice(37)} ····· {
+                      Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) < 60 && rtf.format(Number(res[7].result) - Number(Number(Date.now() / 1000).toFixed(0)), 'second')
+                    }
+                    {
+                      Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) >= 60 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) < 3600 && rtf.format(Number(Number((Number(res[7].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 60).toFixed(0)), 'minute')
+                    }
+                    {
+                      Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) >= 3600 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) < 86400 && rtf.format(Number(Number((Number(res[7].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 3600).toFixed(0)), 'hour')
+                    }
+                    {
+                      Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) >= 86400 && rtf.format(Number(Number((Number(res[7].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 86400).toFixed(0)), 'day')
+                    }
                   </span>
                 </div>
               </Link>

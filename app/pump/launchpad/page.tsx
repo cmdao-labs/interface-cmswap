@@ -126,7 +126,7 @@ export default async function Launchpad(props: {
               <Search />
               <Sort />
             </div>
-            <div className="w-full flex flex-row flex-wrap items-start justify-start overflow-y-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-neutral-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-sky-500">
+            <div className="w-full flex flex-row flex-wrap items-start justify-start overflow-x-hidden overflow-y-visible">
               <Table mode={mode} query={query} sort={sort} order={order} chain={chain} token={token} />
             </div>
           </div>
