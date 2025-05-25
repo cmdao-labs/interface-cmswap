@@ -36,8 +36,16 @@ export default async function Launchpad(props: {
     <main className="mt-[100px] w-full h-full flex flex-col gap-4 items-center sm:items-start overflow-hidden">
         <div className="flex flex-row flex-wrap 2xl:flex-no-wrap gap-14 w-full gap-6 mt-2 mb-6" style={{zIndex: 1}}>
           <Sort4 />
-          <Link href={"launchpad/launch?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")} prefetch={false} className="w-full xl:w-1/6 self-center flex flex-row items-center justify-center gap-2 p-4 rounded-full font-medium text-center text-lg hover:font-bold" style={{backgroundImage: 'radial-gradient( circle 1292px at -13.6% 51.7%,  rgba(0,56,68,1) 0%, rgba(163,217,185,1) 51.5%, rgba(255,252,247,1) 88.6% )', textShadow: '0px 0px 12px rgba(0,255,209,.7)'}}>
-            <span>Create a token</span> 
+          <Link 
+            href={"launchpad/launch?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")} 
+            prefetch={false} 
+            className="w-full xl:w-1/6 self-center text-center p-4 rounded-full font-medium uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
+            bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
+            hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect hover:font-bold
+            shadow-lg shadow-emerald-500/40
+            active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer"
+          >
+            <span>Create a token </span> 
             🚀
           </Link>
         </div>
