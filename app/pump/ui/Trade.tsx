@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react';
 import { useConnections, useAccount, useReadContracts, useBalance } from 'wagmi';
 import { readContracts, writeContract, simulateContract, waitForTransactionReceipt } from '@wagmi/core';
 import { useDebouncedCallback } from 'use-debounce';
-import { formatEther, parseEther, erc20Abi, createPublicClient, http, parseAbiItem } from 'viem';
+import { formatEther, parseEther, erc20Abi, createPublicClient, http } from 'viem';
+import { Copy, Check } from 'lucide-react';
 import { bitkub, monadTestnet } from 'viem/chains';
 import { config } from '@/app/config';
 import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
@@ -186,6 +187,14 @@ export default function Trade({
 
     const [holder, setHolder] = useState([] as { addr: string; value: number; }[]);
     const [hx, setHx] = useState([] as { action: string; value: number; from: any; hash: any; timestamp: number; }[]);
+    const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+    const copyToClipboard = async (address: string): Promise<void> => {
+        await navigator.clipboard.writeText(address);
+        setCopiedAddress(address);
+        setTimeout(() => {
+            setCopiedAddress(null);
+        }, 2000);
+    }
  
     useEffect(() => {
         const fetchLogs = async () => {
@@ -478,11 +487,31 @@ export default function Trade({
                         <span>{result2.status === 'success' && '[$' + result2.data![1].result + ']'}</span>
                         <span className="flex flex-row gap-2">
                             <span>CA: {ticker.slice(0, 5)}...{ticker.slice(37)}</span>
-                            <Link href={_explorer + "address/" + ticker} rel="noopener noreferrer" target="_blank" prefetch={false} className="h-[14px] w-[16px] overflow-hidden flex flex-wrap content-center justify-center">
-                                <div className="h-[20px] w-[20px] relative hover:h-[22px] hover:w-[22px]">
-                                    <Image src="/bs.png" alt="blockscout" fill />
-                                </div>
-                            </Link>
+                            <div className="flex items-center gap-1 ml-2">
+                                <button
+                                    onClick={() => copyToClipboard(ticker)}
+                                    className="flex items-center gap-2 bg-water-300 hover:bg-neutral-700 px-3 py-2 -mt-2 rounded-md transition-colors text-xs cursor-pointer"
+                                    title="Copy contract address"
+                                >
+                                    {copiedAddress === ticker ? 
+                                        <>
+                                            <Check size={16} />
+                                            Copied!
+                                        </> :
+                                        <>
+                                            <Copy size={16} />
+                                            Copy CA
+                                        </>
+                                    }
+                                </button>
+                                <Link 
+                                    href={_explorer + "address/" + ticker} rel="noopener noreferrer" target="_blank" prefetch={false}
+                                    className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 -mt-2 rounded-md transition-colors text-sm"
+                                    title="View on Etherscan"
+                                >
+                                    <Image src="/bs.png" alt="blockscout" height={16} width={16} />
+                                </Link>
+                            </div>
                         </span>
                     </div>
                     <span>Price: <span className="text-emerald-300">{
@@ -609,12 +638,12 @@ export default function Trade({
                                     <span>bonding curve progress: {
                                         result3.status === 'success' &&  Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(
                                             result3.data![1].result?.toUpperCase() !== currencyAddr.toUpperCase() ?
-                                                ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2 * 100 / (mode === 'pro' ? 1 : 320000000)) :
-                                                ((1 / ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2)) * 100) / (mode === 'pro' ? 1 : 320000000)
+                                                ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2 * 100 / (mode === 'pro' ? 1 : 1)) :
+                                                ((1 / ((Number(result3.data![0].result![0]) / (2 ** 96)) ** 2)) * 100) / (mode === 'pro' ? 1 : 1)
                                         )
                                     }%</span>
                                     <div className='has-tooltip'>
-                                        <span className='tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs'>{'When the market cap reaches 1 ' + (chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + (chain === 'monad' && mode === 'pro' ? 'MON' : '') + ', 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.'}</span>
+                                        <span className='tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs'>{'When the market cap reaches 1,000,000,000 ' + (chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + (chain === 'monad' && mode === 'pro' ? 'MON' : '') + ', 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.'}</span>
                                     </div>
                                 </div>
                                 <div className="ml-[20px] mr-[20px] h-6 bg-gray-400 rounded-lg overflow-hidden">

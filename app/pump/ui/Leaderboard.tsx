@@ -430,7 +430,7 @@ export default async function Leaderboard({
               </div>
               <span>{item.addr.slice(0, 5) + '...' + item.addr.slice(37)}</span>
               </div>
-              <div className="w-1/4 flex flex-row items-center justify-between sm:gap-10">
+              <div className="w-2/5 flex flex-row items-center justify-between sm:gap-10">
                 {(rankby === '' || rankby === 'xp') &&
                   <>
                     <span className="font-bold">LVL {item.lvl}</span>
