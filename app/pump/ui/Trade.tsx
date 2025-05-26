@@ -592,7 +592,7 @@ export default function Trade({
                                 <span className="text-right w-[30px] xl:w-[200px]">Txn</span>
                             </div>
                         </div>
-                        <div className="w-full h-[950px] pr-4 flex flex-col items-center sm:items-start overflow-y-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-neutral-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-sky-500" style={{zIndex: 1}}>
+                        <div className="w-full h-[950px] pr-4 flex flex-col items-center sm:items-start overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500" style={{zIndex: 1}}>
                             {hx.map((res: any, index: any) =>
                                 <div className="w-full h-[10px] flex flex-row items-center justify-around text-xs md:text-sm py-6 border-b border-gray-800" key={index}>
                                     <span className="w-1/5 sm:w-1/3 text-gray-500 text-xs">{new Intl.DateTimeFormat('en-GB', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Bangkok', }).format(new Date(res.timestamp))}</span>
@@ -656,7 +656,7 @@ export default function Trade({
                                 :
                                 "https://gateway.commudao.xyz/ipfs/"
                             } alt="token_waiting_for_approve" width={120} height={120} /></div>
-                            <div className="ml-[20px] mr-[20px]"><span className="text-xs">Description: {result2.status === 'success' && result2.data![2].result}</span></div>
+                            <div className="ml-[20px] mr-[20px] w-[200px]"><span className="text-xs">Description: {result2.status === 'success' && result2.data![2].result}</span></div>
                         </div>
                         {(result2.status === 'success' && state[2].result) ?
                             <>
@@ -691,7 +691,7 @@ export default function Trade({
                             </>
                         }
                     </div>
-                    <div className="w-full h-[780px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center">
+                    <div className="w-full h-[780px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
                         <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">
                             {holder.length} Holders
                         </span>
