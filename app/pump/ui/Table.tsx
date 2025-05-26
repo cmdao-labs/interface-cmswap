@@ -144,7 +144,7 @@ export default async function Table({
         {resultfinal.filter(
           (res: any) => {if (query !== '') {return res[0].result!.toLowerCase().includes(query.toLowerCase())} else {return res}}
         ).sort(
-          (a: any, b: any) => {if (sort === 'created' && order === 'ascending') {return Number(b[7].result.timestamp) - Number(a[7].result.timestamp)} else if (sort === 'created' && order === 'descending') {return Number(a[7].result.timestamp) - Number(b[7].result.timestamp)} else if (sort === 'mcap' && order === 'ascending') {return b[3].result - a[3].result} else if (sort === 'mcap' && order === 'descending') {return a[3].result - b[3].result} else {return b[3].result - a[3].result}}
+          (a: any, b: any) => {if (sort === 'created' && order === 'ascending') {return Number(b[7].result) - Number(a[7].result)} else if (sort === 'created' && order === 'descending') {return Number(a[7].result) - Number(b[7].result)} else if (sort === 'mcap' && order === 'ascending') {return b[3].result - a[3].result} else if (sort === 'mcap' && order === 'descending') {return a[3].result - b[3].result} else {return b[3].result - a[3].result}}
         ).map((res: any, index) => 
           <div key={index} className="p-2 w-full 2xl:w-1/3 hover:scale-[1.02]">
               <Link href={"launchpad/token?ticker=" + res[8].result + '&lp=' + res[2].result + '&chain=' + chain + (mode === 'pro' ? '&mode=pro' : '&mode=lite')} prefetch={false} className="w-full h-[220px] flex flex-row item-center justify-around bg-gray-800 shadow-xl rounded-lg">
