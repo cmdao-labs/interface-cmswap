@@ -6,7 +6,7 @@ import { useConnections, useAccount, useReadContracts } from 'wagmi';
 import { readContracts, writeContract, simulateContract, waitForTransactionReceipt, getBalance } from '@wagmi/core';
 import { useDebouncedCallback } from 'use-debounce';
 import { formatEther, parseEther, erc20Abi, createPublicClient, http } from 'viem';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Plus } from 'lucide-react';
 import { bitkub, monadTestnet } from 'viem/chains';
 import { config } from '@/app/config';
 import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
@@ -15,6 +15,7 @@ import { UniswapV2PairABI } from '@/app/pump/abi/UniswapV2Pair';
 import { UniswapV2RouterABI } from '@/app/pump/abi/UniswapV2Router';
 import { UniswapV3QouterABI } from '@/app/pump/abi/UniswapV3Qouter';
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+const { ethereum } = window as any
 
 export default function Trade({
     mode, chain, ticker, lp, token,
@@ -515,6 +516,25 @@ export default function Trade({
                                         </> :
                                         <Copy size={16} />
                                     }
+                                </button>
+                                <button 
+                                    className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 -mt-2 rounded-md transition-colors text-sm cursor-pointer"
+                                    onClick={async () => {
+                                        await ethereum.request({
+                                            method: 'wallet_watchAsset',
+                                            params: {
+                                                type: 'ERC20',
+                                                options: {
+                                                    address: ticker,
+                                                    symbol: result2.status === 'success' && result2.data![1].result,
+                                                    decimals: 18,
+                                                    image: result2.status === 'success' && result2.data![3].result!.slice(0, 7) === 'ipfs://' ? "https://gateway.commudao.xyz/ipfs/" + result2.data![3].result!.slice(7) : "https://gateway.commudao.xyz/ipfs/" + result2.data![3].result!                                             
+                                                },
+                                            },
+                                        })
+                                    }}
+                                >
+                                    <Plus size={16} />
                                 </button>
                                 <Link 
                                     href={_explorer + "address/" + ticker} rel="noopener noreferrer" target="_blank" prefetch={false}
