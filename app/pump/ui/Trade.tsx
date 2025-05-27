@@ -806,20 +806,20 @@ React.useEffect(() => {
                                     <span>bonding curve progress: {
                                         result3.status === 'success' &&  Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(
                                             result3.data![1].result?.toUpperCase() !== currencyAddr.toUpperCase() ?
-                                                ((Number(state[3].result![0]) / (2 ** 96)) ** 2 * 100 / (mode === 'pro' ? 1 : 1)) :
-                                                ((1 / ((Number(state[3].result![0]) / (2 ** 96)) ** 2)) * 100) / (mode === 'pro' ? 1 : 1)
+                                                (((Number(state[3].result![0]) / (2 ** 96)) ** 2 * 100) / ((chain === 'kub' && mode === 'pro' ? 0.000002  : 1) * (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 0.0001 : 1) * (chain === 'monad' && mode === 'pro' ? 1 : 1))) :
+                                                ((1 / ((Number(state[3].result![0]) / (2 ** 96)) ** 2)) * 100) / ((chain === 'kub' && mode === 'pro' ? 0.000002  : 1) * (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 0.0001 : 1) * (chain === 'monad' && mode === 'pro' ? 1 : 1))
                                         )
                                     }%</span>
                                     <div className='has-tooltip'>
-                                        <span className='tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs'>{'When the market cap reaches 1,000,000,000 ' + (chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + (chain === 'monad' && mode === 'pro' ? 'MON' : '') + ', 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.'}</span>
+                                        <span className='tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs'>{'When the market cap reaches ' + (chain === 'kub' && mode === 'pro' ? '2,000 KUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? '100,000 CMM' : '') + (chain === 'monad' && mode === 'pro' ? '1 MON' : '') + ', 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.'}</span>
                                     </div>
                                 </div>
                                 <div className="w-full mx-14 h-6 bg-gray-400 rounded-lg overflow-hidden">
                                     <div className="h-6 bg-sky-400 rounded-lg" style={{width: 
                                         result3.status === 'success' ?
                                             result3.data![1].result?.toUpperCase() !== currencyAddr.toUpperCase() ? 
-                                                ((Number(state[3].result![0]) / (2 ** 96)) ** 2 * 100 / (mode === 'pro' ? 1 : 1)) + '%':
-                                                (((1 / ((Number(state[3].result![0]) / (2 ** 96)) ** 2)) * 100) / (mode === 'pro' ? 1 : 1)) + '%'
+                                                (((Number(state[3].result![0]) / (2 ** 96)) ** 2 * 100) / ((chain === 'kub' && mode === 'pro' ? 0.000002  : 1) * (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 0.0001 : 1) * (chain === 'monad' && mode === 'pro' ? 1 : 1))) + '%':
+                                                (((1 / ((Number(state[3].result![0]) / (2 ** 96)) ** 2)) * 100) / ((chain === 'kub' && mode === 'pro' ? 0.000002  : 1) * (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 0.0001 : 1) * (chain === 'monad' && mode === 'pro' ? 1 : 1))) + '%'
                                             :
                                             '0%'
                                     }} />
