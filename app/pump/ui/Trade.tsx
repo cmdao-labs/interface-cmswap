@@ -842,7 +842,7 @@ React.useEffect(() => {
                             )}
                         </div> 
                     </div> :
-                    <div className="block md:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start" style={{zIndex: 1}}>
+                    <div className="block md:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start">
                         <div className="w-full h-[300px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900" style={{zIndex: 1}}>
                             <div className="w-3/4 bg-gray-800 self-center p-2 mt-3 mb-3 rounded-2xl flex flex-row justify-around">
                                 <span className={(trademode ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg" : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center")} style={{backgroundImage: trademode ? 'radial-gradient( circle 919px at 1.7% 6.1%,  rgba(41,58,76,1) 0%, rgba(40,171,226,1) 100.2% )' : 'none'}} onClick={() => {setTrademode(true); setInputBalance(''); setOutputBalance('0');}}>Buy</span>
@@ -938,8 +938,8 @@ React.useEffect(() => {
                         )}
                     </div>
                 </div>
-                <div className="hidden md:block w-full xl:w-1/4 h-fit xl:h-[1500px] flex flex-col gap-8">
-                    <div className="w-full h-[300px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900" style={{zIndex: 1}}>
+                <div className="hidden md:block w-full xl:w-1/4 h-fit xl:h-[1500px] flex flex-col gap-8 z-1">
+                    <div className="w-full h-[300px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900">
                         <div className="w-3/4 bg-gray-800 self-center p-2 mt-3 mb-3 rounded-2xl flex flex-row justify-around">
                             <span className={(trademode ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg" : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center")} style={{backgroundImage: trademode ? 'radial-gradient( circle 919px at 1.7% 6.1%,  rgba(41,58,76,1) 0%, rgba(40,171,226,1) 100.2% )' : 'none'}} onClick={() => {setTrademode(true); setInputBalance(''); setOutputBalance('0');}}>Buy</span>
                             <span className={(!trademode ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg" : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center")} style={{backgroundImage: !trademode ? 'radial-gradient( circle 919px at 1.7% 6.1%,  rgba(41,58,76,1) 0%, rgba(40,171,226,1) 100.2% )' : 'none'}} onClick={() => {setTrademode(false); setInputBalance(''); setOutputBalance('0');}}>Sell</span>

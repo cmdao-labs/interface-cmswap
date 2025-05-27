@@ -197,7 +197,7 @@ export default function BlogLayout({
                 }
                 <Link href={"/pump/launchpad/leaderboard?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")} prefetch={false} className="underline text-emerald-300 hover:font-bold">Leaderboard</Link>
             </header>
-            <div className="w-[100px] h-[100px] sm:w-[500px] sm:h-[500px] absolute top-14 right-0" style={{backgroundImage: mode === 'pro' ? 'radial-gradient(circle farthest-side at 100% 10%,rgb(110 231 183),#8586ad00 58%)' : 'radial-gradient(circle farthest-side at 100% 10%,#8586ad26,#8586ad00 88%)'}}></div>
+            <div className="w-[100px] h-[100px] sm:w-[500px] sm:h-[500px] absolute top-14 right-0 z-0" style={{backgroundImage: mode === 'pro' ? 'radial-gradient(circle farthest-side at 100% 10%,rgb(110 231 183),#8586ad00 58%)' : 'radial-gradient(circle farthest-side at 100% 10%,#8586ad26,#8586ad00 88%)'}}></div>
             <div className="w-[100px] h-[100px] sm:w-[500px] sm:h-[500px] absolute bottom-0 left-0" style={{backgroundImage: mode === 'pro' ? 'radial-gradient(circle closest-corner at 0%,rgb(110 231 183) 1%,#0000)' : 'radial-gradient(circle closest-corner at 0%,#8586ad26 14%,#0000)'}}></div>
             {children}
         </div>
