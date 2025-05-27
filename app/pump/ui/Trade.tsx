@@ -77,7 +77,7 @@ export default function Trade({
         v2facAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
         v2routerAddr = '0x5a16536bb85a2fa821ec774008d6068eced79c96';
         v3qouterAddr = '0x555756bd5b347853af6f713a2af6231414bedefc';
-        socialAddr = '';
+        socialAddr = '0x01837156518e60362048e78d025a419C51346f55';
     } // add chain and mode here
     const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
     const dataofuniv2factory = {addr: v2facAddr};
@@ -685,6 +685,7 @@ React.useEffect(() => {
                     }
                 </div>
             </div>
+            
             <div className="w-full flex flex-row flex-wrap gap-12 items-center xl:items-start justify-around">
                 {!tabmode ?
                     <div className="block md:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start" style={{zIndex: 1}}>
@@ -825,6 +826,43 @@ React.useEffect(() => {
                                 </div>
                             </>
                         }
+                                 
+                        {/* Socials Section */}
+                        {result2.status === 'success' && result2.data![5].result === account.address && (
+                        <div className="w-full">
+                        <div className="flex flex-col gap-3 mb-4">
+                        {socialItems.map(({ icon, field }) => {
+                            const url = socials[field];
+                            if (!url || url.trim() === "") return null;
+
+                            return (
+                            <a
+                                key={field}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 p-3 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200"
+                            >
+                                <div className="text-[12px] text-green-400">{icon}</div>
+                                <span className="text-[14px] text-green-300 truncate max-w-xs break-all">{url}</span>
+                            </a>
+                            );
+                        })}
+                        </div>
+
+
+                            {/* ปุ่มเพิ่ม Socials */}
+                            <div>
+                            <button
+                                className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                                onClick={() => setShowSocials(!showSocials)}
+                            >
+                                <span className="self-center">Add Socials</span>
+                            </button>
+                            </div>
+                        </div>
+                        )}
+                        
                         <div className="w-full h-[780px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
                             <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">
                                 {holder.length} Holders
@@ -976,7 +1014,31 @@ React.useEffect(() => {
                         }
                     </div>
 
-                    {/* Socials Section */}
+
+                    <div className="w-full h-fit flex flex-col gap-6 item-center justify-start">
+                        <div className="flex flex-row justify-start mt-5">
+                            <div className="flex flex-row items-start gap-2 px-5">
+                                <div className="mr-2">
+                                    <Image
+                                        src={
+                                            result2.status === 'success' 
+                                            ? (result2.data![3].result!.startsWith('ipfs://') 
+                                                ? "https://gateway.commudao.xyz/ipfs/" + result2.data![3].result!.slice(7)
+                                                : "https://gateway.commudao.xyz/ipfs/" + result2.data![3].result!)
+                                            : "https://gateway.commudao.xyz/ipfs/"
+                                        }
+                                        alt="token_waiting_for_approve"
+                                        width={120}
+                                        height={120}
+                                    />
+                                </div>
+                                <div className="flex-1 min-w-0 h-[300px] overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
+                                    <span className="text-xs break-words">Description: {result2.status === 'success' && result2.data![2].result}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                                            {/* Socials Section */}
                     {result2.status === 'success' && result2.data![5].result === account.address && (
                     <div>
                     <div className="flex flex-col gap-3 mb-4">
@@ -1012,28 +1074,6 @@ React.useEffect(() => {
                     </div>
                     )}
 
-                    <div className="w-full h-fit flex flex-col gap-6 item-center justify-start">
-                        <div className="flex flex-row justify-start mt-5">
-                            <div className="flex flex-row items-start gap-2 px-5">
-                                <div className="mr-2">
-                                    <Image
-                                        src={
-                                            result2.status === 'success' 
-                                            ? (result2.data![3].result!.startsWith('ipfs://') 
-                                                ? "https://gateway.commudao.xyz/ipfs/" + result2.data![3].result!.slice(7)
-                                                : "https://gateway.commudao.xyz/ipfs/" + result2.data![3].result!)
-                                            : "https://gateway.commudao.xyz/ipfs/"
-                                        }
-                                        alt="token_waiting_for_approve"
-                                        width={120}
-                                        height={120}
-                                    />
-                                </div>
-                                <div className="flex-1 min-w-0 h-[300px] overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
-                                    <span className="text-xs break-words">Description: {result2.status === 'success' && result2.data![2].result}</span>
-                                </div>
-                            </div>
-                        </div>
                         {(result2.status === 'success' && state[2].result) ?
                             <>
                                 <span className="ml-[20px] text-sm font-bold">🔥 This token has graduated!: {gradHash !== '' && <Link href={_explorer + "tx/" + gradHash} rel="noopener noreferrer" target="_blank" prefetch={false} className="underline text-emerald-300">Txn hash</Link>}</span>
@@ -1066,6 +1106,8 @@ React.useEffect(() => {
                                 </div>
                             </>
                         }
+
+
                     </div>
                     <div className="w-full h-[780px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
                         <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">
@@ -1084,58 +1126,60 @@ React.useEffect(() => {
                         )}
                     </div>
 
-                    {/* Social Modal */}
-                    {showSocials && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-xl relative">
-                            <button
-                            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-                            onClick={() => setShowSocials(false)}
-                            >
-                            ✕
-                            </button>
-                            <h2 className="text-xl font-bold mb-4 text-center text-gray-800">Add Your Socials</h2>
-
-                            <div className="space-y-4 bg-white rounded-2xl p-6 shadow-md border border-gray-300 text-black">
-                            {[
-                                { icon: <FaFacebookF className="text-blue-600" />, field: "fb", placeholder: "Facebook URL" },
-                                { icon: <FaTwitter className="text-blue-400" />, field: "x", placeholder: "X (Twitter) URL" },
-                                { icon: <FaTelegramPlane className="text-blue-500" />, field: "telegram", placeholder: "Telegram URL" },
-                                { icon: <FaGlobe className="text-green-500" />, field: "website", placeholder: "Website URL" },
-                            ].map(({ icon, field, placeholder }) => (
-                                <div key={field}>
-                                <div className="flex items-center gap-3">
-                                    {icon}
-                                    <input
-                                    type="text"
-                                    placeholder={placeholder}
-                                    value={socials[field as keyof typeof socials]}
-                                    onChange={handleChange(field as keyof typeof socials)}
-                                    className={`flex-1 border ${
-                                        errors[field as keyof typeof errors] ? "border-red-500" : "border-gray-300"
-                                    } rounded-lg p-2 focus:outline-none focus:ring-2 ${
-                                        errors[field as keyof typeof errors] ? "focus:ring-red-500" : "focus:ring-blue-400"
-                                    }`}
-                                    />
-                                </div>
-                                {errors[field as keyof typeof errors] && (
-                                    <p className="text-sm text-red-500 mt-1 ml-7">Must start with http:// or https://</p>
-                                )}
-                                </div>
-                            ))}
-
-                            <button
-                                onClick={handleSave}
-                                className="w-full mt-4 bg-blue-600 text-white p-2 rounded-xl hover:bg-blue-700 transition"
-                            >
-                                Save Socials
-                            </button>
-                            </div>
-                        </div>
-                        </div>
-                    )}
+                 
                 </div>
             </div>
+            
+            {/* Social Modal */}
+            {showSocials && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-xl relative">
+                    <button
+                    className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                    onClick={() => setShowSocials(false)}
+                    >
+                    ✕
+                    </button>
+                    <h2 className="text-xl font-bold mb-4 text-center text-gray-800">Add Your Socials</h2>
+
+                    <div className="space-y-4 bg-white rounded-2xl p-6 shadow-md border border-gray-300 text-black">
+                    {[
+                        { icon: <FaFacebookF className="text-blue-600" />, field: "fb", placeholder: "Facebook URL" },
+                        { icon: <FaTwitter className="text-blue-400" />, field: "x", placeholder: "X (Twitter) URL" },
+                        { icon: <FaTelegramPlane className="text-blue-500" />, field: "telegram", placeholder: "Telegram URL" },
+                        { icon: <FaGlobe className="text-green-500" />, field: "website", placeholder: "Website URL" },
+                    ].map(({ icon, field, placeholder }) => (
+                        <div key={field}>
+                        <div className="flex items-center gap-3">
+                            {icon}
+                            <input
+                            type="text"
+                            placeholder={placeholder}
+                            value={socials[field as keyof typeof socials]}
+                            onChange={handleChange(field as keyof typeof socials)}
+                            className={`flex-1 border ${
+                                errors[field as keyof typeof errors] ? "border-red-500" : "border-gray-300"
+                            } rounded-lg p-2 focus:outline-none focus:ring-2 ${
+                                errors[field as keyof typeof errors] ? "focus:ring-red-500" : "focus:ring-blue-400"
+                            }`}
+                            />
+                        </div>
+                        {errors[field as keyof typeof errors] && (
+                            <p className="text-sm text-red-500 mt-1 ml-7">Must start with http:// or https://</p>
+                        )}
+                        </div>
+                    ))}
+
+                    <button
+                        onClick={handleSave}
+                        className="w-full mt-4 bg-blue-600 text-white p-2 rounded-xl hover:bg-blue-700 transition"
+                    >
+                        Save Socials
+                    </button>
+                    </div>
+                </div>
+                </div>
+            )}
         </main>
     );
 }
