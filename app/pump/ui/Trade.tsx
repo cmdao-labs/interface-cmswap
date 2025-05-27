@@ -651,7 +651,7 @@ React.useEffect(() => {
                             </div>
                         </span>
                     </div>
-                    <span>Price: <span className="text-emerald-300">{
+                    <span className="mr-6">Price: <span className="text-emerald-300">{
                         result3.status === 'success' ? 
                             result3.data![1].result!.toUpperCase() !== dataofcurr.addr.toUpperCase() ?
                                 Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format((Number(state[3].result![0]) / (2 ** 96)) ** 2) :
@@ -659,7 +659,7 @@ React.useEffect(() => {
                             :
                             'Fetching...'
                     }</span> {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
-                    <span>Market Cap: <span className="text-emerald-300">{
+                    <span className="mr-6">Market Cap: <span className="text-emerald-300">{
                         result3.status === 'success' ?
                             result3.data![1].result!.toUpperCase() !== dataofcurr.addr.toUpperCase() ?
                                 Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format((Number(state[3].result![0]) / (2 ** 96)) ** 2 * 1000000000) :
@@ -668,7 +668,7 @@ React.useEffect(() => {
                             'Fetching...'
                     }</span> {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
                     {result2.status === 'success' &&
-                        <span>
+                        <span className="mr-6">
                             Creator: <Link href={_explorer + "address/" + result2.data![5].result + (chain === 'kub' ? "/?tab=tokens" : "") + (chain === 'monad' ? "#tokens" : "")} rel="noopener noreferrer" target="_blank" prefetch={false} className="text-right w-[30px] xl:w-[200px]">{result2.data![5].result.slice(0, 5)}...{result2.data![5].result.slice(37)}</Link> ····· {
                                 Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![6].result) < 60 && rtf.format(Number(result2.data![6].result) - Number(Number(Date.now() / 1000).toFixed(0)), 'second')
                             }
@@ -1046,20 +1046,20 @@ React.useEffect(() => {
                                     <span>bonding curve progress: {
                                         result3.status === 'success' &&  Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(
                                             result3.data![1].result?.toUpperCase() !== currencyAddr.toUpperCase() ?
-                                                ((Number(state[3].result![0]) / (2 ** 96)) ** 2 * 100 / (mode === 'pro' ? 1 : 1)) :
-                                                ((1 / ((Number(state[3].result![0]) / (2 ** 96)) ** 2)) * 100) / (mode === 'pro' ? 1 : 1)
+                                                (((Number(state[3].result![0]) / (2 ** 96)) ** 2 * 100) / ((chain === 'kub' && mode === 'pro' ? 0.000002  : 1) * (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 0.0001 : 1) * (chain === 'monad' && mode === 'pro' ? 1 : 1))) :
+                                                ((1 / ((Number(state[3].result![0]) / (2 ** 96)) ** 2)) * 100) / ((chain === 'kub' && mode === 'pro' ? 0.000002  : 1) * (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 0.0001 : 1) * (chain === 'monad' && mode === 'pro' ? 1 : 1))
                                         )
                                     }%</span>
                                     <div className='has-tooltip'>
-                                        <span className='tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs'>{'When the market cap reaches 1,000,000,000 ' + (chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + (chain === 'monad' && mode === 'pro' ? 'MON' : '') + ', 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.'}</span>
+                                        <span className='tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs'>{'When the market cap reaches ' + (chain === 'kub' && mode === 'pro' ? '2,000 KUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? '100,000 CMM' : '') + (chain === 'monad' && mode === 'pro' ? '1 MON' : '') + ', 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.'}</span>
                                     </div>
                                 </div>
                                 <div className="ml-[20px] mr-[20px] h-6 bg-gray-400 rounded-lg overflow-hidden">
                                     <div className="h-6 bg-sky-400 rounded-lg" style={{width: 
                                         result3.status === 'success' ?
                                             result3.data![1].result?.toUpperCase() !== currencyAddr.toUpperCase() ? 
-                                                ((Number(state[3].result![0]) / (2 ** 96)) ** 2 * 100 / (mode === 'pro' ? 1 : 1)) + '%':
-                                                (((1 / ((Number(state[3].result![0]) / (2 ** 96)) ** 2)) * 100) / (mode === 'pro' ? 1 : 1)) + '%'
+                                                (((Number(state[3].result![0]) / (2 ** 96)) ** 2 * 100) / ((chain === 'kub' && mode === 'pro' ? 0.000002  : 1) * (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 0.0001 : 1) * (chain === 'monad' && mode === 'pro' ? 1 : 1))) + '%':
+                                                (((1 / ((Number(state[3].result![0]) / (2 ** 96)) ** 2)) * 100) / ((chain === 'kub' && mode === 'pro' ? 0.000002  : 1) * (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 0.0001 : 1) * (chain === 'monad' && mode === 'pro' ? 1 : 1))) + '%'
                                             :
                                             '0%'
                                     }} />
