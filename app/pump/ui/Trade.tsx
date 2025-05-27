@@ -18,7 +18,7 @@ import { SocialsABI } from "@/app/pump/abi/Socials";
 
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 const { ethereum } = window as any
-// import { FaFacebookF, FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa"; 
+import { FaFacebookF, FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa"; 
 
 export default function Trade({
     mode, chain, ticker, lp, token,
@@ -166,12 +166,12 @@ export default function Trade({
 
     type JSXElement = React.ReactElement;
 
-    // const socialItems: { icon: JSXElement; field: keyof typeof socials }[] = [
-    //     { icon: <FaFacebookF className="text-blue-600" />, field: "fb" },
-    //     { icon: <FaTwitter className="text-blue-400" />, field: "x" },
-    //     { icon: <FaTelegramPlane className="text-blue-500" />, field: "telegram" },
-    //     { icon: <FaGlobe className="text-green-500" />, field: "website" },
-    // ];
+    const socialItems: { icon: JSXElement; field: keyof typeof socials }[] = [
+        { icon: <FaFacebookF className="text-blue-600" />, field: "fb" },
+        { icon: <FaTwitter className="text-blue-400" />, field: "x" },
+        { icon: <FaTelegramPlane className="text-blue-500" />, field: "telegram" },
+        { icon: <FaGlobe className="text-green-500" />, field: "website" },
+    ];
 
     const result2: any = useReadContracts({
         contracts: [
@@ -688,6 +688,88 @@ React.useEffect(() => {
             <div className="w-full flex flex-row flex-wrap gap-12 items-center xl:items-start justify-around">
                 {!tabmode ?
                     <div className="block md:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start" style={{zIndex: 1}}>
+                        <div className="w-full flex flex-col md:flex-row flex-wrap justify-between text-xs xl:text-md">
+                            <div className="flex flex-row flex-wrap gap-2">
+                                <span className="text-emerald-300">{result2.status === 'success' && result2.data![0].result}</span>
+                                <span>{result2.status === 'success' && '[$' + result2.data![1].result + ']'}</span>
+                                <span className="flex flex-row gap-2">
+                                    <span>CA: {ticker.slice(0, 5)}...{ticker.slice(37)}</span>
+                                    <div className="flex items-center gap-1 ml-2">
+                                        <button
+                                            onClick={() => copyToClipboard(ticker)}
+                                            className="flex items-center gap-2 bg-water-300 hover:bg-neutral-700 px-3 py-2 -mt-2 rounded-md transition-colors text-xs cursor-pointer"
+                                            title="Copy contract address"
+                                        >
+                                            {copiedAddress === ticker ? 
+                                                <>
+                                                    <Check size={16} />
+                                                    Copied!
+                                                </> :
+                                                <Copy size={16} />
+                                            }
+                                        </button>
+                                        <button 
+                                            className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 -mt-2 rounded-md transition-colors text-sm cursor-pointer"
+                                            onClick={async () => {
+                                                await ethereum.request({
+                                                    method: 'wallet_watchAsset',
+                                                    params: {
+                                                        type: 'ERC20',
+                                                        options: {
+                                                            address: ticker,
+                                                            symbol: result2.status === 'success' && result2.data![1].result,
+                                                            decimals: 18,
+                                                            image: result2.status === 'success' && result2.data![3].result!.slice(0, 7) === 'ipfs://' ? "https://gateway.commudao.xyz/ipfs/" + result2.data![3].result!.slice(7) : "https://gateway.commudao.xyz/ipfs/" + result2.data![3].result!                                             
+                                                        },
+                                                    },
+                                                })
+                                            }}
+                                        >
+                                            <Plus size={16} />
+                                        </button>
+                                        <Link 
+                                            href={_explorer + "address/" + ticker} rel="noopener noreferrer" target="_blank" prefetch={false}
+                                            className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 -mt-2 rounded-md transition-colors text-sm"
+                                            title="View on Etherscan"
+                                        >
+                                            <Image src="/bs.png" alt="blockscout" height={16} width={16} />
+                                        </Link>
+                                    </div>
+                                </span>
+                            </div>
+                            <span>Price: <span className="text-emerald-300">{
+                                result3.status === 'success' ? 
+                                    result3.data![1].result!.toUpperCase() !== dataofcurr.addr.toUpperCase() ?
+                                        Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format((Number(state[3].result![0]) / (2 ** 96)) ** 2) :
+                                        Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format((1 / ((Number(state[3].result![0]) / (2 ** 96)) ** 2)))
+                                    :
+                                    'Fetching...'
+                            }</span> {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
+                            <span>Market Cap: <span className="text-emerald-300">{
+                                result3.status === 'success' ?
+                                    result3.data![1].result!.toUpperCase() !== dataofcurr.addr.toUpperCase() ?
+                                        Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format((Number(state[3].result![0]) / (2 ** 96)) ** 2 * 1000000000) :
+                                        Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format((1 / ((Number(state[3].result![0]) / (2 ** 96)) ** 2)) * 1000000000)
+                                    :
+                                    'Fetching...'
+                            }</span> {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
+                            {result2.status === 'success' &&
+                                <span>
+                                    Creator: <Link href={_explorer + "address/" + result2.data![5].result + (chain === 'kub' ? "/?tab=tokens" : "") + (chain === 'monad' ? "#tokens" : "")} rel="noopener noreferrer" target="_blank" prefetch={false} className="text-right w-[30px] xl:w-[200px]">{result2.data![5].result.slice(0, 5)}...{result2.data![5].result.slice(37)}</Link> ····· {
+                                        Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![6].result) < 60 && rtf.format(Number(result2.data![6].result) - Number(Number(Date.now() / 1000).toFixed(0)), 'second')
+                                    }
+                                    {
+                                        Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![6].result) >= 60 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![6].result) < 3600 && rtf.format(Number(Number((Number(result2.data![6].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 60).toFixed(0)), 'minute')
+                                    }
+                                    {
+                                        Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![6].result) >= 3600 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![6].result) < 86400 && rtf.format(Number(Number((Number(result2.data![6].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 3600).toFixed(0)), 'hour')
+                                    }
+                                    {
+                                        Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![6].result) >= 86400 && rtf.format(Number(Number((Number(result2.data![6].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 86400).toFixed(0)), 'day')
+                                    }
+                                </span>
+                            }
+                        </div>
                         <div className="w-full h-fit xl:h-[300px] flex flex-col gap-6 item-center justify-start">
                             <div className="flex flex-row justify-start mt-5">
                                 <div className="flex flex-row items-start gap-2 px-5">
@@ -743,90 +825,6 @@ React.useEffect(() => {
                                 </div>
                             </>
                         }
-                        <div className="ml-[28px] w-full xl:w-2/3 flex flex-col gap-4 mb-2">
-                            <div className="w-full flex flex-col md:flex-row flex-wrap justify-between text-xs xl:text-md">
-                                <div className="flex flex-row flex-wrap gap-2">
-                                    <span className="text-emerald-300">{result2.status === 'success' && result2.data![0].result}</span>
-                                    <span>{result2.status === 'success' && '[$' + result2.data![1].result + ']'}</span>
-                                    <span className="flex flex-row gap-2">
-                                        <span>CA: {ticker.slice(0, 5)}...{ticker.slice(37)}</span>
-                                        <div className="flex items-center gap-1 ml-2">
-                                            <button
-                                                onClick={() => copyToClipboard(ticker)}
-                                                className="flex items-center gap-2 bg-water-300 hover:bg-neutral-700 px-3 py-2 -mt-2 rounded-md transition-colors text-xs cursor-pointer"
-                                                title="Copy contract address"
-                                            >
-                                                {copiedAddress === ticker ? 
-                                                    <>
-                                                        <Check size={16} />
-                                                        Copied!
-                                                    </> :
-                                                    <Copy size={16} />
-                                                }
-                                            </button>
-                                            <button 
-                                                className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 -mt-2 rounded-md transition-colors text-sm cursor-pointer"
-                                                onClick={async () => {
-                                                    await ethereum.request({
-                                                        method: 'wallet_watchAsset',
-                                                        params: {
-                                                            type: 'ERC20',
-                                                            options: {
-                                                                address: ticker,
-                                                                symbol: result2.status === 'success' && result2.data![1].result,
-                                                                decimals: 18,
-                                                                image: result2.status === 'success' && result2.data![3].result!.slice(0, 7) === 'ipfs://' ? "https://gateway.commudao.xyz/ipfs/" + result2.data![3].result!.slice(7) : "https://gateway.commudao.xyz/ipfs/" + result2.data![3].result!                                             
-                                                            },
-                                                        },
-                                                    })
-                                                }}
-                                            >
-                                                <Plus size={16} />
-                                            </button>
-                                            <Link 
-                                                href={_explorer + "address/" + ticker} rel="noopener noreferrer" target="_blank" prefetch={false}
-                                                className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 -mt-2 rounded-md transition-colors text-sm"
-                                                title="View on Etherscan"
-                                            >
-                                                <Image src="/bs.png" alt="blockscout" height={16} width={16} />
-                                            </Link>
-                                        </div>
-                                    </span>
-                                </div>
-                                <span>Price: <span className="text-emerald-300">{
-                                    result3.status === 'success' ? 
-                                        result3.data![1].result!.toUpperCase() !== dataofcurr.addr.toUpperCase() ?
-                                            Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format((Number(state[3].result![0]) / (2 ** 96)) ** 2) :
-                                            Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format((1 / ((Number(state[3].result![0]) / (2 ** 96)) ** 2)))
-                                        :
-                                        'Fetching...'
-                                }</span> {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
-                                <span>Market Cap: <span className="text-emerald-300">{
-                                    result3.status === 'success' ?
-                                        result3.data![1].result!.toUpperCase() !== dataofcurr.addr.toUpperCase() ?
-                                            Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format((Number(state[3].result![0]) / (2 ** 96)) ** 2 * 1000000000) :
-                                            Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format((1 / ((Number(state[3].result![0]) / (2 ** 96)) ** 2)) * 1000000000)
-                                        :
-                                        'Fetching...'
-                                }</span> {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
-                                {result2.status === 'success' &&
-                                    <span>
-                                        Creator: <Link href={_explorer + "address/" + result2.data![5].result + (chain === 'kub' ? "/?tab=tokens" : "") + (chain === 'monad' ? "#tokens" : "")} rel="noopener noreferrer" target="_blank" prefetch={false} className="text-right w-[30px] xl:w-[200px]">{result2.data![5].result.slice(0, 5)}...{result2.data![5].result.slice(37)}</Link> ····· {
-                                            Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![6].result) < 60 && rtf.format(Number(result2.data![6].result) - Number(Number(Date.now() / 1000).toFixed(0)), 'second')
-                                        }
-                                        {
-                                            Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![6].result) >= 60 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![6].result) < 3600 && rtf.format(Number(Number((Number(result2.data![6].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 60).toFixed(0)), 'minute')
-                                        }
-                                        {
-                                            Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![6].result) >= 3600 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![6].result) < 86400 && rtf.format(Number(Number((Number(result2.data![6].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 3600).toFixed(0)), 'hour')
-                                        }
-                                        {
-                                            Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![6].result) >= 86400 && rtf.format(Number(Number((Number(result2.data![6].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 86400).toFixed(0)), 'day')
-                                        }
-                                    </span>
-                                }
-                            </div>
-                        </div>
                         <div className="w-full h-[780px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
                             <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">
                                 {holder.length} Holders
@@ -982,7 +980,7 @@ React.useEffect(() => {
                     {result2.status === 'success' && result2.data![5].result === account.address && (
                     <div>
                     <div className="flex flex-col gap-3 mb-4">
-                    {/* {socialItems.map(({ icon, field }) => {
+                    {socialItems.map(({ icon, field }) => {
                         const url = socials[field];
                         if (!url || url.trim() === "") return null;
 
@@ -998,7 +996,7 @@ React.useEffect(() => {
                             <span className="text-sm text-green-300 truncate max-w-xs break-all">{url}</span>
                         </a>
                         );
-                    })} */}
+                    })}
                     </div>
 
 
@@ -1099,7 +1097,7 @@ React.useEffect(() => {
                             <h2 className="text-xl font-bold mb-4 text-center text-gray-800">Add Your Socials</h2>
 
                             <div className="space-y-4 bg-white rounded-2xl p-6 shadow-md border border-gray-300 text-black">
-                            {/* {[
+                            {[
                                 { icon: <FaFacebookF className="text-blue-600" />, field: "fb", placeholder: "Facebook URL" },
                                 { icon: <FaTwitter className="text-blue-400" />, field: "x", placeholder: "X (Twitter) URL" },
                                 { icon: <FaTelegramPlane className="text-blue-500" />, field: "telegram", placeholder: "Telegram URL" },
@@ -1124,7 +1122,7 @@ React.useEffect(() => {
                                     <p className="text-sm text-red-500 mt-1 ml-7">Must start with http:// or https://</p>
                                 )}
                                 </div>
-                            ))} */}
+                            ))}
 
                             <button
                                 onClick={handleSave}
