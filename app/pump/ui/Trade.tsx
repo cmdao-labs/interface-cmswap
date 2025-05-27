@@ -651,7 +651,7 @@ React.useEffect(() => {
                             </div>
                         </span>
                     </div>
-                    <span>Price: <span className="text-emerald-300">{
+                    <span className="mr-6">Price: <span className="text-emerald-300">{
                         result3.status === 'success' ? 
                             result3.data![1].result!.toUpperCase() !== dataofcurr.addr.toUpperCase() ?
                                 Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format((Number(state[3].result![0]) / (2 ** 96)) ** 2) :
@@ -659,7 +659,7 @@ React.useEffect(() => {
                             :
                             'Fetching...'
                     }</span> {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
-                    <span>Market Cap: <span className="text-emerald-300">{
+                    <span className="mr-6">Market Cap: <span className="text-emerald-300">{
                         result3.status === 'success' ?
                             result3.data![1].result!.toUpperCase() !== dataofcurr.addr.toUpperCase() ?
                                 Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format((Number(state[3].result![0]) / (2 ** 96)) ** 2 * 1000000000) :
@@ -668,7 +668,7 @@ React.useEffect(() => {
                             'Fetching...'
                     }</span> {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
                     {result2.status === 'success' &&
-                        <span>
+                        <span className="mr-6">
                             Creator: <Link href={_explorer + "address/" + result2.data![5].result + (chain === 'kub' ? "/?tab=tokens" : "") + (chain === 'monad' ? "#tokens" : "")} rel="noopener noreferrer" target="_blank" prefetch={false} className="text-right w-[30px] xl:w-[200px]">{result2.data![5].result.slice(0, 5)}...{result2.data![5].result.slice(37)}</Link> ····· {
                                 Number(Number(Date.now() / 1000).toFixed(0)) - Number(result2.data![6].result) < 60 && rtf.format(Number(result2.data![6].result) - Number(Number(Date.now() / 1000).toFixed(0)), 'second')
                             }
@@ -794,7 +794,6 @@ React.useEffect(() => {
                                 </div>
                             </div>
                         </div>
-                        
                         {(result2.status === 'success' && state[2].result) ?
                             <>
                                 <span className="ml-[20px] text-sm font-bold">🔥 This token has graduated!: {gradHash !== '' && <Link href={_explorer + "tx/" + gradHash} rel="noopener noreferrer" target="_blank" prefetch={false} className="underline text-emerald-300">Txn hash</Link>}</span>
@@ -827,7 +826,7 @@ React.useEffect(() => {
                                 </div>
                             </>
                         }
-                        
+                                 
                         {/* Socials Section */}
                         {result2.status === 'success' && result2.data![5].result === account.address && (
                         <div className="w-full">
@@ -863,6 +862,7 @@ React.useEffect(() => {
                             </div>
                         </div>
                         )}
+                        
                         <div className="w-full h-[780px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
                             <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">
                                 {holder.length} Holders
@@ -880,7 +880,7 @@ React.useEffect(() => {
                             )}
                         </div> 
                     </div> :
-                    <div className="block md:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start" style={{zIndex: 1}}>
+                    <div className="block md:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start">
                         <div className="w-full h-[300px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900" style={{zIndex: 1}}>
                             <div className="w-3/4 bg-gray-800 self-center p-2 mt-3 mb-3 rounded-2xl flex flex-row justify-around">
                                 <span className={(trademode ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg" : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center")} style={{backgroundImage: trademode ? 'radial-gradient( circle 919px at 1.7% 6.1%,  rgba(41,58,76,1) 0%, rgba(40,171,226,1) 100.2% )' : 'none'}} onClick={() => {setTrademode(true); setInputBalance(''); setOutputBalance('0');}}>Buy</span>
@@ -976,8 +976,8 @@ React.useEffect(() => {
                         )}
                     </div>
                 </div>
-                <div className="hidden md:block w-full xl:w-1/4 h-fit xl:h-[1500px] flex flex-col gap-8">
-                    <div className="w-full h-[300px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900" style={{zIndex: 1}}>
+                <div className="hidden md:block w-full xl:w-1/4 h-fit xl:h-[1500px] flex flex-col gap-8 z-1">
+                    <div className="w-full h-[300px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900">
                         <div className="w-3/4 bg-gray-800 self-center p-2 mt-3 mb-3 rounded-2xl flex flex-row justify-around">
                             <span className={(trademode ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg" : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center")} style={{backgroundImage: trademode ? 'radial-gradient( circle 919px at 1.7% 6.1%,  rgba(41,58,76,1) 0%, rgba(40,171,226,1) 100.2% )' : 'none'}} onClick={() => {setTrademode(true); setInputBalance(''); setOutputBalance('0');}}>Buy</span>
                             <span className={(!trademode ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg" : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center")} style={{backgroundImage: !trademode ? 'radial-gradient( circle 919px at 1.7% 6.1%,  rgba(41,58,76,1) 0%, rgba(40,171,226,1) 100.2% )' : 'none'}} onClick={() => {setTrademode(false); setInputBalance(''); setOutputBalance('0');}}>Sell</span>
@@ -1086,20 +1086,20 @@ React.useEffect(() => {
                                     <span>bonding curve progress: {
                                         result3.status === 'success' &&  Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(
                                             result3.data![1].result?.toUpperCase() !== currencyAddr.toUpperCase() ?
-                                                ((Number(state[3].result![0]) / (2 ** 96)) ** 2 * 100 / (mode === 'pro' ? 1 : 1)) :
-                                                ((1 / ((Number(state[3].result![0]) / (2 ** 96)) ** 2)) * 100) / (mode === 'pro' ? 1 : 1)
+                                                (((Number(state[3].result![0]) / (2 ** 96)) ** 2 * 100) / ((chain === 'kub' && mode === 'pro' ? 0.000002  : 1) * (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 0.0001 : 1) * (chain === 'monad' && mode === 'pro' ? 1 : 1))) :
+                                                ((1 / ((Number(state[3].result![0]) / (2 ** 96)) ** 2)) * 100) / ((chain === 'kub' && mode === 'pro' ? 0.000002  : 1) * (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 0.0001 : 1) * (chain === 'monad' && mode === 'pro' ? 1 : 1))
                                         )
                                     }%</span>
                                     <div className='has-tooltip'>
-                                        <span className='tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs'>{'When the market cap reaches 1,000,000,000 ' + (chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + (chain === 'monad' && mode === 'pro' ? 'MON' : '') + ', 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.'}</span>
+                                        <span className='tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs'>{'When the market cap reaches ' + (chain === 'kub' && mode === 'pro' ? '2,000 KUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? '100,000 CMM' : '') + (chain === 'monad' && mode === 'pro' ? '1 MON' : '') + ', 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.'}</span>
                                     </div>
                                 </div>
                                 <div className="ml-[20px] mr-[20px] h-6 bg-gray-400 rounded-lg overflow-hidden">
                                     <div className="h-6 bg-sky-400 rounded-lg" style={{width: 
                                         result3.status === 'success' ?
                                             result3.data![1].result?.toUpperCase() !== currencyAddr.toUpperCase() ? 
-                                                ((Number(state[3].result![0]) / (2 ** 96)) ** 2 * 100 / (mode === 'pro' ? 1 : 1)) + '%':
-                                                (((1 / ((Number(state[3].result![0]) / (2 ** 96)) ** 2)) * 100) / (mode === 'pro' ? 1 : 1)) + '%'
+                                                (((Number(state[3].result![0]) / (2 ** 96)) ** 2 * 100) / ((chain === 'kub' && mode === 'pro' ? 0.000002  : 1) * (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 0.0001 : 1) * (chain === 'monad' && mode === 'pro' ? 1 : 1))) + '%':
+                                                (((1 / ((Number(state[3].result![0]) / (2 ** 96)) ** 2)) * 100) / ((chain === 'kub' && mode === 'pro' ? 0.000002  : 1) * (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 0.0001 : 1) * (chain === 'monad' && mode === 'pro' ? 1 : 1))) + '%'
                                             :
                                             '0%'
                                     }} />
