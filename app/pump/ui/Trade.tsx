@@ -77,7 +77,7 @@ export default function Trade({
         v2facAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
         v2routerAddr = '0x5a16536bb85a2fa821ec774008d6068eced79c96';
         v3qouterAddr = '0x555756bd5b347853af6f713a2af6231414bedefc';
-        socialAddr = '';
+        socialAddr = '0x01837156518e60362048e78d025a419C51346f55';
     } // add chain and mode here
     const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
     const dataofuniv2factory = {addr: v2facAddr};
