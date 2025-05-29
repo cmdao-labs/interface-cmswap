@@ -953,7 +953,7 @@ React.useEffect(() => {
                
                 <div className="hidden md:block w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start" style={{zIndex: 1}}>
                 <div className="flex justify-end gap-2 mb-3">
-                    {['CMswap', 'Geckoterminal'].map((type) => (
+                    {['CMswap', 'GeckoTerminal'].map((type) => (
                         <button
                         key={type}
                         onClick={() => setGrapthType(type)}
