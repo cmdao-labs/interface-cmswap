@@ -15,9 +15,12 @@ import { UniswapV2PairABI } from '@/app/pump/abi/UniswapV2Pair';
 import { UniswapV2RouterABI } from '@/app/pump/abi/UniswapV2Router';
 import { UniswapV3QouterABI } from '@/app/pump/abi/UniswapV3Qouter';
 import { SocialsABI } from "@/app/pump/abi/Socials";
+import Chart from "@/app/components/Chart";
 
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-const { ethereum } = window as any
+if (typeof window !== 'undefined') {
+  const { ethereum } = window as any;
+}
 import { FaFacebookF, FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa"; 
 
 export default function Trade({
@@ -443,6 +446,7 @@ export default function Trade({
             const theresult = mergedata.map((res: any, index: any) => {
                 return {action: res.action, value: res.value, from: res.from, hash: res.hash, timestamp: restimestamp[index]}
             }).sort((a: any, b: any) => {return b.timestamp - a.timestamp});
+            console.log(theresult)
             setHx(theresult);
         }
         if (hash === '') {
@@ -948,8 +952,11 @@ React.useEffect(() => {
                 }       
                 
                 <div className="hidden md:block w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start" style={{zIndex: 1}}>
-                    <iframe height="35%" width="100%" id="geckoterminal-embed" title="GeckoTerminal Embed" src={"https://www.geckoterminal.com/" + (chain === "kub" ? "bitkub_chain" : chain === "monad" ? "monad-testnet" : '') + "/pools/" + lp + "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"} allow="clipboard-write"></iframe>
-                    <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
+{/*                     <iframe height="35%" width="100%" id="geckoterminal-embed" title="GeckoTerminal Embed" src={"https://www.geckoterminal.com/" + (chain === "kub" ? "bitkub_chain" : chain === "monad" ? "monad-testnet" : '') + "/pools/" + lp + "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"} allow="clipboard-write"></iframe>
+                */} <Chart theme="dark-green" type="candlestick" />
+
+              
+ <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
                         <div className="w-1/5 sm:w-1/3">Timestamp</div>
                         <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-start gap-10">
                             <span className="text-right w-[30px] xl:w-[200px]">From</span>
