@@ -224,12 +224,16 @@ priceScale.applyOptions({
 });
 
 chart.applyOptions({
+  timeScale: {
+    timeVisible: true,
+    secondsVisible: true, 
+  },
   localization: {
     timeFormatter: (time: number) => {
       return new Intl.DateTimeFormat('th-TH', {
         hour: '2-digit',
         minute: '2-digit',
-        timeZone: 'Asia/Bangkok', // <<< จุดสำคัญ
+        timeZone: 'Asia/Bangkok', 
         hour12: false
       }).format(new Date(time * 1000));
     }
