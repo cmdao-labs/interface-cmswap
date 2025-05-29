@@ -223,6 +223,20 @@ priceScale.applyOptions({
   scaleMargins: { top: 0.1, bottom: 0.1 }
 });
 
+chart.applyOptions({
+  localization: {
+    timeFormatter: (time: number) => {
+      return new Intl.DateTimeFormat('th-TH', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Bangkok', // <<< จุดสำคัญ
+        hour12: false
+      }).format(new Date(time * 1000));
+    }
+  }
+});
+
+
 
   const series = chart.addCandlestickSeries({
     upColor: '#26a69a',
@@ -262,8 +276,8 @@ priceScale.applyOptions({
       const volume = aggregated.find(d => d.time === param.time)?.volume ?? '-';
 
       toolTip.style.display = 'block';
-      toolTip.style.left = `${param.point.x + 20}px`;
-      toolTip.style.top = `${param.point.y + 20}px`;
+      toolTip.style.left = `${param.point.x + 10}px`;
+      toolTip.style.top = `${param.point.y + 10}px`;
       toolTip.innerHTML = `
         <div style="color: #26a69a">
           <div><strong>Time:</strong> ${timeStr}</div>
@@ -292,63 +306,37 @@ priceScale.applyOptions({
     };
   }, [intervalMs]);
 
-  return (
+return (
   <div>
-    <div className="relative ">
-  <div ref={chartContainerRef} className="w-full h-full" />
-  {/* Time Selector Inside Chart */}
-  <div
-    style={{
-      position: 'absolute',
-      top: 8,
-      left: 8,
-      background: 'rgba(30, 30, 30, 0.8)',
-      padding: '4px 8px',
-      borderRadius: '4px',
-      zIndex: 10,
-    }}
-  >
-    <label style={{ color: '#fff', marginRight: 8, fontSize: 12 }}>Time:</label>
-    {INTERVAL_OPTIONS.map(opt => (
-      <button
-        key={opt.value}
-        onClick={() => setIntervalMs(opt.value)}
-        style={{
-          marginRight: 4,
-          padding: '2px 6px',
-          fontSize: 12,
-          color: intervalMs === opt.value ?  '#26a69a' : '#fff' ,
-          cursor: 'pointer',
-        }}
-      >
-        {opt.label}
-      </button>
-    ))}
-  </div>
+    <div className="relative overflow-visible w-full h-full">
+      {/* Container chart */}
+      <div ref={chartContainerRef} className="w-full h-full" />
 
-  {/* Tooltip */}
-  <div
-    ref={tooltipRef}
-    style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      display: 'none',
-      background: 'rgba(0,0,0,0.9)',
-      color: '#fff',
-      border: '1px solid #666',
-      padding: '8px',
-      fontSize: '12px',
-      pointerEvents: 'none',
-      zIndex: 1000,
-      borderRadius: '4px',
-      whiteSpace: 'pre-line',
-    }}
-  />
-</div>
-  </div>
+      {/* Time Selector Inside Chart */}
+      <div className="absolute top-2 left-2 bg-gray-900 bg-opacity-80 p-1.5 rounded z-10 flex items-center">
+        <label className="text-white mr-2 text-xs">Time:</label>
+        {INTERVAL_OPTIONS.map(opt => (
+          <button
+            key={opt.value}
+            onClick={() => setIntervalMs(opt.value)}
+            className={`mr-1.5 px-1.5 py-0.5 text-xs cursor-pointer ${
+              intervalMs === opt.value ? 'text-teal-400' : 'text-white'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
 
-  );
+      {/* Tooltip */}
+      <div
+        ref={tooltipRef}
+        className="absolute top-0 left-0 hidden bg-black bg-opacity-90 text-white border border-gray-600 p-2 text-xs pointer-events-none z-50 rounded whitespace-pre-line"
+      />
+    </div>
+  </div>
+);
+
 };
 
 export default Chart;
