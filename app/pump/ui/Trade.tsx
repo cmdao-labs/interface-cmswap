@@ -129,6 +129,7 @@ export default function Trade({
     const [state, setState] = useState<any>([{result: BigInt(0)}, {result: BigInt(0)}, {result: false}, {result: [BigInt(0)]}]);
     const [showSocials, setShowSocials] = useState(false);
     const hasSetSocialsRef = React.useRef(false);
+    const [grapthType,setGrapthType] = useState("");
 
     const [socials, setSocials] = useState({
         fb: "",
@@ -949,10 +950,36 @@ React.useEffect(() => {
                     </div>
                 }       
                 
+               
                 <div className="hidden md:block w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start" style={{zIndex: 1}}>
-{/*                     <iframe height="35%" width="100%" id="geckoterminal-embed" title="GeckoTerminal Embed" src={"https://www.geckoterminal.com/" + (chain === "kub" ? "bitkub_chain" : chain === "monad" ? "monad-testnet" : '') + "/pools/" + lp + "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"} allow="clipboard-write"></iframe>
-                */} 
-                <Chart />
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                    {['CMswap', 'Geckoterminal'].map((type) => (
+                        <button
+                        key={type}
+                        onClick={() => setGrapthType(type)}
+                        style={{
+                            padding: '6px 12px',
+                            fontSize: '14px',
+                            borderRadius: '6px',
+                            border: '1px solid #26a69a',
+                            backgroundColor: grapthType === type ? '#26a69a' : 'transparent',
+                            color: grapthType === type ? '#fff' : '#26a69a',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease-in-out',
+                        }}
+                        >
+                        {type}
+                        </button>
+                    ))}
+                </div>
+
+                 {
+                    grapthType === "Geckoterminal" 
+                    ?
+                    <iframe height="35%" width="100%" id="geckoterminal-embed" title="GeckoTerminal Embed" src={"https://www.geckoterminal.com/" + (chain === "kub" ? "bitkub_chain" : chain === "monad" ? "monad-testnet" : '') + "/pools/" + lp + "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"} allow="clipboard-write"></iframe>
+                    :
+                    <Chart />   
+                }
 
               
  <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">

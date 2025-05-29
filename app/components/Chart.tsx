@@ -18,9 +18,78 @@ const rawSecondData = [
   { time: 1748301708000, price: 0.001701023109447111, volume: 524724 },
   { time: 1748417477000, price: 0.001722055545887237, volume: 58070.13614562474 },
   { time: 1748425287000, price: 0.001674217852269819, volume: 544550 },
-  // เพิ่มเติมตามต้องการ
 ];
-// ฟังก์ชัน aggregateCandles เดิม (ไม่ต้องเปลี่ยน)
+
+function aggregateCandles_fillMissingTime(
+  data: { time: number; price: number; volume: number }[],
+  intervalMs: number
+) {
+  if (data.length === 0) return [];
+
+  const result: any[] = [];
+  let bucketStart = Math.floor(data[0].time / intervalMs) * intervalMs;
+  let bucketData: typeof data = [];
+
+  function aggregateBucket(bucket: typeof data, bucketStart: number) {
+    if (bucket.length === 0) return null;
+    return {
+      time: bucketStart / 1000,
+      open: bucket[0].price,
+      high: Math.max(...bucket.map((d) => d.price)),
+      low: Math.min(...bucket.map((d) => d.price)),
+      close: bucket[bucket.length - 1].price,
+      volume: bucket.reduce((sum, d) => sum + d.volume, 0),
+    };
+  }
+
+  for (const point of data) {
+    const timeBucket = Math.floor(point.time / intervalMs) * intervalMs;
+
+    // เติมแท่งที่เว้นช่วง
+    while (timeBucket > bucketStart) {
+      const candle = aggregateBucket(bucketData, bucketStart);
+      const lastClose = candle ? candle.close : result[result.length - 1]?.close ?? point.price;
+
+      if (candle) result.push(candle);
+      else {
+        result.push({
+          time: bucketStart / 1000,
+          open: lastClose,
+          high: lastClose,
+          low: lastClose,
+          close: lastClose,
+          volume: 0,
+        });
+      }
+
+      bucketStart += intervalMs;
+      bucketData = [];
+    }
+
+    bucketData.push(point);
+  }
+
+  const candle = aggregateBucket(bucketData, bucketStart);
+  if (candle) result.push(candle);
+  else if (result.length > 0) {
+    const lastClose = result[result.length - 1].close;
+    result.push({
+      time: bucketStart / 1000,
+      open: lastClose,
+      high: lastClose,
+      low: lastClose,
+      close: lastClose,
+      volume: 0,
+    });
+  }
+
+  // ปรับ open ให้เท่ากับ close แท่งก่อนหน้า (ยกเว้นแท่งแรก)
+  for (let i = 1; i < result.length; i++) {
+    result[i].open = result[i - 1].close;
+  }
+
+  return result;
+}
 
 function aggregateCandles(data: { time: number; price: number; volume: number }[], intervalMs: number) {
   if (data.length === 0) return [];
@@ -61,6 +130,7 @@ function aggregateCandles(data: { time: number; price: number; volume: number }[
   return result;
 }
 
+
 function toDateStr(timestamp: number): string {
   const d = new Date(timestamp * 1000);
   return `${d.getFullYear()}-${(d.getMonth() + 1)
@@ -75,13 +145,12 @@ function toDateStr(timestamp: number): string {
 }
 
 const INTERVAL_OPTIONS = [
-  { label: '1 min', value: 60 * 1000 },
-  { label: '5 min', value: 5 * 60 * 1000 },
-  { label: '15 min', value: 15 * 60 * 1000 },
-  { label: '30 min', value: 30 * 60 * 1000 },
-  { label: '1 hour', value: 60 * 60 * 1000 },
-  { label: '4 hours', value: 4 * 60 * 60 * 1000 },
-  { label: '24 hours', value: 24 * 60 * 60 * 1000 },
+  { label: '1m', value: 60 * 1000 },
+  { label: '5m', value: 5 * 60 * 1000 },
+  { label: '1m', value: 15 * 60 * 1000 },
+  { label: '1h', value: 60 * 60 * 1000 },
+  { label: '4h', value: 4 * 60 * 60 * 1000 },
+  { label: 'D', value: 24 * 60 * 60 * 1000 },
 ];
 
 const Chart: React.FC = () => {
@@ -96,14 +165,12 @@ const Chart: React.FC = () => {
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    // ถ้ามี chart อยู่แล้วให้ลบก่อน
     if (chartRef.current) {
       chartRef.current.remove();
       chartRef.current = null;
       seriesRef.current = null;
     }
 
-    // รวมข้อมูลใหม่ตาม interval ที่เลือก
     const aggregated = aggregateCandles(rawSecondData, intervalMs);
     setCandleData(aggregated);
 
@@ -139,11 +206,7 @@ const Chart: React.FC = () => {
     seriesRef.current = series;
 
     series.setData(aggregated);
-    requestAnimationFrame(() => {
-      chart.timeScale().scrollToPosition(5, false); // เลื่อนกราฟไปทางขวา 10 แท่ง (แท่งแรกจะไม่ชิดขวา)
-    });
-
-
+    
 
 
     const toolTip = tooltipRef.current!;
@@ -197,51 +260,63 @@ const Chart: React.FC = () => {
 
   return (
       <div>
-        <div style={{ marginBottom: 8 }}>
-  <label style={{ color: '#b0f1c1', marginRight: 8 }}>Select Interval:</label>
-  {INTERVAL_OPTIONS.map(opt => (
-    <button
-      key={opt.value}
-      onClick={() => setIntervalMs(opt.value)}
-      style={{
-        marginRight: 6,
-        padding: '4px 8px',
-        fontSize: 12,
-        borderRadius: 4,
-        border: '1px solid #26a69a',
-        backgroundColor: intervalMs === opt.value ? '#26a69a' : 'transparent',
-        color: intervalMs === opt.value ? '#fff' : '#b0f1c1',
-        cursor: 'pointer',
-        userSelect: 'none',
-      }}
-      type="button"
-    >
-      {opt.label}
-    </button>
-  ))}
+<div style={{ position: 'relative', width: '100%', height: '400px' }}>
+  <div ref={chartContainerRef} style={{ width: '100%', height: '100%' }} />
+  
+  {/* Time Selector Inside Chart */}
+  <div
+    style={{
+      position: 'absolute',
+      top: 8,
+      left: 8,
+      background: 'rgba(30, 30, 30, 0.8)',
+      padding: '4px 8px',
+      borderRadius: '4px',
+      zIndex: 10,
+    }}
+  >
+    <label style={{ color: '#26a69a', marginRight: 8, fontSize: 12 }}>Time:</label>
+    {INTERVAL_OPTIONS.map(opt => (
+      <button
+        key={opt.value}
+        onClick={() => setIntervalMs(opt.value)}
+        style={{
+          marginRight: 4,
+          padding: '2px 6px',
+          fontSize: 12,
+          backgroundColor: intervalMs === opt.value ? '#26a69a' : 'transparent',
+          color: intervalMs === opt.value ? '#fff' : '#26a69a',
+          border: '1px solid #26a69a',
+          borderRadius: '4px',
+          cursor: 'pointer',
+        }}
+      >
+        {opt.label}
+      </button>
+    ))}
+  </div>
+
+  {/* Tooltip */}
+  <div
+    ref={tooltipRef}
+    style={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      display: 'none',
+      background: 'rgba(0,0,0,0.9)',
+      color: '#fff',
+      border: '1px solid #666',
+      padding: '8px',
+      fontSize: '12px',
+      pointerEvents: 'none',
+      zIndex: 1000,
+      borderRadius: '4px',
+      whiteSpace: 'pre-line',
+    }}
+  />
 </div>
 
-      <div style={{ position: 'relative', width: '100%', height: '400px' }}>
-        <div ref={chartContainerRef} style={{ width: '100%', height: '100%' }} />
-        <div
-          ref={tooltipRef}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            display: 'none',
-            background: 'rgba(0,0,0,0.9)',
-            color: '#fff',
-            border: '1px solid #666',
-            padding: '8px',
-            fontSize: '12px',
-            pointerEvents: 'none',
-            zIndex: 1000,
-            borderRadius: '4px',
-            whiteSpace: 'pre-line',
-          }}
-        />
-      </div>
     </div>
   );
 };
