@@ -7,7 +7,7 @@ import {
 } from 'lightweight-charts';
 
 const rawSecondData = [
-  { time: 1748264582000, price: 0, volume: 0 },
+  { time: 1748264582000, price: 0.000006, volume: 0 },
   { time: 1748264583000, price: 0.000106060606060606, volume: 942857142.8571428 },
   { time: 1748264678000, price: 0.001873560606060606, volume: 533743.0754922971 },
   { time: 1748264748000, price: 0.001891243271060606, volume: 528.7527074394833 },
@@ -178,6 +178,7 @@ const Chart: React.FC = () => {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const seriesRef = useRef<any>(null);
+  const infoBarRef = useRef<HTMLDivElement>(null);
 
   const [intervalMs, setIntervalMs] = useState(60 * 1000); // default 1 min
   const [candleData, setCandleData] = useState<any[]>([]);
@@ -278,6 +279,19 @@ chart.applyOptions({
       const data = param.seriesData.get(series) as any;
       const timeStr = toDateStr(param.time as number);
       const volume = aggregated.find(d => d.time === param.time)?.volume ?? '-';
+      const candle = data as { open: number; high: number; low: number; close: number };
+      const change = candle.close - candle.open;
+      const changePercent = candle.open !== 0 ? (change / candle.open) * 100 : 0;
+      const format = (v: number) => formatDecimal(v).padEnd(4);
+
+      if (infoBarRef.current) {
+        infoBarRef.current.innerHTML = `
+          O${format(candle.open)} H${format(candle.high)} L${format(candle.low)} C${format(candle.close)} Δ
+          <span style="color:${change >= 0 ? 'green' : 'red'};">${change >= 0 ? '+' : ''}${format(change)}</span>
+          (<span style="color:${changePercent >= 0 ? 'green' : 'red'};">${changePercent >= 0 ? '+' : ''}${Number(formatDecimal(changePercent)).toLocaleString()}%</span>)
+        `.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+      }
+
 
       toolTip.style.display = 'block';
       toolTip.style.left = `${param.point.x + 10}px`;
@@ -316,21 +330,34 @@ return (
       {/* Container chart */}
       <div ref={chartContainerRef} className="w-full h-full" />
 
-      {/* Time Selector Inside Chart */}
-      <div className="absolute top-2 left-2 bg-gray-900 bg-opacity-80 p-1.5 rounded z-10 flex items-center">
-        <label className="text-white mr-2 text-xs">Time:</label>
-        {INTERVAL_OPTIONS.map(opt => (
-          <button
-            key={opt.value}
-            onClick={() => setIntervalMs(opt.value)}
-            className={`mr-1.5 px-1.5 py-0.5 text-xs cursor-pointer ${
-              intervalMs === opt.value ? 'text-teal-400' : 'text-white'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
+      {/* Container สำหรับ Time Selector + InfoBar */}
+      <div className="absolute top-2 left-2 z-10 flex flex-col space-y-1  bg-opacity-80 p-2 rounded">
+        
+        {/* Time Selector */}
+        <div className="flex items-center">
+          <label className="text-white mr-2 text-xs">Time:</label>
+          {INTERVAL_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setIntervalMs(opt.value)}
+              className={`mr-1.5 px-1.5 py-0.5 text-xs cursor-pointer ${
+                intervalMs === opt.value ? 'text-teal-400' : 'text-white'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Info Bar */}
+    <div
+  ref={infoBarRef}
+  className="text-white text-[12px] font-mono whitespace-pre text-left"
+></div>
+
+
       </div>
+
 
       {/* Tooltip */}
       <div
