@@ -130,6 +130,26 @@ function aggregateCandles(data: { time: number; price: number; volume: number }[
   return result;
 }
 
+function formatDecimal(value: number): string {
+  if (value === 0) return '0';
+  const str = value.toString();
+  if (!str.includes('.')) {
+    return str;
+  }
+
+  const [intPart, decPart] = str.split('.');
+  const decTruncated = decPart.slice(0, 9);
+  if (decTruncated === '' || /^0+$/.test(decTruncated)) {
+    return intPart;
+  }
+  let decimalsToShow = Math.min(4, decTruncated.length);
+  let decShown = decTruncated.slice(0, decimalsToShow);
+  decShown = decShown.replace(/0+$/, '');
+  if (decShown.length === 0) decShown = '0';
+
+  return `${intPart}.${decShown}`;
+}
+
 
 function toDateStr(timestamp: number): string {
   const d = new Date(timestamp * 1000);
@@ -190,6 +210,13 @@ const Chart: React.FC = () => {
 
     chartRef.current = chart;
 
+    function formatNumber(value : number) {
+      if (value >= 1_000_000) return (value / 1_000_000).toFixed(1).replace(/\.0$/, '') + ' M';
+      if (value >= 10_000) return (value / 1_000).toFixed(1).replace(/\.0$/, '') + ' K';
+      return value.toLocaleString();
+    }
+
+
     const series = chart.addCandlestickSeries({
       upColor: '#26a69a',
       downColor: '#ef5350',
@@ -233,11 +260,11 @@ const Chart: React.FC = () => {
       toolTip.innerHTML = `
         <div style="color: #26a69a">
           <div><strong>Time:</strong> ${timeStr}</div>
-          <div><strong>Open:</strong> ${data.open}</div>
-          <div><strong>High:</strong> ${data.high}</div>
-          <div><strong>Low:</strong> ${data.low}</div>
-          <div><strong>Close:</strong> ${data.close}</div>
-          <div><strong>Volume:</strong> ${volume}</div>
+          <div><strong>Open:</strong> ${formatDecimal(Number(data.open))}</div>
+          <div><strong>High:</strong> ${formatDecimal(Number(data.high))}</div>
+          <div><strong>Low:</strong> ${formatDecimal(Number(data.low))}</div>
+          <div><strong>Close:</strong> ${formatDecimal(Number(data.close))}</div>
+          <div><strong>Volume:</strong> ${formatNumber(volume)}</div>
         </div>
       `;
     });
@@ -275,7 +302,7 @@ const Chart: React.FC = () => {
       zIndex: 10,
     }}
   >
-    <label style={{ color: '#26a69a', marginRight: 8, fontSize: 12 }}>Time:</label>
+    <label style={{ color: '#fff', marginRight: 8, fontSize: 12 }}>Time:</label>
     {INTERVAL_OPTIONS.map(opt => (
       <button
         key={opt.value}
@@ -284,10 +311,7 @@ const Chart: React.FC = () => {
           marginRight: 4,
           padding: '2px 6px',
           fontSize: 12,
-          backgroundColor: intervalMs === opt.value ? '#26a69a' : 'transparent',
-          color: intervalMs === opt.value ? '#fff' : '#26a69a',
-          border: '1px solid #26a69a',
-          borderRadius: '4px',
+          color: intervalMs === opt.value ?  '#26a69a' : '#fff' ,
           cursor: 'pointer',
         }}
       >
