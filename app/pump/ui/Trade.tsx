@@ -951,7 +951,8 @@ React.useEffect(() => {
                 
                 <div className="hidden md:block w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start" style={{zIndex: 1}}>
 {/*                     <iframe height="35%" width="100%" id="geckoterminal-embed" title="GeckoTerminal Embed" src={"https://www.geckoterminal.com/" + (chain === "kub" ? "bitkub_chain" : chain === "monad" ? "monad-testnet" : '') + "/pools/" + lp + "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"} allow="clipboard-write"></iframe>
-                */} <Chart theme="dark-green" type="candlestick" />
+                */} 
+                <Chart />
 
               
  <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
