@@ -129,7 +129,7 @@ export default function Trade({
     const [state, setState] = useState<any>([{result: BigInt(0)}, {result: BigInt(0)}, {result: false}, {result: [BigInt(0)]}]);
     const [showSocials, setShowSocials] = useState(false);
     const hasSetSocialsRef = React.useRef(false);
-    const [grapthType,setGrapthType] = useState("");
+    const [grapthType,setGrapthType] = useState("CMswap");
 
     const [socials, setSocials] = useState({
         fb: "",
@@ -952,26 +952,23 @@ React.useEffect(() => {
                 
                
                 <div className="hidden md:block w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start" style={{zIndex: 1}}>
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                <div className="flex justify-end gap-2 mb-3">
                     {['CMswap', 'Geckoterminal'].map((type) => (
                         <button
                         key={type}
                         onClick={() => setGrapthType(type)}
-                        style={{
-                            padding: '6px 12px',
-                            fontSize: '14px',
-                            borderRadius: '6px',
-                            border: '1px solid #26a69a',
-                            backgroundColor: grapthType === type ? '#26a69a' : 'transparent',
-                            color: grapthType === type ? '#fff' : '#26a69a',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease-in-out',
-                        }}
+                        className={`
+                            px-3 py-1.5 text-sm  
+                            transition-all duration-200 ease-in-out
+                            ${grapthType === type ? 'text-teal-600' : ' text-white'}
+                            cursor-pointer
+                        `}
                         >
                         {type}
                         </button>
                     ))}
                 </div>
+
 
                  {
                     grapthType === "Geckoterminal" 
