@@ -142,7 +142,7 @@ function formatDecimal(value: number): string {
   if (decTruncated === '' || /^0+$/.test(decTruncated)) {
     return intPart;
   }
-  let decimalsToShow = Math.min(4, decTruncated.length);
+  let decimalsToShow = Math.min(6, decTruncated.length);
   let decShown = decTruncated.slice(0, decimalsToShow);
   decShown = decShown.replace(/0+$/, '');
   if (decShown.length === 0) decShown = '0';
