@@ -18,9 +18,7 @@ import { SocialsABI } from "@/app/pump/abi/Socials";
 import Chart from "@/app/components/Chart";
 
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-if (typeof window !== 'undefined') {
-  const { ethereum } = window as any;
-}
+const { ethereum } = window as any;
 import { FaFacebookF, FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa"; 
 
 export default function Trade({
