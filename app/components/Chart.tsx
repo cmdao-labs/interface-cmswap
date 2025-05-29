@@ -217,18 +217,25 @@ const Chart: React.FC = () => {
     }
 
 
-    const series = chart.addCandlestickSeries({
-      upColor: '#26a69a',
-      downColor: '#ef5350',
-      borderVisible: false,
-      wickUpColor: '#26a69a',
-      wickDownColor: '#ef5350',
-      priceFormat: {
-        type: 'price',
-        precision: 8,
-        minMove: 0.000000001,
-      },
-    });
+const priceScale = chart.priceScale('right');
+priceScale.applyOptions({
+  autoScale: true,
+  scaleMargins: { top: 0.1, bottom: 0.1 }
+});
+
+
+  const series = chart.addCandlestickSeries({
+    upColor: '#26a69a',
+    downColor: '#ef5350',
+    borderVisible: false,
+    wickUpColor: '#26a69a',
+    wickDownColor: '#ef5350',
+    priceFormat: {
+      type: 'price',
+      precision: 8,
+      minMove: 0.00000001,
+    },
+  });
 
     seriesRef.current = series;
 
@@ -286,10 +293,9 @@ const Chart: React.FC = () => {
   }, [intervalMs]);
 
   return (
-      <div>
-<div style={{ position: 'relative', width: '100%', height: '400px' }}>
-  <div ref={chartContainerRef} style={{ width: '100%', height: '100%' }} />
-  
+  <div>
+    <div className="relative ">
+  <div ref={chartContainerRef} className="w-full h-full" />
   {/* Time Selector Inside Chart */}
   <div
     style={{
@@ -340,8 +346,8 @@ const Chart: React.FC = () => {
     }}
   />
 </div>
+  </div>
 
-    </div>
   );
 };
 
