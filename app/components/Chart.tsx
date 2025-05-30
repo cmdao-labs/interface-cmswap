@@ -192,7 +192,7 @@ const Chart: React.FC = () => {
       seriesRef.current = null;
     }
 
-    const aggregated = aggregateCandles(rawSecondData, intervalMs);
+    const aggregated = aggregateCandles_fillMissingTime(rawSecondData, intervalMs);
     setCandleData(aggregated);
 
     const chart = createChart(chartContainerRef.current, {
