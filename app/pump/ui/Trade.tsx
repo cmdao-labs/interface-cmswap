@@ -20,6 +20,7 @@ import Chart from "@/app/components/Chart";
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 const { ethereum } = window as any;
 import { FaFacebookF, FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa"; 
+import { CMswapChartABI } from "@/app/lib/abi";
 
 export default function Trade({
     mode, chain, ticker, lp, token,
@@ -48,6 +49,8 @@ export default function Trade({
         chain: _chain,
         transport: http(_rpc)
     });
+
+
     let currencyAddr: string = '';
     let bkgafactoryAddr: string = '';
     let _blockcreated: number = 1;
@@ -129,7 +132,7 @@ export default function Trade({
     const [state, setState] = useState<any>([{result: BigInt(0)}, {result: BigInt(0)}, {result: false}, {result: [BigInt(0)]}]);
     const [showSocials, setShowSocials] = useState(false);
     const hasSetSocialsRef = React.useRef(false);
-    const [grapthType,setGrapthType] = useState("CMswap");
+    const [grapthType,setGrapthType] = useState("GeckoTerminal");
 
     const [socials, setSocials] = useState({
         fb: "",
@@ -448,10 +451,55 @@ export default function Trade({
             console.log(theresult)
             setHx(theresult);
         }
+        const fetchGraph = async () => {
+            const result = await readContracts(config, {
+                contracts: [
+                    {
+                        address: "0x7eF8F5F0A04DDB8DB2E6de4DFE743fe45BD107f4" as '0xstring',
+                        abi: CMswapChartABI,
+                        functionName: 'getCandleDataCount',
+                        args: [ticker as '0xstring', currencyAddr as '0xstring'],
+                        chainId: 88991001,
+                    },
+                ]
+            })
+
+            let dataSet: any[] = []
+            if (result && result[0]?.status === 'success') {
+                const count = result[0].result
+                const totalCount = Number(count)
+                const pageSize = 100
+            for (let startIndex = 0; startIndex < totalCount; startIndex += pageSize) {
+                const fetch = await readContracts(config, {
+                    contracts: [
+                        {
+                            address: "0x7eF8F5F0A04DDB8DB2E6de4DFE743fe45BD107f4" as '0xstring',
+                            abi: CMswapChartABI,
+                            functionName: 'getCandleData',
+                            args: [
+                                ticker as '0xstring',
+                                currencyAddr as '0xstring',
+                                BigInt(startIndex),
+                                BigInt(pageSize)
+                            ],
+                            chainId: 88991001,
+                        },
+                    ]
+                })
+                if (result && result[0]?.status === 'success') {
+                    dataSet = dataSet.concat(fetch[0].result)
+                }
+            }}
+
+            console.log('All data:', dataSet)
+        }
+
         if (hash === '') {
+            fetchGraph();
             fetchLogs();
             fetch0();
         } else {
+            setInterval(fetchGraph,5000);
             setInterval(fetchLogs, 5000);
             setInterval(fetch0, 5000);
         }
@@ -952,7 +1000,7 @@ React.useEffect(() => {
                 
                
                 <div className="hidden md:block w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start" style={{zIndex: 1}}>
-                <div className="flex justify-end gap-2 mb-3">
+    {/*             <div className="flex justify-end gap-2 mb-3">
                     {['CMswap', 'GeckoTerminal'].map((type) => (
                         <button
                         key={type}
@@ -967,7 +1015,7 @@ React.useEffect(() => {
                         {type}
                         </button>
                     ))}
-                </div>
+                </div> */}
 
 
                  {
@@ -975,7 +1023,7 @@ React.useEffect(() => {
                     ?
                     <iframe height="28%" width="100%" id="geckoterminal-embed" title="GeckoTerminal Embed" src={"https://www.geckoterminal.com/" + (chain === "kub" ? "bitkub_chain" : chain === "monad" ? "monad-testnet" : '') + "/pools/" + lp + "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"} allow="clipboard-write"></iframe>
                     :
-                        <Chart />   
+                    <Chart />
                 }
 
               
