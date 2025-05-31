@@ -1,6 +1,6 @@
 import { createPublicClient, http, erc20Abi } from 'viem'
 import { bitkub } from 'viem/chains'
-import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3staker, WrappedNative, kap20abi,CMswapUniSmartRouteABIV2,UniswapPair,BitkubEvmKYCABI } from '@/app/lib/abi'
+import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3staker, WrappedNative, kap20abi,CMswapUniSmartRouteABIV2,UniswapPair,BitkubEvmKYCABI,bkcUnwappedKKUB } from '@/app/lib/abi'
 
 // swap
 export const tokens: {name: string, value: '0xstring', logo: string}[] = [
@@ -21,6 +21,7 @@ export const QOUTER_V2 = '0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f' as '0xstri
 export const ROUTER02 = '0x3F7582E36843FF79F173c7DC19f517832496f2D8' as '0xstring'
 export const CMswapUniSmartRoute = '0x01837156518e60362048e78d025a419C51346f55' as '0xstring'
 export const BitkubEvmKYC = '0x409CF41ee862Df7024f289E9F2Ea2F5d0D7f3eb4' as '0xstring' // kyc for unwrap kkub
+export const bkcUnwapped = '0xff76DD8086428EBC4Ed1b14B0e56E95eDc46a315' as '0xstring'
 export const v3FactoryContract = { chainId: 96, abi: v3Factory, address: V3_FACTORY } as const
 export const positionManagerContract = { chainId: 96, address: POSITION_MANAGER, abi: NonfungiblePositionManager } as const
 export const qouterV2Contract = { chainId: 96, abi: qouterV2, address: QOUTER_V2 } as const
@@ -31,6 +32,7 @@ export const v3PoolABI = { chainId: 96, abi: v3Pool } as const
 export const V3_STAKER = '0xC216ad61623617Aa01b757A06836AA8D6fb547fF' as '0xstring'
 export const v3StakerContract = { chainId: 96, address: V3_STAKER, abi: v3staker } as const
 export const wrappedNative = { chainId: 96, abi: WrappedNative, address: tokens[1].value } as const
+export const unwarppedNative = {chainId:96, abi: bkcUnwappedKKUB, address: bkcUnwapped } as const
 export const CMswapUniSmartRouteContractV2 =  { chainId: 96, abi: CMswapUniSmartRouteABIV2 , address: CMswapUniSmartRoute} as const
 export const UniswapPairv2PoolABI = { chainId: 96, abi: UniswapPair} as const
 export const BitkubEvmKYCContract = {chainId: 96, abi: BitkubEvmKYCABI, address: BitkubEvmKYC} as const
