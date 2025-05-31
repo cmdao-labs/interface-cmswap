@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI, CMswapUniSmartRoute, BitkubEvmKYCContract } from '@/app/lib/96'
+import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI, CMswapUniSmartRoute, BitkubEvmKYCContract,unwarppedNative,bkcUnwapped } from '@/app/lib/96'
 import { config } from '@/app/config'
 
 export default function Swap96({
@@ -95,7 +95,7 @@ export default function Swap96({
             setErrMsg(error as WriteContractErrorType);
         }
     };
-
+ 
     function encodePath(tokens: string[], fees: number[]): string {
         let path = "0x"
         for (let i = 0; i < fees.length; i++) {
@@ -303,8 +303,16 @@ export default function Swap96({
                 await waitForTransactionReceipt(config, { hash: h })
                 setTxupdate(h)
             } else if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
+                let allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', bkcUnwapped] })
+
+                if (allowanceA < parseEther(amountA)) {
+                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [bkcUnwapped, parseEther(amountA)] })
+                    const h = await writeContract(config, request)
+                    await waitForTransactionReceipt(config, { hash: h })
+                }
+
                 let { request } = await simulateContract(config, {
-                    ...wrappedNative,
+                    ...unwarppedNative,
                     functionName: 'withdraw',
                     args: [parseEther(amountA)]
                 })
@@ -1399,12 +1407,7 @@ export default function Swap96({
                     )}
                 </div>
             }
-            {((tokenB.value === '0xnative' as '0xstring' && tokenA.value.toLowerCase() === '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5')) && !isAccountKYC ? (
-                <div className="text-red-500 mt-4 text-sm font-mono">
-                    <span>Please </span><a href="https://kkub-otp.bitkubchain.com/" target="_blank" className="underline text-blue-400">
-                        KYC your address</a><span> before UNWRAP</span>
-                </div>
-            ) : (tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountB) !== 0 ? (
+            {(tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountB) !== 0 ? (
                 <Button
                     className="w-full py-6 px-8 font-mono mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
                     bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
