@@ -304,10 +304,10 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
             ${change >= 0 ? '+' : ''}${Number(change).toFixed(10).replace(/\.?0+$/, "")}
           </span>
           (<span style="color:${color};">
-            ${changePercent >= 0 ? '+' : ''}${Number(changePercent).toFixed(2).replace(/\.?0+$/, "")}%
+            ${changePercent >= 0 ? '+' : ''}${Number(changePercent).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
           </span>)
-        `.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
 
+        `.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
       }
 
       toolTip.style.display = 'block';
