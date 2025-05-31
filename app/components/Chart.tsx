@@ -9,119 +9,109 @@ import {
 type RawData = { time: number; price: number; volume: number };
 type Candle = { time: number; open: number; high: number; low: number; close: number; volume: number };
 
-function aggregateCandles_fillMissingTime(data: RawData[], intervalMs: number): Candle[] {
+function aggregateCandlesWithFill(data: RawData[], intervalMs: number): Candle[] {
   if (data.length === 0) return [];
 
-  // จัดกลุ่มข้อมูลตาม bucket เวลา interval (หน่วย ms)
-  const grouped: { [key: number]: Candle } = {};
+  // 1. เรียงข้อมูลตามเวลา
+  const sorted = [...data].sort((a, b) => a.time - b.time);
 
-  data.forEach((d) => {
-    const bucket = Math.floor(d.time / intervalMs) * intervalMs;
-    const timeInSeconds = bucket / 1000;
+  // 2. คำนวณช่วงเวลาเริ่ม-จบ
+  const start = Math.floor(sorted[0].time / intervalMs) * intervalMs;
+  const end = Math.floor(sorted[sorted.length - 1].time / intervalMs) * intervalMs;
 
-    if (!grouped[bucket]) {
-      grouped[bucket] = {
-        time: timeInSeconds,
-        open: d.price,
-        high: d.price,
-        low: d.price,
-        close: d.price,
-        volume: d.volume,
-      };
-    } else {
-      const candle = grouped[bucket];
-      candle.high = Math.max(candle.high, d.price);
-      candle.low = Math.min(candle.low, d.price);
-      candle.close = d.price;
-      candle.volume += d.volume;
-    }
-  });
+  const bucketMap = new Map<number, RawData[]>();
 
-  // แปลง grouped เป็น array เรียงตามเวลา
-  const candles = Object.values(grouped).sort((a, b) => a.time - b.time);
+  // 3. จัดกลุ่มข้อมูลลง bucket ตาม interval
+  for (const point of sorted) {
+    const bucketTime = Math.floor(point.time / intervalMs) * intervalMs;
+    if (!bucketMap.has(bucketTime)) bucketMap.set(bucketTime, []);
+    bucketMap.get(bucketTime)!.push(point);
+  }
 
-  // เติมแท่งแทนช่วงเวลาที่ขาดหายไป
   const result: Candle[] = [];
-  let lastClose = candles[0].open; // เริ่มต้นจากแท่งแรก open เป็น close ก่อนหน้า
+  let previousClose = sorted[0].price;
 
-  // เวลาปัจจุบัน rounded ลง bucket ล่าสุด
-  const now = Date.now();
-  const nowBucket = Math.floor(now / intervalMs) * intervalMs;
+  // 4. วนลูปทุกช่วงเวลาตาม interval และเติมช่องว่าง
+  for (let time = start; time <= end; time += intervalMs) {
+    const bucket = bucketMap.get(time);
 
-  // index สำหรับวนแท่งจริง
-  let candleIndex = 0;
-
-  // เริ่มจากเวลาของแท่งแรก
-  let currentBucket = Math.floor(candles[0].time * 1000 / intervalMs) * intervalMs;
-
-  while (currentBucket <= nowBucket) {
-    if (
-      candleIndex < candles.length &&
-      candles[candleIndex].time * 1000 === currentBucket
-    ) {
-      // มีแท่งจริงอยู่
-      const candle = candles[candleIndex];
-      // แก้ open ให้เท่ากับ close แท่งก่อนหน้า เพื่อความเนียน
-      candle.open = lastClose;
-      result.push(candle);
-      lastClose = candle.close;
-      candleIndex++;
+    let candle: Candle;
+    if (bucket && bucket.length > 0) {
+      candle = {
+        time: time / 1000,
+        open: bucket[0].price,
+        high: Math.max(...bucket.map(d => d.price)),
+        low: Math.min(...bucket.map(d => d.price)),
+        close: bucket[bucket.length - 1].price,
+        volume: bucket.reduce((sum, d) => sum + d.volume, 0),
+      };
+      previousClose = candle.close;
     } else {
-      // เติมแท่งช่องว่าง (volume = 0, ราคาใช้ lastClose ทั้งหมด)
-      const timeInSeconds = currentBucket / 1000;
-      result.push({
-        time: timeInSeconds,
-        open: lastClose,
-        high: lastClose,
-        low: lastClose,
-        close: lastClose,
+      // กรณีไม่มี transaction: สร้างแท่งว่าง
+      candle = {
+        time: time / 1000,
+        open: previousClose,
+        high: previousClose,
+        low: previousClose,
+        close: previousClose,
         volume: 0,
-      });
+      };
     }
-    currentBucket += intervalMs;
+
+    result.push(candle);
   }
 
   return result;
 }
 
-function aggregateCandles(data: { time: number; price: number; volume: number }[], intervalMs: number) {
+function aggregateCandles(data: RawData[], intervalMs: number): Candle[] {
   if (data.length === 0) return [];
 
-  const result: any[] = [];
-  let bucketStart = Math.floor(data[0].time / intervalMs) * intervalMs;
-  let bucketData: typeof data = [];
+  const sorted = [...data].sort((a, b) => a.time - b.time);
+  const start = Math.floor(sorted[0].time / intervalMs) * intervalMs;
+  const end = Math.floor(sorted[sorted.length - 1].time / intervalMs) * intervalMs;
 
-  function aggregateBucket(bucket: typeof data, bucketStart: number) {
-    if (bucket.length === 0) return null;
-    return {
-      time: bucketStart / 1000,
-      open: bucket[0].price,
-      high: Math.max(...bucket.map(d => d.price)),
-      low: Math.min(...bucket.map(d => d.price)),
-      close: bucket[bucket.length - 1].price,
-      volume: bucket.reduce((sum, d) => sum + d.volume, 0),
-    };
+  const bucketMap = new Map<number, RawData[]>();
+  for (const point of sorted) {
+    const bucketTime = Math.floor(point.time / intervalMs) * intervalMs;
+    if (!bucketMap.has(bucketTime)) bucketMap.set(bucketTime, []);
+    bucketMap.get(bucketTime)!.push(point);
   }
 
-  for (const point of data) {
-    const timeBucket = Math.floor(point.time / intervalMs) * intervalMs;
-    if (timeBucket !== bucketStart) {
-      const candle = aggregateBucket(bucketData, bucketStart);
-      if (candle) result.push(candle);
-      bucketStart = timeBucket;
-      bucketData = [];
+  const result: Candle[] = [];
+  let previousClose = sorted[0].price;
+
+  for (let time = start; time <= end; time += intervalMs) {
+    const bucket = bucketMap.get(time);
+    let open = previousClose;
+    let close = previousClose;
+    let high = previousClose;
+    let low = previousClose;
+    let volume = 0;
+
+    if (bucket && bucket.length > 0) {
+      const prices = bucket.map(d => d.price);
+      close = bucket[bucket.length - 1].price;
+      high = Math.max(previousClose, ...prices);
+      low = Math.min(previousClose, ...prices);
+      volume = bucket.reduce((sum, d) => sum + d.volume, 0);
     }
-    bucketData.push(point);
-  }
-  const candle = aggregateBucket(bucketData, bucketStart);
-  if (candle) result.push(candle);
 
-  for (let i = 1; i < result.length; i++) {
-    result[i].open = result[i - 1].close;
+    result.push({
+      time: time / 1000,
+      open,
+      high,
+      low,
+      close,
+      volume,
+    });
+
+    previousClose = close;
   }
 
   return result;
 }
+
 
 function formatDecimal(value: number): string {
   if (value === 0) return '0';
@@ -149,16 +139,16 @@ function toDateStr(timestamp: number): string {
   return `${d.getFullYear()}-${(d.getMonth() + 1)
     .toString()
     .padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')} ${d
-    .getHours()
-    .toString()
-    .padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d
-    .getSeconds()
-    .toString()
-    .padStart(2, '0')}`;
+      .getHours()
+      .toString()
+      .padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d
+        .getSeconds()
+        .toString()
+        .padStart(2, '0')}`;
 }
 
 const INTERVAL_OPTIONS = [
-/*   { label: '1m', value: 60 * 1000 }, */
+  /*   { label: '1m', value: 60 * 1000 }, */
   { label: '5m', value: 5 * 60 * 1000 },
   { label: '15m', value: 15 * 60 * 1000 },
   { label: '1h', value: 60 * 60 * 1000 },
@@ -183,7 +173,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
   const seriesRef = useRef<any>(null);
   const infoBarRef = useRef<HTMLDivElement>(null);
 
-  const [intervalMs, setIntervalMs] = useState(60 * 1000); // default 1 min
+  const [intervalMs, setIntervalMs] = useState(60 * 60 * 1000); // default 1 h
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -234,7 +224,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
     }
 
     // ถ้ามีข้อมูล
-    const aggregated = aggregateCandles_fillMissingTime(data, intervalMs);
+    const aggregated = aggregateCandles(data, intervalMs);
 
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
@@ -248,6 +238,15 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
         vertLines: { color: '#333' },
         horzLines: { color: '#333' },
       },
+      rightPriceScale: {
+      autoScale: false, // 
+      alignLabels: true,
+      borderVisible: true,
+      scaleMargins: {
+        top: 0.2,
+        bottom: 0.2,
+      },
+    },
     });
     chartRef.current = chart;
 
@@ -330,16 +329,14 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
         <div ref={chartContainerRef} className="w-full h-full" />
 
         {/* No infomation */}
-<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col space-y-1 bg-[rgba(30,30,30,0.7)] p-2 rounded">
-          <div className="flex items-center">
-<p>No transactions found. Please perform a transaction and wait for 5 minutes.</p>
+        {data.length === 0 ? (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col space-y-1 bg-[rgba(30,30,30,0.7)] p-2 rounded">
+            <div className="flex items-center">
+              <p>No transactions found. Please perform a transaction and wait for 5 minutes.</p>
+            </div>
+          
           </div>
-          <div
-            ref={infoBarRef}
-            className="text-white text-[12px] font-mono whitespace-pre text-left"
-          ></div>
-        </div>
-
+        ) : null}
         {/* Time Selector + InfoBar */}
         <div className="absolute top-2 left-2 z-10 flex flex-col space-y-1 bg-opacity-80 p-2 rounded">
           <div className="flex items-center">
@@ -348,9 +345,8 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
               <button
                 key={opt.value}
                 onClick={() => setIntervalMs(opt.value)}
-                className={`mr-1.5 px-1.5 py-0.5 text-xs cursor-pointer ${
-                  intervalMs === opt.value ? 'text-teal-400' : 'text-white'
-                }`}
+                className={`mr-1.5 px-1.5 py-0.5 text-xs cursor-pointer ${intervalMs === opt.value ? 'text-teal-400' : 'text-white'
+                  }`}
               >
                 {opt.label}
               </button>
