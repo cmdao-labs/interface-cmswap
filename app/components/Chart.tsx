@@ -4,6 +4,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   createChart,
   CrosshairMode,
+  CandlestickData,
+  Time,
 } from 'lightweight-charts';
 
 type RawData = { time: number; price: number; volume: number };
@@ -112,7 +114,6 @@ function aggregateCandles(data: RawData[], intervalMs: number): Candle[] {
   return result;
 }
 
-
 function formatDecimal(value: number): string {
   if (value === 0) return '0';
   const str = value.toString();
@@ -132,7 +133,6 @@ function formatDecimal(value: number): string {
 
   return `${intPart}.${decShown}`;
 }
-
 
 function toDateStr(timestamp: number): string {
   const d = new Date(timestamp * 1000);
@@ -263,7 +263,16 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
       },
     });
     seriesRef.current = series;
-    series.setData(aggregated);
+
+    const formatted: CandlestickData[] = aggregated.map(c => ({
+      time: Math.floor(c.time) as Time,
+      open: c.open,
+      high: c.high,
+      low: c.low,
+      close: c.close,
+    }));
+
+    series.setData(formatted);
 
     const toolTip = tooltipRef.current!;
     toolTip.style.display = 'none';
@@ -283,28 +292,37 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
       const format = (v: number) => formatDecimal(v).padEnd(4);
 
       if (infoBarRef.current) {
+        const color = change >= 0 ? 'green' : 'red';
+
         infoBarRef.current.innerHTML = `
-          O${format(candle.open)} H${format(candle.high)} L${format(candle.low)} C${format(candle.close)} Δ
-          <span style="color:${change >= 0 ? 'green' : 'red'};">${change >= 0 ? '+' : ''}${format(change)}</span>
-          (<span style="color:${changePercent >= 0 ? 'green' : 'red'};">${changePercent >= 0 ? '+' : ''}${Number(
-          formatDecimal(changePercent)
-        ).toLocaleString()}%</span>)
+          O<span style="color:${color};">${Number(candle.open).toFixed(10).replace(/\.?0+$/, "")}</span>
+          H<span style="color:${color};">${Number(candle.high).toFixed(10).replace(/\.?0+$/, "")}</span>
+          L<span style="color:${color};">${Number(candle.low).toFixed(10).replace(/\.?0+$/, "")}</span>
+          C<span style="color:${color};">${Number(candle.close).toFixed(10).replace(/\.?0+$/, "")}</span>
+          Δ
+          <span style="color:${color};">
+            ${change >= 0 ? '+' : ''}${Number(change).toFixed(10).replace(/\.?0+$/, "")}
+          </span>
+          (<span style="color:${color};">
+            ${changePercent >= 0 ? '+' : ''}${Number(changePercent).toFixed(2).replace(/\.?0+$/, "")}%
+          </span>)
         `.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+
       }
 
       toolTip.style.display = 'block';
       toolTip.style.left = `${param.point.x + 10}px`;
       toolTip.style.top = `${param.point.y + 10}px`;
-      toolTip.innerHTML = `
-        <div style="color: #26a69a">
-          <div><strong>Time:</strong> ${timeStr}</div>
-          <div><strong>Open:</strong> ${formatDecimal(Number(data.open))}</div>
-          <div><strong>High:</strong> ${formatDecimal(Number(data.high))}</div>
-          <div><strong>Low:</strong> ${formatDecimal(Number(data.low))}</div>
-          <div><strong>Close:</strong> ${formatDecimal(Number(data.close))}</div>
-          <div><strong>Volume:</strong> ${volume.toLocaleString()}</div>
-        </div>
-      `;
+      toolTip.innerHTML = 
+      `<div style="color: #26a69a">
+        <div><strong>Time:</strong> ${timeStr}</div>
+        <div><strong>Open:</strong> ${Number(data.open).toFixed(10).replace(/\.?0+$/, "")}</div>
+        <div><strong>High:</strong> ${Number(data.high).toFixed(10).replace(/\.?0+$/, "")}</div>
+        <div><strong>Low:</strong> ${Number(data.low).toFixed(10).replace(/\.?0+$/, "")}</div>
+        <div><strong>Close:</strong> ${Number(data.close).toFixed(10).replace(/\.?0+$/, "")}</div>
+        <div><strong>Volume:</strong> ${volume.toLocaleString()}</div>
+      </div>`;
+
     });
 
     const resizeObserver = new ResizeObserver((entries) => {
