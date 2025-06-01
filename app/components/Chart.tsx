@@ -136,16 +136,17 @@ function formatDecimal(value: number): string {
 
 function toDateStr(timestamp: number): string {
   const d = new Date(timestamp * 1000);
-  return `${d.getFullYear()}-${(d.getMonth() + 1)
+  return `${d.getUTCFullYear()}-${(d.getUTCMonth() + 1)
     .toString()
-    .padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')} ${d
-      .getHours()
+    .padStart(2, '0')}-${d.getUTCDate().toString().padStart(2, '0')} ${d
+      .getUTCHours()
       .toString()
-      .padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d
-        .getSeconds()
+      .padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}:${d
+        .getUTCSeconds()
         .toString()
         .padStart(2, '0')}`;
 }
+
 
 const INTERVAL_OPTIONS = [
   /*   { label: '1m', value: 60 * 1000 }, */
@@ -173,7 +174,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
   const seriesRef = useRef<any>(null);
   const infoBarRef = useRef<HTMLDivElement>(null);
 
-  const [intervalMs, setIntervalMs] = useState(60 * 60 * 1000); // default 1 h
+  const [intervalMs, setIntervalMs] = useState(24 * 60 * 60 * 1000); // default 1 D
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -245,7 +246,12 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
       scaleMargins: {
         top: 0.2,
         bottom: 0.2,
+        },
       },
+    timeScale: {
+      timeVisible: true,      
+      secondsVisible: false,   
+      minBarSpacing: 5,    
     },
     });
     chartRef.current = chart;
@@ -289,7 +295,6 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
       const candle = data as { open: number; high: number; low: number; close: number };
       const change = candle.close - candle.open;
       const changePercent = candle.open !== 0 ? (change / candle.open) * 100 : 0;
-      const format = (v: number) => formatDecimal(v).padEnd(4);
 
       if (infoBarRef.current) {
         const color = change >= 0 ? 'green' : 'red';
@@ -299,7 +304,6 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
           H<span style="color:${color};">${Number(candle.high).toFixed(10).replace(/\.?0+$/, "")}</span>
           L<span style="color:${color};">${Number(candle.low).toFixed(10).replace(/\.?0+$/, "")}</span>
           C<span style="color:${color};">${Number(candle.close).toFixed(10).replace(/\.?0+$/, "")}</span>
-          Δ
           <span style="color:${color};">
             ${change >= 0 ? '+' : ''}${Number(change).toFixed(10).replace(/\.?0+$/, "")}
           </span>
@@ -310,18 +314,32 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
         `.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
       }
 
-      toolTip.style.display = 'block';
-      toolTip.style.left = `${param.point.x + 10}px`;
-      toolTip.style.top = `${param.point.y + 10}px`;
-      toolTip.innerHTML = 
-      `<div style="color: #26a69a">
-        <div><strong>Time:</strong> ${timeStr}</div>
-        <div><strong>Open:</strong> ${Number(data.open).toFixed(10).replace(/\.?0+$/, "")}</div>
-        <div><strong>High:</strong> ${Number(data.high).toFixed(10).replace(/\.?0+$/, "")}</div>
-        <div><strong>Low:</strong> ${Number(data.low).toFixed(10).replace(/\.?0+$/, "")}</div>
-        <div><strong>Close:</strong> ${Number(data.close).toFixed(10).replace(/\.?0+$/, "")}</div>
-        <div><strong>Volume:</strong> ${volume.toLocaleString()}</div>
-      </div>`;
+
+        toolTip.style.display = 'block';
+        toolTip.style.left = `${param.point.x + 10}px`;
+        toolTip.style.top = `${param.point.y + 10}px`;
+        toolTip.innerHTML = `
+        <div style="
+          display: grid;
+          grid-template-columns: max-content auto;
+          gap: 4px 12px;
+          background-color: rgba(0, 0, 0, 0.4);
+          color: white;
+          padding: 8px;
+          font-size: 12px;
+          border: 1px solid #666;
+          border-radius: 6px;
+          white-space: pre;
+        ">
+          <div><strong>Time:</strong></div><div style="color:#26a69a">${timeStr}</div>
+          <div><strong>Open:</strong></div><div style="color:#26a69a">${Number(data.open).toFixed(10).replace(/\.?0+$/, "")}</div>
+          <div><strong>High:</strong></div><div style="color:#26a69a">${Number(data.high).toFixed(10).replace(/\.?0+$/, "")}</div>
+          <div><strong>Low:</strong></div><div style="color:#26a69a">${Number(data.low).toFixed(10).replace(/\.?0+$/, "")}</div>
+          <div><strong>Close:</strong></div><div style="color:#26a69a">${Number(data.close).toFixed(10).replace(/\.?0+$/, "")}</div>
+          <div><strong>Volume:</strong></div><div style="color:#26a69a">${volume.toLocaleString()}</div>
+        </div>
+      `;
+
 
     });
 
@@ -369,17 +387,23 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
                 {opt.label}
               </button>
             ))}
-          </div>
-          <div
-            ref={infoBarRef}
+          <span
+          ref={infoBarRef}
             className="text-white text-[12px] font-mono whitespace-pre text-left"
+            >
+            
+          </span>
+          </div>
+
+          <div
+            
           ></div>
         </div>
 
         {/* Tooltip */}
         <div
           ref={tooltipRef}
-          className="absolute top-0 left-0 hidden bg-black bg-opacity-90 text-white border border-gray-600 p-2 text-xs pointer-events-none z-50 rounded whitespace-pre-line"
+          className="absolute top-0 left-0 hidden  text-white  p-2 text-xs pointer-events-none z-50 rounded whitespace-pre-line"
         />
       </div>
     </div>
