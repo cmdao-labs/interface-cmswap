@@ -174,7 +174,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
   const seriesRef = useRef<any>(null);
   const infoBarRef = useRef<HTMLDivElement>(null);
 
-  const [intervalMs, setIntervalMs] = useState(60 * 60 * 1000); // default 1 h
+  const [intervalMs, setIntervalMs] = useState(24 * 60 * 60 * 1000); // default 1 D
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -304,7 +304,6 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
           H<span style="color:${color};">${Number(candle.high).toFixed(10).replace(/\.?0+$/, "")}</span>
           L<span style="color:${color};">${Number(candle.low).toFixed(10).replace(/\.?0+$/, "")}</span>
           C<span style="color:${color};">${Number(candle.close).toFixed(10).replace(/\.?0+$/, "")}</span>
-          Δ
           <span style="color:${color};">
             ${change >= 0 ? '+' : ''}${Number(change).toFixed(10).replace(/\.?0+$/, "")}
           </span>
