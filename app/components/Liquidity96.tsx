@@ -214,7 +214,7 @@ export default function Liquidity96({
             }
             if (tokenB.value.toUpperCase() !== tokens[0].value.toUpperCase()) {
                 let allowanceB
-                if (tokenB.value.toUpperCase() === tokens[1].value.toUpperCase()) {
+                if (tokenB.value.toUpperCase() === tokens[2].value.toUpperCase()) {
                     allowanceB = await readContract(config, { ...kap20ABI, address: tokenB.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
                 } else {
                     allowanceB = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
