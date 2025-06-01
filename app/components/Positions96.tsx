@@ -220,21 +220,21 @@ export default function Positions96({
             if (tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {
                 allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
             } else {
-                allowanceA = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
+                allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
             }
             if (allowanceA < parseEther(amountA)) {
-                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountA)] })
+                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountA)] })
                 const h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
             let allowanceB
             if (tokenB.value.toUpperCase() === tokens[2].value.toUpperCase()) {
-                allowanceB = await readContract(config, { ...kap20ABI, address: tokenA.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
+                allowanceB = await readContract(config, { ...kap20ABI, address: tokenB.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
             } else {
                 allowanceB = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
             }
             if (allowanceB < parseEther(amountB)) {
-                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountB)] })
+                const { request } = await simulateContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountB)] })
                 const h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
