@@ -304,13 +304,11 @@ export default function Swap96({
                 setTxupdate(h)
             } else if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
                 let allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', bkcUnwapped] })
-
                 if (allowanceA < parseEther(amountA)) {
                     const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [bkcUnwapped, parseEther(amountA)] })
                     const h = await writeContract(config, request)
                     await waitForTransactionReceipt(config, { hash: h })
                 }
-
                 let { request } = await simulateContract(config, {
                     ...unwarppedNative,
                     functionName: 'withdraw',
@@ -392,8 +390,14 @@ export default function Swap96({
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
             if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
+                let allowance = await readContract(config, { ...erc20ABI, address: tokens[1].value as '0xstring', functionName: 'allowance', args: [address as '0xstring', bkcUnwapped] })
+                if (allowance < r) {
+                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokens[1].value as '0xstring', functionName: 'approve', args: [bkcUnwapped, r as bigint] })
+                    const h = await writeContract(config, request)
+                    await waitForTransactionReceipt(config, { hash: h })
+                }
                 let { request } = await simulateContract(config, {
-                    ...wrappedNative,
+                    ...unwarppedNative,
                     functionName: 'withdraw',
                     args: [r as bigint]
                 })
