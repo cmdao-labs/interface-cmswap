@@ -310,18 +310,32 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
         `.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
       }
 
-      toolTip.style.display = 'block';
-      toolTip.style.left = `${param.point.x + 10}px`;
-      toolTip.style.top = `${param.point.y + 10}px`;
-      toolTip.innerHTML = 
-      `<div style="color: #26a69a">
-        <div><strong>Time:</strong> ${timeStr}</div>
-        <div><strong>Open:</strong> ${Number(data.open).toFixed(10).replace(/\.?0+$/, "")}</div>
-        <div><strong>High:</strong> ${Number(data.high).toFixed(10).replace(/\.?0+$/, "")}</div>
-        <div><strong>Low:</strong> ${Number(data.low).toFixed(10).replace(/\.?0+$/, "")}</div>
-        <div><strong>Close:</strong> ${Number(data.close).toFixed(10).replace(/\.?0+$/, "")}</div>
-        <div><strong>Volume:</strong> ${volume.toLocaleString()}</div>
-      </div>`;
+
+        toolTip.style.display = 'block';
+        toolTip.style.left = `${param.point.x + 10}px`;
+        toolTip.style.top = `${param.point.y + 10}px`;
+        toolTip.innerHTML = `
+        <div style="
+          display: grid;
+          grid-template-columns: max-content auto;
+          gap: 4px 12px;
+          background-color: rgba(0, 0, 0, 0.4);
+          color: white;
+          padding: 8px;
+          font-size: 12px;
+          border: 1px solid #666;
+          border-radius: 6px;
+          white-space: pre;
+        ">
+          <div><strong>Time:</strong></div><div style="color:#26a69a">${timeStr}</div>
+          <div><strong>Open:</strong></div><div style="color:#26a69a">${Number(data.open).toFixed(10).replace(/\.?0+$/, "")}</div>
+          <div><strong>High:</strong></div><div style="color:#26a69a">${Number(data.high).toFixed(10).replace(/\.?0+$/, "")}</div>
+          <div><strong>Low:</strong></div><div style="color:#26a69a">${Number(data.low).toFixed(10).replace(/\.?0+$/, "")}</div>
+          <div><strong>Close:</strong></div><div style="color:#26a69a">${Number(data.close).toFixed(10).replace(/\.?0+$/, "")}</div>
+          <div><strong>Volume:</strong></div><div style="color:#26a69a">${volume.toLocaleString()}</div>
+        </div>
+      `;
+
 
     });
 
@@ -379,7 +393,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
         {/* Tooltip */}
         <div
           ref={tooltipRef}
-          className="absolute top-0 left-0 hidden bg-black bg-opacity-90 text-white border border-gray-600 p-2 text-xs pointer-events-none z-50 rounded whitespace-pre-line"
+          className="absolute top-0 left-0 hidden  text-white  p-2 text-xs pointer-events-none z-50 rounded whitespace-pre-line"
         />
       </div>
     </div>
