@@ -758,7 +758,7 @@ export default function Swap96({
                             ||
                             tokenAvalue === '0x7d984C24d2499D840eB3b7016077164e15E5faA6' as '0xstring' && tokenBvalue === '0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5' as '0xstring'
                         ){
-                            currPrice_10000 = token0_10000.toUpperCase() !== tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2))
+                            currPrice_10000 = token0_10000.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2))
                             if (feeSelect === 10000) {
                                 isReverted = token0_10000.toUpperCase() !== tokenBvalue.toUpperCase() ? false : true
                                 setExchangeRate(currPrice_10000.toString());
