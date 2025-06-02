@@ -1557,9 +1557,18 @@ export default function Trade({
         ) : (
           <div className="block md:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start">
             <div
-              className="w-full h-[300px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900"
+              className="w-full h-[400px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900"
               style={{ zIndex: 1 }}
             >
+            <div className="flex items-baseline space-x-2 mx-2 my-2">
+                <span className="text-4xl font-bold">
+                    {result2.status === "success" && result2.data![0].result}
+                </span>
+                <span className="text-sm text-gray-400">
+                    {result2.status === "success" && "[$" + result2.data![1].result + "]"}
+                </span>
+            </div>
+
               <div className="w-3/4 bg-gray-800 self-center p-2 mt-3 mb-3 rounded-2xl flex flex-row justify-around">
                 <span
                   className={
@@ -2054,7 +2063,15 @@ export default function Trade({
           </div>
         </div>
         <div className="hidden md:block w-full xl:w-1/4 h-fit xl:h-[1500px] flex flex-col gap-8 z-1">
-          <div className="w-full h-[300px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900">
+          <div className="w-full h-[400px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900">
+                        <div className="flex items-baseline space-x-2 mx-2 my-2">
+                <span className="text-4xl font-bold">
+                    {result2.status === "success" && result2.data![0].result}
+                </span>
+                <span className="text-sm text-gray-400">
+                    {result2.status === "success" && "[$" + result2.data![1].result + "]"}
+                </span>
+            </div>
             <div className="w-3/4 bg-gray-800 self-center p-2 mt-3 mb-3 rounded-2xl flex flex-row justify-around">
               <span
                 className={
