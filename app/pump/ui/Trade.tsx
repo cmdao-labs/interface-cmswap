@@ -1569,7 +1569,7 @@ export default function Trade({
                 </span>
             </div>
 
-              <div className="w-3/4 bg-gray-800 self-center p-2 mt-3 mb-3 rounded-2xl flex flex-row justify-around">
+              <div className="w-3/4 bg-gray-800 self-center p-2 mb-3 rounded-2xl flex flex-row justify-around">
                 <span
                   className={
                     trademode
@@ -2099,7 +2099,7 @@ export default function Trade({
                     {result2.status === "success" && "[$" + result2.data![1].result + "]"}
                 </span>
             </div>
-            <div className="w-3/4 bg-gray-800 self-center p-2 mt-3 mb-3 rounded-2xl flex flex-row justify-around">
+            <div className="w-3/4 bg-gray-800 self-center p-2  mb-3 rounded-2xl flex flex-row justify-around">
               <span
                 className={
                   trademode
