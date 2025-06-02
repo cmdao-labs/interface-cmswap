@@ -1420,9 +1420,9 @@ export default function Trade({
                     </span>
                   </div>
                 </div>
-                <div className="w-full mx-14 h-6 bg-gray-400 rounded-lg overflow-hidden">
+                <div className="w-full mx-14 h-12 bg-gray-400 rounded-lg overflow-hidden mb-2">
                   <div
-                    className="h-6 bg-sky-400 rounded-lg"
+                    className="h-12 bg-sky-400 rounded-lg"
                     style={{
                       width:
                         result3.status === "success"
@@ -2483,9 +2483,9 @@ export default function Trade({
                     </span>
                   </div>
                 </div>
-                <div className="ml-[20px] mr-[20px] h-6 bg-gray-400 rounded-lg overflow-hidden">
+                <div className="ml-[20px] mr-[20px] h-4 bg-gray-400 rounded-lg overflow-hidden mb-2">
                   <div
-                    className="h-6 bg-sky-400 rounded-lg"
+                    className="h-4 bg-sky-400 rounded-lg"
                     style={{
                       width:
                         result3.status === "success"
@@ -2569,7 +2569,7 @@ export default function Trade({
                         "[Bonding curve]"}
                     </Link>
                   </div>
-                  <span className="w-1/4 text-right w-[50px] sm:w-[200px]">
+                  <span className="w-1/4 text-right  w-[50px] sm:w-[200px]">
                     {res.value.toFixed(4)}%
                   </span>
                 </div>
