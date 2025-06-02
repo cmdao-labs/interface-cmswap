@@ -360,7 +360,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
   }, [intervalMs, data]);
 
   return (
-    <div>
+    <div className='w-full'>
       <div className="relative overflow-visible w-full h-full">
         <div ref={chartContainerRef} className="w-full h-full" />
 
