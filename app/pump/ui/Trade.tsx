@@ -452,6 +452,7 @@ export default function Trade({
             setHx(theresult);
         }
         const fetchGraph = async () => {
+            console.log(`fetch token pair ${ticker} with ${currencyAddr}}`)
             const result = await readContracts(config, {
                 contracts: [
                     {
@@ -1229,24 +1230,26 @@ export default function Trade({
                 </div>
             </div>
 
-            {/* Social Modal */}
+           {/* Social Modal */}
             {showSocials && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-xl relative">
+                <div className="fixed inset-0 bg-[#0a0b1e]/90 backdrop-blur-md p-4 flex  items-center justify-center z-50">
+                    <div className="bg-[#0a0b1e] border border-[#00ff9d]/20 p-6 w-full max-w-md rounded-xl shadow-[0_0_15px_#00ff9d55] relative">
                         <button
-                            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                            className="absolute top-2 right-2 text-[#00ff9d] hover:text-white transition"
                             onClick={() => setShowSocials(false)}
                         >
                             ✕
                         </button>
-                        <h2 className="text-xl font-bold mb-4 text-center text-gray-800">Add Your Socials</h2>
+                        <h2 className="text-2xl font-semibold mb-6 text-center text-[#00ff9d] drop-shadow-[0_0_4px_#00ff9d]">
+                            Add Your Socials
+                        </h2>
 
-                        <div className="space-y-4 bg-white rounded-2xl p-6 shadow-md border border-gray-300 text-black">
+                        <div className="space-y-5 text-white">
                             {[
-                                { icon: <FaFacebookF className="text-blue-600" />, field: "fb", placeholder: "Facebook URL" },
-                                { icon: <FaTwitter className="text-blue-400" />, field: "x", placeholder: "X (Twitter) URL" },
-                                { icon: <FaTelegramPlane className="text-blue-500" />, field: "telegram", placeholder: "Telegram URL" },
-                                { icon: <FaGlobe className="text-green-500" />, field: "website", placeholder: "Website URL" },
+                                { icon: <FaFacebookF className="text-[#00ff9d]" />, field: "fb", placeholder: "Facebook URL" },
+                                { icon: <FaTwitter className="text-[#00ff9d]" />, field: "x", placeholder: "X (Twitter) URL" },
+                                { icon: <FaTelegramPlane className="text-[#00ff9d]" />, field: "telegram", placeholder: "Telegram URL" },
+                                { icon: <FaGlobe className="text-[#00ff9d]" />, field: "website", placeholder: "Website URL" },
                             ].map(({ icon, field, placeholder }) => (
                                 <div key={field}>
                                     <div className="flex items-center gap-3">
@@ -1256,20 +1259,28 @@ export default function Trade({
                                             placeholder={placeholder}
                                             value={socials[field as keyof typeof socials]}
                                             onChange={handleChange(field as keyof typeof socials)}
-                                            className={`flex-1 border ${errors[field as keyof typeof errors] ? "border-red-500" : "border-gray-300"
-                                                } rounded-lg p-2 focus:outline-none focus:ring-2 ${errors[field as keyof typeof errors] ? "focus:ring-red-500" : "focus:ring-blue-400"
-                                                }`}
+                                            className={`flex-1 bg-transparent pl-4 border ${
+                                                errors[field as keyof typeof errors]
+                                                    ? "border-red-500"
+                                                    : "border-[#00ff9d]/40"
+                                            } rounded-lg p-2 text-white placeholder-[#00ff9d99] focus:outline-none focus:ring-2 ${
+                                                errors[field as keyof typeof errors]
+                                                    ? "focus:ring-red-500"
+                                                    : "focus:ring-[#00ff9d]"
+                                            }`}
                                         />
                                     </div>
                                     {errors[field as keyof typeof errors] && (
-                                        <p className="text-sm text-red-500 mt-1 ml-7">Must start with http:// or https://</p>
+                                        <p className="text-sm text-red-400 mt-1 ml-7">
+                                            Must start with http:// or https://
+                                        </p>
                                     )}
                                 </div>
                             ))}
 
                             <button
                                 onClick={handleSave}
-                                className="w-full mt-4 bg-blue-600 text-white p-2 rounded-xl hover:bg-blue-700 transition"
+                                className="w-full mt-4 bg-[#00ff9d] text-[#0a0b1e] font-bold p-2 rounded-xl hover:bg-[#00ff9d]/90 transition shadow-[0_0_10px_#00ff9d80]"
                             >
                                 Save Socials
                             </button>
@@ -1277,6 +1288,7 @@ export default function Trade({
                     </div>
                 </div>
             )}
+
         </main>
     );
 }
