@@ -1838,8 +1838,30 @@ export default function Trade({
                 </button>
               )}
             </div>
+            <div className="flex justify-end gap-2 mb-3">
+            {["CMswap", "GeckoTerminal"].map((type) => (
+              <button
+                key={type}
+                onClick={() => setGrapthType(type)}
+                className={`
+                            px-3 py-1.5 text-sm  
+                            transition-all duration-200 ease-in-out
+                            ${
+                              grapthType === type
+                                ? "text-teal-600"
+                                : " text-white"
+                            }
+                            cursor-pointer
+                        `}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+
+          {grapthType === "GeckoTerminal" ? (
             <iframe
-              height="35%"
+              height="28%"
               width="100%"
               id="geckoterminal-embed"
               title="GeckoTerminal Embed"
@@ -1856,6 +1878,10 @@ export default function Trade({
               }
               allow="clipboard-write"
             ></iframe>
+          ) : (
+            <Chart data={graphData} />
+          )}
+
             <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
               <div className="w-1/5 sm:w-1/3">Timestamp</div>
               <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-start gap-10">
@@ -2062,6 +2088,7 @@ export default function Trade({
             ))}
           </div>
         </div>
+
         <div className="hidden md:block w-full xl:w-1/4 h-fit xl:h-[1500px] flex flex-col gap-8 z-1">
           <div className="w-full h-[350px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900">
                         <div className="flex items-baseline space-x-2 mx-2 my-2">
