@@ -222,10 +222,34 @@ export default async function Event({
     }).sort((a: any, b: any) => {return b.timestamp - a.timestamp}).slice(0, 9);
 
     return (
-        <div className="flex flex-row items-center sm:items-start gap-6 mt-1 w-full" style={{zIndex: 1}}>
+        <div className="flex flex-row items-center sm:items-start gap-2 mt-1 w-full" style={{zIndex: 1}}>
             {theresult.map((res: any, index: any) =>
-                <Link href={_explorer + "tx/" + res.hash} rel="noopener noreferrer" target="_blank" prefetch={false} className={"w-[156px] flex flex-row items-center justify-around text-xs md:text-sm p-1 mb-4 bg-slate-700 rounded-lg overflow-hidden "  + (res.action === 'launch' ? "border-double border-4 border-emerald-300 " : "") + (index >= 3 ? "hidden xl:block" : "")} key={index}>
-                    <div className="flex flex-row items-center justify-end gap-2 text-xs">
+            <Link
+            href={_explorer + "tx/" + res.hash}
+            rel="noopener noreferrer"
+            target="_blank"
+            prefetch={false}
+            className={
+                `
+                w-[156px] flex flex-row items-center justify-around 
+                text-xs md:text-sm p-1 mb-4 rounded-lg overflow-hidden 
+                backdrop-blur-sm bg-white/10 transition-shadow duration-300 
+                shadow-[2px] hover:shadow-[0_0_8px_2px_rgba(255,255,255,0.4)] 
+                border-1
+                ${
+                    res.action === 'buy'
+                    ? 'border-green-400 shadow-green-400'
+                    : res.action === 'sell'
+                    ? 'border-red-400 shadow-red-400'
+                    : 'border-slate-500'
+                } 
+                ${res.action === 'launch' ? 'border-double border-4 border-emerald-300' : ''} 
+                ${index >= 3 ? 'hidden xl:block' : ''}
+                `
+            }
+            key={index}
+            >
+                    <div className="flex flex-row items-center justify-end gap-2 text-xs min-w-[125px]">
                         <div className="text-right flex flex-row gap-2 items-center justify-end overflow-hidden">
                             {res.action === 'buy' && <span className="text-green-500 font-bold">{res.action.toUpperCase()}</span>}
                             {res.action === 'sell' && <span className="text-red-500 font-bold">{res.action.toUpperCase()}</span>}
