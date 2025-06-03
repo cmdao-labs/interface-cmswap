@@ -1905,7 +1905,7 @@ export default function Trade({
                 </button>
               )}
             </div>
-            <div className="flex justify-end gap-2 mb-3">
+            <div className="flex justify-end gap-2 mb-3 text-xs">
             {["CMswap", "GeckoTerminal"].map((type) => (
               <button
                 key={type}
@@ -2033,13 +2033,13 @@ export default function Trade({
           className="hidden md:block w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start"
           style={{ zIndex: 1 }}
         >
-          <div className="flex justify-end gap-2 mb-3">
+          <div className="flex justify-end gap-2 mt-[-28px] ">
             {["CMswap", "GeckoTerminal"].map((type) => (
               <button
                 key={type}
                 onClick={() => setGrapthType(type)}
                 className={`
-                            px-3 py-1.5 text-sm  
+                            px-3 py-1.5 text-xs  
                             transition-all duration-200 ease-in-out
                             ${
                               grapthType === type

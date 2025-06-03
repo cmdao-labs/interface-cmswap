@@ -386,7 +386,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
               <button
                 key={opt.value}
                 onClick={() => setIntervalMs(opt.value)}
-                className={`mr-1.5 px-1.5 py-0.5 text-xs cursor-pointer ${intervalMs === opt.value ? 'text-teal-400' : 'text-white'
+                className={`mr-0.75 px-0.75 py-0.5 text-xs cursor-pointer ${intervalMs === opt.value ? 'text-teal-400' : 'text-white'
                   }`}
               >
                 {opt.label}
