@@ -899,6 +899,9 @@ export default function Trade({
           Trade
         </span>
       </div>
+
+      {//** HEADER TOPBAR */
+      }
       <div className="ml-[28px] w-full xl:w-2/3 flex flex-col gap-4 mb-2">
         <Link
           href={
@@ -913,10 +916,10 @@ export default function Trade({
         </Link>
         <div className="hidden md:block w-full flex flex-col md:flex-row flex-wrap justify-between text-xs xl:text-md">
           <div className="flex flex-row flex-wrap gap-2">
-            <span className="text-emerald-300">
+            <span className="text-emerald-300 text-2xl">
               {result2.status === "success" && result2.data![0].result}
             </span>
-            <span>
+            <span >
               {result2.status === "success" &&
                 "[$" + result2.data![1].result + "]"}
             </span>
