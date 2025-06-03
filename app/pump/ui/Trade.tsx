@@ -902,7 +902,7 @@ export default function Trade({
 
       {//** HEADER TOPBAR */
       }
-      <div className="ml-[28px] w-full xl:w-2/3 flex flex-col gap-4 mb-2">
+      <div className="ml-[28px] lg:ml-[52px] w-full max-w-[1920px] flex flex-col gap-4 mb-2">
         <Link
           href={
             "/pump/launchpad?chain=" +
@@ -915,78 +915,77 @@ export default function Trade({
           Back to launchpad
         </Link>
         <div className="hidden md:block w-full flex flex-col md:flex-row flex-wrap justify-between text-xs xl:text-md">
-          <div className="flex flex-row flex-wrap gap-2">
-            <span className="text-emerald-300 text-2xl">
-              {result2.status === "success" && result2.data![0].result}
+          <div className="flex flex-row flex-wrap gap-2 items-end 2">
+          <span className="text-emerald-300 text-2xl">
+            {result2.status === "success" && result2.data![0].result}
+          </span>
+          <span className="flex items-end">
+            {result2.status === "success" && "[$" + result2.data![1].result + "]"}
+          </span>
+          <span className="flex flex-row gap-2 items-end">
+            <span>
+              CA: {ticker.slice(0, 5)}...{ticker.slice(37)}
             </span>
-            <span >
-              {result2.status === "success" &&
-                "[$" + result2.data![1].result + "]"}
-            </span>
-            <span className="flex flex-row gap-2">
-              <span>
-                CA: {ticker.slice(0, 5)}...{ticker.slice(37)}
-              </span>
-              <div className="flex items-center gap-1 ml-2">
-                <button
-                  onClick={() => copyToClipboard(ticker)}
-                  className="flex items-center gap-2 bg-water-300 hover:bg-neutral-700 px-3 py-2 -mt-2 rounded-md transition-colors text-xs cursor-pointer"
-                  title="Copy contract address"
-                >
-                  {copiedAddress === ticker ? (
-                    <>
-                      <Check size={16} />
-                      Copied!
-                    </>
-                  ) : (
-                    <Copy size={16} />
-                  )}
-                </button>
-                <button
-                  className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 -mt-2 rounded-md transition-colors text-sm cursor-pointer"
-                  onClick={async () => {
-                    await ethereum.request({
-                      method: "wallet_watchAsset",
-                      params: {
-                        type: "ERC20",
-                        options: {
-                          address: ticker,
-                          symbol:
-                            result2.status === "success" &&
-                            result2.data![1].result,
-                          decimals: 18,
-                          image:
-                            result2.status === "success" &&
-                            result2.data![3].result!.slice(0, 7) === "ipfs://"
-                              ? "https://gateway.commudao.xyz/ipfs/" +
-                                result2.data![3].result!.slice(7)
-                              : "https://gateway.commudao.xyz/ipfs/" +
-                                result2.data![3].result!,
-                        },
+            <div className="flex items-center gap-1 ml-2">
+              <button
+                onClick={() => copyToClipboard(ticker)}
+                className="flex items-center gap-2 bg-water-300 hover:bg-neutral-700 px-3 py-2 rounded-md transition-colors text-xs cursor-pointer"
+                title="Copy contract address"
+              >
+                {copiedAddress === ticker ? (
+                  <>
+                    <Check size={16} />
+                    Copied!
+                  </>
+                ) : (
+                  <Copy size={16} />
+                )}
+              </button>
+              <button
+                className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm cursor-pointer"
+                onClick={async () => {
+                  await ethereum.request({
+                    method: "wallet_watchAsset",
+                    params: {
+                      type: "ERC20",
+                      options: {
+                        address: ticker,
+                        symbol:
+                          result2.status === "success" &&
+                          result2.data![1].result,
+                        decimals: 18,
+                        image:
+                          result2.status === "success" &&
+                          result2.data![3].result!.slice(0, 7) === "ipfs://"
+                            ? "https://gateway.commudao.xyz/ipfs/" +
+                              result2.data![3].result!.slice(7)
+                            : "https://gateway.commudao.xyz/ipfs/" +
+                              result2.data![3].result!,
                       },
-                    });
-                  }}
-                >
-                  <Plus size={16} />
-                </button>
-                <Link
-                  href={_explorer + "address/" + ticker}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  prefetch={false}
-                  className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 -mt-2 rounded-md transition-colors text-sm"
-                  title="View on Etherscan"
-                >
-                  <Image
-                    src="/bs.png"
-                    alt="blockscout"
-                    height={16}
-                    width={16}
-                  />
-                </Link>
-              </div>
-            </span>
-          </div>
+                    },
+                  });
+                }}
+              >
+                <Plus size={16} />
+              </button>
+              <Link
+                href={_explorer + "address/" + ticker}
+                rel="noopener noreferrer"
+                target="_blank"
+                prefetch={false}
+                className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm"
+                title="View on Etherscan"
+              >
+                <Image
+                  src="/bs.png"
+                  alt="blockscout"
+                  height={16}
+                  width={16}
+                />
+              </Link>
+            </div>
+          </span>
+        </div>
           <span className="mr-6">
             Price:{" "}
             <span className="text-emerald-300">
@@ -1577,9 +1576,11 @@ export default function Trade({
         ) : (
           <div className="block md:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start">
             <div
-              className="w-full h-[350px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900"
+              className="px-4 py-4 w-full h-[380px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900"
               style={{ zIndex: 1 }}
             >
+              {/** Name */}
+
             <div className="flex items-baseline space-x-2 mx-2 my-2">
                 <span className="text-2xl font-bold">
                     {result2.status === "success" && result2.data![0].result}
@@ -1588,8 +1589,9 @@ export default function Trade({
                     {result2.status === "success" && "[$" + result2.data![1].result + "]"}
                 </span>
             </div>
+              {/** BuySell Btn */}
 
-              <div className="w-3/4 bg-gray-800 self-center p-2 mb-3 rounded-2xl flex flex-row justify-around">
+              <div className="w-full bg-gray-800 self-center p-2 mb-3 rounded-2xl flex flex-row justify-around">
                 <span
                   className={
                     trademode
@@ -1629,6 +1631,8 @@ export default function Trade({
                   Sell
                 </span>
               </div>
+              {/** Input Seciton  */}
+
               <div className="w-full flex flex-row justify-between text-2xl">
                 <input
                   className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-3/5 font-bold bg-transparent"
@@ -1655,6 +1659,7 @@ export default function Trade({
                       "$" + result2.data![1].result}
                 </span>
               </div>
+              
               <div className="mr-[20px] self-end text-sm">
                 {mode === "pro" ? (
                   <>
@@ -1682,35 +1687,37 @@ export default function Trade({
                         >
                           Reset
                         </button>
-                        {[25, 50, 75].map((percent) => (
+                        {(trademode && mode === "pro" ? [0.1, 0.5, 1] : [25, 50, 75]).map((value) => (
                           <button
-                            key={percent}
+                            key={value}
                             className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
                             onClick={() => {
-                              const balance = trademode
-                                ? BigInt(ethBal)
-                                : BigInt(state[1].result as bigint);
-
-                              const amount =
-                                (balance * BigInt(percent)) / BigInt(100);
-                              const adjusted =
-                                Number(formatEther(amount)) - 0.00001;
-
-                              setInputBalance(adjusted.toFixed(6));
-                              qoute(adjusted.toFixed(6));
+                              if (trademode) {
+                                // fix amount (0.1, 0.5, 1)
+                                const adjusted = value;
+                                setInputBalance(adjusted.toFixed(6));
+                                qoute(adjusted.toFixed(6));
+                              } else {
+                                // percent (25%, 50%, 75%)
+                                const balance = BigInt(state[1].result as bigint);
+                                const amount = (balance * BigInt(value)) / BigInt(100);
+                                const adjusted = Number(formatEther(amount));
+                                setInputBalance(adjusted.toFixed(6));
+                                qoute(adjusted.toFixed(6));
+                              }
                             }}
                           >
-                            {percent}%
+                            {trademode ? value : `${value}%`}
                           </button>
                         ))}
+
 
                         <button
                           className="px-3 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
                           onClick={() => {
                             const value = trademode
-                              ? Number(formatEther(ethBal)) - 0.00001
-                              : Number(formatEther(state[1].result as bigint)) -
-                                0.00001;
+                              ? Number(formatEther(ethBal)) + (trademode && mode === "pro" ? - 0.00001 : 0 )
+                              : Number(formatEther(state[1].result as bigint)) + (trademode && mode === "pro" ? - 0.00001 : 0 );
 
                             setInputBalance(value.toFixed(6));
                             qoute(value.toFixed(6));
@@ -1750,23 +1757,30 @@ export default function Trade({
                           Reset
                         </button>
 
-                        {[25, 50, 75].map((percent) => (
-                          <button
-                            key={percent}
-                            className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
-                            onClick={() => {
-                              const balance = trademode
-                                ? BigInt(state[0].result as bigint)
-                                : BigInt(state[1].result as bigint);
-                              const amount =
-                                (balance * BigInt(percent)) / BigInt(100);
-                              setInputBalance(String(formatEther(amount)));
-                              qoute(String(formatEther(amount)));
-                            }}
-                          >
-                            {percent}%
-                          </button>
-                        ))}
+                        {(trademode && mode ==="pro" ? [0.1, 0.5, 1] : [25, 50, 75]).map((value) => (
+                        <button
+                          key={value}
+                          className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
+                          onClick={() => {
+                            if (trademode && mode === "pro") {
+                              // fixed amount 0.1, 0.5, 1
+                              const adjusted = value;
+                              setInputBalance(adjusted.toFixed(6));
+                              qoute(adjusted.toFixed(6));
+                            } else {
+                              // percent 25%, 50%, 75%
+                              const balance = BigInt(state[1].result as bigint);
+                              const amount = (balance * BigInt(value)) / BigInt(100);
+                              const adjusted = Number(formatEther(amount));
+                              setInputBalance(adjusted.toFixed(6));
+                              qoute(adjusted.toFixed(6));
+                            }
+                          }}
+                        >
+                          {trademode && mode === "pro" ? value : `${value}%`}
+                        </button>
+                      ))}
+
 
                         <button
                           className="px-3 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
@@ -1784,14 +1798,17 @@ export default function Trade({
                     </div>
                   </>
                 )}
+
               </div>
+
               <div className="w-full flex flex-row justify-between text-2xl text-emerald-300 font-bold">
-                <span className="ml-[20px] w-3/5 overflow-hidden">
+            <span className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-3/5 font-bold bg-transparent text-left">
                   {Intl.NumberFormat("en-US", {
                     notation: "compact",
                     compactDisplay: "short",
                   }).format(Number(outputBalance))}
                 </span>
+                
                 <span className="mr-[20px] w-2/5 text-right truncate">
                   {!trademode
                     ? chain === "kub" && mode === "pro"
@@ -2110,8 +2127,9 @@ export default function Trade({
         </div>
 
         <div className="hidden md:block w-full xl:w-1/4 h-fit xl:h-[1500px] flex flex-col gap-8 z-1">
-          <div className="w-full h-[350px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900">
-                        <div className="flex items-baseline space-x-2 mx-2 my-2">
+          <div className="px-4 py-4 w-full h-[380px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900">
+              {/** Name */}
+            <div className="w-3/4 flex items-baseline space-x-2 mx-2 my-2">
                 <span className="text-2xl font-bold">
                     {result2.status === "success" && result2.data![0].result}
                 </span>
@@ -2119,7 +2137,9 @@ export default function Trade({
                     {result2.status === "success" && "[$" + result2.data![1].result + "]"}
                 </span>
             </div>
-            <div className="w-3/4 bg-gray-800 self-center p-2  mb-3 rounded-2xl flex flex-row justify-around">
+              {/** BuySell Btn */}
+
+            <div className="w-full bg-gray-800 self-center p-2  mb-3 rounded-2xl flex flex-row justify-around">
               <span
                 className={
                   trademode
@@ -2159,10 +2179,12 @@ export default function Trade({
                 Sell
               </span>
             </div>
+              {/** Input Seciton  */}
+
             <div className="w-full flex flex-row justify-between text-2xl">
               <input
                 className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-3/5 font-bold bg-transparent"
-                placeholder="0"
+                placeholder="0" 
                 value={inputBalance}
                 onChange={(event) => {
                   setInputBalance(event.target.value);
@@ -2185,6 +2207,7 @@ export default function Trade({
                     "$" + result2.data![1].result}
               </span>
             </div>
+              {/** Quick Amount Section */}
             <div className="mr-[20px] self-end text-sm">
               {mode === "pro" ? (
                 <>
@@ -2203,52 +2226,55 @@ export default function Trade({
                     </div>
 
                     <div className="flex flex-wrap gap-2 justify-end mb-4">
-                      <button
-                        className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
-                        onClick={() => {
-                          setInputBalance("");
-                          setOutputBalance("");
-                        }}
-                      >
-                        Reset
-                      </button>
-                      {[25, 50, 75].map((percent) => (
                         <button
-                          key={percent}
                           className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
                           onClick={() => {
-                            const balance = trademode
-                              ? BigInt(ethBal)
-                              : BigInt(state[1].result as bigint);
-
-                            const amount =
-                              (balance * BigInt(percent)) / BigInt(100);
-                            const adjusted =
-                              Number(formatEther(amount)) - 0.00001;
-
-                            setInputBalance(adjusted.toFixed(6));
-                            qoute(adjusted.toFixed(6));
+                            setInputBalance("");
+                            setOutputBalance("");
                           }}
                         >
-                          {percent}%
+                          Reset
                         </button>
-                      ))}
+                        {(trademode && mode === "pro" ? [0.1, 0.5, 1] : [25, 50, 75]).map((value) => (
+                          <button
+                            key={value}
+                            className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
+                            onClick={() => {
+                              if (trademode) {
+                                // fix amount (0.1, 0.5, 1)
+                                const adjusted = value;
+                                setInputBalance(adjusted.toFixed(6));
+                                qoute(adjusted.toFixed(6));
+                              } else {
+                                // percent (25%, 50%, 75%)
+                                const balance = BigInt(state[1].result as bigint);
+                                const amount = (balance * BigInt(value)) / BigInt(100);
+                                const adjusted = Number(formatEther(amount));
+                                setInputBalance(adjusted.toFixed(6));
+                                qoute(adjusted.toFixed(6));
+                              }
+                            }}
+                          >
+                            {trademode ? value : `${value}%`} 
+                          </button>
+                        ))}
 
-                      <button
-                        className="px-3 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
-                        onClick={() => {
-                          const value = trademode
-                            ? Number(formatEther(ethBal)) - 0.00001
-                            : Number(formatEther(state[1].result as bigint)) -
-                              0.00001;
 
-                          setInputBalance(value.toFixed(6));
-                          qoute(value.toFixed(6));
-                        }}
-                      >
-                        Max
-                      </button>
-                    </div>
+                        <button
+                          className="px-3 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
+                          onClick={() => {
+                            const value = trademode
+                              ? Number(formatEther(ethBal)) + (trademode && mode === "pro" ? - 0.00001 : 0 )
+                              : Number(formatEther(state[1].result as bigint)) + (trademode && mode === "pro" ? - 0.00001 : 0 );
+
+                            setInputBalance(value.toFixed(6));
+                            qoute(value.toFixed(6));
+                          }}
+                        >
+                          Max
+                        </button>
+                      </div>
+                      
                   </div>
                 </>
               ) : (
@@ -2315,28 +2341,29 @@ export default function Trade({
                 </>
               )}
             </div>
+            
+              {/** Output Seciton  */}
+
             <div className="w-full flex flex-row justify-between text-2xl text-emerald-300 font-bold">
-              <span className="ml-[20px] w-3/5 overflow-hidden">
-                {Intl.NumberFormat("en-US", {
-                  notation: "compact",
-                  compactDisplay: "short",
-                }).format(Number(outputBalance))}
-              </span>
-              <span className="mr-[20px] w-2/5 text-right truncate">
-                {!trademode
-                  ? chain === "kub" && mode === "pro"
-                    ? "KUB"
-                    : chain === "kub" &&
-                      mode === "lite" &&
-                      (token === "cmm" || token === "")
-                    ? "CMM"
-                    : chain === "monad" && mode === "pro"
-                    ? "MON"
-                    : ""
-                  : result2.status === "success" &&
-                    "$" + result2.data![1].result}
-              </span>
+            <span className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-3/5 font-bold bg-transparent text-left">
+              {Intl.NumberFormat("en-US", {
+                notation: "compact",
+                compactDisplay: "short",
+              }).format(Number(outputBalance))}
+            </span>
+            <span className="mr-[20px] w-2/5 text-right truncate">
+              {!trademode
+                ? chain === "kub" && mode === "pro"
+                  ? "KUB"
+                  : chain === "kub" && mode === "lite" && (token === "cmm" || token === "")
+                  ? "CMM"
+                  : chain === "monad" && mode === "pro"
+                  ? "MON"
+                  : ""
+                : result2.status === "success" && "$" + result2.data![1].result}
+            </span>
             </div>
+
             <div className="mr-[20px] self-end text-sm">
               {mode === "pro" ? (
                 <span className="text-gray-300">
@@ -2374,14 +2401,14 @@ export default function Trade({
             account.address !== undefined &&
             account.chainId === _chainId ? (
               <button
-                className="w-3/4 self-center p-2 my-3 rounded-2xl font-bold bg-emerald-300 text-slate-900 underline hover-effect hover:text-white cursor-pointer"
+                className="w-3/4  self-center p-2 my-3 rounded-2xl font-bold bg-emerald-300 text-slate-900 underline hover-effect hover:text-white cursor-pointer"
                 onClick={trade}
               >
                 <span className="self-center">Trade</span>
               </button>
             ) : (
               <button
-                className="w-3/4 self-center p-2 my-3 rounded-2xl font-bold bg-gray-500 cursor-not-allowed"
+                className="w-3/4  self-center p-2 my-3 rounded-2xl font-bold bg-gray-500 cursor-not-allowed"
                 disabled
               >
                 <span className="self-center text-slate-900">Trade</span>
@@ -2631,6 +2658,7 @@ export default function Trade({
               ))}
           </div>
         </div>
+
       </div>
 
       {/* Social Modal */}
