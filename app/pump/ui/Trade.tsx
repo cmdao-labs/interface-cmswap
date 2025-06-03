@@ -37,6 +37,8 @@ import {
   FaTelegramPlane,
   FaGlobe,
 } from "react-icons/fa";
+import { BsTwitterX } from "react-icons/bs";
+
 import { CMswapChartABI } from "@/app/lib/abi";
 
 export default function Trade({
@@ -208,10 +210,10 @@ export default function Trade({
   type JSXElement = React.ReactElement;
 
   const socialItems: { icon: JSXElement; field: keyof typeof socials }[] = [
-    { icon: <FaFacebookF className="text-blue-600" />, field: "fb" },
-    { icon: <FaTwitter className="text-blue-400" />, field: "x" },
-    { icon: <FaTelegramPlane className="text-blue-500" />, field: "telegram" },
-    { icon: <FaGlobe className="text-green-500" />, field: "website" },
+    { icon: <FaFacebookF className="text-white" />, field: "fb" },
+    { icon: <BsTwitterX className="text-white" />, field: "x" },
+    { icon: <FaTelegramPlane className="text-white" />, field: "telegram" },
+    { icon: <FaGlobe className="text-white" />, field: "website" },
   ];
 
   const result2: any = useReadContracts({
@@ -831,9 +833,9 @@ export default function Trade({
   }, [socialsResult]);
 
   return (
-    <main className="row-start-2 w-full flex flex-col gap-4 items-center xl:items-start mt-[60px] md:mt-1">
+<main className="row-start-2 w-full flex flex-col gap-4 justify-center items-center mt-[60px] md:mt-1">
       {headnoti && (
-        <div className="w-full h-[40px] bg-sky-500 animate-pulse text-center p-2 flex flex-row gap-2 items-center justify-center">
+        <div className="w-full  h-[40px] bg-sky-500 animate-pulse text-center p-2 flex flex-row gap-2 items-center justify-center">
           <span>Trade Successful!, </span>
           <Link
             href={_explorer + "tx/" + hash}
@@ -852,6 +854,10 @@ export default function Trade({
           </button>
         </div>
       )}
+
+      {/** MB */}
+
+      
       <div
         className="md:hidden w-full xl:w-1/3 self-center bg-neutral-900 p-2 rounded-2xl flex flex-row justify-around border-solid border-2 border-emerald-300"
         style={{ zIndex: 1 }}
@@ -1107,7 +1113,9 @@ export default function Trade({
         </div>
       </div>
 
-      <div className="w-full flex flex-row flex-wrap gap-12 items-center xl:items-start justify-around">
+      {/** PC */}
+
+  <div className="w-full text-center max-w-[1920px] flex flex-row flex-wrap gap-12 items-center xl:items-start justify-around">
         {!tabmode ? (
           <div
             className="block md:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start"
@@ -1468,10 +1476,17 @@ export default function Trade({
             {result2.status === "success" &&
               result2.data![5].result === account.address && (
                 <div className="w-full">
-                  <div className="flex flex-col gap-3 mb-4">
+                  <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-4">
                     {socialItems.map(({ icon, field }) => {
                       const url = socials[field];
                       if (!url || url.trim() === "") return null;
+
+                      const platformNames: Record<string, string> = {
+                        fb: "Facebook",
+                        x: "X (Twitter)",
+                        telegram: "Telegram",
+                        website: "Website",
+                      };
 
                       return (
                         <a
@@ -1479,13 +1494,11 @@ export default function Trade({
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-3 p-3 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200"
+                          className="flex items-center justify-center gap-3 p-2 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 text-center w-full h-full"
                         >
-                          <div className="text-[12px] text-green-400">
-                            {icon}
-                          </div>
-                          <span className="text-[14px] text-green-300 truncate max-w-xs break-all">
-                            {url}
+                          <div className="text-green-400">{icon}</div>
+                          <span className="text-green-300 text-sm font-medium">
+                            {platformNames[field] ?? field}
                           </span>
                         </a>
                       );
@@ -1498,11 +1511,12 @@ export default function Trade({
                       className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
                       onClick={() => setShowSocials(!showSocials)}
                     >
-                      <span className="self-center">Add Socials</span>
+                      <span className="self-center">Link your social profiles</span>
                     </button>
                   </div>
                 </div>
-              )}
+            )}
+
 
             <div className="w-full h-[780px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
               <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">
@@ -2400,11 +2414,18 @@ export default function Trade({
             {/* Socials Section */}
             {result2.status === "success" &&
               result2.data![5].result === account.address && (
-                <div>
-                  <div className="flex flex-col gap-3 mb-4">
+                <div className="w-full">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     {socialItems.map(({ icon, field }) => {
                       const url = socials[field];
                       if (!url || url.trim() === "") return null;
+
+                      const platformNames: Record<string, string> = {
+                        fb: "Facebook",
+                        x: "X (Twitter)",
+                        telegram: "Telegram",
+                        website: "Website",
+                      };
 
                       return (
                         <a
@@ -2412,11 +2433,11 @@ export default function Trade({
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-3 p-3 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200"
+                          className="flex items-center justify-center gap-3 p-2 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 text-center w-full h-full"
                         >
-                          <div className="text-xl text-green-400">{icon}</div>
-                          <span className="text-sm text-green-300 truncate max-w-xs break-all">
-                            {url}
+                          <div className="text-green-400">{icon}</div>
+                          <span className="text-green-300 text-sm font-medium">
+                            {platformNames[field] ?? field}
                           </span>
                         </a>
                       );
@@ -2429,11 +2450,12 @@ export default function Trade({
                       className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
                       onClick={() => setShowSocials(!showSocials)}
                     >
-                      <span className="self-center">Add Socials</span>
+                      <span className="self-center">Link your social profiles</span>
                     </button>
                   </div>
                 </div>
-              )}
+            )}
+
 
             {result2.status === "success" && state[2].result ? (
               <>
@@ -2616,40 +2638,41 @@ export default function Trade({
               ✕
             </button>
             <h2 className="text-2xl font-semibold mb-6 text-center text-[#00ff9d] drop-shadow-[0_0_4px_#00ff9d]">
-              Add Your Socials
+              Link your social profiles
             </h2>
 
-            <div className="space-y-5 text-white">
+            <div className="space-y-5 text-white grid ">
               {[
-                {
-                  icon: <FaFacebookF className="text-[#00ff9d]" />,
-                  field: "fb",
-                  placeholder: "Facebook URL",
-                },
-                {
-                  icon: <FaTwitter className="text-[#00ff9d]" />,
-                  field: "x",
-                  placeholder: "X (Twitter) URL",
-                },
-                {
-                  icon: <FaTelegramPlane className="text-[#00ff9d]" />,
-                  field: "telegram",
-                  placeholder: "Telegram URL",
-                },
-                {
-                  icon: <FaGlobe className="text-[#00ff9d]" />,
-                  field: "website",
-                  placeholder: "Website URL",
-                },
+              {
+                icon: <FaFacebookF className="text-white" />,
+                field: "fb",
+                placeholder: "Facebook",
+              },
+              {
+                icon: <FaTwitter className="text-white" />,
+                field: "x",
+                placeholder: "X (Twitter) URL",
+              },
+              {
+                icon: <BsTwitterX className="text-white" />,
+                field: "telegram",
+                placeholder: "Telegram URL",
+              },
+              {
+                icon: <FaGlobe className="text-white" />,
+                field: "website",
+                placeholder: "Website URL",
+              },
               ].map(({ icon, field, placeholder }) => (
                 <div key={field}>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 ">
                     {icon}
                     <input
                       type="text"
                       placeholder={placeholder}
                       value={socials[field as keyof typeof socials]}
                       onChange={handleChange(field as keyof typeof socials)}
+                      maxLength={50}
                       className={`flex-1 bg-transparent pl-4 border ${
                         errors[field as keyof typeof errors]
                           ? "border-red-500"
@@ -2661,13 +2684,21 @@ export default function Trade({
                       }`}
                     />
                   </div>
+
+                  {/* Error Message */}
                   {errors[field as keyof typeof errors] && (
                     <p className="text-sm text-red-400 mt-1 ml-7">
                       Must start with http:// or https://
                     </p>
                   )}
+
+                  {/* Character Count */}
+                  <p className="text-xs text-right text-[#00ff9d99] mt-1 ml-7">
+                    {socials[field as keyof typeof socials].length}/50 characters
+                  </p>
                 </div>
               ))}
+
 
               <button
                 onClick={handleSave}
