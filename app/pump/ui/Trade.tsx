@@ -1580,15 +1580,15 @@ export default function Trade({
               style={{ zIndex: 1 }}
             >
               {/** Name */}
-
-            <div className="flex items-baseline space-x-2 mx-2 my-2">
-                <span className="text-2xl font-bold">
-                    {result2.status === "success" && result2.data![0].result}
-                </span>
-                <span className="text-sm text-gray-400">
-                    {result2.status === "success" && "[$" + result2.data![1].result + "]"}
-                </span>
+            <div className="w-3/4 flex items-baseline space-x-2 mx-2 my-2">
+              <div className="text-2xl font-bold max-w-[240px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
+                {result2.status === "success" && result2.data![0].result}
+              </div>
+              <div className="text-sm text-gray-400 max-w-[80px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
+                {result2.status === "success" && `[$${result2.data![1].result}]`}
+              </div>
             </div>
+
               {/** BuySell Btn */}
 
               <div className="w-full bg-gray-800 self-center p-2 mb-3 rounded-2xl flex flex-row justify-around">
@@ -2127,16 +2127,17 @@ export default function Trade({
         </div>
 
         <div className="hidden md:block w-full xl:w-1/4 h-fit xl:h-[1500px] flex flex-col gap-8 z-1">
-          <div className="px-4 py-4 w-full h-[380px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900">
+          <div className="px-10 py-6 w-full h-[380px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900">
               {/** Name */}
             <div className="w-3/4 flex items-baseline space-x-2 mx-2 my-2">
-                <span className="text-2xl font-bold">
-                    {result2.status === "success" && result2.data![0].result}
-                </span>
-                <span className="text-sm text-gray-400">
-                    {result2.status === "success" && "[$" + result2.data![1].result + "]"}
-                </span>
+              <div className="text-2xl font-bold max-w-[240px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
+                {result2.status === "success" && result2.data![0].result}
+              </div>
+              <div className="text-sm text-gray-400 max-w-[80px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
+                {result2.status === "success" && `[$${result2.data![1].result}]`}
+              </div>
             </div>
+
               {/** BuySell Btn */}
 
             <div className="w-full bg-gray-800 self-center p-2  mb-3 rounded-2xl flex flex-row justify-around">
