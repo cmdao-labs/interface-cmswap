@@ -134,19 +134,19 @@ function formatDecimal(value: number): string {
   return `${intPart}.${decShown}`;
 }
 
+
 function toDateStr(timestamp: number): string {
   const d = new Date(timestamp * 1000);
   return `${d.getUTCFullYear()}-${(d.getUTCMonth() + 1)
     .toString()
     .padStart(2, '0')}-${d.getUTCDate().toString().padStart(2, '0')} ${d
-      .getUTCHours()
-      .toString()
-      .padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}:${d
-        .getUTCSeconds()
-        .toString()
-        .padStart(2, '0')}`;
+    .getUTCHours()
+    .toString()
+    .padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}:${d
+    .getUTCSeconds()
+    .toString()
+    .padStart(2, '0')}`;
 }
-
 
 const INTERVAL_OPTIONS = [
   /*   { label: '1m', value: 60 * 1000 }, */
@@ -232,7 +232,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
       height: 400,
       layout: {
         background: { color: '#1e1e1e' },
-        textColor: '#b0f1c1',
+        textColor: '#D3D3D3',
       },
       crosshair: { mode: CrosshairMode.Normal },
       grid: {
@@ -248,11 +248,11 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
         bottom: 0.2,
         },
       },
-    timeScale: {
-      timeVisible: true,      
-      secondsVisible: false,   
-      minBarSpacing: 5,    
-    },
+      timeScale: {
+        timeVisible: true,      
+        secondsVisible: false,   
+        minBarSpacing: 5,    
+      },
     });
     chartRef.current = chart;
 
@@ -271,7 +271,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
     seriesRef.current = series;
 
     const formatted: CandlestickData[] = aggregated.map(c => ({
-      time: Math.floor(c.time) as Time,
+      time: Math.floor(c.time + ( 7 * 60 * 60)) as Time, //** change time zone here (current UTC+7) */
       open: c.open,
       high: c.high,
       low: c.low,
@@ -300,10 +300,10 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
         const color = change >= 0 ? 'green' : 'red';
 
         infoBarRef.current.innerHTML = `
-          O<span style="color:${color};">${Number(candle.open).toFixed(10).replace(/\.?0+$/, "")}</span>
-          H<span style="color:${color};">${Number(candle.high).toFixed(10).replace(/\.?0+$/, "")}</span>
-          L<span style="color:${color};">${Number(candle.low).toFixed(10).replace(/\.?0+$/, "")}</span>
-          C<span style="color:${color};">${Number(candle.close).toFixed(10).replace(/\.?0+$/, "")}</span>
+          <span className="text-[#D3D3D3]">O</span> <span style="color:${color};">${Number(candle.open).toFixed(10).replace(/\.?0+$/, "")}</span>
+          <span className="text-[#D3D3D3]">H</span> <span style="color:${color};">${Number(candle.high).toFixed(10).replace(/\.?0+$/, "")}</span>
+          <span className="text-[#D3D3D3]">L</span> <span style="color:${color};">${Number(candle.low).toFixed(10).replace(/\.?0+$/, "")}</span>
+          <span className="text-[#D3D3D3]">C</span> <span style="color:${color};">${Number(candle.close).toFixed(10).replace(/\.?0+$/, "")}</span>
           <span style="color:${color};">
             ${change >= 0 ? '+' : ''}${Number(change).toFixed(10).replace(/\.?0+$/, "")}
           </span>
@@ -331,12 +331,12 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
           border-radius: 6px;
           white-space: pre;
         ">
-          <div><strong>Time:</strong></div><div style="color:#26a69a">${timeStr}</div>
-          <div><strong>Open:</strong></div><div style="color:#26a69a">${Number(data.open).toFixed(10).replace(/\.?0+$/, "")}</div>
-          <div><strong>High:</strong></div><div style="color:#26a69a">${Number(data.high).toFixed(10).replace(/\.?0+$/, "")}</div>
-          <div><strong>Low:</strong></div><div style="color:#26a69a">${Number(data.low).toFixed(10).replace(/\.?0+$/, "")}</div>
-          <div><strong>Close:</strong></div><div style="color:#26a69a">${Number(data.close).toFixed(10).replace(/\.?0+$/, "")}</div>
-          <div><strong>Volume:</strong></div><div style="color:#26a69a">${volume.toLocaleString()}</div>
+          <div><strong>Time:</strong></div><div style="color:#fff">${timeStr}</div>
+          <div><strong>Open:</strong></div><div style="color:#fff">${Number(data.open).toFixed(10).replace(/\.?0+$/, "")}</div>
+          <div><strong>High:</strong></div><div style="color:#fff">${Number(data.high).toFixed(10).replace(/\.?0+$/, "")}</div>
+          <div><strong>Low:</strong></div><div style="color:#fff">${Number(data.low).toFixed(10).replace(/\.?0+$/, "")}</div>
+          <div><strong>Close:</strong></div><div style="color:#fff">${Number(data.close).toFixed(10).replace(/\.?0+$/, "")}</div>
+          <div><strong>Volume:</strong></div><div style="color:#fff">${volume.toLocaleString()}</div>
         </div>
       `;
 
