@@ -1327,7 +1327,7 @@ export default function Trade({
                 </span>
               )}
             </div>
-            <div className="w-full h-fit xl:h-[300px] flex flex-col gap-6 item-center justify-start">
+            <div className="w-full h-fit xl:h-[300px] flex flex-col gap-6 item-center justify-start text-left">
               <div className="flex flex-row justify-start mt-5">
                 <div className="flex flex-row items-start gap-2 px-5">
                   <div className="mr-2">
@@ -1404,7 +1404,7 @@ export default function Trade({
             
             {result2.status === "success" && state[2].result ? (
               <>
-                <span className="ml-[20px] text-sm font-bold">
+                <span className="ml-[20px] text-sm font-bold  text-left">
                   🔥 This token has graduated!:{" "}
                   {gradHash !== "" && (
                     <Link
@@ -1427,7 +1427,7 @@ export default function Trade({
               </>
             ) : (
               <>
-                <div className="ml-[20px] text-sm flex flex-col gap-2 justify-start">
+                <div className="ml-[20px] text-sm flex flex-col gap-2 justify-start  text-left">
                   <span>
                     Bonding curve progress:{" "}
                     {result3.status === "success" &&
@@ -2417,7 +2417,7 @@ export default function Trade({
             )}
           </div>
 
-          <div className="w-full h-fit flex flex-col gap-6 item-center justify-start">
+          <div className="w-full h-fit flex flex-col gap-6 item-center justify-start text-left">
             <div className="flex flex-row justify-start mt-5">
               <div className="flex flex-row items-start gap-2 px-5">
                 <div className="mr-2">
