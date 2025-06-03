@@ -1344,7 +1344,7 @@ export default function Trade({
                       height={120}
                     />
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 h-[125px] overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
                     <span className="text-xs break-words">
                       Description:{" "}
                       {result2.status === "success" && result2.data![2].result}
@@ -1353,6 +1353,53 @@ export default function Trade({
                 </div>
               </div>
             </div>
+
+            
+            {/* Socials Section */}
+            {result2.status === "success" &&
+              result2.data![5].result === account.address && (
+                <div className="w-full">
+                  <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-4">
+                    {socialItems.map(({ icon, field }) => {
+                      const url = socials[field];
+                      if (!url || url.trim() === "") return null;
+
+                      const platformNames: Record<string, string> = {
+                        fb: "Facebook",
+                        x: "X (Twitter)",
+                        telegram: "Telegram",
+                        website: "Website",
+                      };
+
+                      return (
+                        <a
+                          key={field}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-3 p-2 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 text-center w-full h-full"
+                        >
+                          <div className="text-green-400">{icon}</div>
+                          <span className="text-green-300 text-sm font-medium">
+                            {platformNames[field] ?? field}
+                          </span>
+                        </a>
+                      );
+                    })}
+                  </div>
+
+                  {/* ปุ่มเพิ่ม Socials */}
+                  <div>
+                    <button
+                      className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                      onClick={() => setShowSocials(!showSocials)}
+                    >
+                      <span className="self-center">Link your social profiles</span>
+                    </button>
+                  </div>
+                </div>
+            )}
+            
             {result2.status === "success" && state[2].result ? (
               <>
                 <span className="ml-[20px] text-sm font-bold">
@@ -1380,7 +1427,7 @@ export default function Trade({
               <>
                 <div className="ml-[20px] text-sm flex flex-col gap-2 justify-start">
                   <span>
-                    bonding curve progress:{" "}
+                    Bonding curve progress:{" "}
                     {result3.status === "success" &&
                       Intl.NumberFormat("en-US", {
                         notation: "compact",
@@ -1428,9 +1475,9 @@ export default function Trade({
                     </span>
                   </div>
                 </div>
-                <div className="w-full mx-14 h-12 bg-gray-400 rounded-lg overflow-hidden mb-2">
+                <div className="w-full mx-14 h-4 bg-gray-400 rounded-lg overflow-hidden mb-2">
                   <div
-                    className="h-12 bg-sky-400 rounded-lg"
+                    className="h-4 bg-emerald-300 rounded-lg"
                     style={{
                       width:
                         result3.status === "success"
@@ -1472,50 +1519,6 @@ export default function Trade({
               </>
             )}
 
-            {/* Socials Section */}
-            {result2.status === "success" &&
-              result2.data![5].result === account.address && (
-                <div className="w-full">
-                  <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-4">
-                    {socialItems.map(({ icon, field }) => {
-                      const url = socials[field];
-                      if (!url || url.trim() === "") return null;
-
-                      const platformNames: Record<string, string> = {
-                        fb: "Facebook",
-                        x: "X (Twitter)",
-                        telegram: "Telegram",
-                        website: "Website",
-                      };
-
-                      return (
-                        <a
-                          key={field}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-3 p-2 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 text-center w-full h-full"
-                        >
-                          <div className="text-green-400">{icon}</div>
-                          <span className="text-green-300 text-sm font-medium">
-                            {platformNames[field] ?? field}
-                          </span>
-                        </a>
-                      );
-                    })}
-                  </div>
-
-                  {/* ปุ่มเพิ่ม Socials */}
-                  <div>
-                    <button
-                      className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                      onClick={() => setShowSocials(!showSocials)}
-                    >
-                      <span className="self-center">Link your social profiles</span>
-                    </button>
-                  </div>
-                </div>
-            )}
 
 
             <div className="w-full h-[780px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
@@ -2402,7 +2405,7 @@ export default function Trade({
                     height={120}
                   />
                 </div>
-                <div className="flex-1 min-w-0 h-[300px] overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
+                <div className="flex-1 min-w-0 h-[125px] overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
                   <span className="text-xs break-words">
                     Description:{" "}
                     {result2.status === "success" && result2.data![2].result}
@@ -2484,7 +2487,7 @@ export default function Trade({
               <>
                 <div className="ml-[20px] text-sm flex flex-col gap-2 justify-start">
                   <span>
-                    bonding curve progress:{" "}
+                    Bonding curve progress:{" "}
                     {result3.status === "success" &&
                       Intl.NumberFormat("en-US", {
                         notation: "compact",
@@ -2534,7 +2537,7 @@ export default function Trade({
                 </div>
                 <div className="ml-[20px] mr-[20px] h-4 bg-gray-400 rounded-lg overflow-hidden mb-2">
                   <div
-                    className="h-4 bg-sky-400 rounded-lg"
+                    className="h-4 bg-emerald-300 rounded-lg"
                     style={{
                       width:
                         result3.status === "success"
