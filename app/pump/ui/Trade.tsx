@@ -1401,6 +1401,36 @@ export default function Trade({
                   </div>
                 </div>
             )}
+                        <a
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-1.5 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 w-full"
+            >
+              {/* Address Display */}
+              <div className="flex items-center gap-1 w-full overflow-hidden">
+                <span className="text-green-300 text-xs font-medium whitespace-nowrap">Contract Address:</span>
+                <span className="text-green-300 text-xs font-mono truncate block">
+                  {ticker}
+                </span>
+              </div>
+
+              {/* Copy Button */}
+              <button
+                onClick={() => copyToClipboard(ticker)}
+                className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-1 rounded-md transition-colors text-xs cursor-pointer"
+                title="Copy contract address"
+              >
+                {copiedAddress === ticker ? (
+                  <>
+                    <Check size={14} />
+                    Copied!
+                  </>
+                ) : (
+                  <Copy size={14} />
+                )}
+              </button>
+            </a>
+
             
             {result2.status === "success" && state[2].result ? (
               <>
@@ -2490,6 +2520,35 @@ export default function Trade({
                 </div>
             )}
 
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-1.5 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 w-full"
+            >
+              {/* Address Display */}
+              <div className="flex items-center gap-1 w-full overflow-hidden">
+                <span className="text-green-300 text-xs font-medium whitespace-nowrap">Contract Address:</span>
+                <span className="text-green-300 text-xs font-mono truncate block">
+                  {ticker}
+                </span>
+              </div>
+
+              {/* Copy Button */}
+              <button
+                onClick={() => copyToClipboard(ticker)}
+                className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-1 rounded-md transition-colors text-xs cursor-pointer"
+                title="Copy contract address"
+              >
+                {copiedAddress === ticker ? (
+                  <>
+                    <Check size={14} />
+                    Copied!
+                  </>
+                ) : (
+                  <Copy size={14} />
+                )}
+              </button>
+            </a>
 
             {result2.status === "success" && state[2].result ? (
               <>
