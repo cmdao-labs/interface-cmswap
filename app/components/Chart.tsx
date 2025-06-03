@@ -134,19 +134,21 @@ function formatDecimal(value: number): string {
   return `${intPart}.${decShown}`;
 }
 
-
 function toDateStr(timestamp: number): string {
   const d = new Date(timestamp * 1000);
+  // แสดงเป็นเวลา UTC+0 (เวลาโลก)
   return `${d.getUTCFullYear()}-${(d.getUTCMonth() + 1)
     .toString()
     .padStart(2, '0')}-${d.getUTCDate().toString().padStart(2, '0')} ${d
-    .getUTCHours()
-    .toString()
-    .padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}:${d
-    .getUTCSeconds()
-    .toString()
-    .padStart(2, '0')}`;
+      .getUTCHours()
+      .toString()
+      .padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}:${d
+        .getUTCSeconds()
+        .toString()
+        .padStart(2, '0')}`;
 }
+
+
 
 const INTERVAL_OPTIONS = [
   /*   { label: '1m', value: 60 * 1000 }, */
@@ -167,13 +169,16 @@ type ChartProps = {
   data: CandleDataPoint[];
 };
 
+
+
 const Chart: React.FC<ChartProps> = ({ data }) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const seriesRef = useRef<any>(null);
   const infoBarRef = useRef<HTMLDivElement>(null);
-
+  const userOffset = new Date().getTimezoneOffset() / 60;
+  const userTimezoneOffsetHours = -userOffset; 
   const [intervalMs, setIntervalMs] = useState(24 * 60 * 60 * 1000); // default 1 D
 
   useEffect(() => {
@@ -248,11 +253,11 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
         bottom: 0.2,
         },
       },
-      timeScale: {
-        timeVisible: true,      
-        secondsVisible: false,   
-        minBarSpacing: 5,    
-      },
+    timeScale: {
+      timeVisible: true,      
+      secondsVisible: false,   
+      minBarSpacing: 5,    
+    },
     });
     chartRef.current = chart;
 
@@ -271,7 +276,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
     seriesRef.current = series;
 
     const formatted: CandlestickData[] = aggregated.map(c => ({
-      time: Math.floor(c.time + ( 7 * 60 * 60)) as Time, //** change time zone here (current UTC+7) */
+      time: Math.floor(c.time + (7*60*60)) as Time, 
       open: c.open,
       high: c.high,
       low: c.low,
@@ -291,7 +296,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
 
       const data = param.seriesData.get(series) as any;
       const timeStr = toDateStr(param.time as number);
-      const volume = aggregated.find((d) => d.time === param.time)?.volume ?? '-';
+      const volume = aggregated.find((d) => d.time === (Number(param.time) - (7*60*60)))?.volume ?? '-';
       const candle = data as { open: number; high: number; low: number; close: number };
       const change = candle.close - candle.open;
       const changePercent = candle.open !== 0 ? (change / candle.open) * 100 : 0;
