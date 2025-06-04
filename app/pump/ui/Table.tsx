@@ -153,7 +153,7 @@ export default async function Table({
                     <Image src={res[1].result!.slice(0, 7) === 'ipfs://' ? "https://gateway.commudao.xyz/ipfs/" + res[1].result!.slice(7) : "https://gateway.commudao.xyz/ipfs/" + res[1].result!} alt="token_waiting_for_approve" fill />
                   </div>
                 </div>
-                <div className="w-1/2 flex flex-col gap-4 item-center justify-center">
+                <div className="w-1/2 flex flex-col gap-2 item-center justify-center">
                   <span className="font-mono font-bold text-2xl truncate">{res[0].result}</span>
                   <span className="text-emerald-300 font-bold text-xl">{res[5].result} {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
                   <span className="text-xs text-gray-500 truncate">{res[9].result}</span>

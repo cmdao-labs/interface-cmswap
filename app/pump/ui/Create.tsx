@@ -111,7 +111,18 @@ export default function Create({
         <form action={launch} className="flex flex-col gap-6">
           <input className="w-full p-4 bg-gray-700 rounded-xl leading-tight focus:outline-none" placeholder="Coin Name" value={name} onChange={(e) => setName(e.target.value)} required />
           <input className="w-full p-4 bg-gray-700 rounded-xl leading-tight focus:outline-none" placeholder="Ticker" value={ticker} onChange={(e) => setTicker(e.target.value)} required />
-          <input className="w-full p-4 bg-gray-700 rounded-xl leading-tight focus:outline-none" placeholder="Description" value={desp} onChange={(e) => setDesp(e.target.value)} />
+          <div className="w-full">
+            <input
+              className="w-full p-4 bg-gray-700 rounded-xl leading-tight focus:outline-none"
+              placeholder="Description"
+              value={desp}
+              onChange={(e) => setDesp(e.target.value)}
+              maxLength={200}
+            />
+            <div className="text-right text-sm text-gray-400 mt-1">
+              {desp.length}/200
+            </div>
+          </div>
           <div className="w-full pt-1 flex flex-col gap-4" >
             <input type="file" className="file:mr-4 file:rounded-full file:border-0 file:bg-gray-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-violet-600 dark:file:text-violet-100 dark:hover:file:bg-violet-500 ..." onChange={(e) => setFile(e.target.files![0])} required />
           </div>

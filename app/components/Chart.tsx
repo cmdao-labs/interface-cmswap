@@ -136,6 +136,7 @@ function formatDecimal(value: number): string {
 
 function toDateStr(timestamp: number): string {
   const d = new Date(timestamp * 1000);
+  // แสดงเป็นเวลา UTC+0 (เวลาโลก)
   return `${d.getUTCFullYear()}-${(d.getUTCMonth() + 1)
     .toString()
     .padStart(2, '0')}-${d.getUTCDate().toString().padStart(2, '0')} ${d
@@ -146,6 +147,7 @@ function toDateStr(timestamp: number): string {
         .toString()
         .padStart(2, '0')}`;
 }
+
 
 
 const INTERVAL_OPTIONS = [
@@ -167,13 +169,16 @@ type ChartProps = {
   data: CandleDataPoint[];
 };
 
+
+
 const Chart: React.FC<ChartProps> = ({ data }) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const seriesRef = useRef<any>(null);
   const infoBarRef = useRef<HTMLDivElement>(null);
-
+  const userOffset = new Date().getTimezoneOffset() / 60;
+  const userTimezoneOffsetHours = -userOffset; 
   const [intervalMs, setIntervalMs] = useState(24 * 60 * 60 * 1000); // default 1 D
 
   useEffect(() => {
@@ -232,7 +237,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
       height: 400,
       layout: {
         background: { color: '#1e1e1e' },
-        textColor: '#b0f1c1',
+        textColor: '#D3D3D3',
       },
       crosshair: { mode: CrosshairMode.Normal },
       grid: {
@@ -271,7 +276,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
     seriesRef.current = series;
 
     const formatted: CandlestickData[] = aggregated.map(c => ({
-      time: Math.floor(c.time) as Time,
+      time: Math.floor(c.time + (7*60*60)) as Time, 
       open: c.open,
       high: c.high,
       low: c.low,
@@ -291,7 +296,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
 
       const data = param.seriesData.get(series) as any;
       const timeStr = toDateStr(param.time as number);
-      const volume = aggregated.find((d) => d.time === param.time)?.volume ?? '-';
+      const volume = aggregated.find((d) => d.time === (Number(param.time) - (7*60*60)))?.volume ?? '-';
       const candle = data as { open: number; high: number; low: number; close: number };
       const change = candle.close - candle.open;
       const changePercent = candle.open !== 0 ? (change / candle.open) * 100 : 0;
@@ -300,10 +305,10 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
         const color = change >= 0 ? 'green' : 'red';
 
         infoBarRef.current.innerHTML = `
-          O<span style="color:${color};">${Number(candle.open).toFixed(10).replace(/\.?0+$/, "")}</span>
-          H<span style="color:${color};">${Number(candle.high).toFixed(10).replace(/\.?0+$/, "")}</span>
-          L<span style="color:${color};">${Number(candle.low).toFixed(10).replace(/\.?0+$/, "")}</span>
-          C<span style="color:${color};">${Number(candle.close).toFixed(10).replace(/\.?0+$/, "")}</span>
+          <span className="text-[#D3D3D3]">O</span> <span style="color:${color};">${Number(candle.open).toFixed(10).replace(/\.?0+$/, "")}</span>
+          <span className="text-[#D3D3D3]">H</span> <span style="color:${color};">${Number(candle.high).toFixed(10).replace(/\.?0+$/, "")}</span>
+          <span className="text-[#D3D3D3]">L</span> <span style="color:${color};">${Number(candle.low).toFixed(10).replace(/\.?0+$/, "")}</span>
+          <span className="text-[#D3D3D3]">C</span> <span style="color:${color};">${Number(candle.close).toFixed(10).replace(/\.?0+$/, "")}</span>
           <span style="color:${color};">
             ${change >= 0 ? '+' : ''}${Number(change).toFixed(10).replace(/\.?0+$/, "")}
           </span>
@@ -331,12 +336,12 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
           border-radius: 6px;
           white-space: pre;
         ">
-          <div><strong>Time:</strong></div><div style="color:#26a69a">${timeStr}</div>
-          <div><strong>Open:</strong></div><div style="color:#26a69a">${Number(data.open).toFixed(10).replace(/\.?0+$/, "")}</div>
-          <div><strong>High:</strong></div><div style="color:#26a69a">${Number(data.high).toFixed(10).replace(/\.?0+$/, "")}</div>
-          <div><strong>Low:</strong></div><div style="color:#26a69a">${Number(data.low).toFixed(10).replace(/\.?0+$/, "")}</div>
-          <div><strong>Close:</strong></div><div style="color:#26a69a">${Number(data.close).toFixed(10).replace(/\.?0+$/, "")}</div>
-          <div><strong>Volume:</strong></div><div style="color:#26a69a">${volume.toLocaleString()}</div>
+          <div><strong>Time:</strong></div><div style="color:#fff">${timeStr}</div>
+          <div><strong>Open:</strong></div><div style="color:#fff">${Number(data.open).toFixed(10).replace(/\.?0+$/, "")}</div>
+          <div><strong>High:</strong></div><div style="color:#fff">${Number(data.high).toFixed(10).replace(/\.?0+$/, "")}</div>
+          <div><strong>Low:</strong></div><div style="color:#fff">${Number(data.low).toFixed(10).replace(/\.?0+$/, "")}</div>
+          <div><strong>Close:</strong></div><div style="color:#fff">${Number(data.close).toFixed(10).replace(/\.?0+$/, "")}</div>
+          <div><strong>Volume:</strong></div><div style="color:#fff">${volume.toLocaleString()}</div>
         </div>
       `;
 
@@ -360,7 +365,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
   }, [intervalMs, data]);
 
   return (
-    <div>
+    <div className='w-full'>
       <div className="relative overflow-visible w-full h-full">
         <div ref={chartContainerRef} className="w-full h-full" />
 
@@ -381,7 +386,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
               <button
                 key={opt.value}
                 onClick={() => setIntervalMs(opt.value)}
-                className={`mr-1.5 px-1.5 py-0.5 text-xs cursor-pointer ${intervalMs === opt.value ? 'text-teal-400' : 'text-white'
+                className={`mr-0.75 px-0.75 py-0.5 text-xs cursor-pointer ${intervalMs === opt.value ? 'text-teal-400' : 'text-white'
                   }`}
               >
                 {opt.label}
