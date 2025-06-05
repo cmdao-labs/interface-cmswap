@@ -49,36 +49,49 @@ export default function Swap96({
 
     React.useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search)
-        const tokenAAddress = searchParams.get('tokenA')?.toLowerCase()
-        const tokenBAddress = searchParams.get('tokenB')?.toLowerCase()
+        const tokenAAddress = searchParams.get('input')?.toLowerCase()
+        const tokenBAddress = searchParams.get('output')?.toLowerCase()
 
-        if (tokenAAddress && tokenBAddress) {
-            const foundTokenA = tokens.find(t => t.value.toLowerCase() === tokenAAddress)
-            const foundTokenB = tokens.find(t => t.value.toLowerCase() === tokenBAddress)
+        const foundTokenA = tokenAAddress ? tokens.find(t => t.value.toLowerCase() === tokenAAddress) : null
+        const foundTokenB = tokenBAddress ? tokens.find(t => t.value.toLowerCase() === tokenBAddress) : null
 
-            if (foundTokenA) setTokenA(foundTokenA)
-            if (foundTokenB) setTokenB(foundTokenB)
+        if (foundTokenA) setTokenA(foundTokenA)
+        if (foundTokenB) setTokenB(foundTokenB)
+
+        if (!tokenAAddress || !tokenBAddress) {
+            if (tokenA?.value && tokenB?.value) {updateURLWithTokens(tokenA.value, tokenB.value, address)}
         } else {
-            if (tokenA?.value && tokenB?.value) {
-                updateURLWithTokens(tokenA.value, tokenB.value)
-            }
+            updateURLWithTokens(tokenAAddress, tokenBAddress, address)
         }
+
         setHasInitializedFromParams(true)
-    }, [])
+        }, [])
 
-    React.useEffect(() => {
-        console.log("hasInitializedFromParams : ",hasInitializedFromParams)
-    },[hasInitializedFromParams])
+        React.useEffect(() => {
+        console.log("hasInitializedFromParams : ", hasInitializedFromParams)
+        }, [hasInitializedFromParams])
 
-    const updateURLWithTokens = (tokenAValue?: string, tokenBValue?: string) => {
+        const updateURLWithTokens = (
+        tokenAValue?: string,
+        tokenBValue?: string,
+        referralCode?: string
+        ) => {
         const url = new URL(window.location.href)
 
-        if (tokenAValue) { url.searchParams.set('tokenA', tokenAValue) }
-        if (tokenBValue) { url.searchParams.set('tokenB', tokenBValue) }
-        if (!tokenAValue) { url.searchParams.delete('tokenA') }
-        if (!tokenBValue) { url.searchParams.delete('tokenB') }
+        if (tokenAValue) url.searchParams.set('input', tokenAValue)
+        else url.searchParams.delete('tokenA')
+
+        if (tokenBValue) url.searchParams.set('output', tokenBValue)
+        else url.searchParams.delete('tokenB')
+
+        if (referralCode && referralCode.startsWith('0x')) {
+            url.searchParams.set('ref', referralCode)
+        } else {
+            url.searchParams.delete('ref')
+        }
+
         window.history.replaceState({}, '', url.toString())
-    }
+        }
 
     const checkBitkubEVMKycLevel = async () => {
         if (!address) return;
@@ -274,7 +287,7 @@ export default function Swap96({
         const _tokenB = tokenA
         setTokenA(_tokenA)
         setTokenB(_tokenB)
-        updateURLWithTokens(_tokenA.value,_tokenB.value)
+        updateURLWithTokens(_tokenA.value,_tokenB.value,address)
     }
 
     const handleSwap = async () => {
@@ -1234,7 +1247,7 @@ export default function Swap96({
                                                 onSelect={() => {
                                                     setTokenA(token)
                                                     setOpen(false)
-                                                    updateURLWithTokens(token.value, tokenB?.value)
+                                                    updateURLWithTokens(token.value, tokenB?.value,address)
                                                 }}
                                                 className='cursor-pointer'
                                             >
@@ -1307,7 +1320,7 @@ export default function Swap96({
                                                 onSelect={() => {
                                                     setTokenB(token)
                                                     setOpen2(false)
-                                                    updateURLWithTokens(tokenA?.value, token.value)
+                                                    updateURLWithTokens(tokenA?.value, token.value,address)
                                                 }}
                                                 className='cursor-pointer'
                                             >

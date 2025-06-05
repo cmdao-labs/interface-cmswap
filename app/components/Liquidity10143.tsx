@@ -39,30 +39,52 @@ export default function Liquidity10143({
     const [rangePercentage, setRangePercentage] = React.useState(1)
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
+    const [hasInitializedFromParams, setHasInitializedFromParams] = React.useState(false)
 
     React.useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search)
-        const tokenAAddress = searchParams.get('tokenA')?.toLowerCase()
-        const tokenBAddress = searchParams.get('tokenB')?.toLowerCase()
-        
-        if (!tokenAAddress || !tokenBAddress) return
-        
-        const foundTokenA = tokens.find(t => t.value.toLowerCase() === tokenAAddress)
-        const foundTokenB = tokens.find(t => t.value.toLowerCase() === tokenBAddress)
-        
+        const tokenAAddress = searchParams.get('input')?.toLowerCase()
+        const tokenBAddress = searchParams.get('output')?.toLowerCase()
+
+        const foundTokenA = tokenAAddress ? tokens.find(t => t.value.toLowerCase() === tokenAAddress) : null
+        const foundTokenB = tokenBAddress ? tokens.find(t => t.value.toLowerCase() === tokenBAddress) : null
+
         if (foundTokenA) setTokenA(foundTokenA)
         if (foundTokenB) setTokenB(foundTokenB)
-            
+
+        if (!tokenAAddress || !tokenBAddress) {
+            if (tokenA?.value && tokenB?.value) {updateURLWithTokens(tokenA.value, tokenB.value, address)}
+        } else {
+            updateURLWithTokens(tokenAAddress, tokenBAddress, address)
+        }
+
+        setHasInitializedFromParams(true)
         }, [])
 
-    const updateURLWithTokens = (tokenAValue?: string, tokenBValue?: string) => {
-        const url = new URL(window.location.href)
-        
-        if (tokenAValue) {url.searchParams.set('tokenA', tokenAValue)}
-        if (tokenBValue) {url.searchParams.set('tokenB', tokenBValue)}
-        if (!tokenAValue) {url.searchParams.delete('tokenA')}
-        if (!tokenBValue) {url.searchParams.delete('tokenB')}
-        window.history.replaceState({}, '', url.toString())
+        React.useEffect(() => {
+            console.log("hasInitializedFromParams : ", hasInitializedFromParams)
+            }, [hasInitializedFromParams])
+
+            const updateURLWithTokens = (
+            tokenAValue?: string,
+            tokenBValue?: string,
+            referralCode?: string
+            ) => {
+            const url = new URL(window.location.href)
+
+            if (tokenAValue) url.searchParams.set('input', tokenAValue)
+            else url.searchParams.delete('tokenA')
+
+            if (tokenBValue) url.searchParams.set('output', tokenBValue)
+            else url.searchParams.delete('tokenB')
+
+            if (referralCode && referralCode.startsWith('0x')) {
+                url.searchParams.set('ref', referralCode)
+            } else {
+                url.searchParams.delete('ref')
+            }
+
+            window.history.replaceState({}, '', url.toString())
         }
 
 
