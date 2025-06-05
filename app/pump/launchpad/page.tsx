@@ -33,7 +33,20 @@ export default async function Launchpad(props: {
   const token = searchParams?.token || '';
   
   return (
-    <main className="mt-10 w-full flex flex-col gap-2 items-start justify-start overflow-hidden">
+    <main className="mt-10 w-full max-w-[1920px] flex flex-col gap-2 items-start justify-start overflow-hidden">
+        <Suspense key={'mode-' + mode + '-chain-' + chain} fallback={
+          <div className="w-full flex flex-row flex-wrap items-start justify-start overflow-visible" style={{zIndex: 1}}>
+            <div className="flex flex-row items-center sm:items-start gap-6 mt-1 w-full">
+              <div className="p-1 mb-4 bg-slate-700 rounded-lg w-[156px] h-[46px] animate-pulse" />
+              <div className="p-1 mb-4 bg-slate-700 rounded-lg w-[156px] h-[46px] animate-pulse" />
+              <div className="p-1 mb-4 bg-slate-700 rounded-lg w-[156px] h-[46px] animate-pulse" />
+            </div>
+          </div>
+        }>
+          <div className="w-full flex flex-row flex-wrap items-start justify-start overflow-visible" style={{zIndex: 1}}>
+            <Event mode={mode} chain={chain} token={token} />
+          </div>
+        </Suspense>
         <div className="flex flex-row flex-wrap 2xl:flex-no-wrap gap-8 w-full" style={{zIndex: 1}}>
           <Sort4 />
           <Link 
@@ -52,15 +65,10 @@ export default async function Launchpad(props: {
         {mode === 'lite' && chain === 'kub' && <div className="flex flex-row flex-wrap 2xl:flex-no-wrap w-full" style={{zIndex: 1}}><Sort5 /></div>}
         <Suspense key={'mode-' + mode + '-chain-' + chain + '-query-' + query + '-sort-' + sort + '-order-' + order} fallback={
           <div className="w-full flex flex-row flex-wrap items-start justify-start overflow-visible" style={{zIndex: 1}}>
-            <div className="flex flex-row items-center sm:items-start gap-6 mt-1 w-full">
-              <div className="p-2 mb-4 bg-slate-700 rounded-lg w-[156px] h-[46px] animate-pulse" />
-              <div className="p-2 mb-4 bg-slate-700 rounded-lg w-[156px] h-[46px] animate-pulse" />
-              <div className="p-2 mb-4 bg-slate-700 rounded-lg w-[156px] h-[46px] animate-pulse" />
-            </div>
             <div className="flex flex-row flex-wrap 2xl:flex-no-wrap gap-6 w-full">
               <div className="w-full 2xl:w-1/4 h-[52px] self-center rounded-full bg-gray-950 p-4" />
-              <div className="w-full 2xl:w-1/4 h-[56px] bg-gray-800 self-center p-2 rounded-2xl" />
-              <div className="w-full 2xl:w-1/4 h-[56px] bg-gray-800 self-center p-2 rounded-2xl" />
+              <div className="w-full 2xl:w-1/4 h-[32px] bg-gray-800 self-center p-1 rounded-2xl" />
+              <div className="w-full 2xl:w-1/4 h-[32px] bg-gray-800 self-center p-1 rounded-2xl" />
             </div>
             <div className="w-full h-[700px] flex flex-row flex-wrap items-start justify-start">
               <div className="p-2 w-full xl:w-1/3">
@@ -121,7 +129,6 @@ export default async function Launchpad(props: {
           </div>
         }>
           <div className="w-full flex flex-row flex-wrap items-start justify-start overflow-visible" style={{zIndex: 1}}>
-            <Event mode={mode} chain={chain} token={token} />
             <div className="flex flex-row flex-wrap 2xl:flex-no-wrap gap-2 w-full">
               <Search />
               <Sort />

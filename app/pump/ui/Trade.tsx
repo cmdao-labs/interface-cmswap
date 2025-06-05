@@ -1950,7 +1950,7 @@ export default function Trade({
           )}
 
             <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
-              <div className="w-1/5 sm:w-1/3">Timestamp</div>
+              <div className="w-1/5 sm:w-1/3 text-left">Timestamp</div>
               <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-start gap-10">
                 <span className="text-right w-[30px] xl:w-[200px]">From</span>
                 <span className="text-right w-[70px] xl:w-[200px]">Asset</span>
@@ -1967,7 +1967,7 @@ export default function Trade({
                   className="w-full h-[10px] flex flex-row items-center justify-around text-xs md:text-sm py-6 border-b border-gray-800"
                   key={index}
                 >
-                  <span className="w-1/5 sm:w-1/3 text-gray-500 text-xs">
+                  <span className="w-1/5 sm:w-1/3 text-gray-500 text-xs text-left">
                     {new Intl.DateTimeFormat("en-GB", {
                       dateStyle: "short",
                       timeStyle: "short",
@@ -2078,7 +2078,7 @@ export default function Trade({
           )}
 
           <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
-            <div className="w-1/5 sm:w-1/3">Timestamp</div>
+            <div className="w-1/5 sm:w-1/3 text-left">Timestamp</div>
             <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-start gap-10">
               <span className="text-right w-[30px] xl:w-[200px]">From</span>
               <span className="text-right w-[70px] xl:w-[200px]">Asset</span>
@@ -2095,7 +2095,7 @@ export default function Trade({
                 className="w-full h-[10px] flex flex-row items-center justify-around text-xs md:text-sm py-6 border-b border-gray-800"
                 key={index}
               >
-                <span className="w-1/5 sm:w-1/3 text-gray-500 text-xs">
+                <span className="w-1/5 sm:w-1/3 text-gray-500 text-xs text-left">
                   {new Intl.DateTimeFormat("en-GB", {
                     dateStyle: "short",
                     timeStyle: "short",
@@ -2157,14 +2157,11 @@ export default function Trade({
         </div>
 
         <div className="hidden md:block w-full xl:w-1/4 h-fit xl:h-[1500px] flex flex-col gap-8 z-1">
-          <div className="px-10 py-6 w-full h-[380px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900">
+          <div className="p-6 w-full h-[380px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900">
               {/** Name */}
             <div className="w-3/4 flex items-baseline space-x-2 mx-2 my-2">
               <div className="text-2xl font-bold max-w-[240px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
-                {result2.status === "success" && result2.data![0].result}
-              </div>
-              <div className="text-sm text-gray-400 max-w-[80px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
-                {result2.status === "success" && `[$${result2.data![1].result}]`}
+                {result2.status === "success" && result2.data![1].result}
               </div>
             </div>
 
@@ -2340,7 +2337,7 @@ export default function Trade({
                       {[25, 50, 75].map((percent) => (
                         <button
                           key={percent}
-                          className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
+                          className="px-2 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
                           onClick={() => {
                             const balance = trademode
                               ? BigInt(state[0].result as bigint)
