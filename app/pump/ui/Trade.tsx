@@ -1665,7 +1665,7 @@ export default function Trade({
 
               <div className="w-full flex flex-row justify-between text-2xl">
                 <input
-                  className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-3/5 font-bold bg-transparent"
+                  className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-2/5 font-bold bg-transparent"
                   placeholder="0"
                   value={inputBalance}
                   onChange={(event) => {
@@ -1674,7 +1674,7 @@ export default function Trade({
                   }}
                   type="number"
                 />
-                <span className="mr-[20px] w-2/5 text-right truncate">
+                <span className="mr-[20px] w-3/5 text-right truncate">
                   {trademode
                     ? chain === "kub" && mode === "pro"
                       ? "KUB"
@@ -1832,14 +1832,14 @@ export default function Trade({
               </div>
 
               <div className="w-full flex flex-row justify-between text-2xl text-emerald-300 font-bold">
-            <span className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-3/5 font-bold bg-transparent text-left">
+            <span className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-2/5 font-bold bg-transparent text-left">
                   {Intl.NumberFormat("en-US", {
                     notation: "compact",
                     compactDisplay: "short",
                   }).format(Number(outputBalance))}
                 </span>
                 
-                <span className="mr-[20px] w-2/5 text-right truncate">
+                <span className="mr-[20px] w-3/5 text-right truncate">
                   {!trademode
                     ? chain === "kub" && mode === "pro"
                       ? "KUB"
@@ -2211,7 +2211,7 @@ export default function Trade({
 
             <div className="w-full flex flex-row justify-between text-2xl">
               <input
-                className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-3/5 font-bold bg-transparent"
+                className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-2/5 font-bold bg-transparent"
                 placeholder="0" 
                 value={inputBalance}
                 onChange={(event) => {
@@ -2220,7 +2220,7 @@ export default function Trade({
                 }}
                 type="number"
               />
-              <span className="mr-[20px] w-2/5 text-right truncate">
+              <span className="mr-[20px] w-3/5 text-right truncate">
                 {trademode
                   ? chain === "kub" && mode === "pro"
                     ? "KUB"
@@ -2255,7 +2255,7 @@ export default function Trade({
 
                     <div className="flex flex-wrap gap-2 justify-end mb-4">
                         <button
-                          className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
+                          className="px-2 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
                           onClick={() => {
                             setInputBalance("");
                             setOutputBalance("");
@@ -2266,7 +2266,7 @@ export default function Trade({
                         {(trademode && mode === "pro" ? [0.1, 0.5, 1] : [25, 50, 75]).map((value) => (
                           <button
                             key={value}
-                            className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
+                            className="px-2 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
                             onClick={() => {
                               if (trademode) {
                                 // fix amount (0.1, 0.5, 1)
@@ -2289,7 +2289,7 @@ export default function Trade({
 
 
                         <button
-                          className="px-3 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
+                          className="px-2 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
                           onClick={() => {
                             const value = trademode
                               ? Number(formatEther(ethBal)) + (trademode && mode === "pro" ? - 0.00001 : 0 )
@@ -2325,7 +2325,7 @@ export default function Trade({
 
                     <div className="flex flex-wrap gap-2 mb-4">
                       <button
-                        className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
+                        className="px-2 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
                         onClick={() => {
                           setInputBalance("");
                           setOutputBalance("");
@@ -2353,7 +2353,7 @@ export default function Trade({
                       ))}
 
                       <button
-                        className="px-3 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
+                        className="px-2 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
                         onClick={() => {
                           const maxValue = trademode
                             ? String(formatEther(state[0].result as bigint))
@@ -2373,13 +2373,13 @@ export default function Trade({
               {/** Output Seciton  */}
 
             <div className="w-full flex flex-row justify-between text-2xl text-emerald-300 font-bold">
-            <span className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-3/5 font-bold bg-transparent text-left">
+            <span className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-2/5 font-bold bg-transparent text-left">
               {Intl.NumberFormat("en-US", {
                 notation: "compact",
                 compactDisplay: "short",
               }).format(Number(outputBalance))}
             </span>
-            <span className="mr-[20px] w-2/5 text-right truncate">
+            <span className="mr-[20px] w-3/5 text-right truncate">
               {!trademode
                 ? chain === "kub" && mode === "pro"
                   ? "KUB"
@@ -2693,7 +2693,7 @@ export default function Trade({
                       target="_blank"
                       prefetch={false}
                       className={
-                        "font-bold " +
+                        "font-bold text-left " +
                         (res.addr.toUpperCase() ===
                           result2.data![5].result.toUpperCase() ||
                         res.addr.toUpperCase() === lp.toUpperCase()
