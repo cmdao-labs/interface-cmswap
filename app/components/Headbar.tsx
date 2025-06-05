@@ -23,11 +23,24 @@ export default function Headbar() {
                         <div className="flex items-center justify-between h-8">
                             <Link href="/"><Button variant="ghost" className='cursor-pointer' size="icon"><img alt="" src="/favicon.ico" height="25" width="25" /></Button></Link>
                             <div className="hidden md:block">
-                                <div className="ml-8 flex items-center space-x-4">
-                                    <Link href="/swap" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono"><Button variant="ghost" className='cursor-pointer'>Swap</Button></Link>
-                                    <Link href="/bridge" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono"><Button variant="ghost" className='cursor-pointer'>Bridge</Button></Link>
-                                    <Link href="/pump" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono"><Button variant="ghost" className='cursor-pointer'>Pump</Button></Link>
-                                </div>
+
+                            <div className="ml-8 flex justify-between items-center w-full max-w-screen-xl mx-auto">
+                                    <Link href="/swap" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono">
+                                    <Button variant="ghost" className="cursor-pointer">Swap</Button>
+                                    </Link>
+                                    <Link href="/bridge" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono">
+                                    <Button variant="ghost" className="cursor-pointer">Bridge</Button>
+                                    </Link>
+                                    <Link href="/pump" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono">
+                                    <Button variant="ghost" className="cursor-pointer">Pump</Button>
+                                    </Link>
+          
+                                    <Link href="/profile" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono">
+                                    <Button variant="ghost" className="cursor-pointer">Profile</Button>
+                                    </Link>
+                            </div>
+
+
                             </div>
                             <div className="md:hidden ml-4 flex items-center">
                                 <button 
