@@ -855,66 +855,57 @@ export default function Trade({
         </div>
       )}
 
-      {/** MB */}
-
-      
-      <div
-        className="md:hidden w-full xl:w-1/3 self-center bg-neutral-900 p-2 rounded-2xl flex flex-row justify-around border-solid border-2 border-emerald-300"
-        style={{ zIndex: 1 }}
-      >
-        <span
-          className={
-            tabmode === false
-              ? "text-black font-bold p-2 w-1/2 bg-black text-center rounded-lg"
-              : "text-gray-400 underline hover:font-bold p-2 w-1/2 text-center"
-          }
-          style={{
-            backgroundImage:
-              tabmode === false
-                ? "radial-gradient( circle farthest-corner at 10% 20%,  rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3% )"
-                : "none",
-          }}
-          onClick={() => {
-            setTabmode(false);
-          }}
-        >
-          Info
-        </span>
-        <span
-          className={
-            tabmode === true
-              ? "text-black font-bold p-2 w-1/2 bg-black text-center rounded-lg"
-              : "text-gray-400 underline hover:font-bold p-2 w-1/2 text-center"
-          }
-          style={{
-            backgroundImage:
-              tabmode === true
-                ? "radial-gradient( circle farthest-corner at 10% 20%,  rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3% )"
-                : "none",
-          }}
-          onClick={() => {
-            setTabmode(true);
-          }}
-        >
-          Trade
-        </span>
-      </div>
-
-      {//** HEADER TOPBAR */
-      }
+      {/* HEADER TOPBAR */}
       <div className="ml-[28px] lg:ml-[52px] w-full max-w-[1920px] flex flex-col gap-4 mb-2">
         <Link
-          href={
-            "/pump/launchpad?chain=" +
-            chain +
-            (mode === "pro" ? "&mode=pro" : "&mode=lite")
-          }
+          href={"/pump/launchpad?chain=" + chain + (mode === "pro" ? "&mode=pro" : "&mode=lite")}
           prefetch={false}
           className="underline hover:font-bold"
         >
           Back to launchpad
         </Link>
-        <div className="hidden md:block w-full flex flex-col md:flex-row flex-wrap justify-between text-xs xl:text-md">
+        <div
+            className="xl:hidden w-full xl:w-1/3 self-center bg-neutral-900 p-2 rounded-2xl flex flex-row justify-around border-solid border-2 border-emerald-300"
+            style={{ zIndex: 1 }}
+        >
+            <span
+            className={
+                tabmode === false
+                ? "text-black font-bold p-2 w-1/2 bg-black text-center rounded-lg"
+                : "text-gray-400 underline hover:font-bold p-2 w-1/2 text-center"
+            }
+            style={{
+                backgroundImage:
+                tabmode === false
+                    ? "radial-gradient( circle farthest-corner at 10% 20%,  rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3% )"
+                    : "none",
+            }}
+            onClick={() => {
+                setTabmode(false);
+            }}
+            >
+                Info
+            </span>
+            <span
+            className={
+                tabmode === true
+                ? "text-black font-bold p-2 w-1/2 bg-black text-center rounded-lg"
+                : "text-gray-400 underline hover:font-bold p-2 w-1/2 text-center"
+            }
+            style={{
+                backgroundImage:
+                tabmode === true
+                    ? "radial-gradient( circle farthest-corner at 10% 20%,  rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3% )"
+                    : "none",
+            }}
+            onClick={() => {
+                setTabmode(true);
+            }}
+            >
+                Trade
+            </span>
+        </div>
+        <div className="hidden xl:block w-full flex flex-col md:flex-row flex-wrap justify-between text-xs xl:text-md">
           <div className="flex flex-row flex-wrap gap-2 items-end 2">
           <span className="text-emerald-300 text-2xl">
             {result2.status === "success" && result2.data![0].result}
@@ -1120,7 +1111,7 @@ export default function Trade({
   <div className="w-full text-center max-w-[1920px] flex flex-row flex-wrap gap-12 items-center xl:items-start justify-around">
         {!tabmode ? (
           <div
-            className="block md:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start"
+            className="block xl:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start"
             style={{ zIndex: 1 }}
           >
             <div className="w-full flex flex-col md:flex-row flex-wrap justify-between text-xs xl:text-md">
@@ -1550,61 +1541,46 @@ export default function Trade({
                 </div>
               </>
             )}
-
-
-
-            <div className="w-full h-[780px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
-              <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">
-                {holder.length} Holders
-              </span>
-              {holder
-                .sort((a, b) => {
-                  return b.value - a.value;
-                })
-                .map((res, index) => (
-                  <div
-                    className="w-full h-[50px] flex flex-row items-center justify-between text-xs lg:text-md py-2 border-b border-gray-800"
-                    key={index}
-                  >
-                    <div className="w-3/4 flex flex-row items-center justify-start gap-6 overflow-hidden">
-                      <span>{index + 1}.</span>
-                      <Link
-                        href={
-                          _explorer +
-                          "address/" +
-                          res.addr +
-                          (chain === "kub" ? "/?tab=tokens" : "") +
-                          (chain === "monad" ? "#tokens" : "")
-                        }
-                        rel="noopener noreferrer"
-                        target="_blank"
-                        prefetch={false}
-                        className={
-                          "font-bold " +
-                          (res.addr.toUpperCase() ===
-                            result2.data![5].result.toUpperCase() ||
-                          res.addr.toUpperCase() === lp.toUpperCase()
-                            ? "text-emerald-300"
-                            : "")
-                        }
-                      >
-                        {res.addr.slice(0, 5) + "..." + res.addr.slice(37)}{" "}
-                        {res.addr.toUpperCase() ===
-                          result2.data![5].result.toUpperCase() &&
-                          "[Creator 🧑‍💻]"}
-                        {res.addr.toUpperCase() === lp.toUpperCase() &&
-                          "[Bonding curve]"}
-                      </Link>
-                    </div>
-                    <span className="w-1/4 text-right w-[50px] sm:w-[200px]">
-                      {res.value.toFixed(4)}%
-                    </span>
-                  </div>
-                ))}
+            <div className="w-full h-[800px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center">
+                <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">{holder.length} Holders</span>
+                <div className="w-full overflow-x-hidden overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
+                    {holder
+                    .sort((a, b) => {
+                    return b.value - a.value;
+                    })
+                    .map((res, index) => (
+                        <div
+                            className="w-full h-[50px] flex flex-row items-center justify-between text-xs lg:text-md py-2 border-b border-gray-800"
+                            key={index}
+                        >
+                            <div className="flex flex-row items-center justify-start gap-6 overflow-hidden">
+                                <span>{index + 1}.</span>
+                                <Link
+                                    href={_explorer + "address/" + res.addr + (chain === "kub" ? "/?tab=tokens" : "") + (chain === "monad" ? "#tokens" : "")}
+                                    rel="noopener noreferrer"
+                                    target="_blank"
+                                    prefetch={false}
+                                    className={
+                                        "font-bold " +
+                                        (res.addr.toUpperCase() === result2.data![5].result.toUpperCase() || res.addr.toUpperCase() === lp.toUpperCase() ? 
+                                            "text-emerald-300" :
+                                            ""
+                                        )
+                                    }
+                                >
+                                    {res.addr.slice(0, 5) + "..." + res.addr.slice(37)}{" "}
+                                    {res.addr.toUpperCase() === result2.data![5].result.toUpperCase() && "[Creator 🧑‍💻]"}
+                                    {res.addr.toUpperCase() === lp.toUpperCase() && "[Bonding curve]"}
+                                </Link>
+                            </div>
+                            <span className="mr-6 text-right w-[50px] sm:w-[200px]">{res.value.toFixed(4)}%</span>
+                        </div>
+                    ))}
+                </div>
             </div>
           </div>
         ) : (
-          <div className="block md:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start">
+          <div className="block xl:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start">
             <div
               className="px-4 py-4 w-full h-[380px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900"
               style={{ zIndex: 1 }}
@@ -1612,10 +1588,7 @@ export default function Trade({
               {/** Name */}
             <div className="w-3/4 flex items-baseline space-x-2 mx-2 my-2">
               <div className="text-2xl font-bold max-w-[240px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
-                {result2.status === "success" && result2.data![0].result}
-              </div>
-              <div className="text-sm text-gray-400 max-w-[80px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
-                {result2.status === "success" && `[$${result2.data![1].result}]`}
+                {result2.status === "success" && result2.data![1].result}
               </div>
             </div>
 
@@ -2030,7 +2003,7 @@ export default function Trade({
         )}
 
         <div
-          className="hidden md:block w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start"
+          className="hidden xl:block w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start"
           style={{ zIndex: 1 }}
         >
           <div className="flex justify-end gap-2 mt-[-28px] ">
@@ -2156,7 +2129,7 @@ export default function Trade({
           </div>
         </div>
 
-        <div className="hidden md:block w-full xl:w-1/4 h-fit xl:h-[1500px] flex flex-col gap-8 z-1">
+        <div className="hidden xl:block w-full xl:w-1/4 h-fit xl:h-[1500px] flex flex-col gap-8 z-1">
           <div className="p-6 w-full h-[380px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900">
               {/** Name */}
             <div className="w-3/4 flex items-baseline space-x-2 mx-2 my-2">
@@ -2666,53 +2639,49 @@ export default function Trade({
               </>
             )}
           </div>
-          <div className="w-full h-[780px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
-            <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">
-              {holder.length} Holders
-            </span>
-            {holder
-              .sort((a, b) => {
-                return b.value - a.value;
-              })
-              .map((res, index) => (
-                <div
-                  className="w-full h-[50px] flex flex-row items-center justify-between text-xs lg:text-md py-2 border-b border-gray-800"
-                  key={index}
-                >
-                  <div className="w-3/4 flex flex-row items-center justify-start gap-6 overflow-hidden">
-                    <span>{index + 1}.</span>
-                    <Link
-                      href={
-                        _explorer +
-                        "address/" +
-                        res.addr +
-                        (chain === "kub" ? "/?tab=tokens" : "") +
-                        (chain === "monad" ? "#tokens" : "")
-                      }
-                      rel="noopener noreferrer"
-                      target="_blank"
-                      prefetch={false}
-                      className={
-                        "font-bold text-left " +
-                        (res.addr.toUpperCase() ===
-                          result2.data![5].result.toUpperCase() ||
-                        res.addr.toUpperCase() === lp.toUpperCase()
-                          ? "text-emerald-300"
-                          : "")
-                      }
+          <div className="w-full h-[800px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center">
+            <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">{holder.length} Holders</span>
+            <div className="w-full overflow-x-hidden overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
+                {holder
+                .sort((a, b) => {
+                    return b.value - a.value;
+                })
+                .map((res, index) => (
+                    <div
+                        className="w-full h-[50px] flex flex-row items-center justify-between text-xs lg:text-md py-2 border-b border-gray-800"
+                        key={index}
                     >
-                      {res.addr.slice(0, 5) + "..." + res.addr.slice(37)}{" "}
-                      {res.addr.toUpperCase() ===
-                        result2.data![5].result.toUpperCase() && "[Creator 🧑‍💻]"}
-                      {res.addr.toUpperCase() === lp.toUpperCase() &&
-                        "[Bonding curve]"}
-                    </Link>
-                  </div>
-                  <span className="w-1/4 text-right  w-[50px] sm:w-[200px]">
-                    {res.value.toFixed(4)}%
-                  </span>
-                </div>
-              ))}
+                        <div className="flex flex-row items-center justify-start gap-6 overflow-hidden">
+                            <span>{index + 1}.</span>
+                            <Link
+                                href={
+                                    _explorer +
+                                    "address/" +
+                                    res.addr +
+                                    (chain === "kub" ? "/?tab=tokens" : "") +
+                                    (chain === "monad" ? "#tokens" : "")
+                                }
+                                rel="noopener noreferrer"
+                                target="_blank"
+                                prefetch={false}
+                                className={
+                                    "font-bold text-left " +
+                                    (res.addr.toUpperCase() ===
+                                    result2.data![5].result.toUpperCase() ||
+                                    res.addr.toUpperCase() === lp.toUpperCase()
+                                    ? "text-emerald-300"
+                                    : "")
+                                }
+                            >
+                                {res.addr.slice(0, 5) + "..." + res.addr.slice(37)}{" "}
+                                {res.addr.toUpperCase() === result2.data![5].result.toUpperCase() && "[Creator 🧑‍💻]"}
+                                {res.addr.toUpperCase() === lp.toUpperCase() && "[Bonding curve]"}
+                            </Link>
+                            <span className="mr-6 text-right  w-[50px] sm:w-[200px]">{res.value.toFixed(4)}%</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
           </div>
         </div>
 
