@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { ExternalLink, X } from "lucide-react";
+import { ArrowDownUp, X } from "lucide-react";
+import { game_tokens } from "../lib/96";
+import { useAccount } from 'wagmi'
+import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core'
+import { tokens,  erc20ABI, kap20ABI,CMswapP2PMarketplace, CMswapP2PMarketplaceContract } from '@/app/lib/96'
+import { formatEther, parseEther } from 'viem'
+
+import { config } from '@/app/config'
 
 type Token = {
   name: string;
@@ -9,8 +16,8 @@ type Token = {
 
 type Order = {
   id: number;
-  fromToken: Token;
-  toToken: Token;
+  fromToken: "0xstring";
+  toToken:  "0xstring";
   amount: number;
   price: number;
   type: "buy" | "sell";
@@ -21,253 +28,241 @@ export default function ExchangePage() {
   const [tradeType, setTradeType] = useState<"buy" | "sell">("buy");
   const [price, setPrice] = useState("");
   const [amount, setAmount] = useState("");
-  const [view, setView] = useState("Orders");
-  const token: Token = {
-    name: "SOLA BOOSTER",
-    symbol: "SOLA",
-    address: "0x1234567890abcdef1234567890abcdef12345678",
-  };
+  const [filter, setFilter] = useState<
+    "all" | "Metal Valley" | "Morning Moon Village"
+  >("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const tokenPairs: TokenPair[] = generateTokenPairs(game_tokens);
+  const [select, setSelectToken] = useState(tokenPairs[0]); 
+  const [kkub,setKKUBbal] = useState(0.00);
+  const [tokenBal,setTokenBal] = useState(0.00);
+  const [onLoading, setOnLoading] = React.useState(false)
+  const [view, setView] = useState<"Orders" | "History">("Orders");
+  const feePercent = 0.003; // 0.3%
+  const total = price && amount ? parseFloat(price) * parseFloat(amount) : 0;
+  const fee = total * feePercent;
+  const net = tradeType === "buy" ? total + fee : total - fee;
+  const [txupdate, setTxupdate] = React.useState("")
+  const [isOnlyFullDecimal, setIsOnlyFullDecimal] = React.useState(false)
+
   const baseExpURL = "https://www.kubscan.com/";
 
-  const [orders, setOrders] = useState<Order[]>([
-    {
-      id: 1,
-      fromToken: token,
-      toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
-      amount: 5,
-      price: 50,
-      type: "sell",
-      date: "2025-05-11 12:34:56",
-    },
-    {
-      id: 5,
-      fromToken: token,
-      toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
-      amount: 3,
-      price: 48.5,
-      type: "buy",
-      date: "2025-05-11 11:30:00",
-    },
-    {
-      id: 2,
-      fromToken: token,
-      toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
-      amount: 3,
-      price: 48.5,
-      type: "buy",
-      date: "2025-05-11 11:30:00",
-    },
-    {
-      id: 3,
-      fromToken: token,
-      toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
-      amount: 3,
-      price: 48.5,
-      type: "buy",
-      date: "2025-05-11 11:30:00",
-    },
-    {
-      id: 4,
-      fromToken: token,
-      toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
-      amount: 5,
-      price: 50,
-      type: "sell",
-      date: "2025-05-11 12:34:56",
-    },
-    {
-      id: 6,
-      fromToken: token,
-      toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
-      amount: 5,
-      price: 51,
-      type: "sell",
-      date: "2025-05-11 12:34:56",
-    },
-    {
-      id: 7,
-      fromToken: token,
-      toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
-      amount: 3,
-      price: 49,
-      type: "sell",
-      date: "2025-05-11 12:34:56",
-    },
-    {
-      id: 8,
-      fromToken: token,
-      toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
-      amount: 3,
-      price: 48.5,
-      type: "sell",
-      date: "2025-05-11 12:34:56",
-    },
-    {
-      id: 9,
-      fromToken: token,
-      toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
-      amount: 3,
-      price: 47,
-      type: "sell",
-      date: "2025-05-11 12:34:56",
-    },
-    {
-      id: 10,
-      fromToken: token,
-      toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
-      amount: 3,
-      price: 49,
-      type: "buy",
-      date: "2025-05-11 12:34:56",
-    },
-    {
-      id: 11,
-      fromToken: token,
-      toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
-      amount: 3,
-      price: 45,
-      type: "buy",
-      date: "2025-05-11 12:34:56",
-    },
-    {
-      id: 12,
-      fromToken: token,
-      toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
-      amount: 48,
-      price: 40,
-      type: "buy",
-      date: "2025-05-11 12:34:56",
-    },
-    {
-      id: 13,
-      fromToken: token,
-      toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
-      amount: 47,
-      price: 40.5,
-      type: "buy",
-      date: "2025-05-11 12:34:56",
-    },
-  ]);
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenValue = urlParams.get("token");
 
-  const tokenPairs = [
-    {
-      name: "SOLA BOOSTER / KKUB",
-      desc: "Metal Valley",
-      img1: "https://cryptologos.cc/logos/solana-sol-logo.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-    {
-      name: "MinerK / KKUB",
-      desc: "Metal Valley",
-      img1: "https://cdn-icons-png.flaticon.com/512/4332/4332625.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-    {
-      name: "Carrot Seed / KKUB",
-      desc: "Morning Moon Village",
-      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-    {
-      name: "Cabbage Seed / KKUB",
-      desc: "Morning Moon Village",
-      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-    {
-      name: "Honeycomb / KKUB",
-      desc: "Morning Moon Village",
-      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-    {
-      name: "Raw Diamond / KKUB",
-      desc: "Bitkub Metaverse",
-      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-    {
-      name: "Raw Ruby / KKUB",
-      desc: "Bitkub Metaverse",
-      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-    {
-      name: "Apple / KKUB",
-      desc: "Bitkub Metaverse",
-      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-    {
-      name: "Apple / KKUB",
-      desc: "Bitkub Metaverse",
-      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-    {
-      name: "Apple / KKUB",
-      desc: "Bitkub Metaverse",
-      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-    {
-      name: "Apple / KKUB",
-      desc: "Bitkub Metaverse",
-      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-    {
-      name: "Apple / KKUB",
-      desc: "Bitkub Metaverse",
-      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-    {
-      name: "Apple / KKUB",
-      desc: "Bitkub Metaverse",
-      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-    {
-      name: "Apple / KKUB",
-      desc: "Bitkub Metaverse",
-      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-    {
-      name: "Apple / KKUB",
-      desc: "Bitkub Metaverse",
-      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-    {
-      name: "Apple / KKUB",
-      desc: "Bitkub Metaverse",
-      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-    {
-      name: "Apple / KKUB",
-      desc: "Bitkub Metaverse",
-      img1: "https://cdn-icons-png.flaticon.com/512/590/590685.png",
-      img2: "https://cryptologos.cc/logos/kubecoin-kubc-logo.png",
-    },
-  ];
 
-  const handleOrder = () => {
-    const newOrder: Order = {
-      id: orders.length + 1,
-      fromToken: token,
-      toToken: { name: "KKUB", symbol: "KKUB", address: "0xkkub" },
-      amount: parseFloat(amount),
-      price: parseFloat(price),
-      type: tradeType,
-      date: new Date().toISOString(),
-    };
-    setOrders([newOrder, ...orders]);
-    setPrice("");
-    setAmount("");
+    if (tokenValue) {
+      const matched = tokenPairs.find(
+        (pair) => pair.value.toLowerCase() === tokenValue.toLowerCase()
+      );
+      if (matched && matched.value !== select.value) {
+        setSelectToken(matched);
+      }
+    }
+    // ใส่ [] เพื่อรันแค่ตอน mount
+    // ถ้า tokenPairs ไม่เปลี่ยนระหว่างรันแอป
+  }, []);
+
+  React.useEffect(() => {
+    if (!select) return;
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("token", select.value);
+    // แทนที่ URL ใน browser โดยไม่ reload หน้า
+    window.history.replaceState(null, "", url.toString());
+  }, [select]);
+
+      const [orders, setOrders] = useState<Order[]>([
+      {
+        id: 1,
+        fromToken: select.value,
+        toToken: "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5" as '0xstring',
+        amount: 5,
+        price: 50,
+        type: "sell",
+        date: "2025-05-11 12:34:56",
+      },
+      {
+        id: 5,
+        fromToken: select.value,
+        toToken: "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5" as '0xstring',
+        amount: 3,
+        price: 48.5,
+        type: "buy",
+        date: "2025-05-11 11:30:00",
+      },
+      // ... เพิ่ม order อื่น ๆ ตามต้องการ
+    ]);
+    
+
+  React.useEffect(() => {
+    async function renders(){
+      try {
+        setOnLoading(true)
+         const stateB = await readContracts(config, {
+            contracts: [
+                { ...kap20ABI, address: "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5", functionName: 'balanceOf', args: [address as '0xstring'] },
+                { ...kap20ABI, address: select.value, functionName: 'balanceOf', args: [address as '0xstring'] },
+            ]
+    })
+
+        stateB[0].result !== undefined && setKKUBbal(Number(formatEther(stateB[0].result)))
+        stateB[1].result !== undefined && setTokenBal(Number(formatEther(stateB[1].result)))
+        console.log("kkub Bal",stateB[0].result)
+
+      } catch (error) {
+        setOnLoading(false)
+        
+      }
+        setOnLoading(false)
+      
+    }
+
+    renders();
+  },[select])
+
+  const placeOrder = async () => {
+      let allowanceA;
+      let targetToken = tradeType === "buy" ? "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5" : select.value;
+      let Cur_amount = tradeType === "buy" ? net.toString() : amount.toString();
+
+      allowanceA = await readContract(config, { ...erc20ABI, address: targetToken as '0xstring', functionName: 'allowance', args: [address as '0xstring', CMswapP2PMarketplace] })
+
+      if (allowanceA < parseEther(Cur_amount)) {
+          const { request } = await simulateContract(config, { ...erc20ABI, address: targetToken as '0xstring', functionName: 'approve', args: [CMswapP2PMarketplace, parseEther(Cur_amount)] })
+          const h = await writeContract(config, request)
+          await waitForTransactionReceipt(config, { hash: h })
+      }
+
+      let h, r
+      console.log({
+        isBuy: tradeType === "buy",
+        tokenSale: select.value,
+        currency: "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5",
+        saleAmount: parseEther(Cur_amount),
+        currencyAmount: parseEther(price),
+        unitSize: parseEther("1"),
+        acceptPartial: !isOnlyFullDecimal,
+        referrer: "0x0000000000000000000000000000000000000000"
+    })
+      const { result, request } = await simulateContract(config, {
+          ...CMswapP2PMarketplaceContract,
+          functionName: 'createOrder',
+          args: [
+            tradeType === "buy", // boolean: true for buy, false for sell
+            select.value as '0xstring',
+            "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5" as '0xstring',
+            parseEther(Cur_amount),
+            parseEther(price),
+            parseEther("1"), // unitSize
+            !isOnlyFullDecimal, // acceptPartial: true for partial, false for full units only
+            "0x0000000000000000000000000000000000000000" as '0xstring',
+          ]
+      })
+        r = result
+        h = await writeContract(config, request)
+        await waitForTransactionReceipt(config, { hash: h })
+        setTxupdate(h)
+
+
+  }
+
+  const renderActiveOrder = async () => {
+    let orders = await readContract(config, {
+      ...CMswapP2PMarketplaceContract,
+      functionName: 'getActiveOrdersPaginated',
+      args: [
+        select.value as '0xstring',
+        "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5",
+        BigInt(0),
+        BigInt(50)
+      ]
+    });
+
+    console.log("Active Orders", orders);
+
+    const formattedOrders: Order[] = [];
+
+    for (let i = 0; i < orders.length; i++) {
+      const data = await readContract(config, {
+        ...CMswapP2PMarketplaceContract,
+        functionName: 'orders',
+        args: [orders[i]]
+      });
+
+      const order: Order = {
+        id: Number(orders[i]),
+        fromToken: data[1] ? data[3] as '0xstring' : data[2] as '0xstring', // buy: from = currency, sell: from = tokenSale
+        toToken: data[1] ? data[2] as '0xstring' : data[3] as '0xstring',   // buy: to = tokenSale, sell: to = currency
+        amount: Number(data[1] ? data[5] : data[4]) / 1e18, // amount user will spend
+        price: Number(data[5]) / Number(data[4]), // price = currencyAmount / saleAmount
+        type: data[1] ? 'buy' : 'sell',
+        date: new Date(Number(data[10]) * 1000).toISOString()
+      };
+
+      formattedOrders.push(order);
+      console.log("Formatted Order", order);
+    }
+    setOrders(formattedOrders)
+
   };
+
+  const ownerOrder = async () => {
+    let orders = await readContract(config, {
+      ...CMswapP2PMarketplaceContract,
+      functionName: 'getOrdersByMaker',
+      args: [
+        address as '0xstring',
+      ]
+    });
+
+    console.log("Active Orders", orders);
+
+    const formattedOrders: Order[] = [];
+
+    for (let i = 0; i < orders.length; i++) {
+      const data = await readContract(config, {
+        ...CMswapP2PMarketplaceContract,
+        functionName: 'orders',
+        args: [orders[i]]
+      });
+
+      const order: Order = {
+        id: Number(orders[i]),
+        fromToken: data[1] ? data[3] as '0xstring' : data[2] as '0xstring', // buy: from = currency, sell: from = tokenSale
+        toToken: data[1] ? data[2] as '0xstring' : data[3] as '0xstring',   // buy: to = tokenSale, sell: to = currency
+        amount: Number(data[1] ? data[5] : data[4]) / 1e18, // amount user will spend
+        price: Number(data[5]) / Number(data[4]), // price = currencyAmount / saleAmount
+        type: data[1] ? 'buy' : 'sell',
+        date: new Date(Number(data[10]) * 1000).toISOString()
+      };
+
+      formattedOrders.push(order);
+      console.log("Formatted Order", order);
+    }
+    setOrders(formattedOrders)
+
+  };
+
+  React.useEffect(() => {
+    renderActiveOrder();
+  }, [select]);
+
+
+  const filteredPairs = tokenPairs.filter((pair) => {
+    // กรองตาม filter
+    const matchesFilter =
+      filter === "all" || pair.desc.toLowerCase() === filter.toLowerCase();
+
+    // กรองตาม searchTerm (เช็คทั้งชื่อและ desc)
+    const matchesSearch =
+      pair.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pair.desc.toLowerCase().includes(searchTerm.toLowerCase());
+
+    return matchesFilter && matchesSearch;
+  });
+
 
   const handleCancelOrder = (id: number) => {
     setOrders(orders.filter((o) => o.id !== id));
@@ -395,54 +390,78 @@ export default function ExchangePage() {
           </div>
 
           {/* Form */}
-          <div className="space-y-4 bg-[#2a2b3c] p-4 rounded-xl">
-            {/* Price Input */}
-            <div className="flex items-center justify-between bg-[#1e1f30] p-2 rounded-lg">
-              <label className="text-sm text-gray-300 w-24">Price</label>
-              <input
-                type="number"
-                className="bg-transparent text-right w-full mr-2 outline-none"
-                placeholder="0.00"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-              />
-              <span className="text-xs text-gray-400">KKUB</span>
-            </div>
+<div className="space-y-4 bg-[#2a2b3c] p-4 rounded-xl text-sm">
+  {/* Balance Info */}
+  <div className="text-right text-gray-400">
+    Your Balance:{" "}
+    {tradeType === "buy"
+      ? `${kkub.toLocaleString(undefined, { maximumFractionDigits: 4 })} KKUB`
+      : `${tokenBal.toLocaleString(undefined, { maximumFractionDigits: 4 })} ${select.name}`}
+  </div>
 
-            {/* Amount Input */}
-            <div className="flex items-center justify-between bg-[#1e1f30] p-2 rounded-lg">
-              <label className="text-sm text-gray-300 w-24">Amount</label>
-              <input
-                type="number"
-                className="bg-transparent text-right w-full mr-2 outline-none"
-                placeholder="0"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-              <span className="text-xs text-gray-400">{token.symbol}</span>
-            </div>
+  {/* Price Input */}
+  <div className="flex items-center justify-between bg-[#1e1f30] p-2 rounded-lg">
+    <label className="text-sm text-gray-300 w-28">Price per {select.name}</label>
+    <input
+      type="number"
+      className="bg-transparent text-right w-full mr-2 outline-none"
+      placeholder="0.00"
+      value={price}
+      onChange={(e) => setPrice(e.target.value)}
+    />
+    <span className="text-xs text-gray-400">KKUB</span>
+  </div>
 
-            {/* Total */}
-            <div className="flex items-center justify-between text-sm text-gray-400 px-2">
-              <span>Total</span>
-              <span className="font-bold text-white">
-                {price && amount
-                  ? (parseFloat(price) * parseFloat(amount)).toFixed(4)
-                  : "0.00"}{" "}
-                KKUB
-              </span>
-            </div>
+  {/* Amount Input */}
+  <div className="flex items-center justify-between bg-[#1e1f30] p-2 rounded-lg">
+    <label className="text-sm text-gray-300 w-28">Amount</label>
+    <input
+      type="number"
+      className="bg-transparent text-right w-full mr-2 outline-none"
+      placeholder="0"
+      value={amount}
+      onChange={(e) => setAmount(e.target.value)}
+    />
+    <span className="text-xs text-gray-400">{select.name}</span>
+  </div>
 
-            {/* Submit Button */}
-            <button
-              onClick={handleOrder}
-              className={`w-full py-2 rounded-lg font-semibold ${
-                tradeType === "buy" ? "bg-green-600" : "bg-red-600"
-              }`}
-            >
-              {tradeType === "buy" ? "BUY" : "SELL"} {token.symbol}
-            </button>
-          </div>
+  {/* Summary with Fee */}
+  {price && amount && (
+    <div className="space-y-1 text-gray-300 bg-[#1e1f30] rounded-lg px-3 py-2">
+      <div className="flex justify-between">
+        <span>{tradeType === "buy" ? "You Pay (Before Fee)" : "You Receive (Before Fee)"}</span>
+        <span>{total.toFixed(8)} KKUB</span>
+      </div>
+      <div className="flex justify-between">
+        <span>Fee (0.3%)</span>
+        <span>{fee.toFixed(8)} KKUB</span>
+      </div>
+      <div className="flex justify-between font-bold text-white">
+        <span>{tradeType === "buy" ? "Total You Pay" : "Net You Receive"}</span>
+        <span>{net.toFixed(8)} KKUB</span>
+      </div>
+      <hr className="my-1 border-gray-600" />
+      <div className="flex justify-between">
+        <span>{tradeType === "buy" ? "You Get" : "You Sell"}</span>
+        <span>{amount} {select.name}</span>
+      </div>
+    </div>
+  )}
+
+  {/* Submit Button */}
+  <button
+    onClick={placeOrder}
+    className={`w-full py-2 rounded-lg font-semibold uppercase transition-colors duration-200 ${
+      tradeType === "buy"
+        ? "bg-green-600 hover:bg-green-700"
+        : "bg-red-600 hover:bg-red-700"
+    }`}
+    disabled={!select?.name}
+  >
+    {tradeType === "buy" ? "Buy" : "Sell"} {select?.name || ""}
+  </button>
+</div>
+
         </div>
 
       {/* Right Panel: Order Book */}

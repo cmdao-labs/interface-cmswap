@@ -1,6 +1,6 @@
 import { createPublicClient, http, erc20Abi } from 'viem'
 import { bitkub } from 'viem/chains'
-import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3staker, WrappedNative, kap20abi,CMswapUniSmartRouteABIV2,UniswapPair,BitkubEvmKYCABI,bkcUnwappedKKUB,cmSwapRefProgramABI } from '@/app/lib/abi'
+import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3staker, WrappedNative, kap20abi,CMswapUniSmartRouteABIV2,UniswapPair,BitkubEvmKYCABI,CMswapP2PMarketplaceABI,bkcUnwappedKKUB,cmSwapRefProgramABI } from '@/app/lib/abi'
 
 // swap
 export const tokens: {name: string, value: '0xstring', logo: string}[] = [
@@ -14,6 +14,41 @@ export const tokens: {name: string, value: '0xstring', logo: string}[] = [
     { name: 'KJFIN', value: '0x9BEc198c43B0714aEEd3c1bF21498ecBeFEB19F8' as '0xstring', logo: '/kjfin.webp' }, */
     // can PR listing here
 ]
+
+// market
+type Token = {
+  name: string;
+  value: '0xstring'; 
+  logo: string;
+};
+export const game_tokens: Record<string, Token[]> = {
+    'Metal Valley': [
+        {name: 'Sola Booster',value: '0x619bdEB706ee9407D6f5320Dfeac576ac0eD4197' as '0xstring',logo: './market/Metal Valley/sola-booster.webp'},
+        {name: 'Miner K',value: '0xd15884036461b16ea682119f59125dfFd9A32fed' as '0xstring',logo: './market/Metal Valley/miner-k.webp'},
+        {name: 'Giga Cube',value: '0x5Ff0CE0b02Ac5A1CafB9F1dA16a3f8BbeD1629A8' as '0xstring',logo: './market/Metal Valley/giga-cube.png'},
+        {name: 'Violet Mineral',value: '0x16516b5bc9ab5A2E2Fc20659b73F205111fd6623' as '0xstring',logo: './market/Metal Valley/violet-mineral.png'},
+        {name: 'Yellow Mineral',value: '0x27C88Ee775B3F5EDCcEa3932455Ba52CBBc378C9' as '0xstring',logo: './market/Metal Valley/yellow-mineral.png'},
+        {name: 'Verdant Mineral',value: '0xAEc47aE92Cd1D7693d227318df580761F514B8f1' as '0xstring',logo: './market/Metal Valley/verdant-mineral.webp'},
+        {name: 'Azure Mineral',value: '0x3183d0c8e0aF99f85CeaFA785Ba56f43e24781a6' as '0xstring',logo: './market/Metal Valley/azure-mineral.webp'},
+        {name: 'Crimson Mineral',value: '0x779BeA18C340De164C13DcE445bE0Fe54B02B72A' as '0xstring',logo: './market/Metal Valley/crimson-mineral.webp'},
+    ],
+    'Morning Moon Village': [
+        { name: 'Adult Grass Hopper', value: '0xee1d9456e5131e3401041C7C568E0957b937cCb5' as '0xstring', logo: './market/Morning Moon Village/AGH.webp' },
+        { name: 'Arcane Powder', value: '0x136609236fadE78113d1690D6546428b1DEd8293' as '0xstring', logo: './market/Morning Moon Village/arcane-powder.webp' },
+        { name: 'Hard Scale', value: '0x8E464188Ab0F6459a231ce32Ed3ab4E4F7ef57FD' as '0xstring', logo: './market/Morning Moon Village/hard_scale.webp' },
+        { name: 'Terra Core', value: '0xcd774ebd98ff1C9A648F152f8fc855E7360a6E92' as '0xstring', logo: './market/Morning Moon Village/terra_core.webp' },
+        { name: 'Lucent Tear', value: '0x8fB2788EDc797cDF52A84e4A4291B82619200073' as '0xstring', logo: './market/Morning Moon Village/Lucent Tear.webp' },
+        { name: 'Illuminated Soul Fragment', value: '0xbb546B399b1767883b083Fef9E69a16dd0185cDD' as '0xstring', logo: './market/Morning Moon Village/illuminated_soul_fragment.webp' },
+        { name: 'Mangosteen', value: '0x1786a5391EaA5cfd5c8bc4376991B993380Db102' as '0xstring', logo: './market/Morning Moon Village/mangosteen.webp' },
+        { name: 'Cabbage', value: '0xE3bee928D481b40BB6D0F0EDbfD888a7845CF622' as '0xstring', logo: './market/Morning Moon Village/crop-cabbage.png' },
+        { name: 'Carrot', value: '0x3937dDAd2Ad8A9Ac7EFbf7C1Cb2B2D9b68B7d048' as '0xstring', logo: './market/Morning Moon Village/crop-carrot.webp' },
+        { name: 'Coffee', value: '0xb9431CD242692a2557c85CFf9638d45B8E8F9D25' as '0xstring', logo: './market/Morning Moon Village/COFFEEBEAN.webp' },
+        { name: 'Corn', value: '0x4fA393FC50BcDF367145163b920bB37C21e596ec' as '0xstring', logo: './market/Morning Moon Village/crop-corn.webp' },
+        { name: 'Tomato', value: '0x9Ea7E0435B5E50e1DCBB8Eacd63F0dbD3003BdAA' as '0xstring', logo: './market/Morning Moon Village/crop-tomato.webp' },
+        ]
+
+}
+
 export const V3_FACTORY = '0x090C6E5fF29251B1eF9EC31605Bdd13351eA316C' as '0xstring'
 export const POSITION_MANAGER = '0xb6b76870549893c6b59E7e979F254d0F9Cca4Cc9' as '0xstring'
 export const positionManagerCreatedAt = BigInt(25033368)
@@ -23,6 +58,8 @@ export const CMswapUniSmartRoute = '0x01837156518e60362048e78d025a419C51346f55' 
 export const BitkubEvmKYC = '0x409CF41ee862Df7024f289E9F2Ea2F5d0D7f3eb4' as '0xstring' // kyc for unwrap kkub
 export const bkcUnwapped = '0xff76DD8086428EBC4Ed1b14B0e56E95eDc46a315' as '0xstring'
 export const cmSwapRefProgram = '0xf74C099613eF374Aa3cCE75fA8c0B8eF1928f759' as '0xstring'
+
+export const CMswapP2PMarketplace = '0x9068401504b317495356d3fed502C1D3344d346D' as '0xstring'
 
 export const v3FactoryContract = { chainId: 96, abi: v3Factory, address: V3_FACTORY } as const
 export const positionManagerContract = { chainId: 96, address: POSITION_MANAGER, abi: NonfungiblePositionManager } as const
@@ -38,5 +75,7 @@ export const unwarppedNative = {chainId:96, abi: bkcUnwappedKKUB, address: bkcUn
 export const CMswapUniSmartRouteContractV2 =  { chainId: 96, abi: CMswapUniSmartRouteABIV2 , address: CMswapUniSmartRoute} as const
 export const UniswapPairv2PoolABI = { chainId: 96, abi: UniswapPair} as const
 export const BitkubEvmKYCContract = {chainId: 96, abi: BitkubEvmKYCABI, address: BitkubEvmKYC} as const
+export const CMswapP2PMarketplaceContract = {chainId: 96, abi: CMswapP2PMarketplaceABI, address: CMswapP2PMarketplace} as const
+
 export const cmSwapRefProgramContract = {chainId: 96, abi: cmSwapRefProgramABI, address: cmSwapRefProgram} as const
 export const publicClient = createPublicClient({ chain: bitkub, transport: http() })
