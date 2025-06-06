@@ -24,8 +24,19 @@ type Token = {
 export const game_tokens: Record<string, Token[]> = {
     'Metal Valley': [
         {name: 'Sola Booster',value: '0x619bdEB706ee9407D6f5320Dfeac576ac0eD4197' as '0xstring',logo: './market/Metal Valley/sola-booster.webp'},
-        {name: 'Miner K',value: '0xd15884036461b16ea682119f59125dfFd9A32fed' as '0xstring',logo: './market/Metal Valley/miner-k.webp'},
+        {name: 'Hyper Cube',value: '0x8d35C6719e34ea938bf60Ad60D59557C8376298F' as '0xstring',logo: './market/Metal Valley/hyper-cube.webp'},
         {name: 'Giga Cube',value: '0x5Ff0CE0b02Ac5A1CafB9F1dA16a3f8BbeD1629A8' as '0xstring',logo: './market/Metal Valley/giga-cube.png'},
+        {name: 'Super Cube',value: '0x1B6eE9C3ff312C5E4E09BC4BEe2FFd4C67eaF40F' as '0xstring',logo: './market/Metal Valley/super-cube.png'},
+        {name: 'Meta Cube',value: '0x5325563918e9Af18E1f007C4033D8C0f4FAD8478' as '0xstring',logo: './market/Metal Valley/meta-cube.png'},
+        {name: 'Miner K',value: '0xd15884036461b16ea682119f59125dfFd9A32fed' as '0xstring',logo: './market/Metal Valley/miner-k.webp'},
+
+        {name: 'Titanite',value: '0x5ef97c05078e053b15Ef81737CE9F900cb616D7a' as '0xstring',logo: './market/Metal Valley/titanite-crystal.webp'},
+        {name: 'Emberite',value: '0x3726f02F858147d1CD2798Eb31583eDfD549f36e' as '0xstring',logo: './market/Metal Valley/emberite-crystal.webp'},
+        {name: 'Thunderite',value: '0x89fD23f8c8084C6e5550cE26D1d453E40bf1ed8d' as '0xstring',logo: './market/Metal Valley/thunderite-crystal.webp'},
+        {name: 'Venomite',value: '0xe3E89870DE151d53ADBb56CA029eEb4854939AE6' as '0xstring',logo: './market/Metal Valley/venomite-crystal.webp'},
+        {name: 'Starite',value: '0xe60285406dD7Ed46568C64E64c0D4Ac73C42E809' as '0xstring',logo: './market/Metal Valley/starite-crystal.webp'},
+        {name: 'Purity',value: '0x8Ea582cAd1edD4f5D3BA9f7194A7954539e4fc86' as '0xstring',logo: './market/Metal Valley/purity-crystal.webp'},
+
         {name: 'Violet Mineral',value: '0x16516b5bc9ab5A2E2Fc20659b73F205111fd6623' as '0xstring',logo: './market/Metal Valley/violet-mineral.png'},
         {name: 'Yellow Mineral',value: '0x27C88Ee775B3F5EDCcEa3932455Ba52CBBc378C9' as '0xstring',logo: './market/Metal Valley/yellow-mineral.png'},
         {name: 'Verdant Mineral',value: '0xAEc47aE92Cd1D7693d227318df580761F514B8f1' as '0xstring',logo: './market/Metal Valley/verdant-mineral.webp'},
