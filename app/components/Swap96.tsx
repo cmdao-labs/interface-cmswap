@@ -68,29 +68,29 @@ export default function Swap96({
         }, [])
 
         React.useEffect(() => {
-        console.log("hasInitializedFromParams : ", hasInitializedFromParams)
-        }, [hasInitializedFromParams])
+            console.log("hasInitializedFromParams : ", hasInitializedFromParams)
+            }, [hasInitializedFromParams])
 
-        const updateURLWithTokens = (
-        tokenAValue?: string,
-        tokenBValue?: string,
-        referralCode?: string
-        ) => {
-        const url = new URL(window.location.href)
+            const updateURLWithTokens = (
+            tokenAValue?: string,
+            tokenBValue?: string,
+            referralCode?: string
+            ) => {
+            const url = new URL(window.location.href)
 
-        if (tokenAValue) url.searchParams.set('input', tokenAValue)
-        else url.searchParams.delete('tokenA')
+            if (tokenAValue) url.searchParams.set('input', tokenAValue)
+            else url.searchParams.delete('tokenA')
 
-        if (tokenBValue) url.searchParams.set('output', tokenBValue)
-        else url.searchParams.delete('tokenB')
+            if (tokenBValue) url.searchParams.set('output', tokenBValue)
+            else url.searchParams.delete('tokenB')
 
-        if (referralCode && referralCode.startsWith('0x')) {
-            url.searchParams.set('ref', referralCode)
-        } else {
-            url.searchParams.delete('ref')
-        }
+            if (referralCode && referralCode.startsWith('0x')) {
+                url.searchParams.set('ref', referralCode)
+            } else {
+                url.searchParams.delete('ref')
+            }
 
-        window.history.replaceState({}, '', url.toString())
+            window.history.replaceState({}, '', url.toString())
         }
 
     const checkBitkubEVMKycLevel = async () => {
