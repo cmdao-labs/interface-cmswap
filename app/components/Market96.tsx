@@ -1,10 +1,19 @@
 import React, { useState } from "react";
 import { ArrowDownUp, X } from "lucide-react";
 import { game_tokens } from "../lib/96";
-import { useAccount } from 'wagmi'
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core'
-import {  erc20ABI, kap20ABI } from '@/app/lib/96'
-import { config } from '@/app/config'
+import { useAccount } from "wagmi";
+import {
+  simulateContract,
+  waitForTransactionReceipt,
+  writeContract,
+  readContract,
+  readContracts,
+  getBalance,
+  sendTransaction,
+  type WriteContractErrorType,
+} from "@wagmi/core";
+import { erc20ABI, kap20ABI } from "@/app/lib/96";
+import { config } from "@/app/config";
 import { formatEther } from "viem";
 
 type Token = {
@@ -33,6 +42,10 @@ type TokenPair = {
   img2: string; // logo ของ KKUB (คงที่)
   value: "0xstring";
 };
+
+const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
 
 function generateTokenPairs(gameTokens: Record<string, Token[]>): TokenPair[] {
   const pairs: TokenPair[] = [];
@@ -72,14 +85,21 @@ function groupOrdersByPrice(orders: Order[], type: "buy" | "sell") {
     .sort((a, b) => (type === "buy" ? b[0] - a[0] : a[0] - b[0]));
 }
 
+function toSlugName(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, '-');
+}
+
 
 export default function Market96({
-    setIsLoading, setErrMsg,
+  setIsLoading,
+  setErrMsg,
 }: {
-    setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
-    setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>,
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setErrMsg: React.Dispatch<
+    React.SetStateAction<WriteContractErrorType | null>
+  >;
 }) {
-  const { address } = useAccount()
+  const { address } = useAccount();
   const [tradeType, setTradeType] = useState<"buy" | "sell">("buy");
   const [price, setPrice] = useState("");
   const [amount, setAmount] = useState("");
@@ -88,64 +108,95 @@ export default function Market96({
   >("all");
   const [searchTerm, setSearchTerm] = useState("");
   const tokenPairs: TokenPair[] = generateTokenPairs(game_tokens);
-  const [select, setSelectToken] = useState(tokenPairs[0]); 
-  const [kkub,setKKUBbal] = useState(0.00);
-  const [tokenBal,setTokenBal] = useState(0.00);
-  const [onLoading, setOnLoading] = React.useState(false)
-const [view, setView] = useState<"Orders" | "History">("Orders");
+  const [select, setSelectToken] = useState(tokenPairs[0]);
+  const [kkub, setKKUBbal] = useState(0.0);
+  const [tokenBal, setTokenBal] = useState(0.0);
+  const [onLoading, setOnLoading] = React.useState(false);
+  const [view, setView] = useState<"Orders" | "History">("Orders");
 
   const baseExpURL = "https://www.kubscan.com/";
 
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const tokenValue = urlParams.get("token");
+    const tokenSlug = urlParams.get("token");
 
-    if (tokenValue) {
+    if (tokenSlug) {
       const matched = tokenPairs.find(
-        (pair) => pair.value.toLowerCase() === tokenValue.toLowerCase()
+        (pair) => toSlugName(pair.name) === tokenSlug.toLowerCase()
       );
-      if (matched && matched.value !== select.value) {
+
+      if (matched && matched.value !== select?.value) {
         setSelectToken(matched);
       }
     }
-    // ใส่ [] เพื่อรันแค่ตอน mount
-    // ถ้า tokenPairs ไม่เปลี่ยนระหว่างรันแอป
   }, []);
 
+
   React.useEffect(() => {
-    if (!select) return;
+    if (!select || !address) return;
 
     const url = new URL(window.location.href);
-    url.searchParams.set("token", select.value);
-    // แทนที่ URL ใน browser โดยไม่ reload หน้า
+
+    // 👇 แปลงชื่อเป็น slug ก่อนใส่ใน URL
+    const tokenSlug = toSlugName(select.name);
+    url.searchParams.set("token", tokenSlug);
+    url.searchParams.set("ref", address);
+
     window.history.replaceState(null, "", url.toString());
-  }, [select]);
+  }, [select, address]);
+
+  function getCurrentLink(select: { name: string } | null, address: string | null): string {
+    const url = new URL(window.location.href);
+
+    if (select?.name) {
+      const tokenSlug = toSlugName(select.name);
+      url.searchParams.set("token", tokenSlug);
+    }
+
+    if (address) {
+      url.searchParams.set("ref", address);
+    }
+
+    return url.toString();
+  }
+
 
   React.useEffect(() => {
-    async function renders(){
+    async function renders() {
       try {
-        setOnLoading(true)
-         const stateB = await readContracts(config, {
-            contracts: [
-                { ...kap20ABI, address: "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5", functionName: 'balanceOf', args: [address as '0xstring'] },
-                { ...kap20ABI, address: select.value, functionName: 'balanceOf', args: [address as '0xstring'] },
-            ]
-    })
+        setOnLoading(true);
+        const stateB = await readContracts(config, {
+          contracts: [
+            {
+              ...kap20ABI,
+              address: "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5",
+              functionName: "balanceOf",
+              args: [address as "0xstring"],
+            },
+            {
+              ...kap20ABI,
+              address: select.value,
+              functionName: "balanceOf",
+              args: [address as "0xstring"],
+            },
+          ],
+        });
 
-        stateB[0].result !== undefined && setKKUBbal(Number(formatEther(stateB[0].result)))
-        stateB[1].result !== undefined && setTokenBal(Number(formatEther(stateB[1].result)))
-        console.log("kkub Bal",stateB[0].result)
-
+        stateB[0].result !== undefined &&
+          setKKUBbal(Number(formatEther(stateB[0].result)));
+        stateB[1].result !== undefined &&
+          setTokenBal(Number(formatEther(stateB[1].result)));
+        console.log("kkub Bal", stateB[0].result);
       } catch (error) {
-        setOnLoading(false)
-        
+        setOnLoading(false);
       }
-        setOnLoading(false)
-      
+      setOnLoading(false);
     }
 
     renders();
-  },[select])
+  }, [select]);
+
+
 
   const [orders, setOrders] = useState<Order[]>([
     {
@@ -333,7 +384,6 @@ const [view, setView] = useState<"Orders" | "History">("Orders");
           <div className="h-[550px] bg-[#2a2b3c] mb-6 rounded-lg flex items-center justify-center">
             <span className="text-gray-500">[Trading Chart Coming Soon]</span>
           </div>
-
           {/* Trade Buttons */}
           <div className="flex space-x-4 mb-4">
             <button
@@ -353,14 +403,23 @@ const [view, setView] = useState<"Orders" | "History">("Orders");
               Sell
             </button>
           </div>
-
           {/* Form */}
           <div className="space-y-4 bg-[#2a2b3c] p-4 rounded-xl">
             {/* Price Input */}
             {tradeType === "buy" ? (
-            <div className="text-sm text-gray-400 text-right">Your Balance : {kkub.toLocaleString(undefined,{maximumFractionDigits:4})} KKUB</div>
+              <div className="text-sm text-gray-400 text-right">
+                Your Balance :{" "}
+                {kkub.toLocaleString(undefined, { maximumFractionDigits: 4 })}{" "}
+                KKUB
+              </div>
             ) : (
-            <div className="text-sm text-gray-400 text-right">Your Balance : {tokenBal.toLocaleString(undefined,{maximumFractionDigits:4})} {select.name}</div>
+              <div className="text-sm text-gray-400 text-right">
+                Your Balance :{" "}
+                {tokenBal.toLocaleString(undefined, {
+                  maximumFractionDigits: 4,
+                })}{" "}
+                {select.name}
+              </div>
             )}
             <div className="flex items-center justify-between bg-[#1e1f30] p-2 rounded-lg">
               <label className="text-sm text-gray-300 w-24">Price</label>
@@ -398,18 +457,37 @@ const [view, setView] = useState<"Orders" | "History">("Orders");
               </span>
             </div>
 
-    {/* Submit Button */}
-    <button
-      onClick={handleOrder}
-      className={`w-full py-2 rounded-lg font-semibold uppercase transition-colors duration-200 ${
-        tradeType === "buy" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
-      }`}
-      disabled={!select?.name}
-    >
-      {tradeType === "buy" ? "Buy" : "Sell"} {select?.name || ""}
-    </button>
-
+            {/* Submit Button */}
+            <button
+              onClick={handleOrder}
+              className={`w-full py-2 rounded-lg font-semibold uppercase transition-colors duration-200 ${
+                tradeType === "buy"
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-red-600 hover:bg-red-700"
+              }`}
+              disabled={!select?.name}
+            >
+              {tradeType === "buy" ? "Buy" : "Sell"} {select?.name || ""}
+            </button>
           </div>
+          <div className="mt-8 w-full px-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-black/30 border border-gray-700 rounded-xl p-3">
+            <div className="flex-1 overflow-hidden">
+              <p className="text-xs text-gray-400 mb-1">Share to your friend, earn <span className="text-emerald-400 font-bold">15%</span></p>
+              <p className="font-mono text-[12px] text-white truncate">
+                {getCurrentLink(select, address as '0xstring')}
+              </p>
+            </div>
+
+            <button
+              onClick={() => copyToClipboard(getCurrentLink(select, address as '0xstring'))}
+              className="px-4 py-2 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-lg text-black font-bold hover:scale-105 transition-transform"
+            >
+              Copy
+            </button>
+          </div>
+        </div>
+
         </div>
 
         {/* Right Panel: Order Book */}
@@ -632,7 +710,9 @@ const [view, setView] = useState<"Orders" | "History">("Orders");
                 <span>{(order.amount * order.price).toFixed(2)} KKUB</span>
               </div>
             ))}
-          </>)}
+          </>
+        )}
       </div>
-      </div>
-)}
+    </div>
+  );
+}
