@@ -474,7 +474,7 @@ export default function Market96({
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-black/30 border border-gray-700 rounded-xl p-3">
             <div className="flex-1 overflow-hidden">
               <p className="text-xs text-gray-400 mb-1">Share to your friend, earn <span className="text-emerald-400 font-bold">15%</span></p>
-              <p className="font-mono text-[12px] text-white truncate">
+              <p className="font-mono text-[12px] text-white ">
                 {getCurrentLink(select, address as '0xstring')}
               </p>
             </div>
