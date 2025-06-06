@@ -244,7 +244,7 @@ export default async function Event({
                     : 'border-slate-500'
                 } 
                 ${res.action === 'launch' ? 'border-double border-4 border-emerald-300' : ''} 
-                ${index >= 3 ? 'hidden xl:block' : ''}
+                ${index >= 2 ? 'hidden xl:block' : ''}
                 `
             }
             key={index}
