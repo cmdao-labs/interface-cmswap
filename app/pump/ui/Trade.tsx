@@ -1108,81 +1108,10 @@ export default function Trade({
             className="block xl:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start"
             style={{ zIndex: 1 }}
           >
-            <div className="w-full flex flex-col md:flex-row flex-wrap justify-between text-xs xl:text-md">
-              <div className="flex flex-row flex-wrap gap-2">
-                <span className="text-emerald-300">
-                  {result2.status === "success" && result2.data![0].result}
-                </span>
-                <span>
-                  {result2.status === "success" &&
-                    "[" + result2.data![1].result + "]"}
-                </span>
-                <span className="flex flex-row gap-2">
-                  <span>
-                    CA: {ticker.slice(0, 5)}...{ticker.slice(37)}
-                  </span>
-                  <div className="flex items-center gap-1 ml-2">
-                    <button
-                      onClick={() => copyToClipboard(ticker)}
-                      className="flex items-center gap-2 bg-water-300 hover:bg-neutral-700 px-3 py-2 -mt-2 rounded-md transition-colors text-xs cursor-pointer"
-                      title="Copy contract address"
-                    >
-                      {copiedAddress === ticker ? (
-                        <>
-                          <Check size={16} />
-                          Copied!
-                        </>
-                      ) : (
-                        <Copy size={16} />
-                      )}
-                    </button>
-                    <button
-                      className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 -mt-2 rounded-md transition-colors text-sm cursor-pointer"
-                      onClick={async () => {
-                        await ethereum.request({
-                          method: "wallet_watchAsset",
-                          params: {
-                            type: "ERC20",
-                            options: {
-                              address: ticker,
-                              symbol:
-                                result2.status === "success" &&
-                                result2.data![1].result,
-                              decimals: 18,
-                              image:
-                                result2.status === "success" &&
-                                result2.data![3].result!.slice(0, 7) ===
-                                  "ipfs://"
-                                  ? "https://gateway.commudao.xyz/ipfs/" +
-                                    result2.data![3].result!.slice(7)
-                                  : "https://gateway.commudao.xyz/ipfs/" +
-                                    result2.data![3].result!,
-                            },
-                          },
-                        });
-                      }}
-                    >
-                      <Plus size={16} />
-                    </button>
-                    <Link
-                      href={_explorer + "address/" + ticker}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                      prefetch={false}
-                      className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 -mt-2 rounded-md transition-colors text-sm"
-                      title="View on Etherscan"
-                    >
-                      <Image
-                        src="/bs.png"
-                        alt="blockscout"
-                        height={16}
-                        width={16}
-                      />
-                    </Link>
-                  </div>
-                </span>
-              </div>
-              <span>
+            <div className="w-full flex flex-col items-start md:flex-row flex-wrap justify-between text-xs xl:text-md">
+              <span className="text-emerald-300 text-2xl mr-6">{result2.status === "success" && result2.data![0].result}</span>
+              <span className="mr-6">{result2.status === "success" && "[" + result2.data![1].result + "]"}</span>
+              <span className="mr-6">
                 Price:{" "}
                 <span className="text-emerald-300">
                   {result3.status === "success"
@@ -1195,9 +1124,7 @@ export default function Trade({
                       : Intl.NumberFormat("en-US", {
                           notation: "compact",
                           compactDisplay: "short",
-                        }).format(
-                          1 / (Number(state[3].result![0]) / 2 ** 96) ** 2
-                        )
+                        }).format(1 / (Number(state[3].result![0]) / 2 ** 96) ** 2)
                     : "Fetching..."}
                 </span>{" "}
                 {chain === "kub" && mode === "pro" && "KUB"}
@@ -1207,7 +1134,7 @@ export default function Trade({
                   "CMM"}
                 {chain === "monad" && mode === "pro" && "MON"}
               </span>
-              <span>
+              <span className="mr-6">
                 Market Cap:{" "}
                 <span className="text-emerald-300">
                   {result3.status === "success"
@@ -1217,8 +1144,7 @@ export default function Trade({
                           notation: "compact",
                           compactDisplay: "short",
                         }).format(
-                          (Number(state[3].result![0]) / 2 ** 96) ** 2 *
-                            1000000000
+                          (Number(state[3].result![0]) / 2 ** 96) ** 2 * 1000000000
                         )
                       : Intl.NumberFormat("en-US", {
                           notation: "compact",
@@ -1237,7 +1163,7 @@ export default function Trade({
                 {chain === "monad" && mode === "pro" && "MON"}
               </span>
               {result2.status === "success" && (
-                <span>
+                <span className="mr-6">
                   Creator:{" "}
                   <Link
                     href={
@@ -1311,6 +1237,65 @@ export default function Trade({
                     )}
                 </span>
               )}
+              <span className="flex items-center gap-1 mr-6">
+                <span>CA: {ticker.slice(0, 5)}...{ticker.slice(37)}</span>
+                <button
+                  onClick={() => copyToClipboard(ticker)}
+                  className="flex items-center gap-2 bg-water-300 hover:bg-neutral-700 px-3 py-2 rounded-md transition-colors text-xs cursor-pointer"
+                  title="Copy contract address"
+                >
+                  {copiedAddress === ticker ? (
+                    <>
+                      <Check size={16} />
+                      Copied!
+                    </>
+                  ) : (
+                    <Copy size={16} />
+                  )}
+                </button>
+                <button
+                  className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm cursor-pointer"
+                  onClick={async () => {
+                    await ethereum.request({
+                      method: "wallet_watchAsset",
+                      params: {
+                        type: "ERC20",
+                        options: {
+                          address: ticker,
+                          symbol:
+                            result2.status === "success" &&
+                            result2.data![1].result,
+                          decimals: 18,
+                          image:
+                            result2.status === "success" &&
+                            result2.data![3].result!.slice(0, 7) === "ipfs://"
+                              ? "https://gateway.commudao.xyz/ipfs/" +
+                                result2.data![3].result!.slice(7)
+                              : "https://gateway.commudao.xyz/ipfs/" +
+                                result2.data![3].result!,
+                        },
+                      },
+                    });
+                  }}
+                >
+                  <Plus size={16} />
+                </button>
+                <Link
+                  href={_explorer + "address/" + ticker}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  prefetch={false}
+                  className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm"
+                  title="View on Etherscan"
+                >
+                  <Image
+                    src="/bs.png"
+                    alt="blockscout"
+                    height={16}
+                    width={16}
+                  />
+                </Link>
+              </span>
             </div>
             <div className="w-full h-fit xl:h-[300px] flex flex-col gap-6 item-center justify-start text-left">
               <div className="flex flex-row justify-start mt-5">
@@ -1870,26 +1855,26 @@ export default function Trade({
                 </button>
               )}
             </div>
-            <div className="flex justify-end gap-2 mb-3 text-xs">
-            {["CMswap", "GeckoTerminal"].map((type) => (
-              <button
-                key={type}
-                onClick={() => setGrapthType(type)}
-                className={`
-                            px-3 py-1.5 text-sm  
-                            transition-all duration-200 ease-in-out
-                            ${
-                              grapthType === type
-                                ? "text-teal-600"
-                                : " text-white"
-                            }
-                            cursor-pointer
-                        `}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
+            <div className="w-full flex justify-end items-end gap-2 mt-3 text-xs">
+              {["CMswap", "GeckoTerminal"].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setGrapthType(type)}
+                  className={`
+                              px-3 py-1.5 text-sm  
+                              transition-all duration-200 ease-in-out
+                              ${
+                                grapthType === type
+                                  ? "text-teal-600"
+                                  : " text-white"
+                              }
+                              cursor-pointer
+                          `}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
 
           {grapthType === "GeckoTerminal" ? (
             <iframe
