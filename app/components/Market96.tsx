@@ -3,28 +3,83 @@ import { ArrowDownUp, X } from "lucide-react";
 import { game_tokens } from "../lib/96";
 import { useAccount } from 'wagmi'
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core'
-import { tokens,  erc20ABI, kap20ABI,CMswapP2PMarketplace, CMswapP2PMarketplaceContract } from '@/app/lib/96'
-import { formatEther, parseEther } from 'viem'
-
+import {  erc20ABI, kap20ABI } from '@/app/lib/96'
 import { config } from '@/app/config'
+import { formatEther } from "viem";
 
 type Token = {
   name: string;
-  symbol: string;
-  address: string;
+  logo: string;
+  value: string; // แทน address
 };
 
 type Order = {
   id: number;
   fromToken: "0xstring";
-  toToken:  "0xstring";
+  toToken: Token;
   amount: number;
   price: number;
   type: "buy" | "sell";
   date: string;
 };
 
-export default function ExchangePage() {
+const KKUB_LOGO = "./96.png";
+const DEFAULT_LOGO = "../favicon.ico";
+
+type TokenPair = {
+  name: string; // เช่น "Sola Booster / KKUB"
+  desc: string; // เช่น "Metal Valley"
+  img1: string; // logo ของ token หรือ placeholder
+  img2: string; // logo ของ KKUB (คงที่)
+  value: "0xstring";
+};
+
+function generateTokenPairs(gameTokens: Record<string, Token[]>): TokenPair[] {
+  const pairs: TokenPair[] = [];
+
+  for (const [gameName, tokens] of Object.entries(gameTokens)) {
+    tokens.forEach((token) => {
+      pairs.push({
+        name: `${token.name}`,
+        desc: gameName,
+        img1:
+          token.logo && token.logo.trim() !== "" ? token.logo : DEFAULT_LOGO,
+        img2: KKUB_LOGO,
+        value: token.value as "0xstring",
+      });
+    });
+  }
+
+  // เรียงลำดับ A-Z ตาม name
+  pairs.sort((a, b) => a.name.localeCompare(b.name));
+  return pairs;
+}
+
+function groupOrdersByPrice(orders: Order[], type: "buy" | "sell") {
+  const grouped: Record<number, number> = {};
+
+  orders
+    .filter((o) => o.type === type)
+    .forEach((o) => {
+      if (!grouped[o.price]) {
+        grouped[o.price] = 0;
+      }
+      grouped[o.price] += o.amount;
+    });
+
+  return Object.entries(grouped)
+    .map(([price, amount]) => [parseFloat(price), amount])
+    .sort((a, b) => (type === "buy" ? b[0] - a[0] : a[0] - b[0]));
+}
+
+
+export default function Market96({
+    setIsLoading, setErrMsg,
+}: {
+    setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+    setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>,
+}) {
+  const { address } = useAccount()
   const [tradeType, setTradeType] = useState<"buy" | "sell">("buy");
   const [price, setPrice] = useState("");
   const [amount, setAmount] = useState("");
@@ -37,20 +92,13 @@ export default function ExchangePage() {
   const [kkub,setKKUBbal] = useState(0.00);
   const [tokenBal,setTokenBal] = useState(0.00);
   const [onLoading, setOnLoading] = React.useState(false)
-  const [view, setView] = useState<"Orders" | "History">("Orders");
-  const feePercent = 0.003; // 0.3%
-  const total = price && amount ? parseFloat(price) * parseFloat(amount) : 0;
-  const fee = total * feePercent;
-  const net = tradeType === "buy" ? total + fee : total - fee;
-  const [txupdate, setTxupdate] = React.useState("")
-  const [isOnlyFullDecimal, setIsOnlyFullDecimal] = React.useState(false)
+const [view, setView] = useState<"Orders" | "History">("Orders");
 
   const baseExpURL = "https://www.kubscan.com/";
 
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tokenValue = urlParams.get("token");
-
 
     if (tokenValue) {
       const matched = tokenPairs.find(
@@ -72,29 +120,6 @@ export default function ExchangePage() {
     // แทนที่ URL ใน browser โดยไม่ reload หน้า
     window.history.replaceState(null, "", url.toString());
   }, [select]);
-
-      const [orders, setOrders] = useState<Order[]>([
-      {
-        id: 1,
-        fromToken: select.value,
-        toToken: "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5" as '0xstring',
-        amount: 5,
-        price: 50,
-        type: "sell",
-        date: "2025-05-11 12:34:56",
-      },
-      {
-        id: 5,
-        fromToken: select.value,
-        toToken: "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5" as '0xstring',
-        amount: 3,
-        price: 48.5,
-        type: "buy",
-        date: "2025-05-11 11:30:00",
-      },
-      // ... เพิ่ม order อื่น ๆ ตามต้องการ
-    ]);
-    
 
   React.useEffect(() => {
     async function renders(){
@@ -122,133 +147,27 @@ export default function ExchangePage() {
     renders();
   },[select])
 
-  const placeOrder = async () => {
-      let allowanceA;
-      let targetToken = tradeType === "buy" ? "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5" : select.value;
-      let Cur_amount = tradeType === "buy" ? net.toString() : amount.toString();
-
-      allowanceA = await readContract(config, { ...erc20ABI, address: targetToken as '0xstring', functionName: 'allowance', args: [address as '0xstring', CMswapP2PMarketplace] })
-
-      if (allowanceA < parseEther(Cur_amount)) {
-          const { request } = await simulateContract(config, { ...erc20ABI, address: targetToken as '0xstring', functionName: 'approve', args: [CMswapP2PMarketplace, parseEther(Cur_amount)] })
-          const h = await writeContract(config, request)
-          await waitForTransactionReceipt(config, { hash: h })
-      }
-
-      let h, r
-      console.log({
-        isBuy: tradeType === "buy",
-        tokenSale: select.value,
-        currency: "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5",
-        saleAmount: parseEther(Cur_amount),
-        currencyAmount: parseEther(price),
-        unitSize: parseEther("1"),
-        acceptPartial: !isOnlyFullDecimal,
-        referrer: "0x0000000000000000000000000000000000000000"
-    })
-      const { result, request } = await simulateContract(config, {
-          ...CMswapP2PMarketplaceContract,
-          functionName: 'createOrder',
-          args: [
-            tradeType === "buy", // boolean: true for buy, false for sell
-            select.value as '0xstring',
-            "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5" as '0xstring',
-            parseEther(Cur_amount),
-            parseEther(price),
-            parseEther("1"), // unitSize
-            !isOnlyFullDecimal, // acceptPartial: true for partial, false for full units only
-            "0x0000000000000000000000000000000000000000" as '0xstring',
-          ]
-      })
-        r = result
-        h = await writeContract(config, request)
-        await waitForTransactionReceipt(config, { hash: h })
-        setTxupdate(h)
-
-
-  }
-
-  const renderActiveOrder = async () => {
-    let orders = await readContract(config, {
-      ...CMswapP2PMarketplaceContract,
-      functionName: 'getActiveOrdersPaginated',
-      args: [
-        select.value as '0xstring',
-        "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5",
-        BigInt(0),
-        BigInt(50)
-      ]
-    });
-
-    console.log("Active Orders", orders);
-
-    const formattedOrders: Order[] = [];
-
-    for (let i = 0; i < orders.length; i++) {
-      const data = await readContract(config, {
-        ...CMswapP2PMarketplaceContract,
-        functionName: 'orders',
-        args: [orders[i]]
-      });
-
-      const order: Order = {
-        id: Number(orders[i]),
-        fromToken: data[1] ? data[3] as '0xstring' : data[2] as '0xstring', // buy: from = currency, sell: from = tokenSale
-        toToken: data[1] ? data[2] as '0xstring' : data[3] as '0xstring',   // buy: to = tokenSale, sell: to = currency
-        amount: Number(data[1] ? data[5] : data[4]) / 1e18, // amount user will spend
-        price: Number(data[5]) / Number(data[4]), // price = currencyAmount / saleAmount
-        type: data[1] ? 'buy' : 'sell',
-        date: new Date(Number(data[10]) * 1000).toISOString()
-      };
-
-      formattedOrders.push(order);
-      console.log("Formatted Order", order);
-    }
-    setOrders(formattedOrders)
-
-  };
-
-  const ownerOrder = async () => {
-    let orders = await readContract(config, {
-      ...CMswapP2PMarketplaceContract,
-      functionName: 'getOrdersByMaker',
-      args: [
-        address as '0xstring',
-      ]
-    });
-
-    console.log("Active Orders", orders);
-
-    const formattedOrders: Order[] = [];
-
-    for (let i = 0; i < orders.length; i++) {
-      const data = await readContract(config, {
-        ...CMswapP2PMarketplaceContract,
-        functionName: 'orders',
-        args: [orders[i]]
-      });
-
-      const order: Order = {
-        id: Number(orders[i]),
-        fromToken: data[1] ? data[3] as '0xstring' : data[2] as '0xstring', // buy: from = currency, sell: from = tokenSale
-        toToken: data[1] ? data[2] as '0xstring' : data[3] as '0xstring',   // buy: to = tokenSale, sell: to = currency
-        amount: Number(data[1] ? data[5] : data[4]) / 1e18, // amount user will spend
-        price: Number(data[5]) / Number(data[4]), // price = currencyAmount / saleAmount
-        type: data[1] ? 'buy' : 'sell',
-        date: new Date(Number(data[10]) * 1000).toISOString()
-      };
-
-      formattedOrders.push(order);
-      console.log("Formatted Order", order);
-    }
-    setOrders(formattedOrders)
-
-  };
-
-  React.useEffect(() => {
-    renderActiveOrder();
-  }, [select]);
-
+  const [orders, setOrders] = useState<Order[]>([
+    {
+      id: 1,
+      fromToken: select.value,
+      toToken: { name: "KKUB", logo: "KKUB", value: "0xkkub" },
+      amount: 5,
+      price: 50,
+      type: "sell",
+      date: "2025-05-11 12:34:56",
+    },
+    {
+      id: 5,
+      fromToken: select.value,
+      toToken: { name: "KKUB", logo: "KKUB", value: "0xkkub" },
+      amount: 3,
+      price: 48.5,
+      type: "buy",
+      date: "2025-05-11 11:30:00",
+    },
+    // ... เพิ่ม order อื่น ๆ ตามต้องการ
+  ]);
 
   const filteredPairs = tokenPairs.filter((pair) => {
     // กรองตาม filter
@@ -263,30 +182,24 @@ export default function ExchangePage() {
     return matchesFilter && matchesSearch;
   });
 
+  const handleOrder = () => {
+    if (!amount || !price) return;
+    const newOrder: Order = {
+      id: orders.length + 1,
+      fromToken: select.value,
+      toToken: { name: "KKUB", logo: "KKUB", value: "0xkkub" },
+      amount: parseFloat(amount),
+      price: parseFloat(price),
+      type: tradeType,
+      date: new Date().toISOString(),
+    };
+    setOrders([newOrder, ...orders]);
+    setPrice("");
+    setAmount("");
+  };
 
   const handleCancelOrder = (id: number) => {
     setOrders(orders.filter((o) => o.id !== id));
-  };
-
-  const groupOrdersByPrice = (orders: Order[], type: "buy" | "sell") => {
-    const grouped = new Map<number, number>();
-
-    orders
-      .filter((o) => o.type === type)
-      .forEach((o) => {
-        if (grouped.has(o.price)) {
-          grouped.set(o.price, grouped.get(o.price)! + o.amount);
-        } else {
-          grouped.set(o.price, o.amount);
-        }
-      });
-
-    // Sort descending for sell, ascending for buy
-    const sortedEntries = Array.from(grouped.entries()).sort((a, b) =>
-      type === "sell" ? b[0] - a[0] : a[0] - b[0]
-    );
-
-    return sortedEntries;
   };
 
   return (
@@ -294,16 +207,26 @@ export default function ExchangePage() {
       {/* Header */}
       <div className="bg-[#1a1b2e] rounded-xl p-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
         <div>
-          <h2 className="text-xl font-bold">{token.name} / KKUB</h2>
+          <div className="flex items-center space-x-2 mb-4">
+            <img
+              src={select.img1}
+              alt="token1"
+              className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white"
+            />
+            <h2 className="text-xl font-bold uppercase text-white">
+              {select.name} / KKUB
+            </h2>
+          </div>
+
           <p className="text-xs">
             Token Address:{" "}
             <span
               className="text-blue-500 cursor-pointer"
               onClick={() =>
-                window.open(`${baseExpURL}address/${token.address}`, "_blank")
+                window.open(`${baseExpURL}address/${select.value}`, "_blank")
               }
             >
-              {token.address}
+              {select.value}
             </span>
           </p>
         </div>
@@ -314,75 +237,117 @@ export default function ExchangePage() {
           </div>
           <div>
             <p className="text-sm text-gray-400">Trade Fee</p>
-            <p className="text-lg font-bold text-red-400">1%</p>
+            <p className="text-lg font-bold text-red-400">
+              Maker 0.5% / Taker 0.5%
+            </p>
           </div>
         </div>
       </div>
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Left Panel: My Orders */}
+        {/* Left Panel: Token Pair */}
         <div className="md:col-span-2 bg-[#1a1b2e] rounded-xl p-4">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">Pair</h3>
+
+            {/* Search input */}
             <input
               type="text"
               placeholder="Search..."
               className="bg-[#2a2b3c] text-sm rounded-lg px-3 py-1 text-white placeholder-gray-400 focus:outline-none"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
+          </div>
+
+          {/* Filter buttons */}
+          <div className="flex space-x-3 mb-4">
+            {["all", "metal valley", "Morning Moon Village"].map((f) => {
+              const label =
+                f === "Morning Moon Village"
+                  ? "MMV"
+                  : f.charAt(0).toUpperCase() + f.slice(1);
+
+              return (
+                <button
+                  key={f}
+                  onClick={() =>
+                    setFilter(
+                      f as "all" | "Metal Valley" | "Morning Moon Village"
+                    )
+                  }
+                  className={`px-3 py-1 rounded ${
+                    filter === f
+                      ? "bg-blue-600 text-white"
+                      : "bg-[#2a2b3c] text-gray-400 hover:text-white"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
 
           {/* Divider */}
           <hr className="border-gray-700 mb-4" />
 
-          {/* Mapping Token Pairs with Scrollable Container */}
+          {/* Token pairs list */}
           <div className="space-y-4 max-h-200 overflow-y-auto pr-2 scrollbar-hide">
-            {tokenPairs.map((pair, idx) => (
-              <div key={idx} className="flex items-center space-x-3">
-                <div className="relative w-10 h-10">
-                  <img
-                    src={pair.img1}
-                    alt="token1"
-                    className="absolute top-0 left-0 w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white"
-                  />
-                  <img
-                    src={pair.img2}
-                    alt="token2"
-                    className="absolute top-0 left-4 w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white"
-                  />
+            {filteredPairs.length === 0 ? (
+              <p className="text-gray-400 text-center">No pairs found</p>
+            ) : (
+              filteredPairs.map((pair, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center space-x-3"
+                  onClick={() => setSelectToken(pair)}
+                >
+                  <div className="relative w-10 h-10">
+                    <img
+                      src={pair.img1}
+                      alt="token1"
+                      className="absolute top-0 left-0 w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white"
+                    />
+                    <img
+                      src={pair.img2}
+                      alt="token2"
+                      className="absolute top-0 left-4 w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm uppercase">
+                      {pair.name}
+                    </p>
+                    <p className="text-xs text-gray-400">{pair.desc}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-white font-semibold text-sm">
-                    {pair.name}
-                  </p>
-                  <p className="text-xs text-gray-400">{pair.desc}</p>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
         {/* Center Panel: Trading */}
         <div className="md:col-span-6 bg-[#1a1b2e] rounded-xl p-6">
           <div className="h-[550px] bg-[#2a2b3c] mb-6 rounded-lg flex items-center justify-center">
-            <span className="text-gray-500">[Trading Chart Placeholder]</span>
+            <span className="text-gray-500">[Trading Chart Coming Soon]</span>
           </div>
 
           {/* Trade Buttons */}
           <div className="flex space-x-4 mb-4">
             <button
               onClick={() => setTradeType("buy")}
-              className={`flex-1 py-2 rounded-lg font-semibold ${
-                tradeType === "buy" ? "bg-green-600" : "bg-gray-700"
+              className={`w-1/2 py-2 font-semibold rounded-l ${
+                tradeType === "buy" ? "bg-green-500" : "bg-[#2a2f45]"
               }`}
             >
               Buy
             </button>
             <button
               onClick={() => setTradeType("sell")}
-              className={`flex-1 py-2 rounded-lg font-semibold ${
-                tradeType === "sell" ? "bg-red-600" : "bg-gray-700"
+              className={`w-1/2 py-2 font-semibold rounded-r ${
+                tradeType === "sell" ? "bg-red-500" : "bg-[#2a2f45]"
               }`}
             >
               Sell
@@ -390,115 +355,111 @@ export default function ExchangePage() {
           </div>
 
           {/* Form */}
-<div className="space-y-4 bg-[#2a2b3c] p-4 rounded-xl text-sm">
-  {/* Balance Info */}
-  <div className="text-right text-gray-400">
-    Your Balance:{" "}
-    {tradeType === "buy"
-      ? `${kkub.toLocaleString(undefined, { maximumFractionDigits: 4 })} KKUB`
-      : `${tokenBal.toLocaleString(undefined, { maximumFractionDigits: 4 })} ${select.name}`}
-  </div>
+          <div className="space-y-4 bg-[#2a2b3c] p-4 rounded-xl">
+            {/* Price Input */}
+            {tradeType === "buy" ? (
+            <div className="text-sm text-gray-400 text-right">Your Balance : {kkub.toLocaleString(undefined,{maximumFractionDigits:4})} KKUB</div>
+            ) : (
+            <div className="text-sm text-gray-400 text-right">Your Balance : {tokenBal.toLocaleString(undefined,{maximumFractionDigits:4})} {select.name}</div>
+            )}
+            <div className="flex items-center justify-between bg-[#1e1f30] p-2 rounded-lg">
+              <label className="text-sm text-gray-300 w-24">Price</label>
+              <input
+                type="number"
+                className="bg-transparent text-right w-full mr-2 outline-none"
+                placeholder="0.00"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+              />
+              <span className="text-xs text-gray-400">KKUB</span>
+            </div>
 
-  {/* Price Input */}
-  <div className="flex items-center justify-between bg-[#1e1f30] p-2 rounded-lg">
-    <label className="text-sm text-gray-300 w-28">Price per {select.name}</label>
-    <input
-      type="number"
-      className="bg-transparent text-right w-full mr-2 outline-none"
-      placeholder="0.00"
-      value={price}
-      onChange={(e) => setPrice(e.target.value)}
-    />
-    <span className="text-xs text-gray-400">KKUB</span>
-  </div>
+            {/* Amount Input */}
+            <div className="flex items-center justify-between bg-[#1e1f30] p-2 rounded-lg">
+              <label className="text-sm text-gray-300 w-24">Amount</label>
+              <input
+                type="number"
+                className="bg-transparent text-right w-full mr-2 outline-none"
+                placeholder="0"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+              <span className="text-xs text-gray-400">{select.name}</span>
+            </div>
 
-  {/* Amount Input */}
-  <div className="flex items-center justify-between bg-[#1e1f30] p-2 rounded-lg">
-    <label className="text-sm text-gray-300 w-28">Amount</label>
-    <input
-      type="number"
-      className="bg-transparent text-right w-full mr-2 outline-none"
-      placeholder="0"
-      value={amount}
-      onChange={(e) => setAmount(e.target.value)}
-    />
-    <span className="text-xs text-gray-400">{select.name}</span>
-  </div>
+            {/* Total */}
+            <div className="flex items-center justify-between text-sm text-gray-400 px-2">
+              <span>Total</span>
+              <span className="font-bold text-white">
+                {price && amount
+                  ? (parseFloat(price) * parseFloat(amount)).toFixed(4)
+                  : "0.00"}{" "}
+                KKUB
+              </span>
+            </div>
 
-  {/* Summary with Fee */}
-  {price && amount && (
-    <div className="space-y-1 text-gray-300 bg-[#1e1f30] rounded-lg px-3 py-2">
-      <div className="flex justify-between">
-        <span>{tradeType === "buy" ? "You Pay (Before Fee)" : "You Receive (Before Fee)"}</span>
-        <span>{total.toFixed(8)} KKUB</span>
-      </div>
-      <div className="flex justify-between">
-        <span>Fee (0.3%)</span>
-        <span>{fee.toFixed(8)} KKUB</span>
-      </div>
-      <div className="flex justify-between font-bold text-white">
-        <span>{tradeType === "buy" ? "Total You Pay" : "Net You Receive"}</span>
-        <span>{net.toFixed(8)} KKUB</span>
-      </div>
-      <hr className="my-1 border-gray-600" />
-      <div className="flex justify-between">
-        <span>{tradeType === "buy" ? "You Get" : "You Sell"}</span>
-        <span>{amount} {select.name}</span>
-      </div>
-    </div>
-  )}
+    {/* Submit Button */}
+    <button
+      onClick={handleOrder}
+      className={`w-full py-2 rounded-lg font-semibold uppercase transition-colors duration-200 ${
+        tradeType === "buy" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+      }`}
+      disabled={!select?.name}
+    >
+      {tradeType === "buy" ? "Buy" : "Sell"} {select?.name || ""}
+    </button>
 
-  {/* Submit Button */}
-  <button
-    onClick={placeOrder}
-    className={`w-full py-2 rounded-lg font-semibold uppercase transition-colors duration-200 ${
-      tradeType === "buy"
-        ? "bg-green-600 hover:bg-green-700"
-        : "bg-red-600 hover:bg-red-700"
-    }`}
-    disabled={!select?.name}
-  >
-    {tradeType === "buy" ? "Buy" : "Sell"} {select?.name || ""}
-  </button>
-</div>
-
+          </div>
         </div>
 
-      {/* Right Panel: Order Book */}
-<div className="md:col-span-4 bg-[#1a1b2e] rounded-xl p-4 flex flex-col justify-center h-full">
-  <h3 className="text-lg font-semibold mb-4 text-white text-center">Order Book</h3>
+        {/* Right Panel: Order Book */}
+        <div className="md:col-span-4 bg-[#1a1b2e] rounded-xl p-4 flex flex-col justify-center h-full">
+          <h3 className="text-lg font-semibold mb-4 text-white text-center">
+            Order Book
+          </h3>
 
-  <div className="flex flex-col divide-y divide-gray-700 max-h-[400px] overflow-y-auto">
-    {/* Sell Orders */}
-    <div className="flex flex-col items-center space-y-2 pb-4 w-full">
-      <p className="text-red-400 font-semibold text-center">Sell Orders</p>
-      {groupOrdersByPrice(orders, "sell").map(([price, amount]) => (
-        <div
-          key={`sell-${price}`}
-          className="flex justify-center items-center space-x-4 text-sm text-red-200 w-full"
-        >
-          <span className="w-1/2 text-center">{price.toFixed(2)} KKUB</span>
-          <span className="w-1/2 text-center">{amount.toFixed(2)} SOLA</span>
+          <div className="flex flex-col divide-y divide-gray-700 max-h-[400px] overflow-y-auto">
+            {/* Sell Orders */}
+            <div className="flex flex-col items-center space-y-2 pb-4 w-full">
+              <p className="text-red-400 font-semibold text-center">
+                Sell Orders
+              </p>
+              {groupOrdersByPrice(orders, "sell").map(([price, amount]) => (
+                <div
+                  key={`sell-${price}`}
+                  className="flex justify-center items-center space-x-4 text-sm text-red-200 w-full"
+                >
+                  <span className="w-1/2 text-center">
+                    {price.toFixed(2)} KKUB
+                  </span>
+                  <span className="w-1/2 text-center">
+                    {amount.toFixed(2)} {select.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Buy Orders */}
+            <div className="flex flex-col items-center space-y-2 pt-4 w-full">
+              <p className="text-green-400 font-semibold text-center">
+                Buy Orders
+              </p>
+              {groupOrdersByPrice(orders, "buy").map(([price, amount]) => (
+                <div
+                  key={`buy-${price}`}
+                  className="flex justify-center items-center space-x-4 text-sm text-green-200 w-full"
+                >
+                  <span className="w-1/2 text-center">
+                    {price.toFixed(2)} KKUB
+                  </span>
+                  <span className="w-1/2 text-center">
+                    {amount.toFixed(2)} SOLA
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      ))}
-    </div>
-
-    {/* Buy Orders */}
-    <div className="flex flex-col items-center space-y-2 pt-4 w-full">
-      <p className="text-green-400 font-semibold text-center">Buy Orders</p>
-      {groupOrdersByPrice(orders, "buy").map(([price, amount]) => (
-        <div
-          key={`buy-${price}`}
-          className="flex justify-center items-center space-x-4 text-sm text-green-200 w-full"
-        >
-          <span className="w-1/2 text-center">{price.toFixed(2)} KKUB</span>
-          <span className="w-1/2 text-center">{amount.toFixed(2)} SOLA</span>
-        </div>
-      ))}
-    </div>
-  </div>
-</div>
-
       </div>
 
       {/* Footer: Tabs + Order Table */}
@@ -545,8 +506,8 @@ export default function ExchangePage() {
               {
                 id: 1,
                 date: "2025-05-11 12:34:56",
-                fromToken: { symbol: "SOLA" },
-                toToken: { symbol: "KKUB" },
+                fromToken: { logo: "SOLA" },
+                toToken: { logo: "KKUB" },
                 type: "sell",
                 price: 2.5,
                 amount: 5,
@@ -554,8 +515,8 @@ export default function ExchangePage() {
               {
                 id: 2,
                 date: "2025-05-10 11:20:10",
-                fromToken: { symbol: "SOLA" },
-                toToken: { symbol: "KKUB" },
+                fromToken: { logo: "SOLA" },
+                toToken: { logo: "KKUB" },
                 type: "buy",
                 price: 2.4,
                 amount: 10,
@@ -563,8 +524,8 @@ export default function ExchangePage() {
               {
                 id: 3,
                 date: "2025-05-09 09:10:25",
-                fromToken: { symbol: "SOLA" },
-                toToken: { symbol: "KKUB" },
+                fromToken: { logo: "SOLA" },
+                toToken: { logo: "KKUB" },
                 type: "sell",
                 price: 2.3,
                 amount: 7,
@@ -578,7 +539,7 @@ export default function ExchangePage() {
                   {order.date.split("T")[0]}
                 </span>
                 <span>
-                  {order.fromToken.symbol}/{order.toToken.symbol}
+                  {order.fromToken.logo}/{order.toToken.logo}
                 </span>
                 <span
                   className={
@@ -589,7 +550,7 @@ export default function ExchangePage() {
                 </span>
                 <span>{order.price.toFixed(2)} KKUB</span>
                 <span>
-                  {order.amount} {order.fromToken.symbol}
+                  {order.amount} {order.fromToken.logo}
                 </span>
                 <span>{(order.amount * order.price).toFixed(2)} KKUB</span>
                 <div className="flex justify-center">
@@ -607,11 +568,12 @@ export default function ExchangePage() {
         {view === "History" && (
           <>
             {/* Table Header */}
-            <div className="grid grid-cols-6 gap-4 text-sm text-gray-400 font-semibold px-2 py-3 border-b border-gray-700">
+            <div className="grid grid-cols-7 gap-4 text-sm text-gray-400 font-semibold px-2 py-3 border-b border-gray-700">
               <span className="text-left">Date</span>
               <span className="text-left">Pair</span>
               <span className="text-left">Side</span>
               <span className="text-left">Price</span>
+              <span className="text-left">Fee</span>
               <span className="text-left">Amount</span>
               <span className="text-left">Total</span>
             </div>
@@ -621,8 +583,8 @@ export default function ExchangePage() {
               {
                 id: 1,
                 date: "2025-05-11 12:34:56",
-                fromToken: { symbol: "SOLA" },
-                toToken: { symbol: "KKUB" },
+                fromToken: { logo: "SOLA" },
+                toToken: { logo: "KKUB" },
                 type: "sell",
                 price: 2.5,
                 amount: 5,
@@ -630,8 +592,8 @@ export default function ExchangePage() {
               {
                 id: 2,
                 date: "2025-05-10 11:20:10",
-                fromToken: { symbol: "SOLA" },
-                toToken: { symbol: "KKUB" },
+                fromToken: { logo: "SOLA" },
+                toToken: { logo: "KKUB" },
                 type: "buy",
                 price: 2.4,
                 amount: 10,
@@ -639,8 +601,8 @@ export default function ExchangePage() {
               {
                 id: 3,
                 date: "2025-05-09 09:10:25",
-                fromToken: { symbol: "SOLA" },
-                toToken: { symbol: "KKUB" },
+                fromToken: { logo: "SOLA" },
+                toToken: { logo: "KKUB" },
                 type: "sell",
                 price: 2.3,
                 amount: 7,
@@ -648,13 +610,13 @@ export default function ExchangePage() {
             ].map((order) => (
               <div
                 key={order.id}
-                className="grid grid-cols-6 gap-4 text-sm text-white items-center px-2 py-4 border-b border-[#2a2b3c]"
+                className="grid grid-cols-7 gap-4 text-sm text-white items-center px-2 py-4 border-b border-[#2a2b3c]"
               >
                 <span className="text-xs text-gray-400">
                   {order.date.split("T")[0]}
                 </span>
                 <span>
-                  {order.fromToken.symbol}/{order.toToken.symbol}
+                  {order.fromToken.logo}/{order.toToken.logo}
                 </span>
                 <span
                   className={
@@ -665,14 +627,12 @@ export default function ExchangePage() {
                 </span>
                 <span>{order.price.toFixed(2)} KKUB</span>
                 <span>
-                  {order.amount} {order.fromToken.symbol}
+                  {order.amount} {order.fromToken.logo}
                 </span>
                 <span>{(order.amount * order.price).toFixed(2)} KKUB</span>
               </div>
             ))}
-          </>
-        )}
+          </>)}
       </div>
-    </div>
-  );
-}
+      </div>
+)}
