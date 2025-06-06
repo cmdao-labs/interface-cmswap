@@ -345,7 +345,7 @@ export default function Market96({
           <hr className="border-gray-700 mb-4" />
 
           {/* Token pairs list */}
-          <div className="space-y-4 max-h-200 overflow-y-auto pr-2 scrollbar-hide">
+          <div className="space-y-4 max-h-250 overflow-y-auto pr-2 scrollbar-hide">
             {filteredPairs.length === 0 ? (
               <p className="text-gray-400 text-center">No pairs found</p>
             ) : (
