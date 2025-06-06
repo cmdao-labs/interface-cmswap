@@ -35,8 +35,8 @@ export default function Headbar() {
                                     <Button variant="ghost" className="cursor-pointer">Pump</Button>
                                     </Link>
           
-                                    <Link href="/profile" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono">
-                                    <Button variant="ghost" className="cursor-pointer">Profile</Button>
+                                    <Link href="/refferal" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono">
+                                    <Button variant="ghost" className="cursor-pointer">Refferal Program</Button>
                                     </Link>
                             </div>
 
