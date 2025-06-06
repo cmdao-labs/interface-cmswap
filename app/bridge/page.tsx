@@ -10,6 +10,7 @@ import { simulateContract, waitForTransactionReceipt, writeContract, readContrac
 import { formatEther, parseEther, erc20Abi } from 'viem'
 import { config } from '@/app/config'
 import ErrorModal from '@/app/components/error-modal'
+import ReferralTracker from '../components/Refferal'
 
 const chains: {name: string, id: number, logo: string}[] = [
     { name: 'JB chain', id: 8899, logo: './8899.png' },
@@ -51,6 +52,7 @@ export default function BridgeInterface() {
     const [escrowAddress, setEscrowAddress] = useState('0x' as '0xstring')
     const [bridgeFee, setBridgeFee] = useState('0')
     const [depositValue, setDepositValue] = useState('')
+
 
     useEffect(() => {
         const fetch0 = async () => {
@@ -101,6 +103,8 @@ export default function BridgeInterface() {
             data[1].result !== undefined ? setSourceBalance(formatEther(data[1].result)) : setSourceBalance('0')
             data[2].result !== undefined ? setDestinationBalance(formatEther(data[2].result)) : setDestinationBalance('0')
         }
+        
+       
         fetch0()
     }, [config, address, txupdate, erc20Abi, sourceChain, destinationChain])
 
@@ -125,6 +129,7 @@ export default function BridgeInterface() {
 
     return (
         <div className="min-h-screen bg-[#0a0b1e] p-4 font-mono bg-gradient-to-br from-slate-700 via-black to-emerald-900">
+            <ReferralTracker/>
             {isLoading && <div className="w-full h-full fixed backdrop-blur-[12px] z-999" />}
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
             <div className="max-w-md mx-auto">
