@@ -28,6 +28,7 @@ import { UniswapV2RouterABI } from "@/app/pump/abi/UniswapV2Router";
 import { UniswapV3QouterABI } from "@/app/pump/abi/UniswapV3Qouter";
 import { SocialsABI } from "@/app/pump/abi/Socials";
 import Chart from "@/app/components/Chart";
+import Menu from "@/app/pump/ui/Menu";
 
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 const { ethereum } = window as any;
@@ -833,9 +834,9 @@ export default function Trade({
   }, [socialsResult]);
 
   return (
-<main className="row-start-2 w-full flex flex-col gap-4 justify-center items-center mt-[60px] md:mt-1">
+    <main className="row-start-2 w-full flex flex-col gap-4 justify-center items-center mt-[60px] md:mt-1">
       {headnoti && (
-        <div className="w-full  h-[40px] bg-sky-500 animate-pulse text-center p-2 flex flex-row gap-2 items-center justify-center">
+        <div className="w-full h-[40px] bg-sky-500 animate-pulse text-center p-2 flex flex-row gap-2 items-center justify-center">
           <span>Trade Successful!, </span>
           <Link
             href={_explorer + "tx/" + hash}
@@ -856,14 +857,17 @@ export default function Trade({
       )}
 
       {/* HEADER TOPBAR */}
-      <div className="ml-[28px] lg:ml-[52px] w-full max-w-[1920px] flex flex-col gap-4 mb-2">
-        <Link
-          href={"/pump/launchpad?chain=" + chain + (mode === "pro" ? "&mode=pro" : "&mode=lite")}
-          prefetch={false}
-          className="underline hover:font-bold"
-        >
-          Back to launchpad
-        </Link>
+      <div className="mt-[20px] md:mt-[50px] w-full max-w-[1920px] flex flex-col gap-4 mb-2">
+        <div className="w-full flex flex-row justify-between flex-wrap gap-4 mt-4" style={{zIndex: 1}}>
+          <Link
+            href={"/pump/launchpad?chain=" + chain + (mode === "pro" ? "&mode=pro" : "&mode=lite")}
+            prefetch={false}
+            className="underline hover:font-bold p-4 md:ml-4"
+          >
+            Back to launchpad
+          </Link>
+          <Menu chainEnable={false} />
+        </div>     
         <div
             className="xl:hidden w-full xl:w-1/3 self-center bg-neutral-900 p-2 rounded-2xl flex flex-row justify-around border-solid border-2 border-emerald-300"
             style={{ zIndex: 1 }}
@@ -905,78 +909,9 @@ export default function Trade({
                 Trade
             </span>
         </div>
-        <div className="hidden xl:block w-full flex flex-col md:flex-row flex-wrap justify-between text-xs xl:text-md">
-          <div className="flex flex-row flex-wrap gap-2 items-end 2">
-          <span className="text-emerald-300 text-2xl">
-            {result2.status === "success" && result2.data![0].result}
-          </span>
-          <span className="flex items-end">
-            {result2.status === "success" && "[$" + result2.data![1].result + "]"}
-          </span>
-          <span className="flex flex-row gap-2 items-end">
-            <span>
-              CA: {ticker.slice(0, 5)}...{ticker.slice(37)}
-            </span>
-            <div className="flex items-center gap-1 ml-2">
-              <button
-                onClick={() => copyToClipboard(ticker)}
-                className="flex items-center gap-2 bg-water-300 hover:bg-neutral-700 px-3 py-2 rounded-md transition-colors text-xs cursor-pointer"
-                title="Copy contract address"
-              >
-                {copiedAddress === ticker ? (
-                  <>
-                    <Check size={16} />
-                    Copied!
-                  </>
-                ) : (
-                  <Copy size={16} />
-                )}
-              </button>
-              <button
-                className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm cursor-pointer"
-                onClick={async () => {
-                  await ethereum.request({
-                    method: "wallet_watchAsset",
-                    params: {
-                      type: "ERC20",
-                      options: {
-                        address: ticker,
-                        symbol:
-                          result2.status === "success" &&
-                          result2.data![1].result,
-                        decimals: 18,
-                        image:
-                          result2.status === "success" &&
-                          result2.data![3].result!.slice(0, 7) === "ipfs://"
-                            ? "https://gateway.commudao.xyz/ipfs/" +
-                              result2.data![3].result!.slice(7)
-                            : "https://gateway.commudao.xyz/ipfs/" +
-                              result2.data![3].result!,
-                      },
-                    },
-                  });
-                }}
-              >
-                <Plus size={16} />
-              </button>
-              <Link
-                href={_explorer + "address/" + ticker}
-                rel="noopener noreferrer"
-                target="_blank"
-                prefetch={false}
-                className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm"
-                title="View on Etherscan"
-              >
-                <Image
-                  src="/bs.png"
-                  alt="blockscout"
-                  height={16}
-                  width={16}
-                />
-              </Link>
-            </div>
-          </span>
-        </div>
+        <div className="ml-[14px] lg:ml-[28px] hidden xl:block w-full flex flex-col items-center md:flex-row flex-wrap justify-between text-xs xl:text-md">
+          <span className="text-emerald-300 text-2xl mr-6">{result2.status === "success" && result2.data![0].result}</span>
+          <span className="mr-6">{result2.status === "success" && "[" + result2.data![1].result + "]"}</span>
           <span className="mr-6">
             Price:{" "}
             <span className="text-emerald-300">
@@ -1103,6 +1038,65 @@ export default function Trade({
                 )}
             </span>
           )}
+          <span className="flex items-center gap-1 mr-6">
+            <span>CA: {ticker.slice(0, 5)}...{ticker.slice(37)}</span>
+            <button
+              onClick={() => copyToClipboard(ticker)}
+              className="flex items-center gap-2 bg-water-300 hover:bg-neutral-700 px-3 py-2 rounded-md transition-colors text-xs cursor-pointer"
+              title="Copy contract address"
+            >
+              {copiedAddress === ticker ? (
+                <>
+                  <Check size={16} />
+                  Copied!
+                </>
+              ) : (
+                <Copy size={16} />
+              )}
+            </button>
+            <button
+              className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm cursor-pointer"
+              onClick={async () => {
+                await ethereum.request({
+                  method: "wallet_watchAsset",
+                  params: {
+                    type: "ERC20",
+                    options: {
+                      address: ticker,
+                      symbol:
+                        result2.status === "success" &&
+                        result2.data![1].result,
+                      decimals: 18,
+                      image:
+                        result2.status === "success" &&
+                        result2.data![3].result!.slice(0, 7) === "ipfs://"
+                          ? "https://gateway.commudao.xyz/ipfs/" +
+                            result2.data![3].result!.slice(7)
+                          : "https://gateway.commudao.xyz/ipfs/" +
+                            result2.data![3].result!,
+                    },
+                  },
+                });
+              }}
+            >
+              <Plus size={16} />
+            </button>
+            <Link
+              href={_explorer + "address/" + ticker}
+              rel="noopener noreferrer"
+              target="_blank"
+              prefetch={false}
+              className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm"
+              title="View on Etherscan"
+            >
+              <Image
+                src="/bs.png"
+                alt="blockscout"
+                height={16}
+                width={16}
+              />
+            </Link>
+          </span>
         </div>
       </div>
 
@@ -1121,7 +1115,7 @@ export default function Trade({
                 </span>
                 <span>
                   {result2.status === "success" &&
-                    "[$" + result2.data![1].result + "]"}
+                    "[" + result2.data![1].result + "]"}
                 </span>
                 <span className="flex flex-row gap-2">
                   <span>
@@ -1658,8 +1652,7 @@ export default function Trade({
                       : chain === "monad" && mode === "pro"
                       ? "MON"
                       : ""
-                    : result2.status === "success" &&
-                      "$" + result2.data![1].result}
+                    : result2.status === "success" && result2.data![1].result}
                 </span>
               </div>
               
@@ -1823,8 +1816,7 @@ export default function Trade({
                       : chain === "monad" && mode === "pro"
                       ? "MON"
                       : ""
-                    : result2.status === "success" &&
-                      "$" + result2.data![1].result}
+                    : result2.status === "success" && result2.data![1].result}
                 </span>
               </div>
               <div className="mr-[20px] self-end text-sm">
@@ -2204,8 +2196,7 @@ export default function Trade({
                     : chain === "monad" && mode === "pro"
                     ? "MON"
                     : ""
-                  : result2.status === "success" &&
-                    "$" + result2.data![1].result}
+                  : result2.status === "success" && result2.data![1].result}
               </span>
             </div>
               {/** Quick Amount Section */}
@@ -2361,7 +2352,7 @@ export default function Trade({
                   : chain === "monad" && mode === "pro"
                   ? "MON"
                   : ""
-                : result2.status === "success" && "$" + result2.data![1].result}
+                : result2.status === "success" && result2.data![1].result}
             </span>
             </div>
 
