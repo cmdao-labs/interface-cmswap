@@ -14,6 +14,8 @@ import Liquidity10143 from '../components/Liquidity10143'
 import Positions8899 from '../components/Positions8899'
 import Positions96 from '../components/Positions96'
 import Positions10143 from '../components/Positions10143'
+import { useSearchParams } from 'next/navigation'
+import ReferralTracker from '../components/Refferal'
 
 export default function Page() {
     const [isLoading, setIsLoading] = React.useState(false)
@@ -22,6 +24,7 @@ export default function Page() {
 
     return (
         <div className="min-h-screen w-full flex flex-col items-center justify-start text-xs bg-gradient-to-br from-slate-700 via-black to-emerald-900">
+            <ReferralTracker/>
             {isLoading && <div className="w-full h-full fixed backdrop-blur-[12px] z-999" />}
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
             <Card className="w-full max-w-xl mx-auto bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-lg overflow-hidden p-2 mb-8 mt-[100px]">

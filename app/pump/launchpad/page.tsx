@@ -7,6 +7,7 @@ import Table from "@/app/pump/ui/Table";
 import Event from "@/app/pump/ui/Event";
 import Sort4 from "@/app/pump/ui/Sort4";
 import Sort5 from "@/app/pump/ui/Sort5";
+import ReferralTracker from '../../components/Refferal'
 
 export const metadata: Metadata = {
     title: "CMswap - PUMP",
@@ -34,6 +35,7 @@ export default async function Launchpad(props: {
   
   return (
     <main className="mt-10 w-full flex flex-col gap-2 items-start justify-start overflow-hidden">
+        <ReferralTracker/>
         <div className="flex flex-row flex-wrap 2xl:flex-no-wrap gap-8 w-full" style={{zIndex: 1}}>
           <Sort4 />
           <Link 
