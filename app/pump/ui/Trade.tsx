@@ -91,7 +91,7 @@ export default function Trade({
     v2facAddr = "0x090c6e5ff29251b1ef9ec31605bdd13351ea316c";
     v2routerAddr = "0x3F7582E36843FF79F173c7DC19f517832496f2D8";
     v3qouterAddr = "0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f";
-    socialAddr = "0xdf6516Bd0e28F85f94Fdd6E9E5569ab5f24AbEF6";
+    socialAddr = "0xf8dec288D2438771f65ed59509ab474edaf067Da";
   } else if ((chain === "kub" || chain === "") && mode === "pro") {
     currencyAddr = "0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5";
     bkgafactoryAddr = "0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56";
@@ -99,7 +99,7 @@ export default function Trade({
     v2facAddr = "0x090c6e5ff29251b1ef9ec31605bdd13351ea316c";
     v2routerAddr = "0x3F7582E36843FF79F173c7DC19f517832496f2D8";
     v3qouterAddr = "0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f";
-    socialAddr = "0xdf6516Bd0e28F85f94Fdd6E9E5569ab5f24AbEF6";
+    socialAddr = "0xf8dec288D2438771f65ed59509ab474edaf067Da";
   } else if (chain === "monad" && mode === "pro") {
     currencyAddr = "0x760afe86e5de5fa0ee542fc7b7b713e1c5425701";
     bkgafactoryAddr = "0x6dfc8eecca228c45cc55214edc759d39e5b39c93";
