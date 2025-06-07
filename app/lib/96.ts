@@ -9,9 +9,9 @@ export const tokens: {name: string, value: '0xstring', logo: string}[] = [
     { name: 'KUSDT', value: '0x7d984C24d2499D840eB3b7016077164e15E5faA6' as '0xstring', logo: '/usdt.png' },
     { name: 'CMM', value: '0x9B005000A10Ac871947D99001345b01C1cEf2790' as '0xstring', logo: '/cmm.png' },
     { name: 'LUMI', value: '0x95013Dcb6A561e6C003AED9C43Fb8B64008aA361' as '0xstring', logo: '/lumi.webp' },
-/*     { name: 'ISOLA', value: '0xC8925E89bE4Ce76218a3e52B995C5Ae02662A94F' as '0xstring', logo: '/isola.webp' }, */
-/*     { name: 'KSOLA', value: '0x9cf6dF95b918307Ff81feF70E616a094e9977a28' as '0xstring', logo: '/ksola.webp' },
-    { name: 'KJFIN', value: '0x9BEc198c43B0714aEEd3c1bF21498ecBeFEB19F8' as '0xstring', logo: '/kjfin.webp' }, */
+    { name: 'ISOLA', value: '0xC8925E89bE4Ce76218a3e52B995C5Ae02662A94F' as '0xstring', logo: '/isola.webp' }, 
+    { name: 'KSOLA', value: '0x9cf6dF95b918307Ff81feF70E616a094e9977a28' as '0xstring', logo: '/ksola.webp' },
+    { name: 'KJFIN', value: '0x9BEc198c43B0714aEEd3c1bF21498ecBeFEB19F8' as '0xstring', logo: '/kjfin.webp' }, 
     // can PR listing here
 ]
 
@@ -21,6 +21,7 @@ type Token = {
   value: '0xstring'; 
   logo: string;
 };
+
 export const game_tokens: Record<string, Token[]> = {
     'Metal Valley': [
         {name: 'Sola Booster',value: '0x619bdEB706ee9407D6f5320Dfeac576ac0eD4197' as '0xstring',logo: './market/Metal Valley/sola-booster.webp'},
@@ -58,7 +59,8 @@ export const game_tokens: Record<string, Token[]> = {
         { name: 'Tomato', value: '0x9Ea7E0435B5E50e1DCBB8Eacd63F0dbD3003BdAA' as '0xstring', logo: './market/Morning Moon Village/crop-tomato.webp' },
         ]
 
-}
+    // Can PR P2P Pair KKUB Listing Here
+    }
 
 export const V3_FACTORY = '0x090C6E5fF29251B1eF9EC31605Bdd13351eA316C' as '0xstring'
 export const POSITION_MANAGER = '0xb6b76870549893c6b59E7e979F254d0F9Cca4Cc9' as '0xstring'
@@ -69,7 +71,6 @@ export const CMswapUniSmartRoute = '0x01837156518e60362048e78d025a419C51346f55' 
 export const BitkubEvmKYC = '0x409CF41ee862Df7024f289E9F2Ea2F5d0D7f3eb4' as '0xstring' // kyc for unwrap kkub
 export const bkcUnwapped = '0xff76DD8086428EBC4Ed1b14B0e56E95eDc46a315' as '0xstring'
 export const cmSwapRefProgram = '0xf74C099613eF374Aa3cCE75fA8c0B8eF1928f759' as '0xstring'
-
 export const CMswapP2PMarketplace = '0x9068401504b317495356d3fed502C1D3344d346D' as '0xstring'
 
 export const v3FactoryContract = { chainId: 96, abi: v3Factory, address: V3_FACTORY } as const
