@@ -196,6 +196,7 @@ export default function Trade({
     };
 
   const handleSave = () => {
+    
     const hasError = Object.values(errors).some((v) => v);
     if (hasError) {
       return;
@@ -2759,6 +2760,8 @@ export default function Trade({
               Link your social profiles
             </h2>
 
+
+
             <div className="space-y-5 text-white grid ">
               {[
                 {
@@ -2817,6 +2820,11 @@ export default function Trade({
                   </p>
                 </div>
               ))}
+
+              <p className="text-xs text-red-500 text-center">
+                🚫 No inappropriate or unethical links.<br />
+                Violations may lead to a ban. Team may edit links if needed.
+              </p>
 
               <button
                 onClick={handleSave}
