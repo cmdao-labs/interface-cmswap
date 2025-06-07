@@ -416,7 +416,7 @@ export default function Market96({
   };
 
   return (
-    <div className="font-mono max-w-[1920px] mt-[120px]">
+    <div className="font-mono lg:min-w-[1680px] max-w-[1920px] mt-[120px]">
       {/* Header */}
       <div className="bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-xl p-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
         <div>
@@ -468,7 +468,7 @@ export default function Market96({
                 Order Book
               </h3>
 
-              <div className="flex flex-col divide-y divide-gray-700 w-full overflow-y-auto max-h-[500px] flex-grow">
+              <div className="flex flex-col divide-y divide-gray-700 w-full overflow-y-auto max-h-[500px] flex-grow min-w-0">
                 {/* Sell Orders */}
                 <div className="flex flex-col items-center space-y-2 pb-4 w-full">
                   <p className="text-red-400 font-semibold text-center">
@@ -479,10 +479,13 @@ export default function Market96({
                       key={`sell-${price}`}
                       className="flex justify-center items-center space-x-4 text-sm text-red-200 w-full"
                     >
-                      <span className="w-1/2 text-center">
+                      <span className="w-1/2 text-center truncate">
                         {price.toFixed(2)} KKUB
                       </span>
-                      <span className="w-1/2 text-center">
+                      <span
+                        className="w-1/2 text-center truncate overflow-hidden whitespace-nowrap"
+                        title={select.name}
+                      >
                         {amount.toFixed(2)} {select.name}
                       </span>
                     </div>
@@ -499,11 +502,14 @@ export default function Market96({
                       key={`buy-${price}`}
                       className="flex justify-center items-center space-x-4 text-sm text-green-200 w-full"
                     >
-                      <span className="w-1/2 text-center">
+                      <span className="w-1/2 text-center truncate">
                         {price.toFixed(2)} KKUB
                       </span>
-                      <span className="w-1/2 text-center">
-                        {amount.toFixed(2)} SOLA
+                      <span
+                        className="w-1/2 text-center truncate overflow-hidden whitespace-nowrap"
+                        title={select.name}
+                      >
+                        {amount.toFixed(2)} {select.name}
                       </span>
                     </div>
                   ))}
@@ -521,46 +527,48 @@ export default function Market96({
               <div className="grid grid-cols-3 text-gray-400 text-sm font-semibold border-b border-gray-600 pb-2 mb-2">
                 <span className="text-center">Timestamp</span>
                 <span className="text-center">Price (KKUB)</span>
-                <span className="text-center">Volume ({select.name})</span>
+                <span className="text-center">Volume</span>
               </div>
 
               {/* Order List */}
-              <div className="flex flex-col divide-y divide-gray-700 w-full overflow-y-auto max-h-[500px] flex-grow">
+              <div className="flex flex-col divide-y divide-gray-700 w-full overflow-y-auto max-h-[500px] flex-grow min-w-0">
                 {/* Sell Orders */}
-                {groupOrdersByPrice(orders, "sell").map(
-                  ([price, amount], idx) => (
-                    <div
-                      key={`sell-${price}`}
-                      className="grid grid-cols-3 text-sm text-red-200 py-2"
+                {groupOrdersByPrice(orders, "sell").map(([price, amount]) => (
+                  <div
+                    key={`sell-${price}`}
+                    className="grid grid-cols-3 text-sm text-red-200 py-2 min-w-0"
+                  >
+                    <span className="text-center">—</span>
+                    <span className="text-center truncate">
+                      {price.toFixed(2)} KKUB
+                    </span>
+                    <span
+                      className="text-center truncate overflow-hidden whitespace-nowrap"
+                      title={select.name}
                     >
-                      <span className="text-center"></span>
-                      <span className="text-center">
-                        {price.toFixed(2)} KKUB
-                      </span>
-                      <span className="text-center">
-                        {amount.toFixed(2)} {select.name}
-                      </span>
-                    </div>
-                  )
-                )}
+                      {amount.toFixed(2)} {select.name}
+                    </span>
+                  </div>
+                ))}
 
                 {/* Buy Orders */}
-                {groupOrdersByPrice(orders, "buy").map(
-                  ([price, amount], idx) => (
-                    <div
-                      key={`buy-${price}`}
-                      className="grid grid-cols-3 text-sm text-green-200 py-2"
+                {groupOrdersByPrice(orders, "buy").map(([price, amount]) => (
+                  <div
+                    key={`buy-${price}`}
+                    className="grid grid-cols-3 text-sm text-green-200 py-2 min-w-0"
+                  >
+                    <span className="text-center">—</span>
+                    <span className="text-center truncate">
+                      {price.toFixed(2)} KKUB
+                    </span>
+                    <span
+                      className="text-center truncate overflow-hidden whitespace-nowrap"
+                      title={select.name}
                     >
-                      <span className="text-center"></span>
-                      <span className="text-center">
-                        {price.toFixed(2)} KKUB
-                      </span>
-                      <span className="text-center">
-                        {amount.toFixed(2)} {select.name}
-                      </span>
-                    </div>
-                  )
-                )}
+                      {amount.toFixed(2)} {select.name}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -651,61 +659,72 @@ export default function Market96({
             {/* Total */}
 
             {/* Fee Breakdown */}
-{price && amount && (
-  <>
-    <div className="flex items-center justify-between text-sm text-gray-400 px-2">
-      <span>Total </span>
-      <span>
-        {(parseFloat(price) * parseFloat(amount)).toLocaleString(undefined, {
-          minimumFractionDigits: 8,
-          maximumFractionDigits: 8,
-        })}{" "}
-        KKUB
-      </span>
-    </div>
-    <div className="flex items-center justify-between text-sm text-gray-400 px-2">
-      <span>Fee (0.5%)</span>
-      <span>
-        {(parseFloat(price) * parseFloat(amount) * 0.005).toLocaleString(undefined, {
-          minimumFractionDigits: 8,
-          maximumFractionDigits: 8,
-        })}{" "}
-        KKUB
-      </span>
-    </div>
-    <div className="flex items-center justify-between text-sm px-2 font-bold text-white">
-      <span>
-        {tradeType === "buy" ? "You must pay" : "You receive"}
-      </span>
-      <span>
-        {(
-          parseFloat(price) * parseFloat(amount) * (tradeType === "buy" ? 1.005 : 0.995)
-        ).toLocaleString(undefined, {
-          minimumFractionDigits: 8,
-          maximumFractionDigits: 8,
-        })}{" "}
-        KKUB
-      </span>
-    </div>
-  </>
-)}
-
+            {price && amount && (
+              <>
+                <div className="flex items-center justify-between text-sm text-gray-400 px-2">
+                  <span>Total </span>
+                  <span>
+                    {(parseFloat(price) * parseFloat(amount)).toLocaleString(
+                      undefined,
+                      {
+                        minimumFractionDigits: 8,
+                        maximumFractionDigits: 8,
+                      }
+                    )}{" "}
+                    KKUB
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-gray-400 px-2">
+                  <span>Fee (0.5%)</span>
+                  <span>
+                    {(
+                      parseFloat(price) *
+                      parseFloat(amount) *
+                      0.005
+                    ).toLocaleString(undefined, {
+                      minimumFractionDigits: 8,
+                      maximumFractionDigits: 8,
+                    })}{" "}
+                    KKUB
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm px-2 font-bold text-white">
+                  <span>
+                    {tradeType === "buy" ? "You must pay" : "You receive"}
+                  </span>
+                  <span>
+                    {(
+                      parseFloat(price) *
+                      parseFloat(amount) *
+                      (tradeType === "buy" ? 1.005 : 0.995)
+                    ).toLocaleString(undefined, {
+                      minimumFractionDigits: 8,
+                      maximumFractionDigits: 8,
+                    })}{" "}
+                    KKUB
+                  </span>
+                </div>
+              </>
+            )}
 
             {/* Submit Button */}
             <button
               onClick={handleOrder}
               className={`font-bold p-2 w-full text-center rounded-lg transition-all duration-300
               ${tradeType === "buy"
-                            ? "text-green-100 hover:brightness-110 active:scale-95"
-                            : "text-red-100 hover:brightness-110 active:scale-95"
-                          }
-              ${!select?.name ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                        style={{
-                          backgroundImage:
-                            tradeType === "buy"
-                              ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(34, 197, 94) 0%, rgb(20, 83, 45) 60%, rgba(34, 197, 94, 0.2) 100%)"
-                              : "radial-gradient(circle 919px at 1.7% 6.1%, rgb(239, 68, 68) 0%, rgb(139, 15, 15) 60%, rgba(239, 68, 68, 0.2) 100%)",
-                        }}
+                  ? "text-green-100 hover:brightness-110 active:scale-95"
+                  : "text-red-100 hover:brightness-110 active:scale-95"
+                }
+              ${!select?.name
+                  ? "opacity-50 cursor-not-allowed"
+                  : "cursor-pointer"
+                }`}
+              style={{
+                backgroundImage:
+                  tradeType === "buy"
+                    ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(34, 197, 94) 0%, rgb(20, 83, 45) 60%, rgba(34, 197, 94, 0.2) 100%)"
+                    : "radial-gradient(circle 919px at 1.7% 6.1%, rgb(239, 68, 68) 0%, rgb(139, 15, 15) 60%, rgba(239, 68, 68, 0.2) 100%)",
+              }}
               disabled={!select?.name}
             >
               {tradeType === "buy" ? "Buy" : "Sell"} {select?.name || ""}

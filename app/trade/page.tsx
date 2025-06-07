@@ -18,9 +18,7 @@ export default function Page() {
             <ReferralTracker/>
             {isLoading && <div className="w-full h-full fixed backdrop-blur-[12px] z-999" />}
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
-                <div className="px-4">
                    <Market96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />
-                </div>
         </div>
     )
 }
