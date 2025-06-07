@@ -51,11 +51,7 @@ export default async function Launchpad(props: {
         <Link 
           href={"launchpad/launch?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")} 
           prefetch={false} 
-          className="w-full xl:w-1/6 self-center text-center p-4 rounded-full font-medium uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
-          bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
-          hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect hover:font-bold
-          shadow-lg shadow-emerald-500/40
-          active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer"
+          className={"w-full xl:w-1/6 self-center text-center p-4 rounded-full font-medium uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 " + (chain === 'kub' ? "bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 shadow-lg shadow-emerald-500/40 hover:custom-gradient hover:custom-text-shadow hover-effect " : "") + (chain === 'monad' ? "bg-gradient-to-br from-purple-500 via-purple-600 to-purple-800 shadow-lg shadow-purple-300/40 hover:custom-gradient hover:custom-text-shadow hover-effect-monad " : "") + "hover:scale-[1.02] hover:font-bold active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer"}
         >
           <span>Create a token </span> 
           🚀

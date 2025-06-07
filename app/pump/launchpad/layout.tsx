@@ -1,17 +1,17 @@
 'use client';
-import Image from "next/image";
-import Link from "next/link";
+// import Image from "next/image";
+// import Link from "next/link";
 import { useSearchParams, redirect } from "next/navigation";
-import { useState, useEffect } from 'react';
-import { formatEther, createPublicClient, http } from 'viem';
-import { unichain, base } from 'viem/chains';
-import { config } from '@/app/config'
-import { useConnections, useAccount } from 'wagmi';
-import { readContracts } from '@wagmi/core';
-import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
-import { UniswapV2FactoryABI } from '@/app/pump/abi/UniswapV2Factory';
-import { UniswapV2PairABI } from '@/app/pump/abi/UniswapV2Pair';
-import { dataxp } from "@/app/pump/blob/data";
+// import { useState, useEffect } from 'react';
+// import { formatEther, createPublicClient, http } from 'viem';
+// import { unichain, base } from 'viem/chains';
+// import { config } from '@/app/config'
+// import { useConnections, useAccount } from 'wagmi';
+// import { readContracts } from '@wagmi/core';
+// import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
+// import { UniswapV2FactoryABI } from '@/app/pump/abi/UniswapV2Factory';
+// import { UniswapV2PairABI } from '@/app/pump/abi/UniswapV2Pair';
+// import { dataxp } from "@/app/pump/blob/data";
 export const experimental_ppr = true;
 
 export default function BlogLayout({
@@ -20,12 +20,12 @@ export default function BlogLayout({
     children: React.ReactNode
 }) {
     const searchParams = useSearchParams();
-    const mode = searchParams.get('mode') || '';
+    // const mode = searchParams.get('mode') || '';
     const chain = searchParams.get('chain') || '';
-    const connections = useConnections();
-    const account = useAccount();
-    const [xp, setXp] = useState(0);
-    const [level, setLevel] = useState(0);
+    // const connections = useConnections();
+    // const account = useAccount();
+    // const [xp, setXp] = useState(0);
+    // const [level, setLevel] = useState(0);
     
     // let _chain: any = unichain;
     // let _rpc = '';
@@ -186,7 +186,7 @@ export default function BlogLayout({
     };
 
     return (
-        <div className="items-start justify-items-center min-h-screen pb-20 gap-16 p-4 sm:p-10 font-[family-name:var(--font-geist-sans)] bg-gradient-to-br from-slate-700 via-black to-emerald-900">
+        <div className={"items-start justify-items-center min-h-screen gap-16 px-4 sm:px-10 pt-4 sm:pt-10 pb-[150px] font-[family-name:var(--font-geist-sans)] bg-gradient-to-br from-slate-700 via-black " + (chain === "monad" ? "to-purple-300" : "") + (chain === "kub" ? "to-[#01ff99]" : "")}>
             {/* <div className="absolute top-[80px] xl:top-[290px] xl:right-14 flex gap-4 md:gap-8 items-center justify-end md:justify-end text-xs md:text-sm flex-wrap" style={{zIndex: 2}}>
                 <div className="flex flex-row gap-1">
                     <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'kub') {handleChain('kub');}}}><Image src="/96.png" alt="" width={25} height={25} style={{filter: (chain === 'kub' || chain === '') ? "grayscale(0)" : "grayscale(1)"}} /></button>

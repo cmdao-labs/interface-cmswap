@@ -28,9 +28,9 @@ export default function Menu({
                 </div>
             }
             {connections && account.address !== undefined &&
-                <Link href={"/pump/launchpad/portfolio?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite") + "&addr=" + account.address} prefetch={false} className="underline text-emerald-300 hover:font-bold">Portfolio</Link>
+                <Link href={"/pump/launchpad/portfolio?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite") + "&addr=" + account.address} prefetch={false} className={"underline hover:font-bold " + (chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>Portfolio</Link>
             }
-            <Link href={"/pump/launchpad/leaderboard?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")} prefetch={false} className="underline text-emerald-300 hover:font-bold">Leaderboard</Link>
+            <Link href={"/pump/launchpad/leaderboard?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")} prefetch={false} className={"underline hover:font-bold " + (chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>Leaderboard</Link>
         </div>
     );
 }
