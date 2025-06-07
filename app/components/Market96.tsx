@@ -317,7 +317,7 @@ export default function Market96({
     let approvedToken = tradeType === "buy" ? tokens[1].value : select.value;
     let amounts =
       tradeType === "buy"
-        ? parseFloat(price) * parseFloat(amount) * 1.006
+        ? parseFloat(price) * parseFloat(amount) * 1.005
         : amount;
     console.log(`Apporve token ${approvedToken}\nAmount ${amounts}`);
 
@@ -416,9 +416,9 @@ export default function Market96({
   };
 
   return (
-    <div className="min-h-screen min-w-screen  w-full bg-[#0a0b1e] text-white px-6 py-6 mt-[120px]">
+    <div className="font-mono max-w-[1920px] mt-[120px]">
       {/* Header */}
-      <div className="bg-[#1a1b2e] rounded-xl p-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+      <div className="bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-xl p-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
         <div>
           <div className="flex items-center space-x-2 mb-4">
             <img
@@ -458,85 +458,155 @@ export default function Market96({
       </div>
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Left Panel: Order Book */}
-        <div className="md:col-span-3 bg-[#1a1b2e] rounded-xl p-4 ">
-          <div className="bg-[#1a1b2e] rounded-xl p-4 w-full max-w-[400px] h-full flex flex-col">
-            <h3 className="text-lg font-semibold mb-4 text-white text-center w-full">
-              Order Book
-            </h3>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 max-w-[1920px]">
+        {/* Left Panel: Order Book and Trade History */}
+        <div className="md:col-span-3 rounded-xl flex flex-col space-y-6 w-full">
+          <div className="flex flex-col w-full mx-auto flex-1 space-y-6">
+            {/* Order Book */}
+            <div className="bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-xl p-4 w-full flex flex-col flex-grow min-h-[200px]">
+              <h3 className="text-lg font-semibold mb-4 text-white text-center w-full">
+                Order Book
+              </h3>
 
-            <div className="flex flex-col divide-y divide-gray-700 w-full overflow-y-auto max-h-[500px]">
-              {/* Sell Orders */}
-              <div className="flex flex-col items-center space-y-2 pb-4 w-full">
-                <p className="text-red-400 font-semibold text-center">
-                  Sell Orders
-                </p>
-                {groupOrdersByPrice(orders, "sell").map(([price, amount]) => (
-                  <div
-                    key={`sell-${price}`}
-                    className="flex justify-center items-center space-x-4 text-sm text-red-200 w-full"
-                  >
-                    <span className="w-1/2 text-center">
-                      {price.toFixed(2)} KKUB
-                    </span>
-                    <span className="w-1/2 text-center">
-                      {amount.toFixed(2)} {select.name}
-                    </span>
-                  </div>
-                ))}
+              <div className="flex flex-col divide-y divide-gray-700 w-full overflow-y-auto max-h-[500px] flex-grow">
+                {/* Sell Orders */}
+                <div className="flex flex-col items-center space-y-2 pb-4 w-full">
+                  <p className="text-red-400 font-semibold text-center">
+                    Sell Orders
+                  </p>
+                  {groupOrdersByPrice(orders, "sell").map(([price, amount]) => (
+                    <div
+                      key={`sell-${price}`}
+                      className="flex justify-center items-center space-x-4 text-sm text-red-200 w-full"
+                    >
+                      <span className="w-1/2 text-center">
+                        {price.toFixed(2)} KKUB
+                      </span>
+                      <span className="w-1/2 text-center">
+                        {amount.toFixed(2)} {select.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Buy Orders */}
+                <div className="flex flex-col items-center space-y-2 pt-4 w-full">
+                  <p className="text-green-400 font-semibold text-center">
+                    Buy Orders
+                  </p>
+                  {groupOrdersByPrice(orders, "buy").map(([price, amount]) => (
+                    <div
+                      key={`buy-${price}`}
+                      className="flex justify-center items-center space-x-4 text-sm text-green-200 w-full"
+                    >
+                      <span className="w-1/2 text-center">
+                        {price.toFixed(2)} KKUB
+                      </span>
+                      <span className="w-1/2 text-center">
+                        {amount.toFixed(2)} SOLA
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Trade History */}
+            <div className="bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-xl p-4 w-full flex flex-col flex-grow min-h-[200px]">
+              <h3 className="text-lg font-semibold mb-4 text-white text-center w-full">
+                Trade History
+              </h3>
+
+              {/* Header Columns */}
+              <div className="grid grid-cols-3 text-gray-400 text-sm font-semibold border-b border-gray-600 pb-2 mb-2">
+                <span className="text-center">Timestamp</span>
+                <span className="text-center">Price (KKUB)</span>
+                <span className="text-center">Volume ({select.name})</span>
               </div>
 
-              {/* Buy Orders */}
-              <div className="flex flex-col items-center space-y-2 pt-4 w-full">
-                <p className="text-green-400 font-semibold text-center">
-                  Buy Orders
-                </p>
-                {groupOrdersByPrice(orders, "buy").map(([price, amount]) => (
-                  <div
-                    key={`buy-${price}`}
-                    className="flex justify-center items-center space-x-4 text-sm text-green-200 w-full"
-                  >
-                    <span className="w-1/2 text-center">
-                      {price.toFixed(2)} KKUB
-                    </span>
-                    <span className="w-1/2 text-center">
-                      {amount.toFixed(2)} SOLA
-                    </span>
-                  </div>
-                ))}
+              {/* Order List */}
+              <div className="flex flex-col divide-y divide-gray-700 w-full overflow-y-auto max-h-[500px] flex-grow">
+                {/* Sell Orders */}
+                {groupOrdersByPrice(orders, "sell").map(
+                  ([price, amount], idx) => (
+                    <div
+                      key={`sell-${price}`}
+                      className="grid grid-cols-3 text-sm text-red-200 py-2"
+                    >
+                      <span className="text-center"></span>
+                      <span className="text-center">
+                        {price.toFixed(2)} KKUB
+                      </span>
+                      <span className="text-center">
+                        {amount.toFixed(2)} {select.name}
+                      </span>
+                    </div>
+                  )
+                )}
+
+                {/* Buy Orders */}
+                {groupOrdersByPrice(orders, "buy").map(
+                  ([price, amount], idx) => (
+                    <div
+                      key={`buy-${price}`}
+                      className="grid grid-cols-3 text-sm text-green-200 py-2"
+                    >
+                      <span className="text-center"></span>
+                      <span className="text-center">
+                        {price.toFixed(2)} KKUB
+                      </span>
+                      <span className="text-center">
+                        {amount.toFixed(2)} {select.name}
+                      </span>
+                    </div>
+                  )
+                )}
               </div>
             </div>
           </div>
         </div>
 
         {/* Center Panel: Trading */}
-        <div className="md:col-span-6 bg-[#1a1b2e] rounded-xl p-6">
-          <div className="h-[550px] bg-[#2a2b3c] mb-6 rounded-lg flex items-center justify-center">
+        <div className="md:col-span-6 bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-xl p-6 w-full">
+          <div className="h-[550px] bg-opacity-[0.07] border border-[#00ff9d]/20 mb-6 rounded-lg flex items-center justify-center">
             <span className="text-gray-500">[Trading Chart Coming Soon]</span>
           </div>
           {/* Trade Buttons */}
-          <div className="flex space-x-4 mb-4">
+          <div className="flex space-x-4 mb-4 bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-xl">
             <button
               onClick={() => setTradeType("buy")}
-              className={`w-1/2 py-2 font-semibold rounded-l ${
-                tradeType === "buy" ? "bg-green-500" : "bg-[#2a2f45]"
-              }`}
+              className={`${tradeType === "buy"
+                  ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
+                  : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
+                }`}
+              style={{
+                backgroundImage:
+                  tradeType === "buy"
+                    ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(34, 197, 94) 0%, rgb(20, 83, 45) 60%, rgba(34, 197, 94, 0.2) 100%)"
+                    : "none",
+              }}
             >
               Buy
             </button>
             <button
               onClick={() => setTradeType("sell")}
-              className={`w-1/2 py-2 font-semibold rounded-r ${
-                tradeType === "sell" ? "bg-red-500" : "bg-[#2a2f45]"
-              }`}
+              className={`${tradeType === "sell"
+                  ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
+                  : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
+                }`}
+              style={{
+                backgroundImage:
+                  tradeType === "sell"
+                    ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(239, 68, 68) 0%, rgb(139, 15, 15) 60%, rgba(239, 68, 68, 0.2) 100%)"
+                    : "none",
+              }}
             >
               Sell
             </button>
           </div>
 
           {/* Form */}
-          <div className="space-y-4 bg-[#2a2b3c] p-4 rounded-xl">
+          <div className="space-y-4 bg-opacity-[0.07] border border-[#00ff9d]/20 p-4 rounded-xl">
             {/* Price Input */}
             {tradeType === "buy" ? (
               <div className="text-sm text-gray-400 text-right">
@@ -553,11 +623,11 @@ export default function Market96({
                 {select.name}
               </div>
             )}
-            <div className="flex items-center justify-between bg-[#1e1f30] p-2 rounded-lg">
+            <div className="flex items-center justify-between bg-opacity-[0.07] border border-[#00ff9d]/20 p-2 rounded-lg">
               <label className="text-sm text-gray-300 w-24">Price</label>
               <input
                 type="number"
-                className="bg-transparent text-right w-full mr-2 outline-none"
+                className="focus:outline-none text-gray-400 font-mono text-xs rounded-lg px-3 py-1 w-full text-white placeholder-gray-400 text-right"
                 placeholder="0.00"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
@@ -566,11 +636,11 @@ export default function Market96({
             </div>
 
             {/* Amount Input */}
-            <div className="flex items-center justify-between bg-[#1e1f30] p-2 rounded-lg">
+            <div className="flex items-center justify-between bg-opacity-[0.07] border border-[#00ff9d]/20 p-2 rounded-lg">
               <label className="text-sm text-gray-300 w-24">Amount</label>
               <input
                 type="number"
-                className="bg-transparent text-right w-full mr-2 outline-none"
+                className="focus:outline-none text-gray-400 font-mono text-xs rounded-lg px-3 py-1 w-full text-white placeholder-gray-400 text-right"
                 placeholder="0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
@@ -581,53 +651,61 @@ export default function Market96({
             {/* Total */}
 
             {/* Fee Breakdown */}
-            {price && amount && (
-              <>
-                <div className="flex items-center justify-between text-sm text-gray-400 px-2">
-                  <span>Total </span>
-                  <span>
-                    {(parseFloat(price) * parseFloat(amount)).toFixed(8)} KKUB
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm text-gray-400 px-2">
-                  <span>Fee (0.5%)</span>
-                  <span>
-                    {(parseFloat(price) * parseFloat(amount) * 0.005).toFixed(
-                      8
-                    )}{" "}
-                    KKUB
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm px-2 font-bold text-white">
-                  <span>
-                    {tradeType === "buy" ? "You must pay" : "You receive"}
-                  </span>
-                  <span>
-                    {tradeType === "buy"
-                      ? (
-                          parseFloat(price) *
-                          parseFloat(amount) *
-                          1.005
-                        ).toFixed(8)
-                      : (
-                          parseFloat(price) *
-                          parseFloat(amount) *
-                          0.995
-                        ).toFixed(8)}{" "}
-                    KKUB
-                  </span>
-                </div>
-              </>
-            )}
+{price && amount && (
+  <>
+    <div className="flex items-center justify-between text-sm text-gray-400 px-2">
+      <span>Total </span>
+      <span>
+        {(parseFloat(price) * parseFloat(amount)).toLocaleString(undefined, {
+          minimumFractionDigits: 8,
+          maximumFractionDigits: 8,
+        })}{" "}
+        KKUB
+      </span>
+    </div>
+    <div className="flex items-center justify-between text-sm text-gray-400 px-2">
+      <span>Fee (0.5%)</span>
+      <span>
+        {(parseFloat(price) * parseFloat(amount) * 0.005).toLocaleString(undefined, {
+          minimumFractionDigits: 8,
+          maximumFractionDigits: 8,
+        })}{" "}
+        KKUB
+      </span>
+    </div>
+    <div className="flex items-center justify-between text-sm px-2 font-bold text-white">
+      <span>
+        {tradeType === "buy" ? "You must pay" : "You receive"}
+      </span>
+      <span>
+        {(
+          parseFloat(price) * parseFloat(amount) * (tradeType === "buy" ? 1.005 : 0.995)
+        ).toLocaleString(undefined, {
+          minimumFractionDigits: 8,
+          maximumFractionDigits: 8,
+        })}{" "}
+        KKUB
+      </span>
+    </div>
+  </>
+)}
+
 
             {/* Submit Button */}
             <button
               onClick={handleOrder}
-              className={`w-full py-2 rounded-lg font-semibold uppercase transition-colors duration-200 ${
-                tradeType === "buy"
-                  ? "bg-green-600 hover:bg-green-700"
-                  : "bg-red-600 hover:bg-red-700"
-              }`}
+              className={`font-bold p-2 w-full text-center rounded-lg transition-all duration-300
+              ${tradeType === "buy"
+                            ? "text-green-100 hover:brightness-110 active:scale-95"
+                            : "text-red-100 hover:brightness-110 active:scale-95"
+                          }
+              ${!select?.name ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                        style={{
+                          backgroundImage:
+                            tradeType === "buy"
+                              ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(34, 197, 94) 0%, rgb(20, 83, 45) 60%, rgba(34, 197, 94, 0.2) 100%)"
+                              : "radial-gradient(circle 919px at 1.7% 6.1%, rgb(239, 68, 68) 0%, rgb(139, 15, 15) 60%, rgba(239, 68, 68, 0.2) 100%)",
+                        }}
               disabled={!select?.name}
             >
               {tradeType === "buy" ? "Buy" : "Sell"} {select?.name || ""}
@@ -659,7 +737,7 @@ export default function Market96({
         </div>
 
         {/* Right Panel: Token Pair */}
-        <div className="md:col-span-3 bg-[#1a1b2e] rounded-xl p-4 flex flex-col justify-center h-full">
+        <div className="md:col-span-3 bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-xl p-4 flex flex-col w-full">
           {/* Header */}
           <div className="flex flex-wrap items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">Pair</h3>
@@ -668,7 +746,7 @@ export default function Market96({
             <input
               type="text"
               placeholder="Search..."
-              className="bg-[#2a2b3c] text-sm rounded-lg px-3 py-1 w-full text-white placeholder-gray-400 focus:outline-none"
+              className="focus:outline-none text-gray-400 font-mono text-xs rounded-lg px-3 py-1 w-full text-white placeholder-gray-400 "
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -690,11 +768,10 @@ export default function Market96({
                       f as "all" | "Metal Valley" | "Morning Moon Village"
                     )
                   }
-                  className={`px-3 py-1 rounded ${
-                    filter === f
+                  className={`px-3 py-1 rounded ${filter === f
                       ? "bg-blue-600 text-white"
                       : "bg-[#2a2b3c] text-gray-400 hover:text-white"
-                  }`}
+                    }`}
                 >
                   {label}
                 </button>
@@ -706,55 +783,56 @@ export default function Market96({
           <hr className="border-gray-700 mb-4" />
 
           {/* Token pairs list */}
-          <div className="space-y-4 max-h-250 overflow-y-auto pr-2 scrollbar-hide">
+          <div className="space-y-4 h-250 overflow-y-auto pr-2 scrollbar-hide">
             {filteredPairs.length === 0 ? (
-              <p className="text-gray-400 text-center">No pairs found</p>
+              <p className="text-gray-400 font-mono text-center">
+                No pairs found
+              </p>
             ) : (
               filteredPairs.map((pair, idx) => (
                 <div
-  key={idx}
-  className="flex items-center space-x-3 cursor-pointer"
-  onClick={() => setSelectToken(pair)}
->
-  {/* Token Icons */}
-  <div className="relative w-10 aspect-square flex-shrink-0">
-    {/* Token 1 */}
-    <div className="absolute top-0 left-0 w-8 aspect-square rounded-full overflow-hidden border-2 border-[#1a1b2e] bg-white">
-      <img
-        src={pair.img1}
-        alt="token1"
-        className="w-full h-full object-cover"
-      />
-    </div>
+                  key={idx}
+                  className="flex items-center space-x-3 cursor-pointer"
+                  onClick={() => setSelectToken(pair)}
+                >
+                  {/* Token Icons */}
+                  <div className="relative w-10 aspect-square flex-shrink-0">
+                    {/* Token 1 */}
+                    <div className="absolute top-0 left-0 w-8 aspect-square rounded-full overflow-hidden border-2 border-[#1a1b2e] bg-white">
+                      <img
+                        src={pair.img1}
+                        alt="token1"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
 
-    {/* Token 2 (overlap) */}
-    <div className="absolute top-0 left-5 w-6 aspect-square rounded-full overflow-hidden border-2 border-[#1a1b2e] bg-white">
-      <img
-        src={pair.img2}
-        alt="token2"
-        className="w-full h-full object-cover"
-      />
-    </div>
-  </div>
+                    {/* Token 2 (overlap) */}
+                    <div className="absolute top-0 left-5 w-6 aspect-square rounded-full overflow-hidden border-2 border-[#1a1b2e] bg-white">
+                      <img
+                        src={pair.img2}
+                        alt="token2"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
 
-  {/* Token Info */}
-  <div className="flex flex-col justify-center max-w-full overflow-hidden">
-    <p
-      className="text-white font-semibold truncate uppercase
+                  {/* Token Info */}
+                  <div className="flex flex-col justify-center max-w-full overflow-hidden">
+                    <p
+                      className="text-white font-mono truncate uppercase 
       text-sm sm:text-base md:text-lg lg:text-base xl:text-lg 2xl:text-xl"
-    >
-      {pair.name}
-    </p>
+                    >
+                      {pair.name}
+                    </p>
 
-    <p
-      className="text-gray-400 truncate
+                    <p
+                      className="text-gray-400 truncate
       text-xs sm:text-sm md:text-base lg:text-sm xl:text-base"
-    >
-      {pair.desc}
-    </p>
-  </div>
-</div>
-
+                    >
+                      {pair.desc}
+                    </p>
+                  </div>
+                </div>
               ))
             )}
           </div>
@@ -762,25 +840,23 @@ export default function Market96({
       </div>
 
       {/* Footer: Tabs + Order Table */}
-      <div className="bg-[#1a1b2e] rounded-xl p-6 mt-6">
+      <div className="bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-xl p-6 mt-6">
         {/* Tabs */}
         <div className="flex justify-start space-x-8 mb-6 border-b border-gray-700 pb-2">
           <button
-            className={`${
-              view === "Orders"
-                ? "text-white font-semibold pb-2 border-b-2 border-green-500"
+            className={`${view === "Orders"
+                ? "text-white font-semibold  border-green-500"
                 : "text-gray-400 hover:text-white "
-            }`}
+              }`}
             onClick={() => setView("Orders")}
           >
             Orders
           </button>
           <button
-            className={`${
-              view === "History"
-                ? "text-white font-semibold pb-2 border-b-2 border-green-500"
+            className={`${view === "History"
+                ? "text-white font-semibold  border-green-500"
                 : "text-gray-400 hover:text-white "
-            }`}
+              }`}
             onClick={() => setView("History")}
           >
             Trade History
