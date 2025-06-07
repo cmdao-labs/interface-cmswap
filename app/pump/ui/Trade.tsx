@@ -833,7 +833,7 @@ export default function Trade({
   }, [socialsResult]);
 
   return (
-<main className="row-start-2 w-full flex flex-col gap-4 justify-center items-center mt-[60px] md:mt-1">
+    <main className="row-start-2 w-full flex flex-col gap-4 justify-center items-center mt-[60px] md:mt-1">
       {headnoti && (
         <div className="w-full  h-[40px] bg-sky-500 animate-pulse text-center p-2 flex flex-row gap-2 items-center justify-center">
           <span>Trade Successful!, </span>
@@ -857,7 +857,6 @@ export default function Trade({
 
       {/** MB */}
 
-      
       <div
         className="md:hidden w-full xl:w-1/3 self-center bg-neutral-900 p-2 rounded-2xl flex flex-row justify-around border-solid border-2 border-emerald-300"
         style={{ zIndex: 1 }}
@@ -900,7 +899,8 @@ export default function Trade({
         </span>
       </div>
 
-      {//** HEADER TOPBAR */
+      {
+        //** HEADER TOPBAR */
       }
       <div className="ml-[28px] lg:ml-[52px] w-full max-w-[1920px] flex flex-col gap-4 mb-2">
         <Link
@@ -916,76 +916,77 @@ export default function Trade({
         </Link>
         <div className="hidden md:block w-full flex flex-col md:flex-row flex-wrap justify-between text-xs xl:text-md">
           <div className="flex flex-row flex-wrap gap-2 items-end 2">
-          <span className="text-emerald-300 text-2xl">
-            {result2.status === "success" && result2.data![0].result}
-          </span>
-          <span className="flex items-end">
-            {result2.status === "success" && "[$" + result2.data![1].result + "]"}
-          </span>
-          <span className="flex flex-row gap-2 items-end">
-            <span>
-              CA: {ticker.slice(0, 5)}...{ticker.slice(37)}
+            <span className="text-emerald-300 text-2xl">
+              {result2.status === "success" && result2.data![0].result}
             </span>
-            <div className="flex items-center gap-1 ml-2">
-              <button
-                onClick={() => copyToClipboard(ticker)}
-                className="flex items-center gap-2 bg-water-300 hover:bg-neutral-700 px-3 py-2 rounded-md transition-colors text-xs cursor-pointer"
-                title="Copy contract address"
-              >
-                {copiedAddress === ticker ? (
-                  <>
-                    <Check size={16} />
-                    Copied!
-                  </>
-                ) : (
-                  <Copy size={16} />
-                )}
-              </button>
-              <button
-                className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm cursor-pointer"
-                onClick={async () => {
-                  await ethereum.request({
-                    method: "wallet_watchAsset",
-                    params: {
-                      type: "ERC20",
-                      options: {
-                        address: ticker,
-                        symbol:
-                          result2.status === "success" &&
-                          result2.data![1].result,
-                        decimals: 18,
-                        image:
-                          result2.status === "success" &&
-                          result2.data![3].result!.slice(0, 7) === "ipfs://"
-                            ? "https://gateway.commudao.xyz/ipfs/" +
-                              result2.data![3].result!.slice(7)
-                            : "https://gateway.commudao.xyz/ipfs/" +
-                              result2.data![3].result!,
+            <span className="flex items-end">
+              {result2.status === "success" &&
+                "[$" + result2.data![1].result + "]"}
+            </span>
+            <span className="flex flex-row gap-2 items-end">
+              <span>
+                CA: {ticker.slice(0, 5)}...{ticker.slice(37)}
+              </span>
+              <div className="flex items-center gap-1 ml-2">
+                <button
+                  onClick={() => copyToClipboard(ticker)}
+                  className="flex items-center gap-2 bg-water-300 hover:bg-neutral-700 px-3 py-2 rounded-md transition-colors text-xs cursor-pointer"
+                  title="Copy contract address"
+                >
+                  {copiedAddress === ticker ? (
+                    <>
+                      <Check size={16} />
+                      Copied!
+                    </>
+                  ) : (
+                    <Copy size={16} />
+                  )}
+                </button>
+                <button
+                  className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm cursor-pointer"
+                  onClick={async () => {
+                    await ethereum.request({
+                      method: "wallet_watchAsset",
+                      params: {
+                        type: "ERC20",
+                        options: {
+                          address: ticker,
+                          symbol:
+                            result2.status === "success" &&
+                            result2.data![1].result,
+                          decimals: 18,
+                          image:
+                            result2.status === "success" &&
+                            result2.data![3].result!.slice(0, 7) === "ipfs://"
+                              ? "https://gateway.commudao.xyz/ipfs/" +
+                                result2.data![3].result!.slice(7)
+                              : "https://gateway.commudao.xyz/ipfs/" +
+                                result2.data![3].result!,
+                        },
                       },
-                    },
-                  });
-                }}
-              >
-                <Plus size={16} />
-              </button>
-              <Link
-                href={_explorer + "address/" + ticker}
-                rel="noopener noreferrer"
-                target="_blank"
-                prefetch={false}
-                className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm"
-                title="View on Etherscan"
-              >
-                <Image
-                  src="/bs.png"
-                  alt="blockscout"
-                  height={16}
-                  width={16}
-                />
-              </Link>
-            </div>
-          </span>
-        </div>
+                    });
+                  }}
+                >
+                  <Plus size={16} />
+                </button>
+                <Link
+                  href={_explorer + "address/" + ticker}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  prefetch={false}
+                  className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm"
+                  title="View on Etherscan"
+                >
+                  <Image
+                    src="/bs.png"
+                    alt="blockscout"
+                    height={16}
+                    width={16}
+                  />
+                </Link>
+              </div>
+            </span>
+          </div>
           <span className="mr-6">
             Price:{" "}
             <span className="text-emerald-300">
@@ -1117,7 +1118,7 @@ export default function Trade({
 
       {/** PC */}
 
-  <div className="w-full text-center max-w-[1920px] flex flex-row flex-wrap gap-12 items-center xl:items-start justify-around">
+      <div className="w-full text-center max-w-[1920px] flex flex-row flex-wrap gap-12 items-center xl:items-start justify-around">
         {!tabmode ? (
           <div
             className="block md:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start"
@@ -1356,59 +1357,63 @@ export default function Trade({
               </div>
             </div>
 
-            
             {/* Socials Section */}
-            {result2.status === "success" &&
-              result2.data![5].result === account.address && (
-                <div className="w-full">
-                  <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-4">
-                    {socialItems.map(({ icon, field }) => {
-                      const url = socials[field];
-                      if (!url || url.trim() === "") return null;
+            {(
+              <div className="w-full">
+                <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-4">
+                  {socialItems.map(({ icon, field }) => {
+                    const url = socials[field];
+                    if (!url || url.trim() === "") return null;
 
-                      const platformNames: Record<string, string> = {
-                        fb: "Facebook",
-                        x: "X (Twitter)",
-                        telegram: "Telegram",
-                        website: "Website",
-                      };
+                    const platformNames: Record<string, string> = {
+                      fb: "Facebook",
+                      x: "X (Twitter)",
+                      telegram: "Telegram",
+                      website: "Website",
+                    };
 
-                      return (
-                        <a
-                          key={field}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-3 p-2 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 text-center w-full h-full"
-                        >
-                          <div className="text-green-400">{icon}</div>
-                          <span className="text-green-300 text-sm font-medium">
-                            {platformNames[field] ?? field}
-                          </span>
-                        </a>
-                      );
-                    })}
-                  </div>
-
-                  {/* ปุ่มเพิ่ม Socials */}
-                  <div>
-                    <button
-                      className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                      onClick={() => setShowSocials(!showSocials)}
-                    >
-                      <span className="self-center">Link your social profiles</span>
-                    </button>
-                  </div>
+                    return (
+                      <a
+                        key={field}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-3 p-2 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 text-center w-full h-full"
+                      >
+                        <div className="text-green-400">{icon}</div>
+                        <span className="text-green-300 text-sm font-medium">
+                          {platformNames[field] ?? field}
+                        </span>
+                      </a>
+                    );
+                  })}
                 </div>
+
+                {/* ปุ่มเพิ่ม Socials */}
+              </div>
             )}
-                        <a
+
+            {result2.status === "success" && result2.data![5].result === account.address && (
+              <div>
+                <button
+                  className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                  onClick={() => setShowSocials(!showSocials)}
+                >
+                  <span className="self-center">Link your social profiles</span>
+                </button>
+              </div>
+            )}
+
+            <a
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-3 py-1.5 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 w-full"
             >
               {/* Address Display */}
               <div className="flex items-center gap-1 w-full overflow-hidden">
-                <span className="text-green-300 text-xs font-medium whitespace-nowrap">Contract Address:</span>
+                <span className="text-green-300 text-xs font-medium whitespace-nowrap">
+                  Contract Address:
+                </span>
                 <span className="text-green-300 text-xs font-mono truncate block">
                   {ticker}
                 </span>
@@ -1431,7 +1436,6 @@ export default function Trade({
               </button>
             </a>
 
-            
             {result2.status === "success" && state[2].result ? (
               <>
                 <span className="ml-[20px] text-sm font-bold  text-left">
@@ -1551,8 +1555,6 @@ export default function Trade({
               </>
             )}
 
-
-
             <div className="w-full h-[780px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
               <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">
                 {holder.length} Holders
@@ -1610,14 +1612,15 @@ export default function Trade({
               style={{ zIndex: 1 }}
             >
               {/** Name */}
-            <div className="w-3/4 flex items-baseline space-x-2 mx-2 my-2">
-              <div className="text-2xl font-bold max-w-[240px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
-                {result2.status === "success" && result2.data![0].result}
+              <div className="w-3/4 flex items-baseline space-x-2 mx-2 my-2">
+                <div className="text-2xl font-bold max-w-[240px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
+                  {result2.status === "success" && result2.data![0].result}
+                </div>
+                <div className="text-sm text-gray-400 max-w-[80px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
+                  {result2.status === "success" &&
+                    `[$${result2.data![1].result}]`}
+                </div>
               </div>
-              <div className="text-sm text-gray-400 max-w-[80px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
-                {result2.status === "success" && `[$${result2.data![1].result}]`}
-              </div>
-            </div>
 
               {/** BuySell Btn */}
 
@@ -1630,7 +1633,7 @@ export default function Trade({
                   }
                   style={{
                     backgroundImage: trademode
-                    ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(34, 197, 94) 0%, rgb(20, 83, 45) 60%, rgba(34, 197, 94, 0.2) 100%)"
+                      ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(34, 197, 94) 0%, rgb(20, 83, 45) 60%, rgba(34, 197, 94, 0.2) 100%)"
                       : "none",
                   }}
                   onClick={() => {
@@ -1649,7 +1652,7 @@ export default function Trade({
                   }
                   style={{
                     backgroundImage: !trademode
-                    ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(239, 68, 68) 0%, rgb(139, 15, 15) 60%, rgba(239, 68, 68, 0.2) 100%)"
+                      ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(239, 68, 68) 0%, rgb(139, 15, 15) 60%, rgba(239, 68, 68, 0.2) 100%)"
                       : "none",
                   }}
                   onClick={() => {
@@ -1689,7 +1692,7 @@ export default function Trade({
                       "$" + result2.data![1].result}
                 </span>
               </div>
-              
+
               <div className="mr-[20px] self-end text-sm">
                 {mode === "pro" ? (
                   <>
@@ -1717,7 +1720,10 @@ export default function Trade({
                         >
                           Reset
                         </button>
-                        {(trademode && mode === "pro" ? [0.1, 0.5, 1] : [25, 50, 75]).map((value) => (
+                        {(trademode && mode === "pro"
+                          ? [0.1, 0.5, 1]
+                          : [25, 50, 75]
+                        ).map((value) => (
                           <button
                             key={value}
                             className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
@@ -1729,8 +1735,11 @@ export default function Trade({
                                 qoute(adjusted.toFixed(6));
                               } else {
                                 // percent (25%, 50%, 75%)
-                                const balance = BigInt(state[1].result as bigint);
-                                const amount = (balance * BigInt(value)) / BigInt(100);
+                                const balance = BigInt(
+                                  state[1].result as bigint
+                                );
+                                const amount =
+                                  (balance * BigInt(value)) / BigInt(100);
                                 const adjusted = Number(formatEther(amount));
                                 setInputBalance(adjusted.toFixed(6));
                                 qoute(adjusted.toFixed(6));
@@ -1741,13 +1750,14 @@ export default function Trade({
                           </button>
                         ))}
 
-
                         <button
                           className="px-3 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
                           onClick={() => {
                             const value = trademode
-                              ? Number(formatEther(ethBal)) + (trademode && mode === "pro" ? - 0.00001 : 0 )
-                              : Number(formatEther(state[1].result as bigint)) + (trademode && mode === "pro" ? - 0.00001 : 0 );
+                              ? Number(formatEther(ethBal)) +
+                                (trademode && mode === "pro" ? -0.00001 : 0)
+                              : Number(formatEther(state[1].result as bigint)) +
+                                (trademode && mode === "pro" ? -0.00001 : 0);
 
                             setInputBalance(value.toFixed(6));
                             qoute(value.toFixed(6));
@@ -1787,30 +1797,35 @@ export default function Trade({
                           Reset
                         </button>
 
-                        {(trademode && mode ==="pro" ? [0.1, 0.5, 1] : [25, 50, 75]).map((value) => (
-                        <button
-                          key={value}
-                          className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
-                          onClick={() => {
-                            if (trademode && mode === "pro") {
-                              // fixed amount 0.1, 0.5, 1
-                              const adjusted = value;
-                              setInputBalance(adjusted.toFixed(6));
-                              qoute(adjusted.toFixed(6));
-                            } else {
-                              // percent 25%, 50%, 75%
-                              const balance = BigInt(state[1].result as bigint);
-                              const amount = (balance * BigInt(value)) / BigInt(100);
-                              const adjusted = Number(formatEther(amount));
-                              setInputBalance(adjusted.toFixed(6));
-                              qoute(adjusted.toFixed(6));
-                            }
-                          }}
-                        >
-                          {trademode && mode === "pro" ? value : `${value}%`}
-                        </button>
-                      ))}
-
+                        {(trademode && mode === "pro"
+                          ? [0.1, 0.5, 1]
+                          : [25, 50, 75]
+                        ).map((value) => (
+                          <button
+                            key={value}
+                            className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
+                            onClick={() => {
+                              if (trademode && mode === "pro") {
+                                // fixed amount 0.1, 0.5, 1
+                                const adjusted = value;
+                                setInputBalance(adjusted.toFixed(6));
+                                qoute(adjusted.toFixed(6));
+                              } else {
+                                // percent 25%, 50%, 75%
+                                const balance = BigInt(
+                                  state[1].result as bigint
+                                );
+                                const amount =
+                                  (balance * BigInt(value)) / BigInt(100);
+                                const adjusted = Number(formatEther(amount));
+                                setInputBalance(adjusted.toFixed(6));
+                                qoute(adjusted.toFixed(6));
+                              }
+                            }}
+                          >
+                            {trademode && mode === "pro" ? value : `${value}%`}
+                          </button>
+                        ))}
 
                         <button
                           className="px-3 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
@@ -1828,17 +1843,16 @@ export default function Trade({
                     </div>
                   </>
                 )}
-
               </div>
 
               <div className="w-full flex flex-row justify-between text-2xl text-emerald-300 font-bold">
-            <span className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-3/5 font-bold bg-transparent text-left">
+                <span className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-3/5 font-bold bg-transparent text-left">
                   {Intl.NumberFormat("en-US", {
                     notation: "compact",
                     compactDisplay: "short",
                   }).format(Number(outputBalance))}
                 </span>
-                
+
                 <span className="mr-[20px] w-2/5 text-right truncate">
                   {!trademode
                     ? chain === "kub" && mode === "pro"
@@ -1906,11 +1920,11 @@ export default function Trade({
               )}
             </div>
             <div className="flex justify-end gap-2 mb-3 text-xs">
-            {["CMswap", "GeckoTerminal"].map((type) => (
-              <button
-                key={type}
-                onClick={() => setGrapthType(type)}
-                className={`
+              {["CMswap", "GeckoTerminal"].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setGrapthType(type)}
+                  className={`
                             px-3 py-1.5 text-sm  
                             transition-all duration-200 ease-in-out
                             ${
@@ -1920,34 +1934,34 @@ export default function Trade({
                             }
                             cursor-pointer
                         `}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
 
-          {grapthType === "GeckoTerminal" ? (
-            <iframe
-              height="28%"
-              width="100%"
-              id="geckoterminal-embed"
-              title="GeckoTerminal Embed"
-              src={
-                "https://www.geckoterminal.com/" +
-                (chain === "kub"
-                  ? "bitkub_chain"
-                  : chain === "monad"
-                  ? "monad-testnet"
-                  : "") +
-                "/pools/" +
-                lp +
-                "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"
-              }
-              allow="clipboard-write"
-            ></iframe>
-          ) : (
-            <Chart data={graphData} />
-          )}
+            {grapthType === "GeckoTerminal" ? (
+              <iframe
+                height="28%"
+                width="100%"
+                id="geckoterminal-embed"
+                title="GeckoTerminal Embed"
+                src={
+                  "https://www.geckoterminal.com/" +
+                  (chain === "kub"
+                    ? "bitkub_chain"
+                    : chain === "monad"
+                    ? "monad-testnet"
+                    : "") +
+                  "/pools/" +
+                  lp +
+                  "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"
+                }
+                allow="clipboard-write"
+              ></iframe>
+            ) : (
+              <Chart data={graphData} />
+            )}
 
             <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
               <div className="w-1/5 sm:w-1/3">Timestamp</div>
@@ -2158,17 +2172,18 @@ export default function Trade({
 
         <div className="hidden md:block w-full xl:w-1/4 h-fit xl:h-[1500px] flex flex-col gap-8 z-1">
           <div className="px-10 py-6 w-full h-[380px] border-2 border-l-8 border-emerald-300 border-solid flex flex-col item-center justify-around bg-gray-900">
-              {/** Name */}
+            {/** Name */}
             <div className="w-3/4 flex items-baseline space-x-2 mx-2 my-2">
               <div className="text-2xl font-bold max-w-[240px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
                 {result2.status === "success" && result2.data![0].result}
               </div>
               <div className="text-sm text-gray-400 max-w-[80px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
-                {result2.status === "success" && `[$${result2.data![1].result}]`}
+                {result2.status === "success" &&
+                  `[$${result2.data![1].result}]`}
               </div>
             </div>
 
-              {/** BuySell Btn */}
+            {/** BuySell Btn */}
 
             <div className="w-full bg-gray-800 self-center p-2  mb-3 rounded-2xl flex flex-row justify-around">
               <span
@@ -2210,12 +2225,12 @@ export default function Trade({
                 Sell
               </span>
             </div>
-              {/** Input Seciton  */}
+            {/** Input Seciton  */}
 
             <div className="w-full flex flex-row justify-between text-2xl">
               <input
                 className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-3/5 font-bold bg-transparent"
-                placeholder="0" 
+                placeholder="0"
                 value={inputBalance}
                 onChange={(event) => {
                   setInputBalance(event.target.value);
@@ -2238,7 +2253,7 @@ export default function Trade({
                     "$" + result2.data![1].result}
               </span>
             </div>
-              {/** Quick Amount Section */}
+            {/** Quick Amount Section */}
             <div className="mr-[20px] self-end text-sm">
               {mode === "pro" ? (
                 <>
@@ -2257,55 +2272,59 @@ export default function Trade({
                     </div>
 
                     <div className="flex flex-wrap gap-2 justify-end mb-4">
+                      <button
+                        className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
+                        onClick={() => {
+                          setInputBalance("");
+                          setOutputBalance("");
+                        }}
+                      >
+                        Reset
+                      </button>
+                      {(trademode && mode === "pro"
+                        ? [0.1, 0.5, 1]
+                        : [25, 50, 75]
+                      ).map((value) => (
                         <button
+                          key={value}
                           className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
                           onClick={() => {
-                            setInputBalance("");
-                            setOutputBalance("");
+                            if (trademode) {
+                              // fix amount (0.1, 0.5, 1)
+                              const adjusted = value;
+                              setInputBalance(adjusted.toFixed(6));
+                              qoute(adjusted.toFixed(6));
+                            } else {
+                              // percent (25%, 50%, 75%)
+                              const balance = BigInt(state[1].result as bigint);
+                              const amount =
+                                (balance * BigInt(value)) / BigInt(100);
+                              const adjusted = Number(formatEther(amount));
+                              setInputBalance(adjusted.toFixed(6));
+                              qoute(adjusted.toFixed(6));
+                            }
                           }}
                         >
-                          Reset
+                          {trademode ? value : `${value}%`}
                         </button>
-                        {(trademode && mode === "pro" ? [0.1, 0.5, 1] : [25, 50, 75]).map((value) => (
-                          <button
-                            key={value}
-                            className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
-                            onClick={() => {
-                              if (trademode) {
-                                // fix amount (0.1, 0.5, 1)
-                                const adjusted = value;
-                                setInputBalance(adjusted.toFixed(6));
-                                qoute(adjusted.toFixed(6));
-                              } else {
-                                // percent (25%, 50%, 75%)
-                                const balance = BigInt(state[1].result as bigint);
-                                const amount = (balance * BigInt(value)) / BigInt(100);
-                                const adjusted = Number(formatEther(amount));
-                                setInputBalance(adjusted.toFixed(6));
-                                qoute(adjusted.toFixed(6));
-                              }
-                            }}
-                          >
-                            {trademode ? value : `${value}%`} 
-                          </button>
-                        ))}
+                      ))}
 
+                      <button
+                        className="px-3 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
+                        onClick={() => {
+                          const value = trademode
+                            ? Number(formatEther(ethBal)) +
+                              (trademode && mode === "pro" ? -0.00001 : 0)
+                            : Number(formatEther(state[1].result as bigint)) +
+                              (trademode && mode === "pro" ? -0.00001 : 0);
 
-                        <button
-                          className="px-3 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
-                          onClick={() => {
-                            const value = trademode
-                              ? Number(formatEther(ethBal)) + (trademode && mode === "pro" ? - 0.00001 : 0 )
-                              : Number(formatEther(state[1].result as bigint)) + (trademode && mode === "pro" ? - 0.00001 : 0 );
-
-                            setInputBalance(value.toFixed(6));
-                            qoute(value.toFixed(6));
-                          }}
-                        >
-                          Max
-                        </button>
-                      </div>
-                      
+                          setInputBalance(value.toFixed(6));
+                          qoute(value.toFixed(6));
+                        }}
+                      >
+                        Max
+                      </button>
+                    </div>
                   </div>
                 </>
               ) : (
@@ -2372,27 +2391,30 @@ export default function Trade({
                 </>
               )}
             </div>
-            
-              {/** Output Seciton  */}
+
+            {/** Output Seciton  */}
 
             <div className="w-full flex flex-row justify-between text-2xl text-emerald-300 font-bold">
-            <span className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-3/5 font-bold bg-transparent text-left">
-              {Intl.NumberFormat("en-US", {
-                notation: "compact",
-                compactDisplay: "short",
-              }).format(Number(outputBalance))}
-            </span>
-            <span className="mr-[20px] w-2/5 text-right truncate">
-              {!trademode
-                ? chain === "kub" && mode === "pro"
-                  ? "KUB"
-                  : chain === "kub" && mode === "lite" && (token === "cmm" || token === "")
-                  ? "CMM"
-                  : chain === "monad" && mode === "pro"
-                  ? "MON"
-                  : ""
-                : result2.status === "success" && "$" + result2.data![1].result}
-            </span>
+              <span className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-3/5 font-bold bg-transparent text-left">
+                {Intl.NumberFormat("en-US", {
+                  notation: "compact",
+                  compactDisplay: "short",
+                }).format(Number(outputBalance))}
+              </span>
+              <span className="mr-[20px] w-2/5 text-right truncate">
+                {!trademode
+                  ? chain === "kub" && mode === "pro"
+                    ? "KUB"
+                    : chain === "kub" &&
+                      mode === "lite" &&
+                      (token === "cmm" || token === "")
+                    ? "CMM"
+                    : chain === "monad" && mode === "pro"
+                    ? "MON"
+                    : ""
+                  : result2.status === "success" &&
+                    "$" + result2.data![1].result}
+              </span>
             </div>
 
             <div className="mr-[20px] self-end text-sm">
@@ -2476,48 +2498,49 @@ export default function Trade({
             </div>
 
             {/* Socials Section */}
-            {result2.status === "success" &&
-              result2.data![5].result === account.address && (
-                <div className="w-full">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    {socialItems.map(({ icon, field }) => {
-                      const url = socials[field];
-                      if (!url || url.trim() === "") return null;
+            {result2.status === "success" && (
+              <div className="w-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  {socialItems.map(({ icon, field }) => {
+                    const url = socials[field];
+                    if (!url || url.trim() === "") return null;
 
-                      const platformNames: Record<string, string> = {
-                        fb: "Facebook",
-                        x: "X (Twitter)",
-                        telegram: "Telegram",
-                        website: "Website",
-                      };
+                    const platformNames: Record<string, string> = {
+                      fb: "Facebook",
+                      x: "X (Twitter)",
+                      telegram: "Telegram",
+                      website: "Website",
+                    };
 
-                      return (
-                        <a
-                          key={field}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-3 p-2 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 text-center w-full h-full"
-                        >
-                          <div className="text-green-400">{icon}</div>
-                          <span className="text-green-300 text-sm font-medium">
-                            {platformNames[field] ?? field}
-                          </span>
-                        </a>
-                      );
-                    })}
-                  </div>
-
-                  {/* ปุ่มเพิ่ม Socials */}
-                  <div>
-                    <button
-                      className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                      onClick={() => setShowSocials(!showSocials)}
-                    >
-                      <span className="self-center">Link your social profiles</span>
-                    </button>
-                  </div>
+                    return (
+                      <a
+                        key={field}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-3 p-2 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 text-center w-full h-full"
+                      >
+                        <div className="text-green-400">{icon}</div>
+                        <span className="text-green-300 text-sm font-medium">
+                          {platformNames[field] ?? field}
+                        </span>
+                      </a>
+                    );
+                  })}
                 </div>
+              </div>
+            )}
+
+            {/* ปุ่มเพิ่ม Socials */}
+            {result2.status === "success" && result2.data![5].result === account.address && (
+              <div>
+                <button
+                  className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                  onClick={() => setShowSocials(!showSocials)}
+                >
+                  <span className="self-center">Link your social profiles</span>
+                </button>
+              </div>
             )}
 
             <a
@@ -2527,7 +2550,9 @@ export default function Trade({
             >
               {/* Address Display */}
               <div className="flex items-center gap-1 w-full overflow-hidden">
-                <span className="text-green-300 text-xs font-medium whitespace-nowrap">Contract Address:</span>
+                <span className="text-green-300 text-xs font-medium whitespace-nowrap">
+                  Contract Address:
+                </span>
                 <span className="text-green-300 text-xs font-mono truncate block">
                   {ticker}
                 </span>
@@ -2718,7 +2743,6 @@ export default function Trade({
               ))}
           </div>
         </div>
-
       </div>
 
       {/* Social Modal */}
@@ -2737,26 +2761,26 @@ export default function Trade({
 
             <div className="space-y-5 text-white grid ">
               {[
-              {
-                icon: <FaFacebookF className="text-white" />,
-                field: "fb",
-                placeholder: "Facebook",
-              },
-              {
-                icon: <FaTwitter className="text-white" />,
-                field: "x",
-                placeholder: "X (Twitter) URL",
-              },
-              {
-                icon: <FaTelegramPlane className="text-white" />,
-                field: "telegram",
-                placeholder: "Telegram URL",
-              },
-              {
-                icon: <FaGlobe className="text-white" />,
-                field: "website",
-                placeholder: "Website URL",
-              },
+                {
+                  icon: <FaFacebookF className="text-white" />,
+                  field: "fb",
+                  placeholder: "Facebook",
+                },
+                {
+                  icon: <FaTwitter className="text-white" />,
+                  field: "x",
+                  placeholder: "X (Twitter) URL",
+                },
+                {
+                  icon: <FaTelegramPlane className="text-white" />,
+                  field: "telegram",
+                  placeholder: "Telegram URL",
+                },
+                {
+                  icon: <FaGlobe className="text-white" />,
+                  field: "website",
+                  placeholder: "Website URL",
+                },
               ].map(({ icon, field, placeholder }) => (
                 <div key={field}>
                   <div className="flex items-center gap-3 ">
@@ -2788,11 +2812,11 @@ export default function Trade({
 
                   {/* Character Count */}
                   <p className="text-xs text-right text-[#00ff9d99] mt-1 ml-7">
-                    {socials[field as keyof typeof socials].length}/50 characters
+                    {socials[field as keyof typeof socials].length}/50
+                    characters
                   </p>
                 </div>
               ))}
-
 
               <button
                 onClick={handleSave}
