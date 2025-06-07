@@ -39,11 +39,54 @@ type Referral = {
   timestamp: bigint;
 };
 
+const themes: Record<number, Theme> = {
+    96: {
+      primary: "from-green-400 to-emerald-400",
+      secondary: "from-green-600 to-emerald-600",
+      accent: "green-400",
+      glow: "" /* "shadow-green-400/50" */,
+      border: "border-green-400/30",
+      text: "text-green-300",
+    },
+    8899: {
+      primary: "from-blue-400 to-cyan-400",
+      secondary: "from-blue-600 to-cyan-600",
+      accent: "blue-400",
+      glow: "" /* "shadow-blue-400/50" */,
+      border: "border-blue-400/30",
+      text: "text-blue-300",
+    },
+    56: {
+      primary: "from-yellow-400 to-amber-400",
+      secondary: "from-yellow-600 to-amber-600",
+      accent: "yellow-400",
+      glow: "" /* "shadow-yellow-400/50" */,
+      border: "border-yellow-400/30",
+      text: "text-yellow-300",
+    },
+    3501: {
+      primary: "from-red-400 to-rose-400",
+      secondary: "from-red-600 to-rose-600",
+      accent: "red-400",
+      glow: "" /* "shadow-red-400/50" */,
+      border: "border-red-400/30",
+      text: "text-red-300",
+    },
+    10143: {
+      primary: "from-purple-400 to-violet-400",
+      secondary: "from-purple-600 to-violet-600",
+      accent: "purple-400",
+      glow: "" /* "shadow-purple-400/50" */,
+      border: "border-purple-400/30",
+      text: "text-purple-300",
+    },
+  };
+
 export default function Ref96() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [selectedTheme, setSelectedTheme] = React.useState(96);
   const { address, chainId } = useAccount();
-  const [theme, setTheme] = React.useState<Theme>({} as Theme);
+  const [theme, setTheme] = React.useState<Theme>(themes[96]);
   const [currentPage, setCurrentPage] = React.useState(1);
   const referralsPerPage = 5;
   const [refAmount, setRefAmount] = React.useState(0);
@@ -173,49 +216,7 @@ export default function Ref96() {
     fetchReward();
   }, []);
 
-  // Theme configuration based on chainId
-  const themes: Record<number, Theme> = {
-    96: {
-      primary: "from-green-400 to-emerald-400",
-      secondary: "from-green-600 to-emerald-600",
-      accent: "green-400",
-      glow: "" /* "shadow-green-400/50" */,
-      border: "border-green-400/30",
-      text: "text-green-300",
-    },
-    8899: {
-      primary: "from-blue-400 to-cyan-400",
-      secondary: "from-blue-600 to-cyan-600",
-      accent: "blue-400",
-      glow: "" /* "shadow-blue-400/50" */,
-      border: "border-blue-400/30",
-      text: "text-blue-300",
-    },
-    56: {
-      primary: "from-yellow-400 to-amber-400",
-      secondary: "from-yellow-600 to-amber-600",
-      accent: "yellow-400",
-      glow: "" /* "shadow-yellow-400/50" */,
-      border: "border-yellow-400/30",
-      text: "text-yellow-300",
-    },
-    3501: {
-      primary: "from-red-400 to-rose-400",
-      secondary: "from-red-600 to-rose-600",
-      accent: "red-400",
-      glow: "" /* "shadow-red-400/50" */,
-      border: "border-red-400/30",
-      text: "text-red-300",
-    },
-    10143: {
-      primary: "from-purple-400 to-violet-400",
-      secondary: "from-purple-600 to-violet-600",
-      accent: "purple-400",
-      glow: "" /* "shadow-purple-400/50" */,
-      border: "border-purple-400/30",
-      text: "text-purple-300",
-    },
-  };
+
 
   const handleClaim = async () => {
     let { request } = await simulateContract(config, {
@@ -226,7 +227,7 @@ export default function Ref96() {
     await waitForTransactionReceipt(config, { hash: h });
   };
 
-  const getThemeColors = (chainId: number | undefined): Theme => {
+  const getThemeColors = (chainId: number | 96): Theme => {
     return themes[chainId as number] || themes[96];
   };
 
@@ -236,6 +237,8 @@ export default function Ref96() {
       setTheme(getThemeColors(chainId));
       setSelectedTheme(chainId);
       console.log("Chain ID:", chainId);
+    }else{
+      setTheme(getThemeColors(96));
     }
   }, [chainId]);
 
