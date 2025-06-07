@@ -2748,7 +2748,7 @@ export default function Trade({
                 placeholder: "X (Twitter) URL",
               },
               {
-                icon: <BsTwitterX className="text-white" />,
+                icon: <FaTelegramPlane className="text-white" />,
                 field: "telegram",
                 placeholder: "Telegram URL",
               },
