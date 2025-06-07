@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Copy, Users, Gift, TrendingUp, Zap } from "lucide-react";
+import { Copy,Check, Users, Gift, TrendingUp, Zap } from "lucide-react";
 import { useAccount } from "wagmi";
 import {
   simulateContract,
@@ -48,6 +48,9 @@ export default function Ref96() {
   const referralsPerPage = 5;
   const [refAmount, setRefAmount] = React.useState(0);
   const [referrals, setReferrals] = React.useState<Referral[]>([]);
+  const [copyLocation, setCopyLocation] = React.useState<"" | "address" | "url">("");
+
+
   const [RewardList, setRewardList] = React.useState<
     { token: string; symbol: string; reward: string }[]
   >([]);
@@ -184,7 +187,7 @@ export default function Ref96() {
       primary: "from-blue-400 to-cyan-400",
       secondary: "from-blue-600 to-cyan-600",
       accent: "blue-400",
-      glow: "shadow-blue-400/50",
+      glow: "" /* "shadow-blue-400/50" */,
       border: "border-blue-400/30",
       text: "text-blue-300",
     },
@@ -192,7 +195,7 @@ export default function Ref96() {
       primary: "from-yellow-400 to-amber-400",
       secondary: "from-yellow-600 to-amber-600",
       accent: "yellow-400",
-      glow: "shadow-yellow-400/50",
+      glow: "" /* "shadow-yellow-400/50" */,
       border: "border-yellow-400/30",
       text: "text-yellow-300",
     },
@@ -200,7 +203,7 @@ export default function Ref96() {
       primary: "from-red-400 to-rose-400",
       secondary: "from-red-600 to-rose-600",
       accent: "red-400",
-      glow: "shadow-red-400/50",
+      glow: "" /* "shadow-red-400/50" */,
       border: "border-red-400/30",
       text: "text-red-300",
     },
@@ -208,7 +211,7 @@ export default function Ref96() {
       primary: "from-purple-400 to-violet-400",
       secondary: "from-purple-600 to-violet-600",
       accent: "purple-400",
-      glow: "shadow-purple-400/50",
+      glow: "" /* "shadow-purple-400/50" */,
       border: "border-purple-400/30",
       text: "text-purple-300",
     },
@@ -236,9 +239,15 @@ export default function Ref96() {
     }
   }, [chainId]);
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, location: "" | "address" | "url") => {
     navigator.clipboard.writeText(text);
+    setCopyLocation(location);
+
+    setTimeout(() => {
+      setCopyLocation("");
+    }, 800);
   };
+
 
   const formatNumber = (num: number) => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
@@ -252,7 +261,6 @@ export default function Ref96() {
   }));
 
   const totalPages = Math.ceil(mreferrals.length / referralsPerPage);
-
 
   return (
     <div className="min-h-screen min-w-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white overflow-hidden">
@@ -269,7 +277,7 @@ export default function Ref96() {
         ></div>
       </div> */}
 
-      <div className="relative z-10 p-6 max-w-7xl mx-auto mt-[120px]">
+      <div className="relative z-10 p-6 max-w-7xl mx-auto mt-[90px]">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
@@ -300,10 +308,14 @@ export default function Ref96() {
               </div>
 
               <button
-                onClick={() => copyToClipboard(address as "0xstring")}
+                onClick={() => copyToClipboard(address as "0xstring","address")}
                 className={`p-2 sm:p-3 bg-gradient-to-r ${theme.primary} rounded-xl hover:scale-105 transition-transform ${theme.glow} shadow-lg`}
               >
-                <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
+                {copyLocation !== "address" ? 
+                <Copy className={`w-4 h-4 sm:w-5 sm:h-5 text-black bg-gradient-to-r ${theme.primary}`}  />
+                : 
+                <Check className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
+                }
               </button>
             </div>
           </div>
@@ -319,7 +331,7 @@ export default function Ref96() {
               <div
                 className={`p-3 bg-gradient-to-r ${theme.primary} rounded-xl ${theme.glow} shadow-lg`}
               >
-                <Users size={24} />
+                <Users size={24} className="text-black" />
               </div>
               <TrendingUp
                 className={`text-${theme.accent} opacity-60`}
@@ -342,13 +354,19 @@ export default function Ref96() {
               <div
                 className={`p-3 bg-gradient-to-r ${theme.primary} rounded-xl ${theme.glow} shadow-lg`}
               >
-                <Zap size={24} />
+                <Zap size={24} className="text-black" />
               </div>
               <button
-                onClick={() => copyToClipboard(address as "0xstring")}
-                className={`p-2 bg-gradient-to-r ${theme.secondary} rounded-lg hover:scale-105 transition-transform`}
+                onClick={() =>
+                  copyToClipboard(`https://cmswap.xyz/?ref=${address}`,"url")
+                }
+                className={`p-2 bg-gradient-to-r ${theme.primary} rounded-lg hover:scale-105 transition-transform`}
               >
-                <Copy size={16} />
+                 {copyLocation !== "url" ? 
+                <Copy className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
+                : 
+                <Check className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
+                }
               </button>
             </div>
             <p className="text-gray-400 text-sm mb-2">Your Referral Code</p>
@@ -402,7 +420,7 @@ export default function Ref96() {
                     </div>
 
                     <div
-                      className={`px-3 py-1 bg-gradient-to-r ${theme.secondary} rounded-full text-[10px] lg:text-sm font-bold`}
+                      className={`px-3 py-1 bg-gradient-to-r ${theme.secondary} rounded-full text-[10px] lg:text-[14px] font-bold`}
                     >
                       {new Date(
                         Number(referral.timestamp) * 1000
@@ -411,89 +429,91 @@ export default function Ref96() {
                   </div>
                 ))}
             </div>
-            
+
             {/* Page Button */}
-<div className="flex flex-wrap justify-center items-center gap-2 mt-6 text-sm">
-  {/* << */}
-  <button
-    onClick={() => setCurrentPage((prev) => Math.max(prev - 2, 1))}
-    disabled={currentPage <= 2}
-    className="px-2 py-1 rounded bg-black/30 text-white hover:bg-black/50 disabled:opacity-50"
-  >
-    &laquo;
-  </button>
+            <div className="flex flex-wrap justify-center items-center gap-2 mt-6 text-sm">
+              {/* << */}
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 2, 1))}
+                disabled={currentPage <= 2}
+                className="px-2 py-1 rounded bg-black/30 text-white hover:bg-black/50 disabled:opacity-50"
+              >
+                &laquo;
+              </button>
 
-  {/* < */}
-  <button
-    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-    disabled={currentPage === 1}
-    className="px-2 py-1 rounded bg-black/30 text-white hover:bg-black/50 disabled:opacity-50"
-  >
-    &lsaquo;
-  </button>
+              {/* < */}
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-2 py-1 rounded bg-black/30 text-white hover:bg-black/50 disabled:opacity-50"
+              >
+                &lsaquo;
+              </button>
 
-  {/* Page Numbers */}
-  {Array.from({ length: totalPages }).map((_, idx) => {
-    const pageNum = idx + 1;
+              {/* Page Numbers */}
+              {Array.from({ length: totalPages }).map((_, idx) => {
+                const pageNum = idx + 1;
 
-    // เฉพาะหน้าใกล้ currentPage หรือ หน้าแรก/สุดท้าย
-    if (
-      pageNum === 1 ||
-      pageNum === totalPages ||
-      Math.abs(pageNum - currentPage) <= 1
-    ) {
-      return (
-        <button
-          key={pageNum}
-          onClick={() => setCurrentPage(pageNum)}
-          className={`px-3 py-1 rounded font-bold ${
-            pageNum === currentPage
-              ? 'bg-gradient-to-r ' + theme.primary + ' text-black shadow-md'
-              : 'bg-black/30 text-white hover:bg-black/50'
-          }`}
-        >
-          {pageNum}
-        </button>
-      );
-    }
+                // เฉพาะหน้าใกล้ currentPage หรือ หน้าแรก/สุดท้าย
+                if (
+                  pageNum === 1 ||
+                  pageNum === totalPages ||
+                  Math.abs(pageNum - currentPage) <= 1
+                ) {
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`px-3 py-1 rounded font-bold ${
+                        pageNum === currentPage
+                          ? "bg-gradient-to-r " +
+                            theme.primary +
+                            " text-black shadow-md"
+                          : "bg-black/30 text-white hover:bg-black/50"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                }
 
-    // แสดง ... เฉพาะจุดเปลี่ยน
-    if (
-      pageNum === currentPage - 2 ||
-      pageNum === currentPage + 2
-    ) {
-      return (
-        <span key={pageNum} className="px-2 text-gray-500">
-          ...
-        </span>
-      );
-    }
+                // แสดง ... เฉพาะจุดเปลี่ยน
+                if (
+                  pageNum === currentPage - 2 ||
+                  pageNum === currentPage + 2
+                ) {
+                  return (
+                    <span key={pageNum} className="px-2 text-gray-500">
+                      ...
+                    </span>
+                  );
+                }
 
-    return null;
-  })}
+                return null;
+              })}
 
-  {/* > */}
-  <button
-    onClick={() =>
-      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-    }
-    disabled={currentPage === totalPages}
-    className="px-2 py-1 rounded bg-black/30 text-white hover:bg-black/50 disabled:opacity-50"
-  >
-    &rsaquo;
-  </button>
+              {/* > */}
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="px-2 py-1 rounded bg-black/30 text-white hover:bg-black/50 disabled:opacity-50"
+              >
+                &rsaquo;
+              </button>
 
-  {/* >> */}
-  <button
-    onClick={() =>
-      setCurrentPage((prev) => Math.min(prev + 2, totalPages))
-    }
-    disabled={currentPage >= totalPages - 1}
-    className="px-2 py-1 rounded bg-black/30 text-white hover:bg-black/50 disabled:opacity-50"
-  >
-    &raquo;
-  </button>
-</div>
+              {/* >> */}
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 2, totalPages))
+                }
+                disabled={currentPage >= totalPages - 1}
+                className="px-2 py-1 rounded bg-black/30 text-white hover:bg-black/50 disabled:opacity-50"
+              >
+                &raquo;
+              </button>
+            </div>
           </div>
 
           {/* Pending Rewards */}
