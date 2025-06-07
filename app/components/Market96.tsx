@@ -118,9 +118,20 @@ export default function Market96({
   const [tokenBal, setTokenBal] = useState(0.0);
   const [onLoading, setOnLoading] = React.useState(false);
   const [view, setView] = useState<"Orders" | "History">("Orders");
-  const [ref, setRef] = React.useState("0x0000000000000000000000000000000000000000");
-  const [uorders, setUOrders] = useState<Array<{id: number;date: string;fromToken: { logo: string };toToken: { logo: string };type: string;price: number;amount: number;}>>([]);
-
+  const [ref, setRef] = React.useState(
+    "0x0000000000000000000000000000000000000000"
+  );
+  const [uorders, setUOrders] = useState<
+    Array<{
+      id: number;
+      date: string;
+      fromToken: { logo: string };
+      toToken: { logo: string };
+      type: string;
+      price: number;
+      amount: number;
+    }>
+  >([]);
 
   const currencyAddr = tokens[1].value;
   const baseExpURL = "https://www.kubscan.com/";
@@ -213,53 +224,52 @@ export default function Market96({
       setOnLoading(false);
     }
 
+    async function fetchMyOrders(address: `0x${string}`) {
+      try {
+        const result = await readContracts(config, {
+          contracts: [
+            {
+              ...CMswapP2PMarketplaceContract,
+              functionName: "getMyOrders",
+              args: [address],
+            },
+          ],
+        });
 
-async function fetchMyOrders(address: `0x${string}`) {
-  try {
-    const result = await readContracts(config, {
-      contracts: [
-        {
-          ...CMswapP2PMarketplaceContract,
-          functionName: 'getMyOrders',
-          args: [address],
-        },
-      ],
-    });
+        const rawOrders = result[0]?.result;
 
-    const rawOrders = result[0]?.result;
+        if (!rawOrders) {
+          console.warn("No orders found or result undefined");
+          return;
+        }
 
-    if (!rawOrders) {
-      console.warn('No orders found or result undefined');
-      return;
+        console.log("Raw Orders:", rawOrders);
+
+        const mappedOrders = rawOrders.map((order: any, index: number) => {
+          const amount = Number(order.amount) / 1e18;
+          const price = Number(order.pricePerUnit) / 1e18;
+          const fromToken = order.isBuy ? { logo: "KKUB" } : { logo: "SOLA" };
+          const toToken = order.isBuy ? { logo: "SOLA" } : { logo: "KKUB" };
+
+          return {
+            id: index + 1,
+            date: new Date().toISOString().slice(0, 19).replace("T", " "),
+            fromToken,
+            toToken,
+            type: order.isBuy ? "buy" : "sell",
+            price,
+            amount,
+          };
+        });
+
+        setUOrders(mappedOrders);
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      }
     }
 
-    console.log('Raw Orders:', rawOrders);
-
-    const mappedOrders = rawOrders.map((order: any, index: number) => {
-      const amount = Number(order.amount) / 1e18;
-      const price = Number(order.pricePerUnit) / 1e18;
-      const fromToken = order.isBuy ? { logo: 'KKUB' } : { logo: 'SOLA' };
-      const toToken = order.isBuy ? { logo: 'SOLA' } : { logo: 'KKUB' };
-
-      return {
-        id: index + 1,
-        date: new Date().toISOString().slice(0, 19).replace('T', ' '),
-        fromToken,
-        toToken,
-        type: order.isBuy ? 'buy' : 'sell',
-        price,
-        amount,
-      };
-    });
-
-    setUOrders(mappedOrders);
-  } catch (error) {
-    console.error('Error fetching orders:', error);
-  }
-}
-
     renders();
-    fetchMyOrders(address as '0xstring');
+    fetchMyOrders(address as "0xstring");
   }, [select]);
 
   const [orders, setOrders] = useState<Order[]>([
@@ -329,7 +339,7 @@ async function fetchMyOrders(address: `0x${string}`) {
         await waitForTransactionReceipt(config, { hash: h });
       }
     } catch (error) {
-      console.log('Token is not ERC20 checking KAP20')
+      console.log("Token is not ERC20 checking KAP20");
       try {
         allowanceA = await readContract(config, {
           ...kap20ABI,
@@ -348,7 +358,7 @@ async function fetchMyOrders(address: `0x${string}`) {
           await waitForTransactionReceipt(config, { hash: h });
         }
       } catch (error) {
-      console.log('Token is not ERC20 and KAP20')
+        console.log("Token is not ERC20 and KAP20");
         setErrMsg(error as WriteContractErrorType);
       }
     }
@@ -365,7 +375,6 @@ async function fetchMyOrders(address: `0x${string}`) {
       const orderAmount = parseEther(amount); // จำนวน Token
       const orderPrice = parseEther(price); // ราคาต่อหน่วย (เช่น 1 Token = 2 KKUB)
       const minUnitSize = parseEther("1"); // เช่น 1e18 => เทรดได้ทีละอย่างต่ำ 1 token
-      const allowPartial = false; // Bug contract have but no use on sc
       const referral = ref as `0x${string}`; // ref เป็น address string
 
       const { result, request } = await simulateContract(config, {
@@ -378,7 +387,6 @@ async function fetchMyOrders(address: `0x${string}`) {
           orderAmount,
           orderPrice,
           minUnitSize,
-          allowPartial,
           referral,
         ],
       });
@@ -389,7 +397,7 @@ async function fetchMyOrders(address: `0x${string}`) {
       setErrMsg(error as WriteContractErrorType);
     }
 
-/*     const newOrder: Order = {
+    /*     const newOrder: Order = {
       id: orders.length + 1,
       fromToken: select.value,
       toToken: { name: "KKUB", logo: "KKUB", value: "0xkkub" },
@@ -451,84 +459,54 @@ async function fetchMyOrders(address: `0x${string}`) {
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Left Panel: Token Pair */}
-        <div className="md:col-span-2 bg-[#1a1b2e] rounded-xl p-4">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Pair</h3>
+        {/* Left Panel: Order Book */}
+        <div className="md:col-span-3 bg-[#1a1b2e] rounded-xl p-4 ">
+          <div className="bg-[#1a1b2e] rounded-xl p-4 w-full max-w-[400px] h-full flex flex-col">
+            <h3 className="text-lg font-semibold mb-4 text-white text-center w-full">
+              Order Book
+            </h3>
 
-            {/* Search input */}
-            <input
-              type="text"
-              placeholder="Search..."
-              className="bg-[#2a2b3c] text-sm rounded-lg px-3 py-1 text-white placeholder-gray-400 focus:outline-none"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          {/* Filter buttons */}
-          <div className="flex space-x-3 mb-4">
-            {["all", "metal valley", "Morning Moon Village"].map((f) => {
-              const label =
-                f === "Morning Moon Village"
-                  ? "MMV"
-                  : f.charAt(0).toUpperCase() + f.slice(1);
-
-              return (
-                <button
-                  key={f}
-                  onClick={() =>
-                    setFilter(
-                      f as "all" | "Metal Valley" | "Morning Moon Village"
-                    )
-                  }
-                  className={`px-3 py-1 rounded ${filter === f
-                    ? "bg-blue-600 text-white"
-                    : "bg-[#2a2b3c] text-gray-400 hover:text-white"
-                    }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Divider */}
-          <hr className="border-gray-700 mb-4" />
-
-          {/* Token pairs list */}
-          <div className="space-y-4 max-h-250 overflow-y-auto pr-2 scrollbar-hide">
-            {filteredPairs.length === 0 ? (
-              <p className="text-gray-400 text-center">No pairs found</p>
-            ) : (
-              filteredPairs.map((pair, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center space-x-3"
-                  onClick={() => setSelectToken(pair)}
-                >
-                  <div className="relative w-10 h-10">
-                    <img
-                      src={pair.img1}
-                      alt="token1"
-                      className="absolute top-0 left-0 w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white"
-                    />
-                    <img
-                      src={pair.img2}
-                      alt="token2"
-                      className="absolute top-0 left-4 w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white"
-                    />
+            <div className="flex flex-col divide-y divide-gray-700 w-full overflow-y-auto max-h-[500px]">
+              {/* Sell Orders */}
+              <div className="flex flex-col items-center space-y-2 pb-4 w-full">
+                <p className="text-red-400 font-semibold text-center">
+                  Sell Orders
+                </p>
+                {groupOrdersByPrice(orders, "sell").map(([price, amount]) => (
+                  <div
+                    key={`sell-${price}`}
+                    className="flex justify-center items-center space-x-4 text-sm text-red-200 w-full"
+                  >
+                    <span className="w-1/2 text-center">
+                      {price.toFixed(2)} KKUB
+                    </span>
+                    <span className="w-1/2 text-center">
+                      {amount.toFixed(2)} {select.name}
+                    </span>
                   </div>
-                  <div>
-                    <p className="text-white font-semibold text-sm uppercase">
-                      {pair.name}
-                    </p>
-                    <p className="text-xs text-gray-400">{pair.desc}</p>
+                ))}
+              </div>
+
+              {/* Buy Orders */}
+              <div className="flex flex-col items-center space-y-2 pt-4 w-full">
+                <p className="text-green-400 font-semibold text-center">
+                  Buy Orders
+                </p>
+                {groupOrdersByPrice(orders, "buy").map(([price, amount]) => (
+                  <div
+                    key={`buy-${price}`}
+                    className="flex justify-center items-center space-x-4 text-sm text-green-200 w-full"
+                  >
+                    <span className="w-1/2 text-center">
+                      {price.toFixed(2)} KKUB
+                    </span>
+                    <span className="w-1/2 text-center">
+                      {amount.toFixed(2)} SOLA
+                    </span>
                   </div>
-                </div>
-              ))
-            )}
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -541,15 +519,17 @@ async function fetchMyOrders(address: `0x${string}`) {
           <div className="flex space-x-4 mb-4">
             <button
               onClick={() => setTradeType("buy")}
-              className={`w-1/2 py-2 font-semibold rounded-l ${tradeType === "buy" ? "bg-green-500" : "bg-[#2a2f45]"
-                }`}
+              className={`w-1/2 py-2 font-semibold rounded-l ${
+                tradeType === "buy" ? "bg-green-500" : "bg-[#2a2f45]"
+              }`}
             >
               Buy
             </button>
             <button
               onClick={() => setTradeType("sell")}
-              className={`w-1/2 py-2 font-semibold rounded-r ${tradeType === "sell" ? "bg-red-500" : "bg-[#2a2f45]"
-                }`}
+              className={`w-1/2 py-2 font-semibold rounded-r ${
+                tradeType === "sell" ? "bg-red-500" : "bg-[#2a2f45]"
+              }`}
             >
               Sell
             </button>
@@ -625,15 +605,15 @@ async function fetchMyOrders(address: `0x${string}`) {
                   <span>
                     {tradeType === "buy"
                       ? (
-                        parseFloat(price) *
-                        parseFloat(amount) *
-                        1.005
-                      ).toFixed(8)
+                          parseFloat(price) *
+                          parseFloat(amount) *
+                          1.005
+                        ).toFixed(8)
                       : (
-                        parseFloat(price) *
-                        parseFloat(amount) *
-                        0.995
-                      ).toFixed(8)}{" "}
+                          parseFloat(price) *
+                          parseFloat(amount) *
+                          0.995
+                        ).toFixed(8)}{" "}
                     KKUB
                   </span>
                 </div>
@@ -643,10 +623,11 @@ async function fetchMyOrders(address: `0x${string}`) {
             {/* Submit Button */}
             <button
               onClick={handleOrder}
-              className={`w-full py-2 rounded-lg font-semibold uppercase transition-colors duration-200 ${tradeType === "buy"
-                ? "bg-green-600 hover:bg-green-700"
-                : "bg-red-600 hover:bg-red-700"
-                }`}
+              className={`w-full py-2 rounded-lg font-semibold uppercase transition-colors duration-200 ${
+                tradeType === "buy"
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-red-600 hover:bg-red-700"
+              }`}
               disabled={!select?.name}
             >
               {tradeType === "buy" ? "Buy" : "Sell"} {select?.name || ""}
@@ -677,52 +658,105 @@ async function fetchMyOrders(address: `0x${string}`) {
           </div>
         </div>
 
-        {/* Right Panel: Order Book */}
-        <div className="md:col-span-4 bg-[#1a1b2e] rounded-xl p-4 flex flex-col justify-center h-full">
-          <h3 className="text-lg font-semibold mb-4 text-white text-center">
-            Order Book
-          </h3>
+        {/* Right Panel: Token Pair */}
+        <div className="md:col-span-3 bg-[#1a1b2e] rounded-xl p-4 flex flex-col justify-center h-full">
+          {/* Header */}
+          <div className="flex flex-wrap items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">Pair</h3>
 
-          <div className="flex flex-col divide-y divide-gray-700 max-h-[400px] overflow-y-auto">
-            {/* Sell Orders */}
-            <div className="flex flex-col items-center space-y-2 pb-4 w-full">
-              <p className="text-red-400 font-semibold text-center">
-                Sell Orders
-              </p>
-              {groupOrdersByPrice(orders, "sell").map(([price, amount]) => (
-                <div
-                  key={`sell-${price}`}
-                  className="flex justify-center items-center space-x-4 text-sm text-red-200 w-full"
-                >
-                  <span className="w-1/2 text-center">
-                    {price.toFixed(2)} KKUB
-                  </span>
-                  <span className="w-1/2 text-center">
-                    {amount.toFixed(2)} {select.name}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {/* Search input */}
+            <input
+              type="text"
+              placeholder="Search..."
+              className="bg-[#2a2b3c] text-sm rounded-lg px-3 py-1 w-full text-white placeholder-gray-400 focus:outline-none"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
 
-            {/* Buy Orders */}
-            <div className="flex flex-col items-center space-y-2 pt-4 w-full">
-              <p className="text-green-400 font-semibold text-center">
-                Buy Orders
-              </p>
-              {groupOrdersByPrice(orders, "buy").map(([price, amount]) => (
-                <div
-                  key={`buy-${price}`}
-                  className="flex justify-center items-center space-x-4 text-sm text-green-200 w-full"
+          {/* Filter buttons */}
+          <div className="flex space-x-3 mb-4  w-full">
+            {["all", "metal valley", "Morning Moon Village"].map((f) => {
+              const label =
+                f === "Morning Moon Village"
+                  ? "MMV"
+                  : f.charAt(0).toUpperCase() + f.slice(1);
+
+              return (
+                <button
+                  key={f}
+                  onClick={() =>
+                    setFilter(
+                      f as "all" | "Metal Valley" | "Morning Moon Village"
+                    )
+                  }
+                  className={`px-3 py-1 rounded ${
+                    filter === f
+                      ? "bg-blue-600 text-white"
+                      : "bg-[#2a2b3c] text-gray-400 hover:text-white"
+                  }`}
                 >
-                  <span className="w-1/2 text-center">
-                    {price.toFixed(2)} KKUB
-                  </span>
-                  <span className="w-1/2 text-center">
-                    {amount.toFixed(2)} SOLA
-                  </span>
-                </div>
-              ))}
-            </div>
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Divider */}
+          <hr className="border-gray-700 mb-4" />
+
+          {/* Token pairs list */}
+          <div className="space-y-4 max-h-250 overflow-y-auto pr-2 scrollbar-hide">
+            {filteredPairs.length === 0 ? (
+              <p className="text-gray-400 text-center">No pairs found</p>
+            ) : (
+              filteredPairs.map((pair, idx) => (
+                <div
+  key={idx}
+  className="flex items-center space-x-3 cursor-pointer"
+  onClick={() => setSelectToken(pair)}
+>
+  {/* Token Icons */}
+  <div className="relative w-10 aspect-square flex-shrink-0">
+    {/* Token 1 */}
+    <div className="absolute top-0 left-0 w-8 aspect-square rounded-full overflow-hidden border-2 border-[#1a1b2e] bg-white">
+      <img
+        src={pair.img1}
+        alt="token1"
+        className="w-full h-full object-cover"
+      />
+    </div>
+
+    {/* Token 2 (overlap) */}
+    <div className="absolute top-0 left-5 w-6 aspect-square rounded-full overflow-hidden border-2 border-[#1a1b2e] bg-white">
+      <img
+        src={pair.img2}
+        alt="token2"
+        className="w-full h-full object-cover"
+      />
+    </div>
+  </div>
+
+  {/* Token Info */}
+  <div className="flex flex-col justify-center max-w-full overflow-hidden">
+    <p
+      className="text-white font-semibold truncate uppercase
+      text-sm sm:text-base md:text-lg lg:text-base xl:text-lg 2xl:text-xl"
+    >
+      {pair.name}
+    </p>
+
+    <p
+      className="text-gray-400 truncate
+      text-xs sm:text-sm md:text-base lg:text-sm xl:text-base"
+    >
+      {pair.desc}
+    </p>
+  </div>
+</div>
+
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -732,19 +766,21 @@ async function fetchMyOrders(address: `0x${string}`) {
         {/* Tabs */}
         <div className="flex justify-start space-x-8 mb-6 border-b border-gray-700 pb-2">
           <button
-            className={`${view === "Orders"
-              ? "text-white font-semibold pb-2 border-b-2 border-green-500"
-              : "text-gray-400 hover:text-white "
-              }`}
+            className={`${
+              view === "Orders"
+                ? "text-white font-semibold pb-2 border-b-2 border-green-500"
+                : "text-gray-400 hover:text-white "
+            }`}
             onClick={() => setView("Orders")}
           >
             Orders
           </button>
           <button
-            className={`${view === "History"
-              ? "text-white font-semibold pb-2 border-b-2 border-green-500"
-              : "text-gray-400 hover:text-white "
-              }`}
+            className={`${
+              view === "History"
+                ? "text-white font-semibold pb-2 border-b-2 border-green-500"
+                : "text-gray-400 hover:text-white "
+            }`}
             onClick={() => setView("History")}
           >
             Trade History
@@ -766,39 +802,38 @@ async function fetchMyOrders(address: `0x${string}`) {
 
             {/* Table Rows */}
             {uorders.map((order) => (
-  <div
-    key={order.id}
-    className="grid grid-cols-7 gap-4 text-sm text-white items-center px-2 py-4 border-b border-[#2a2b3c]"
-  >
-    <span className="text-xs text-gray-400">
-      {order.date.split(" ")[0]}
-    </span>
-    <span>
-      {select.name}/{order.toToken.logo}
-    </span>
-    <span
-      className={
-        order.type === "buy" ? "text-green-500" : "text-red-500"
-      }
-    >
-      {order.type.toUpperCase()}
-    </span>
-    <span>{order.price.toFixed(2)} KKUB</span>
-    <span>
-      {order.amount} {select.name}
-    </span>
-    <span>{(order.amount * order.price).toFixed(2)} KKUB</span>
-    <div className="flex justify-center">
-      <button
-        onClick={() => handleCancelOrder(order.id)}
-        className="text-xs text-red-500 hover:text-red-600 px-3 py-1 rounded bg-[#3e3f4c] hover:bg-[#4f505c] transition"
-      >
-        Cancel
-      </button>
-    </div>
-  </div>
+              <div
+                key={order.id}
+                className="grid grid-cols-7 gap-4 text-sm text-white items-center px-2 py-4 border-b border-[#2a2b3c]"
+              >
+                <span className="text-xs text-gray-400">
+                  {order.date.split(" ")[0]}
+                </span>
+                <span>
+                  {select.name}/{order.toToken.logo}
+                </span>
+                <span
+                  className={
+                    order.type === "buy" ? "text-green-500" : "text-red-500"
+                  }
+                >
+                  {order.type.toUpperCase()}
+                </span>
+                <span>{order.price.toFixed(2)} KKUB</span>
+                <span>
+                  {order.amount} {select.name}
+                </span>
+                <span>{(order.amount * order.price).toFixed(2)} KKUB</span>
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => handleCancelOrder(order.id)}
+                    className="text-xs text-red-500 hover:text-red-600 px-3 py-1 rounded bg-[#3e3f4c] hover:bg-[#4f505c] transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             ))}
-
           </>
         )}
         {view === "History" && (
