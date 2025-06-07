@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { ArrowDownUp, X } from "lucide-react";
-import { game_tokens } from "../lib/96";
+import {
+  game_tokens,
+  tokens,
+  CMswapP2PMarketplace,
+  CMswapP2PMarketplaceContract,
+  AddrZero,
+} from "../lib/96";
 import { useAccount } from "wagmi";
 import {
   simulateContract,
@@ -14,7 +20,7 @@ import {
 } from "@wagmi/core";
 import { erc20ABI, kap20ABI } from "@/app/lib/96";
 import { config } from "@/app/config";
-import { formatEther } from "viem";
+import { formatEther, parseEther } from "viem";
 
 type Token = {
   name: string;
@@ -44,8 +50,8 @@ type TokenPair = {
 };
 
 const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-  };
+  navigator.clipboard.writeText(text);
+};
 
 function generateTokenPairs(gameTokens: Record<string, Token[]>): TokenPair[] {
   const pairs: TokenPair[] = [];
@@ -86,9 +92,8 @@ function groupOrdersByPrice(orders: Order[], type: "buy" | "sell") {
 }
 
 function toSlugName(name: string): string {
-  return name.toLowerCase().replace(/\s+/g, '-');
+  return name.toLowerCase().replace(/\s+/g, "-");
 }
-
 
 export default function Market96({
   setIsLoading,
@@ -113,12 +118,27 @@ export default function Market96({
   const [tokenBal, setTokenBal] = useState(0.0);
   const [onLoading, setOnLoading] = React.useState(false);
   const [view, setView] = useState<"Orders" | "History">("Orders");
+  const [ref, setRef] = React.useState("0x0000000000000000000000000000000000000000");
+  const [uorders, setUOrders] = useState<Array<{id: number;date: string;fromToken: { logo: string };toToken: { logo: string };type: string;price: number;amount: number;}>>([]);
 
+
+  const currencyAddr = tokens[1].value;
   const baseExpURL = "https://www.kubscan.com/";
 
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tokenSlug = urlParams.get("token");
+
+    const existingRef = localStorage.getItem("referral_code");
+
+    if (
+      ref?.startsWith("0x") &&
+      existingRef &&
+      existingRef !== AddrZero &&
+      existingRef !== address
+    ) {
+      setRef(existingRef);
+    }
 
     if (tokenSlug) {
       const matched = tokenPairs.find(
@@ -131,13 +151,11 @@ export default function Market96({
     }
   }, []);
 
-
   React.useEffect(() => {
     if (!select || !address) return;
 
     const url = new URL(window.location.href);
 
-    // 👇 แปลงชื่อเป็น slug ก่อนใส่ใน URL
     const tokenSlug = toSlugName(select.name);
     url.searchParams.set("token", tokenSlug);
     url.searchParams.set("ref", address);
@@ -145,7 +163,10 @@ export default function Market96({
     window.history.replaceState(null, "", url.toString());
   }, [select, address]);
 
-  function getCurrentLink(select: { name: string } | null, address: string | null): string {
+  function getCurrentLink(
+    select: { name: string } | null,
+    address: string | null
+  ): string {
     const url = new URL(window.location.href);
 
     if (select?.name) {
@@ -159,7 +180,6 @@ export default function Market96({
 
     return url.toString();
   }
-
 
   React.useEffect(() => {
     async function renders() {
@@ -193,10 +213,54 @@ export default function Market96({
       setOnLoading(false);
     }
 
+
+async function fetchMyOrders(address: `0x${string}`) {
+  try {
+    const result = await readContracts(config, {
+      contracts: [
+        {
+          ...CMswapP2PMarketplaceContract,
+          functionName: 'getMyOrders',
+          args: [address],
+        },
+      ],
+    });
+
+    const rawOrders = result[0]?.result;
+
+    if (!rawOrders) {
+      console.warn('No orders found or result undefined');
+      return;
+    }
+
+    console.log('Raw Orders:', rawOrders);
+
+    const mappedOrders = rawOrders.map((order: any, index: number) => {
+      const amount = Number(order.amount) / 1e18;
+      const price = Number(order.pricePerUnit) / 1e18;
+      const fromToken = order.isBuy ? { logo: 'KKUB' } : { logo: 'SOLA' };
+      const toToken = order.isBuy ? { logo: 'SOLA' } : { logo: 'KKUB' };
+
+      return {
+        id: index + 1,
+        date: new Date().toISOString().slice(0, 19).replace('T', ' '),
+        fromToken,
+        toToken,
+        type: order.isBuy ? 'buy' : 'sell',
+        price,
+        amount,
+      };
+    });
+
+    setUOrders(mappedOrders);
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+  }
+}
+
     renders();
+    fetchMyOrders(address as '0xstring');
   }, [select]);
-
-
 
   const [orders, setOrders] = useState<Order[]>([
     {
@@ -233,9 +297,99 @@ export default function Market96({
     return matchesFilter && matchesSearch;
   });
 
-  const handleOrder = () => {
+  const handleOrder = async () => {
     if (!amount || !price) return;
-    const newOrder: Order = {
+
+    {
+      /* Checking Approval */
+    }
+    let allowanceA;
+    let approvedToken = tradeType === "buy" ? tokens[1].value : select.value;
+    let amounts =
+      tradeType === "buy"
+        ? parseFloat(price) * parseFloat(amount) * 1.006
+        : amount;
+    console.log(`Apporve token ${approvedToken}\nAmount ${amounts}`);
+
+    try {
+      allowanceA = await readContract(config, {
+        ...erc20ABI,
+        address: approvedToken as "0xstring",
+        functionName: "allowance",
+        args: [address as "0xstring", CMswapP2PMarketplace],
+      });
+      if (allowanceA < parseEther(amounts.toLocaleString())) {
+        const { request } = await simulateContract(config, {
+          ...erc20ABI,
+          address: approvedToken as "0xstring",
+          functionName: "approve",
+          args: [CMswapP2PMarketplace, parseEther(amounts.toLocaleString())],
+        });
+        const h = await writeContract(config, request);
+        await waitForTransactionReceipt(config, { hash: h });
+      }
+    } catch (error) {
+      console.log('Token is not ERC20 checking KAP20')
+      try {
+        allowanceA = await readContract(config, {
+          ...kap20ABI,
+          address: approvedToken as "0xstring",
+          functionName: "allowances",
+          args: [address as "0xstring", CMswapP2PMarketplace],
+        });
+        if (allowanceA < parseEther(amounts.toLocaleString())) {
+          const { request } = await simulateContract(config, {
+            ...erc20ABI,
+            address: approvedToken as "0xstring",
+            functionName: "approve",
+            args: [CMswapP2PMarketplace, parseEther(amounts.toLocaleString())],
+          });
+          const h = await writeContract(config, request);
+          await waitForTransactionReceipt(config, { hash: h });
+        }
+      } catch (error) {
+      console.log('Token is not ERC20 and KAP20')
+        setErrMsg(error as WriteContractErrorType);
+      }
+    }
+
+    {
+      /* Place Order */
+    }
+    let h;
+    let r;
+    try {
+      const isBuy = tradeType === "buy";
+      const token = select.value; // ซื้อ: token = token, ขาย: token = token
+      const currency = currencyAddr;
+      const orderAmount = parseEther(amount); // จำนวน Token
+      const orderPrice = parseEther(price); // ราคาต่อหน่วย (เช่น 1 Token = 2 KKUB)
+      const minUnitSize = parseEther("1"); // เช่น 1e18 => เทรดได้ทีละอย่างต่ำ 1 token
+      const allowPartial = false; // Bug contract have but no use on sc
+      const referral = ref as `0x${string}`; // ref เป็น address string
+
+      const { result, request } = await simulateContract(config, {
+        ...CMswapP2PMarketplaceContract,
+        functionName: "createOrder",
+        args: [
+          isBuy,
+          token,
+          currency,
+          orderAmount,
+          orderPrice,
+          minUnitSize,
+          allowPartial,
+          referral,
+        ],
+      });
+
+      const tx = await writeContract(config, request);
+      console.log("Order submitted:", tx);
+    } catch (error) {
+      setErrMsg(error as WriteContractErrorType);
+    }
+
+/*     const newOrder: Order = {
       id: orders.length + 1,
       fromToken: select.value,
       toToken: { name: "KKUB", logo: "KKUB", value: "0xkkub" },
@@ -246,7 +400,7 @@ export default function Market96({
     };
     setOrders([newOrder, ...orders]);
     setPrice("");
-    setAmount("");
+    setAmount(""); */
   };
 
   const handleCancelOrder = (id: number) => {
@@ -329,11 +483,10 @@ export default function Market96({
                       f as "all" | "Metal Valley" | "Morning Moon Village"
                     )
                   }
-                  className={`px-3 py-1 rounded ${
-                    filter === f
-                      ? "bg-blue-600 text-white"
-                      : "bg-[#2a2b3c] text-gray-400 hover:text-white"
-                  }`}
+                  className={`px-3 py-1 rounded ${filter === f
+                    ? "bg-blue-600 text-white"
+                    : "bg-[#2a2b3c] text-gray-400 hover:text-white"
+                    }`}
                 >
                   {label}
                 </button>
@@ -388,21 +541,20 @@ export default function Market96({
           <div className="flex space-x-4 mb-4">
             <button
               onClick={() => setTradeType("buy")}
-              className={`w-1/2 py-2 font-semibold rounded-l ${
-                tradeType === "buy" ? "bg-green-500" : "bg-[#2a2f45]"
-              }`}
+              className={`w-1/2 py-2 font-semibold rounded-l ${tradeType === "buy" ? "bg-green-500" : "bg-[#2a2f45]"
+                }`}
             >
               Buy
             </button>
             <button
               onClick={() => setTradeType("sell")}
-              className={`w-1/2 py-2 font-semibold rounded-r ${
-                tradeType === "sell" ? "bg-red-500" : "bg-[#2a2f45]"
-              }`}
+              className={`w-1/2 py-2 font-semibold rounded-r ${tradeType === "sell" ? "bg-red-500" : "bg-[#2a2f45]"
+                }`}
             >
               Sell
             </button>
           </div>
+
           {/* Form */}
           <div className="space-y-4 bg-[#2a2b3c] p-4 rounded-xl">
             {/* Price Input */}
@@ -447,47 +599,82 @@ export default function Market96({
             </div>
 
             {/* Total */}
-            <div className="flex items-center justify-between text-sm text-gray-400 px-2">
-              <span>Total</span>
-              <span className="font-bold text-white">
-                {price && amount
-                  ? (parseFloat(price) * parseFloat(amount)).toFixed(4)
-                  : "0.00"}{" "}
-                KKUB
-              </span>
-            </div>
+
+            {/* Fee Breakdown */}
+            {price && amount && (
+              <>
+                <div className="flex items-center justify-between text-sm text-gray-400 px-2">
+                  <span>Total </span>
+                  <span>
+                    {(parseFloat(price) * parseFloat(amount)).toFixed(8)} KKUB
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-gray-400 px-2">
+                  <span>Fee (0.5%)</span>
+                  <span>
+                    {(parseFloat(price) * parseFloat(amount) * 0.005).toFixed(
+                      8
+                    )}{" "}
+                    KKUB
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm px-2 font-bold text-white">
+                  <span>
+                    {tradeType === "buy" ? "You must pay" : "You receive"}
+                  </span>
+                  <span>
+                    {tradeType === "buy"
+                      ? (
+                        parseFloat(price) *
+                        parseFloat(amount) *
+                        1.005
+                      ).toFixed(8)
+                      : (
+                        parseFloat(price) *
+                        parseFloat(amount) *
+                        0.995
+                      ).toFixed(8)}{" "}
+                    KKUB
+                  </span>
+                </div>
+              </>
+            )}
 
             {/* Submit Button */}
             <button
               onClick={handleOrder}
-              className={`w-full py-2 rounded-lg font-semibold uppercase transition-colors duration-200 ${
-                tradeType === "buy"
-                  ? "bg-green-600 hover:bg-green-700"
-                  : "bg-red-600 hover:bg-red-700"
-              }`}
+              className={`w-full py-2 rounded-lg font-semibold uppercase transition-colors duration-200 ${tradeType === "buy"
+                ? "bg-green-600 hover:bg-green-700"
+                : "bg-red-600 hover:bg-red-700"
+                }`}
               disabled={!select?.name}
             >
               {tradeType === "buy" ? "Buy" : "Sell"} {select?.name || ""}
             </button>
           </div>
+
           <div className="mt-8 w-full px-4">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-black/30 border border-gray-700 rounded-xl p-3">
-            <div className="flex-1 overflow-hidden">
-              <p className="text-xs text-gray-400 mb-1">Share to your friend, earn <span className="text-emerald-400 font-bold">15%</span></p>
-              <p className="font-mono text-[12px] text-white ">
-                {getCurrentLink(select, address as '0xstring')}
-              </p>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-black/30 border border-gray-700 rounded-xl p-3">
+              <div className="flex-1 overflow-hidden">
+                <p className="text-xs text-gray-400 mb-1">
+                  Share to your friend, earn{" "}
+                  <span className="text-emerald-400 font-bold">15%</span>
+                </p>
+                <p className="font-mono text-[12px] text-white ">
+                  {getCurrentLink(select, address as "0xstring")}
+                </p>
+              </div>
+
+              <button
+                onClick={() =>
+                  copyToClipboard(getCurrentLink(select, address as "0xstring"))
+                }
+                className="px-4 py-2 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-lg text-black font-bold hover:scale-105 transition-transform"
+              >
+                Copy
+              </button>
             </div>
-
-            <button
-              onClick={() => copyToClipboard(getCurrentLink(select, address as '0xstring'))}
-              className="px-4 py-2 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-lg text-black font-bold hover:scale-105 transition-transform"
-            >
-              Copy
-            </button>
           </div>
-        </div>
-
         </div>
 
         {/* Right Panel: Order Book */}
@@ -545,21 +732,19 @@ export default function Market96({
         {/* Tabs */}
         <div className="flex justify-start space-x-8 mb-6 border-b border-gray-700 pb-2">
           <button
-            className={`${
-              view === "Orders"
-                ? "text-white font-semibold pb-2 border-b-2 border-green-500"
-                : "text-gray-400 hover:text-white "
-            }`}
+            className={`${view === "Orders"
+              ? "text-white font-semibold pb-2 border-b-2 border-green-500"
+              : "text-gray-400 hover:text-white "
+              }`}
             onClick={() => setView("Orders")}
           >
             Orders
           </button>
           <button
-            className={`${
-              view === "History"
-                ? "text-white font-semibold pb-2 border-b-2 border-green-500"
-                : "text-gray-400 hover:text-white "
-            }`}
+            className={`${view === "History"
+              ? "text-white font-semibold pb-2 border-b-2 border-green-500"
+              : "text-gray-400 hover:text-white "
+              }`}
             onClick={() => setView("History")}
           >
             Trade History
@@ -579,68 +764,41 @@ export default function Market96({
               <span className="text-center">Action</span>
             </div>
 
-            {/* Table Rows (Mockup Data) */}
-            {[
-              {
-                id: 1,
-                date: "2025-05-11 12:34:56",
-                fromToken: { logo: "SOLA" },
-                toToken: { logo: "KKUB" },
-                type: "sell",
-                price: 2.5,
-                amount: 5,
-              },
-              {
-                id: 2,
-                date: "2025-05-10 11:20:10",
-                fromToken: { logo: "SOLA" },
-                toToken: { logo: "KKUB" },
-                type: "buy",
-                price: 2.4,
-                amount: 10,
-              },
-              {
-                id: 3,
-                date: "2025-05-09 09:10:25",
-                fromToken: { logo: "SOLA" },
-                toToken: { logo: "KKUB" },
-                type: "sell",
-                price: 2.3,
-                amount: 7,
-              },
-            ].map((order) => (
-              <div
-                key={order.id}
-                className="grid grid-cols-7 gap-4 text-sm text-white items-center px-2 py-4 border-b border-[#2a2b3c]"
-              >
-                <span className="text-xs text-gray-400">
-                  {order.date.split("T")[0]}
-                </span>
-                <span>
-                  {order.fromToken.logo}/{order.toToken.logo}
-                </span>
-                <span
-                  className={
-                    order.type === "buy" ? "text-green-500" : "text-red-500"
-                  }
-                >
-                  {order.type.toUpperCase()}
-                </span>
-                <span>{order.price.toFixed(2)} KKUB</span>
-                <span>
-                  {order.amount} {order.fromToken.logo}
-                </span>
-                <span>{(order.amount * order.price).toFixed(2)} KKUB</span>
-                <div className="flex justify-center">
-                  <button
-                    onClick={() => handleCancelOrder(order.id)}
-                    className="text-xs text-red-500 hover:text-red-600 px-3 py-1 rounded bg-[#3e3f4c] hover:bg-[#4f505c] transition"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
+            {/* Table Rows */}
+            {uorders.map((order) => (
+  <div
+    key={order.id}
+    className="grid grid-cols-7 gap-4 text-sm text-white items-center px-2 py-4 border-b border-[#2a2b3c]"
+  >
+    <span className="text-xs text-gray-400">
+      {order.date.split(" ")[0]}
+    </span>
+    <span>
+      {select.name}/{order.toToken.logo}
+    </span>
+    <span
+      className={
+        order.type === "buy" ? "text-green-500" : "text-red-500"
+      }
+    >
+      {order.type.toUpperCase()}
+    </span>
+    <span>{order.price.toFixed(2)} KKUB</span>
+    <span>
+      {order.amount} {select.name}
+    </span>
+    <span>{(order.amount * order.price).toFixed(2)} KKUB</span>
+    <div className="flex justify-center">
+      <button
+        onClick={() => handleCancelOrder(order.id)}
+        className="text-xs text-red-500 hover:text-red-600 px-3 py-1 rounded bg-[#3e3f4c] hover:bg-[#4f505c] transition"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
             ))}
+
           </>
         )}
         {view === "History" && (
