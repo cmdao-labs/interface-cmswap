@@ -62,6 +62,7 @@ export const game_tokens: Record<string, Token[]> = {
     // Can PR P2P Pair KKUB Listing Here
     }
 
+export const AddrZero = '0x0000000000000000000000000000000000000000' as '0xstring'
 export const V3_FACTORY = '0x090C6E5fF29251B1eF9EC31605Bdd13351eA316C' as '0xstring'
 export const POSITION_MANAGER = '0xb6b76870549893c6b59E7e979F254d0F9Cca4Cc9' as '0xstring'
 export const positionManagerCreatedAt = BigInt(25033368)
@@ -71,7 +72,7 @@ export const CMswapUniSmartRoute = '0x01837156518e60362048e78d025a419C51346f55' 
 export const BitkubEvmKYC = '0x409CF41ee862Df7024f289E9F2Ea2F5d0D7f3eb4' as '0xstring' // kyc for unwrap kkub
 export const bkcUnwapped = '0xff76DD8086428EBC4Ed1b14B0e56E95eDc46a315' as '0xstring'
 export const cmSwapRefProgram = '0xf74C099613eF374Aa3cCE75fA8c0B8eF1928f759' as '0xstring'
-export const CMswapP2PMarketplace = '0x9068401504b317495356d3fed502C1D3344d346D' as '0xstring'
+export const CMswapP2PMarketplace = '0xCd110B7b162ee69B7E956413f80590fd8Ba5c75c' as '0xstring'
 
 export const v3FactoryContract = { chainId: 96, abi: v3Factory, address: V3_FACTORY } as const
 export const positionManagerContract = { chainId: 96, address: POSITION_MANAGER, abi: NonfungiblePositionManager } as const
@@ -88,6 +89,5 @@ export const CMswapUniSmartRouteContractV2 =  { chainId: 96, abi: CMswapUniSmart
 export const UniswapPairv2PoolABI = { chainId: 96, abi: UniswapPair} as const
 export const BitkubEvmKYCContract = {chainId: 96, abi: BitkubEvmKYCABI, address: BitkubEvmKYC} as const
 export const CMswapP2PMarketplaceContract = {chainId: 96, abi: CMswapP2PMarketplaceABI, address: CMswapP2PMarketplace} as const
-
 export const cmSwapRefProgramContract = {chainId: 96, abi: cmSwapRefProgramABI, address: cmSwapRefProgram} as const
 export const publicClient = createPublicClient({ chain: bitkub, transport: http() })
