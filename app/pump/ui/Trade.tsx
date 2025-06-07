@@ -835,33 +835,32 @@ export default function Trade({
 
   return (
     <main className="row-start-2 w-full flex flex-col gap-4 justify-center items-center mt-[60px] md:mt-1">
-      {headnoti && (
-        <div className="w-full h-[40px] bg-sky-500 animate-pulse text-center p-2 flex flex-row gap-2 items-center justify-center">
-          <span>Trade Successful!, </span>
-          <Link
-            href={_explorer + "tx/" + hash}
-            rel="noopener noreferrer"
-            target="_blank"
-            prefetch={false}
-            className="underline"
-          >
-            your txn hash
-          </Link>
-          <button
-            className="bg-red-600 px-2 rounded-lg"
-            onClick={() => setHeadnoti(false)}
-          >
-            Close
-          </button>
-        </div>
-      )}
-
       {/* HEADER TOPBAR */}
       <div className="mt-[20px] md:mt-[50px] w-full max-w-[1920px] flex flex-col gap-4 mb-2">
         <div className="w-full flex flex-row justify-between flex-wrap gap-4 mt-4" style={{zIndex: 1}}>
-          <Link href={"/pump/launchpad?chain=" + chain + (mode === "pro" ? "&mode=pro" : "&mode=lite")} prefetch={false} className="underline hover:font-bold p-4 md:ml-4">Back to launchpad</Link>
+          <Link href={"/pump/launchpad?chain=" + chain + (mode === "pro" ? "&mode=pro" : "&mode=lite")} prefetch={false} className="underline hover:font-bold p-4 xl:ml-4">Back to launchpad</Link>
           <Menu chainEnable={false} />
-        </div>     
+        </div>
+        {headnoti && (
+          <div className="w-full h-[40px] bg-sky-500 animate-pulse text-center p-2 flex flex-row gap-2 items-center justify-center">
+            <span>Trade Successful!, </span>
+            <Link
+              href={_explorer + "tx/" + hash}
+              rel="noopener noreferrer"
+              target="_blank"
+              prefetch={false}
+              className="underline"
+            >
+              your txn hash
+            </Link>
+            <button
+              className="bg-red-600 px-2 rounded-lg"
+              onClick={() => setHeadnoti(false)}
+            >
+              Close
+            </button>
+          </div>
+        )}     
         <div className={"xl:hidden w-full xl:w-1/3 self-center bg-neutral-900 p-2 rounded-2xl flex flex-row justify-around border-solid border-2 " + (chain === 'kub' ? "border-emerald-300" : "") + (chain === 'monad' ? "border-purple-300" : "")} style={{ zIndex: 1 }}>
           <span 
             className={!tabmode ? "text-black font-bold p-2 w-1/2 bg-black text-center rounded-lg" : "text-gray-400 underline hover:font-bold p-2 w-1/2 text-center"}
@@ -1073,7 +1072,7 @@ export default function Trade({
       <div className="w-full text-center max-w-[1920px] flex flex-row flex-wrap gap-12 items-center xl:items-start justify-around">
         {!tabmode ? (
           <div className="block xl:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start" style={{ zIndex: 1 }}>
-            <div className="w-full flex flex-col items-start md:flex-row flex-wrap justify-between text-xs xl:text-md">
+            <div className="w-full flex flex-col items-start xl:flex-row flex-wrap justify-between text-xs xl:text-md">
               <span className={"text-2xl mr-6 " + (chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>{result2.status === "success" && result2.data![0].result}</span>
               <span className="mr-6">{result2.status === "success" && "[" + result2.data![1].result + "]"}</span>
               <span className="mr-6">
@@ -1392,7 +1391,7 @@ export default function Trade({
               </>
             ) : (
               <>
-                <div className="ml-[20px] text-sm flex flex-col gap-2 justify-start  text-left">
+                <div className="w-full text-sm flex flex-col gap-2 justify-start  text-left">
                   <span>
                     Bonding curve progress:{" "}
                     {result3.status === "success" &&
@@ -1485,7 +1484,7 @@ export default function Trade({
                 </div>
               </>
             )}
-            <div className="w-full h-[800px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center">
+            <div className="w-full h-[800px] mt-8 p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center">
                 <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">{holder.length} Holders</span>
                 <div className="w-full overflow-x-hidden overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
                     {holder
@@ -1827,13 +1826,13 @@ export default function Trade({
             <Chart data={graphData} />
           )}
 
-            <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
+            <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500 pr-4">
               <div className="w-1/5 sm:w-1/3 text-left">Timestamp</div>
-              <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-start gap-10">
-                <span className="text-right w-[30px] xl:w-[200px]">From</span>
-                <span className="text-right w-[70px] xl:w-[200px]">Asset</span>
-                <span className="text-right w-[30px] xl:w-[200px]">Amount</span>
-                <span className="text-right w-[30px] xl:w-[200px]">Txn</span>
+              <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-end gap-10">
+                <span className="text-right w-[30px] md:w-[200px]">From</span>
+                <span className="text-right w-[70px] md:w-[200px]">Asset</span>
+                <span className="text-right w-[30px] md:w-[200px]">Amount</span>
+                <span className="text-right w-[30px] md:w-[200px]">Txn</span>
               </div>
             </div>
             <div
@@ -1864,11 +1863,11 @@ export default function Trade({
                       rel="noopener noreferrer"
                       target="_blank"
                       prefetch={false}
-                      className="text-right w-[30px] xl:w-[200px]"
+                      className="text-right w-[30px] md:w-[200px]"
                     >
                       {res.from.slice(0, 5) + "..." + res.from.slice(37)}
                     </Link>
-                    <div className="text-right w-[70px] xl:w-[200px] flex flex-row gap-2 items-center justify-end overflow-hidden">
+                    <div className="text-right w-[70px] md:w-[200px] flex flex-row gap-2 items-center justify-end overflow-hidden">
                       {res.action === "buy" && (
                         <span className="text-green-500 font-bold">
                           {res.action.toUpperCase()}
@@ -1885,7 +1884,7 @@ export default function Trade({
                         </span>
                       )}
                     </div>
-                    <span className="text-right w-[30px] xl:w-[200px]">
+                    <span className="text-right w-[30px] md:w-[200px]">
                       {Intl.NumberFormat("en-US", {
                         notation: "compact",
                         compactDisplay: "short",
@@ -1896,7 +1895,7 @@ export default function Trade({
                       rel="noopener noreferrer"
                       target="_blank"
                       prefetch={false}
-                      className="font-bold text-right w-[30px] xl:w-[200px] underline truncate"
+                      className="font-bold text-right w-[30px] md:w-[200px] underline truncate"
                     >
                       {res.hash.slice(0, 5) + "..." + res.hash.slice(61)}
                     </Link>
@@ -1955,13 +1954,13 @@ export default function Trade({
             <Chart data={graphData} />
           )}
 
-          <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
+          <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500 pr-4">
             <div className="w-1/5 sm:w-1/3 text-left">Timestamp</div>
-            <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-start gap-10">
-              <span className="text-right w-[30px] xl:w-[200px]">From</span>
-              <span className="text-right w-[70px] xl:w-[200px]">Asset</span>
-              <span className="text-right w-[30px] xl:w-[200px]">Amount</span>
-              <span className="text-right w-[30px] xl:w-[200px]">Txn</span>
+            <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-end gap-10">
+              <span className="text-right w-[30px] md:w-[200px]">From</span>
+              <span className="text-right w-[70px] md:w-[200px]">Asset</span>
+              <span className="text-right w-[30px] md:w-[200px]">Amount</span>
+              <span className="text-right w-[30px] md:w-[200px]">Txn</span>
             </div>
           </div>
           <div
@@ -1992,11 +1991,11 @@ export default function Trade({
                     rel="noopener noreferrer"
                     target="_blank"
                     prefetch={false}
-                    className="text-right w-[30px] xl:w-[200px]"
+                    className="text-right w-[30px] md:w-[200px]"
                   >
                     {res.from.slice(0, 5) + "..." + res.from.slice(37)}
                   </Link>
-                  <div className="text-right w-[70px] xl:w-[200px] flex flex-row gap-2 items-center justify-end overflow-hidden">
+                  <div className="text-right w-[70px] md:w-[200px] flex flex-row gap-2 items-center justify-end overflow-hidden">
                     {res.action === "buy" && (
                       <span className="text-green-500 font-bold">
                         {res.action.toUpperCase()}
@@ -2013,7 +2012,7 @@ export default function Trade({
                       </span>
                     )}
                   </div>
-                  <span className="text-right w-[30px] xl:w-[200px]">
+                  <span className="text-right w-[30px] md:w-[200px]">
                     {Intl.NumberFormat("en-US", {
                       notation: "compact",
                       compactDisplay: "short",
@@ -2024,7 +2023,7 @@ export default function Trade({
                     rel="noopener noreferrer"
                     target="_blank"
                     prefetch={false}
-                    className="font-bold text-right w-[30px] xl:w-[200px] underline truncate"
+                    className="font-bold text-right w-[30px] md:w-[200px] underline truncate"
                   >
                     {res.hash.slice(0, 5) + "..." + res.hash.slice(61)}
                   </Link>
@@ -2508,7 +2507,7 @@ export default function Trade({
               </>
             )}
           </div>
-          <div className="w-full h-[800px] p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center">
+          <div className="w-full h-[800px] mt-8 p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center">
             <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">{holder.length} Holders</span>
             <div className="w-full overflow-x-hidden overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
                 {holder
