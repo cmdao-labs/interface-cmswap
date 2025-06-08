@@ -108,9 +108,7 @@ export default function Market96({
   const [tradeType, setTradeType] = useState<"buy" | "sell">("buy");
   const [price, setPrice] = useState("");
   const [amount, setAmount] = useState("");
-  const [filter, setFilter] = useState<
-    "all" | "Metal Valley" | "Morning Moon Village"
-  >("all");
+  const [filter, setFilter] = useState<"all" | "Metal Valley" | "Morning Moon Village">("all");
   const [searchTerm, setSearchTerm] = useState("");
   const tokenPairs: TokenPair[] = generateTokenPairs(game_tokens);
   const [select, setSelectToken] = useState(tokenPairs[0]);
@@ -118,22 +116,26 @@ export default function Market96({
   const [tokenBal, setTokenBal] = useState(0.0);
   const [onLoading, setOnLoading] = React.useState(false);
   const [view, setView] = useState<"Orders" | "History">("Orders");
-  const [ref, setRef] = React.useState(
-    "0x0000000000000000000000000000000000000000"
-  );
-  const [uorders, setUOrders] = useState<
-    Array<{
+  const [ref, setRef] = React.useState("0x0000000000000000000000000000000000000000");
+  const [txupdate, setTxupdate] = React.useState("")
+  const [lastPrice,setLastPrice] = React.useState("")
+  
+  const [uorders, setUOrders] = useState<Array<{
       id: number;
       date: string;
-      fromToken: { logo: string };
-      toToken: { logo: string };
+      tokenSymbol: string;
       type: string;
       price: number;
       amount: number;
+      filledAmount: number;
+      cancelAt: number;
     }>
   >([]);
 
+  const [orders, setOrders] = useState<Order[]>([]);
+
   const currencyAddr = tokens[1].value;
+  const currencySymbol = tokens[1].name;
   const baseExpURL = "https://www.kubscan.com/";
 
   React.useEffect(() => {
@@ -192,8 +194,20 @@ export default function Market96({
     return url.toString();
   }
 
-  React.useEffect(() => {
-    async function renders() {
+  function matchTokenByAddress(addr: string): Token | undefined {
+      const pair = tokenPairs.find((token) => token.value.toLowerCase() === addr.toLowerCase());
+      if (pair) {
+          return {
+              name: pair.name,
+              logo: pair.img1,
+              value: pair.value,
+          };
+      }
+      return undefined;
+  }
+
+
+  async function renders() {
       try {
         setOnLoading(true);
         const stateB = await readContracts(config, {
@@ -222,9 +236,9 @@ export default function Market96({
         setOnLoading(false);
       }
       setOnLoading(false);
-    }
+  }
 
-    async function fetchMyOrders(address: `0x${string}`) {
+  async function fetchMyOrders(address: `0x${string}`) {
       try {
         const result = await readContracts(config, {
           contracts: [
@@ -238,27 +252,34 @@ export default function Market96({
 
         const rawOrders = result[0]?.result;
 
-        if (!rawOrders) {
-          console.warn("No orders found or result undefined");
+        if (!rawOrders || rawOrders.length < 2) {
+          console.warn("No orders found or unexpected structure.");
           return;
         }
 
-        console.log("Raw Orders:", rawOrders);
+        const [orderIds, orderDetails] = rawOrders;
 
-        const mappedOrders = rawOrders.map((order: any, index: number) => {
+        console.log("Order IDs:", orderIds);
+        console.log("Order Details:", orderDetails);
+
+        const mappedOrders = orderDetails.map((order: any, index: number) => {
           const amount = Number(order.amount) / 1e18;
           const price = Number(order.pricePerUnit) / 1e18;
-          const fromToken = order.isBuy ? { logo: "KKUB" } : { logo: "SOLA" };
-          const toToken = order.isBuy ? { logo: "SOLA" } : { logo: "KKUB" };
+          const tokenSymbolObj = matchTokenByAddress(order.token)
+          const tokenSymbol = tokenSymbolObj ? tokenSymbolObj.name : "Unknown";
+
+          const filledAmount = Number(order.filledAmount) / 1e18;
+          const cancelAt = Number(order.cancelAt);
 
           return {
-            id: index + 1,
+            id: Number(orderIds[index]),
             date: new Date().toISOString().slice(0, 19).replace("T", " "),
-            fromToken,
-            toToken,
+            tokenSymbol,
             type: order.isBuy ? "buy" : "sell",
             price,
             amount,
+            filledAmount,
+            cancelAt
           };
         });
 
@@ -266,33 +287,93 @@ export default function Market96({
       } catch (error) {
         console.error("Error fetching orders:", error);
       }
+  }
+
+  function mapDepthToOrders(
+    rawDepth: [bigint[], bigint[], bigint[]],
+    type: "buy" | "sell",
+    fromTokenAddr: string,
+    toToken: Token
+  ): Order[] {
+    const [ids, prices, amounts] = rawDepth;
+
+    return ids.map((id, index) => ({
+      id: Number(id),
+      fromToken: fromTokenAddr as "0xstring",
+      toToken: toToken,
+      amount: Number(amounts[index]) / 1e18,
+      price: Number(prices[index]) / 1e18,
+      type,
+      date: new Date().toISOString().slice(0, 19).replace("T", " "),
+    }));
+  }
+
+  async function fetchOrderData() {
+
+    let result = await readContracts(config,{
+      contracts: [
+        {...CMswapP2PMarketplaceContract,functionName:'getLastTradePrice',args:[select.value,currencyAddr]}
+      ]
+    }) 
+    if(result[0].result !== undefined){
+      setLastPrice(formatEther(result[0].result))
     }
-
-    renders();
-    fetchMyOrders(address as "0xstring");
-  }, [select]);
-
-  const [orders, setOrders] = useState<Order[]>([
+    
+    let result_depth = await readContracts(config, {
+  contracts: [
     {
-      id: 1,
-      fromToken: select.value,
-      toToken: { name: "KKUB", logo: "KKUB", value: "0xkkub" },
-      amount: 5,
-      price: 50,
-      type: "sell",
-      date: "2025-05-11 12:34:56",
+      ...CMswapP2PMarketplaceContract,
+      functionName: "getOrderBookDepth",
+      args: [select.value, currencyAddr, true, BigInt(50)],
     },
     {
-      id: 5,
-      fromToken: select.value,
-      toToken: { name: "KKUB", logo: "KKUB", value: "0xkkub" },
-      amount: 3,
-      price: 48.5,
-      type: "buy",
-      date: "2025-05-11 11:30:00",
+      ...CMswapP2PMarketplaceContract,
+      functionName: "getOrderBookDepth",
+      args: [select.value, currencyAddr, false, BigInt(50)],
     },
-    // ... เพิ่ม order อื่น ๆ ตามต้องการ
-  ]);
+  ],
+});
+
+const newOrders: Order[] = [];
+
+if (
+  result_depth[0]?.result &&
+  Array.isArray(result_depth[0].result[0]) &&
+  result_depth[0].result[0].length > 0
+) {
+  const buyOrders = mapDepthToOrders(
+    result_depth[0].result as [bigint[], bigint[], bigint[]],
+    "buy",
+    select.value,
+    { name: "KKUB", logo: "KKUB", value: "0xkkub" }
+  );
+
+  newOrders.push(...buyOrders);
+}
+
+if (
+  result_depth[1]?.result &&
+  Array.isArray(result_depth[1].result[0]) &&
+  result_depth[1].result[0].length > 0
+) {
+  const sellOrders = mapDepthToOrders(
+    result_depth[1].result as [bigint[], bigint[], bigint[]],
+    "sell",
+    select.value,
+    { name: "KKUB", logo: "KKUB", value: "0xkkub" }
+  );
+
+  newOrders.push(...sellOrders);
+}
+
+if (newOrders.length > 0) {
+  setOrders(newOrders); // หรือ setOrders(prev => [...prev, ...newOrders]) ถ้าต้องการสะสม
+} else {
+  console.warn("No valid buy or sell orders found.");
+}
+
+    
+  }
 
   const filteredPairs = tokenPairs.filter((pair) => {
     // กรองตาม filter
@@ -317,7 +398,7 @@ export default function Market96({
     let approvedToken = tradeType === "buy" ? tokens[1].value : select.value;
     let amounts =
       tradeType === "buy"
-        ? parseFloat(price) * parseFloat(amount) * 1.005
+        ? (parseFloat(price) * parseFloat(amount) * 1.005)
         : amount;
     console.log(`Apporve token ${approvedToken}\nAmount ${amounts}`);
 
@@ -391,8 +472,9 @@ export default function Market96({
         ],
       });
 
-      const tx = await writeContract(config, request);
-      console.log("Order submitted:", tx);
+      h = await writeContract(config, request)
+      await waitForTransactionReceipt(config, { hash: h })
+      setTxupdate(h)
     } catch (error) {
       setErrMsg(error as WriteContractErrorType);
     }
@@ -411,9 +493,33 @@ export default function Market96({
     setAmount(""); */
   };
 
-  const handleCancelOrder = (id: number) => {
-    setOrders(orders.filter((o) => o.id !== id));
+  const handleCancelOrder = async (id: number) => {
+    let h;
+    let r;
+    try {
+
+      const { result, request } = await simulateContract(config, {
+        ...CMswapP2PMarketplaceContract,
+        functionName: "cancelOrder",
+        args: [
+          BigInt(id)
+        ],
+      });
+
+      h = await writeContract(config, request)
+      await waitForTransactionReceipt(config, { hash: h })
+      setTxupdate(h)
+    } catch (error) {
+      setErrMsg(error as WriteContractErrorType);
+    }
   };
+
+  React.useEffect(() => {
+    fetchOrderData();
+    renders();
+    fetchMyOrders(address as "0xstring");
+  }, [select,txupdate]);
+
 
   return (
     <div className="font-mono lg:min-w-[1680px] max-w-[1920px] mt-[120px]">
@@ -426,12 +532,12 @@ export default function Market96({
               alt="token1"
               className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white"
             />
-            <h2 className="text-xl font-bold uppercase text-white">
+            <h2 className="text-2xl font-bold uppercase text-white">
               {select.name} / KKUB
             </h2>
           </div>
 
-          <p className="text-xs">
+          <p className="text-sm">
             Token Address:{" "}
             <span
               className="text-blue-500 cursor-pointer"
@@ -446,7 +552,7 @@ export default function Market96({
         <div className="flex space-x-8">
           <div>
             <p className="text-sm text-gray-400">Last Price</p>
-            <p className="text-lg font-bold text-green-400">0.5 KKUB</p>
+            <p className="text-lg font-bold text-green-400">{lastPrice} KKUB</p>
           </div>
           <div>
             <p className="text-sm text-gray-400">Trade Fee</p>
@@ -480,13 +586,13 @@ export default function Market96({
                       className="flex justify-center items-center space-x-4 text-sm text-red-200 w-full"
                     >
                       <span className="w-1/2 text-center truncate">
-                        {price.toFixed(2)} KKUB
+                        {price.toFixed(8)} KKUB
                       </span>
                       <span
                         className="w-1/2 text-center truncate overflow-hidden whitespace-nowrap"
                         title={select.name}
                       >
-                        {amount.toFixed(2)} {select.name}
+                        {amount.toFixed(0)} {select.name}
                       </span>
                     </div>
                   ))}
@@ -503,13 +609,13 @@ export default function Market96({
                       className="flex justify-center items-center space-x-4 text-sm text-green-200 w-full"
                     >
                       <span className="w-1/2 text-center truncate">
-                        {price.toFixed(2)} KKUB
+                        {price.toFixed(8)} KKUB
                       </span>
                       <span
                         className="w-1/2 text-center truncate overflow-hidden whitespace-nowrap"
                         title={select.name}
                       >
-                        {amount.toFixed(2)} {select.name}
+                        {amount.toFixed(0)} {select.name}
                       </span>
                     </div>
                   ))}
@@ -527,7 +633,7 @@ export default function Market96({
               <div className="grid grid-cols-3 text-gray-400 text-sm font-semibold border-b border-gray-600 pb-2 mb-2">
                 <span className="text-center">Timestamp</span>
                 <span className="text-center">Price (KKUB)</span>
-                <span className="text-center">Volume</span>
+                <span className="text-center">Volume ({select.name}) </span>
               </div>
 
               {/* Order List */}
@@ -540,13 +646,13 @@ export default function Market96({
                   >
                     <span className="text-center">—</span>
                     <span className="text-center truncate">
-                      {price.toFixed(2)} KKUB
+                      {price.toFixed(8)}
                     </span>
                     <span
                       className="text-center truncate overflow-hidden whitespace-nowrap"
                       title={select.name}
                     >
-                      {amount.toFixed(2)} {select.name}
+                      {amount.toFixed(0)}
                     </span>
                   </div>
                 ))}
@@ -559,13 +665,13 @@ export default function Market96({
                   >
                     <span className="text-center">—</span>
                     <span className="text-center truncate">
-                      {price.toFixed(2)} KKUB
+                      {price.toFixed(8)} 
                     </span>
                     <span
                       className="text-center truncate overflow-hidden whitespace-nowrap"
                       title={select.name}
                     >
-                      {amount.toFixed(2)} {select.name}
+                      {amount.toFixed(0)}
                     </span>
                   </div>
                 ))}
@@ -905,7 +1011,7 @@ export default function Market96({
                   {order.date.split(" ")[0]}
                 </span>
                 <span>
-                  {select.name}/{order.toToken.logo}
+                  {order.tokenSymbol}/{currencySymbol}
                 </span>
                 <span
                   className={
@@ -914,12 +1020,13 @@ export default function Market96({
                 >
                   {order.type.toUpperCase()}
                 </span>
-                <span>{order.price.toFixed(2)} KKUB</span>
+                <span>{order.price.toFixed(8)} KKUB</span>
                 <span>
-                  {order.amount} {select.name}
+                  {order.filledAmount}{"/"}{order.amount} {order.tokenSymbol}
                 </span>
-                <span>{(order.amount * order.price).toFixed(2)} KKUB</span>
-                <div className="flex justify-center">
+                <span>{(order.amount * order.price).toFixed(8)} KKUB</span>
+                {order.filledAmount !== order.amount && order.cancelAt === 0 && (
+                  <div className="flex justify-center">
                   <button
                     onClick={() => handleCancelOrder(order.id)}
                     className="text-xs text-red-500 hover:text-red-600 px-3 py-1 rounded bg-[#3e3f4c] hover:bg-[#4f505c] transition"
@@ -927,6 +1034,7 @@ export default function Market96({
                     Cancel
                   </button>
                 </div>
+                )}
               </div>
             ))}
           </>
