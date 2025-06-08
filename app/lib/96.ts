@@ -52,11 +52,11 @@ export const game_tokens: Record<string, Token[]> = {
         { name: 'Lucent Tear', value: '0x8fB2788EDc797cDF52A84e4A4291B82619200073' as '0xstring', logo: './market/Morning Moon Village/Lucent Tear.webp' },
         { name: 'Illuminated Soul Fragment', value: '0xbb546B399b1767883b083Fef9E69a16dd0185cDD' as '0xstring', logo: './market/Morning Moon Village/illuminated_soul_fragment.webp' },
         { name: 'Mangosteen', value: '0x1786a5391EaA5cfd5c8bc4376991B993380Db102' as '0xstring', logo: './market/Morning Moon Village/mangosteen.webp' },
-        { name: 'Cabbage', value: '0xE3bee928D481b40BB6D0F0EDbfD888a7845CF622' as '0xstring', logo: './market/Morning Moon Village/crop-cabbage.png' },
-        { name: 'Carrot', value: '0x3937dDAd2Ad8A9Ac7EFbf7C1Cb2B2D9b68B7d048' as '0xstring', logo: './market/Morning Moon Village/crop-carrot.webp' },
-        { name: 'Coffee', value: '0xb9431CD242692a2557c85CFf9638d45B8E8F9D25' as '0xstring', logo: './market/Morning Moon Village/COFFEEBEAN.webp' },
-        { name: 'Corn', value: '0x4fA393FC50BcDF367145163b920bB37C21e596ec' as '0xstring', logo: './market/Morning Moon Village/crop-corn.webp' },
-        { name: 'Tomato', value: '0x9Ea7E0435B5E50e1DCBB8Eacd63F0dbD3003BdAA' as '0xstring', logo: './market/Morning Moon Village/crop-tomato.webp' },
+        { name: 'Cabbage Crop', value: '0xE3bee928D481b40BB6D0F0EDbfD888a7845CF622' as '0xstring', logo: './market/Morning Moon Village/crop-cabbage.png' },
+        { name: 'Carrot Crop', value: '0x3937dDAd2Ad8A9Ac7EFbf7C1Cb2B2D9b68B7d048' as '0xstring', logo: './market/Morning Moon Village/crop-carrot.webp' },
+        { name: 'Coffee Bean', value: '0xb9431CD242692a2557c85CFf9638d45B8E8F9D25' as '0xstring', logo: './market/Morning Moon Village/COFFEEBEAN.webp' },
+        { name: 'Corn Crop', value: '0x4fA393FC50BcDF367145163b920bB37C21e596ec' as '0xstring', logo: './market/Morning Moon Village/crop-corn.webp' },
+        { name: 'Tomato Crop', value: '0x9Ea7E0435B5E50e1DCBB8Eacd63F0dbD3003BdAA' as '0xstring', logo: './market/Morning Moon Village/crop-tomato.webp' },
         ]
 
     // Can PR P2P Pair KKUB Listing Here
@@ -72,7 +72,7 @@ export const CMswapUniSmartRoute = '0x01837156518e60362048e78d025a419C51346f55' 
 export const BitkubEvmKYC = '0x409CF41ee862Df7024f289E9F2Ea2F5d0D7f3eb4' as '0xstring' // kyc for unwrap kkub
 export const bkcUnwapped = '0xff76DD8086428EBC4Ed1b14B0e56E95eDc46a315' as '0xstring'
 export const cmSwapRefProgram = '0xf74C099613eF374Aa3cCE75fA8c0B8eF1928f759' as '0xstring'
-export const CMswapP2PMarketplace = '0xCd110B7b162ee69B7E956413f80590fd8Ba5c75c' as '0xstring'
+export const CMswapP2PMarketplace = '0x46aBB5825aF01fa19Ec6e26fDac6678c5E408311' as '0xstring'
 
 export const v3FactoryContract = { chainId: 96, abi: v3Factory, address: V3_FACTORY } as const
 export const positionManagerContract = { chainId: 96, address: POSITION_MANAGER, abi: NonfungiblePositionManager } as const
