@@ -214,7 +214,7 @@ export default function Ref96() {
 
     fetch();
     fetchReward();
-  }, []);
+  }, [address]);
 
 
 
@@ -263,7 +263,7 @@ export default function Ref96() {
     timestamp: (Date.now() / 1000 - i * 3600).toString(), // ลดเวลาทีละ 1 ชั่วโมง
   }));
 
-  const totalPages = Math.ceil(mreferrals.length / referralsPerPage);
+  const totalPages = Math.ceil(referrals.length / referralsPerPage);
 
   return (
     <div className="min-h-screen min-w-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white overflow-hidden">
@@ -392,7 +392,9 @@ export default function Ref96() {
               Referrals
             </h3>
             <div className="space-y-3">
-              {mreferrals
+              {referrals.length > 0 ?
+              <>
+              {referrals
                 .slice(
                   (currentPage - 1) * referralsPerPage,
                   currentPage * referralsPerPage
@@ -431,9 +433,8 @@ export default function Ref96() {
                     </div>
                   </div>
                 ))}
-            </div>
 
-            {/* Page Button */}
+                {/* Page Button */}
             <div className="flex flex-wrap justify-center items-center gap-2 mt-6 text-sm">
               {/* << */}
               <button
@@ -517,6 +518,16 @@ export default function Ref96() {
                 &raquo;
               </button>
             </div>
+
+                </> 
+                :
+                <div className="flex items-center justify-center text-gray-400 text-sm py-10">
+                  No referrals yet.
+                </div>
+                }
+            </div>
+
+            
           </div>
 
           {/* Pending Rewards */}
@@ -536,6 +547,7 @@ export default function Ref96() {
               </h3>
             </div>
             <div className="space-y-4">
+              {RewardList.length > 0 ? <>
               {RewardList.map((reward, index) => {
                 // หาข้อมูล token จาก array tokens ตาม address (value)
                 const tokenInfo = tokens.find(
@@ -583,6 +595,14 @@ export default function Ref96() {
               >
                 Claim All Rewards
               </button>
+              </> : 
+              (
+                <div className="flex items-center justify-center text-gray-400 text-sm py-10">
+  You haven’t earned any rewards from referrals yet.
+</div>
+
+              )} 
+              
             </div>
           </div>
         </div>
