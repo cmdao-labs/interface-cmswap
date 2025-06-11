@@ -5,6 +5,7 @@ import { type WriteContractErrorType } from '@wagmi/core'
 import ErrorModal from '@/app/components/error-modal'
 
 import Ref96 from '../components/Ref96'
+import Ref25925 from '../components/Ref25925'
 import RefError from '../components/RefError'
 
 import ReferralTracker from '../components/Refferal'
@@ -26,7 +27,8 @@ export default function Page() {
   <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
 
   <div className="w-full max-w-full">
-    <Ref96 />
+    {chainId === 96 ? 
+    (<Ref96 />) : (<Ref25925/>)}
     {/* {chainId === 96 ? <Ref96 /> : <RefError chainID={Number(chainId)} />} */}
   </div>
 </div>
