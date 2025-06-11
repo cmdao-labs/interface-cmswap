@@ -21,7 +21,7 @@ import {
   bkcUnwapped,
   cmSwapRefProgram,
   cmSwapRefProgramContract,
-} from "@/app/lib/96";
+} from "@/app/lib/25925";
 import { config } from "@/app/config";
 import { formatEther, parseEther } from "viem";
 
