@@ -27,8 +27,8 @@ export default function Page() {
   <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
 
   <div className="w-full max-w-full">
-    {chainId === 96 ? 
-    (<Ref96 />) : (<Ref25925/>)}
+    {/* {chainId === 96 ? (<Ref96 />) : (<Ref25925/>)} */}
+    {chainId === 25925 ? <Ref25925/> : <RefError chainID={Number(chainId)} />}
     {/* {chainId === 96 ? <Ref96 /> : <RefError chainID={Number(chainId)} />} */}
   </div>
 </div>

@@ -4,8 +4,10 @@ import { useAccount } from 'wagmi'
 import { type WriteContractErrorType } from '@wagmi/core'
 import ErrorModal from '@/app/components/error-modal'
 
+import MarketError from '../components/MarketError'
 import Market96 from '../components/Market96'
 import Market25925 from '../components/Market25925'
+
 import ReferralTracker from '../components/Refferal'
 
 
@@ -19,12 +21,8 @@ export default function Page() {
             <ReferralTracker/>
             {isLoading && <div className="w-full h-full fixed backdrop-blur-[12px] z-999" />}
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
-            {chainId === 96 ?
-            (<Market96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />)
-            :
-            (<Market25925 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />)
+            {chainId === 25925 ? <Market25925 setIsLoading={setIsLoading} setErrMsg={setErrMsg} /> : <MarketError chainID={Number(chainId)} />}
 
-        }
         </div>
     )
 }
