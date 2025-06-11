@@ -118,18 +118,18 @@ export default function Market96({
   const [view, setView] = useState<"Orders" | "History">("Orders");
   const [ref, setRef] = React.useState("0x0000000000000000000000000000000000000000");
   const [txupdate, setTxupdate] = React.useState("")
-  const [lastPrice,setLastPrice] = React.useState("")
-  
+  const [lastPrice, setLastPrice] = React.useState("")
+
   const [uorders, setUOrders] = useState<Array<{
-      id: number;
-      date: string;
-      tokenSymbol: string;
-      type: string;
-      price: number;
-      amount: number;
-      filledAmount: number;
-      cancelAt: number;
-    }>
+    id: number;
+    date: string;
+    tokenSymbol: string;
+    type: string;
+    price: number;
+    amount: number;
+    filledAmount: number;
+    cancelAt: number;
+  }>
   >([]);
 
   const [orders, setOrders] = useState<Order[]>([]);
@@ -195,98 +195,98 @@ export default function Market96({
   }
 
   function matchTokenByAddress(addr: string): Token | undefined {
-      const pair = tokenPairs.find((token) => token.value.toLowerCase() === addr.toLowerCase());
-      if (pair) {
-          return {
-              name: pair.name,
-              logo: pair.img1,
-              value: pair.value,
-          };
-      }
-      return undefined;
+    const pair = tokenPairs.find((token) => token.value.toLowerCase() === addr.toLowerCase());
+    if (pair) {
+      return {
+        name: pair.name,
+        logo: pair.img1,
+        value: pair.value,
+      };
+    }
+    return undefined;
   }
 
 
   async function renders() {
-      try {
-        setOnLoading(true);
-        const stateB = await readContracts(config, {
-          contracts: [
-            {
-              ...kap20ABI,
-              address: "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5",
-              functionName: "balanceOf",
-              args: [address as "0xstring"],
-            },
-            {
-              ...kap20ABI,
-              address: select.value,
-              functionName: "balanceOf",
-              args: [address as "0xstring"],
-            },
-          ],
-        });
+    try {
+      setOnLoading(true);
+      const stateB = await readContracts(config, {
+        contracts: [
+          {
+            ...kap20ABI,
+            address: "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5",
+            functionName: "balanceOf",
+            args: [address as "0xstring"],
+          },
+          {
+            ...kap20ABI,
+            address: select.value,
+            functionName: "balanceOf",
+            args: [address as "0xstring"],
+          },
+        ],
+      });
 
-        stateB[0].result !== undefined &&
-          setKKUBbal(Number(formatEther(stateB[0].result)));
-        stateB[1].result !== undefined &&
-          setTokenBal(Number(formatEther(stateB[1].result)));
-        console.log("kkub Bal", stateB[0].result);
-      } catch (error) {
-        setOnLoading(false);
-      }
+      stateB[0].result !== undefined &&
+        setKKUBbal(Number(formatEther(stateB[0].result)));
+      stateB[1].result !== undefined &&
+        setTokenBal(Number(formatEther(stateB[1].result)));
+      console.log("kkub Bal", stateB[0].result);
+    } catch (error) {
       setOnLoading(false);
+    }
+    setOnLoading(false);
   }
 
   async function fetchMyOrders(address: `0x${string}`) {
-      try {
-        const result = await readContracts(config, {
-          contracts: [
-            {
-              ...CMswapP2PMarketplaceContract,
-              functionName: "getMyOrders",
-              args: [address],
-            },
-          ],
-        });
+    try {
+      const result = await readContracts(config, {
+        contracts: [
+          {
+            ...CMswapP2PMarketplaceContract,
+            functionName: "getMyOrders",
+            args: [address],
+          },
+        ],
+      });
 
-        const rawOrders = result[0]?.result;
+      const rawOrders = result[0]?.result;
 
-        if (!rawOrders || rawOrders.length < 2) {
-          console.warn("No orders found or unexpected structure.");
-          return;
-        }
-
-        const [orderIds, orderDetails] = rawOrders;
-
-        console.log("Order IDs:", orderIds);
-        console.log("Order Details:", orderDetails);
-
-        const mappedOrders = orderDetails.map((order: any, index: number) => {
-          const amount = Number(order.amount) / 1e18;
-          const price = Number(order.pricePerUnit) / 1e18;
-          const tokenSymbolObj = matchTokenByAddress(order.token)
-          const tokenSymbol = tokenSymbolObj ? tokenSymbolObj.name : "Unknown";
-
-          const filledAmount = Number(order.filledAmount) / 1e18;
-          const cancelAt = Number(order.cancelAt);
-
-          return {
-            id: Number(orderIds[index]),
-            date: new Date().toISOString().slice(0, 19).replace("T", " "),
-            tokenSymbol,
-            type: order.isBuy ? "buy" : "sell",
-            price,
-            amount,
-            filledAmount,
-            cancelAt
-          };
-        });
-
-        setUOrders(mappedOrders);
-      } catch (error) {
-        console.error("Error fetching orders:", error);
+      if (!rawOrders || rawOrders.length < 2) {
+        console.warn("No orders found or unexpected structure.");
+        return;
       }
+
+      const [orderIds, orderDetails] = rawOrders;
+
+      console.log("Order IDs:", orderIds);
+      console.log("Order Details:", orderDetails);
+
+      const mappedOrders = orderDetails.map((order: any, index: number) => {
+        const amount = Number(order.amount) / 1e18;
+        const price = Number(order.pricePerUnit) / 1e18;
+        const tokenSymbolObj = matchTokenByAddress(order.token)
+        const tokenSymbol = tokenSymbolObj ? tokenSymbolObj.name : "Unknown";
+
+        const filledAmount = Number(order.filledAmount) / 1e18;
+        const cancelAt = Number(order.cancelAt);
+
+        return {
+          id: Number(orderIds[index]),
+          date: new Date().toISOString().slice(0, 19).replace("T", " "),
+          tokenSymbol,
+          type: order.isBuy ? "buy" : "sell",
+          price,
+          amount,
+          filledAmount,
+          cancelAt
+        };
+      });
+
+      setUOrders(mappedOrders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+    }
   }
 
   function mapDepthToOrders(
@@ -310,69 +310,70 @@ export default function Market96({
 
   async function fetchOrderData() {
 
-    let result = await readContracts(config,{
+    let result = await readContracts(config, {
       contracts: [
-        {...CMswapP2PMarketplaceContract,functionName:'getLastTradePrice',args:[select.value,currencyAddr]}
+        { ...CMswapP2PMarketplaceContract, functionName: 'getLastTradePrice', args: [select.value, currencyAddr] }
       ]
-    }) 
-    if(result[0].result !== undefined){
+    })
+    if (result[0].result !== undefined) {
       setLastPrice(formatEther(result[0].result))
     }
-    
+
     let result_depth = await readContracts(config, {
-  contracts: [
-    {
-      ...CMswapP2PMarketplaceContract,
-      functionName: "getOrderBookDepth",
-      args: [select.value, currencyAddr, true, BigInt(50)],
-    },
-    {
-      ...CMswapP2PMarketplaceContract,
-      functionName: "getOrderBookDepth",
-      args: [select.value, currencyAddr, false, BigInt(50)],
-    },
-  ],
-});
+      contracts: [
+        {
+          ...CMswapP2PMarketplaceContract,
+          functionName: "getOrderBookDepth",
+          args: [select.value, currencyAddr, true, BigInt(50)],
+        },
+        {
+          ...CMswapP2PMarketplaceContract,
+          functionName: "getOrderBookDepth",
+          args: [select.value, currencyAddr, false, BigInt(50)],
+        },
+      ],
+    });
 
-const newOrders: Order[] = [];
+    const newOrders: Order[] = [];
 
-if (
-  result_depth[0]?.result &&
-  Array.isArray(result_depth[0].result[0]) &&
-  result_depth[0].result[0].length > 0
-) {
-  const buyOrders = mapDepthToOrders(
-    result_depth[0].result as [bigint[], bigint[], bigint[]],
-    "buy",
-    select.value,
-    { name: "KKUB", logo: "KKUB", value: "0xkkub" }
-  );
+    if (
+      result_depth[0]?.result &&
+      Array.isArray(result_depth[0].result[0]) &&
+      result_depth[0].result[0].length > 0
+    ) {
+      const buyOrders = mapDepthToOrders(
+        result_depth[0].result as [bigint[], bigint[], bigint[]],
+        "buy",
+        select.value,
+        { name: "KKUB", logo: "KKUB", value: "0xkkub" }
+      );
+      console.log("buy depth", buyOrders)
+      newOrders.push(...buyOrders);
+    }
 
-  newOrders.push(...buyOrders);
-}
+    if (
+      result_depth[1]?.result &&
+      Array.isArray(result_depth[1].result[0]) &&
+      result_depth[1].result[0].length > 0
+    ) {
+      const sellOrders = mapDepthToOrders(
+        result_depth[1].result as [bigint[], bigint[], bigint[]],
+        "sell",
+        select.value,
+        { name: "KKUB", logo: "KKUB", value: "0xkkub" }
+      );
 
-if (
-  result_depth[1]?.result &&
-  Array.isArray(result_depth[1].result[0]) &&
-  result_depth[1].result[0].length > 0
-) {
-  const sellOrders = mapDepthToOrders(
-    result_depth[1].result as [bigint[], bigint[], bigint[]],
-    "sell",
-    select.value,
-    { name: "KKUB", logo: "KKUB", value: "0xkkub" }
-  );
+      console.log("sell depth", sellOrders)
+      newOrders.push(...sellOrders);
+    }
 
-  newOrders.push(...sellOrders);
-}
+    if (newOrders.length > 0) {
+      setOrders(newOrders); // หรือ setOrders(prev => [...prev, ...newOrders]) ถ้าต้องการสะสม
+    } else {
+      console.warn("No valid buy or sell orders found.");
+    }
 
-if (newOrders.length > 0) {
-  setOrders(newOrders); // หรือ setOrders(prev => [...prev, ...newOrders]) ถ้าต้องการสะสม
-} else {
-  console.warn("No valid buy or sell orders found.");
-}
 
-    
   }
 
   const filteredPairs = tokenPairs.filter((pair) => {
@@ -414,7 +415,7 @@ if (newOrders.length > 0) {
           ...erc20ABI,
           address: approvedToken as "0xstring",
           functionName: "approve",
-          args: [CMswapP2PMarketplace, parseEther(amounts.toLocaleString())],
+          args: [CMswapP2PMarketplace, parseEther(amounts.toLocaleString(undefined,{minimumFractionDigits:18}))],
         });
         const h = await writeContract(config, request);
         await waitForTransactionReceipt(config, { hash: h });
@@ -518,13 +519,13 @@ if (newOrders.length > 0) {
     fetchOrderData();
     renders();
     fetchMyOrders(address as "0xstring");
-  }, [select,txupdate]);
+  }, [select, txupdate,address]);
 
 
   return (
     <div className="font-mono lg:min-w-[1680px] max-w-[1920px] mt-[120px]">
       {/* Header */}
-      <div className="bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-xl p-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+      <div className="bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-xl p-6 mb-6 flex flex-col md:flex-row  items-start md:items-center space-y-4 md:space-y-0">
         <div>
           <div className="flex items-center space-x-2 mb-4">
             <img
@@ -549,18 +550,36 @@ if (newOrders.length > 0) {
             </span>
           </p>
         </div>
-        <div className="flex space-x-8">
-          <div>
-            <p className="text-sm text-gray-400">Last Price</p>
+
+        <div className="ml-[2px] sm:ml-[24px]">
+          <div className="flex items-center space-x-2 mb-4">
+
+            <h2 className="text-2xl font-bold uppercase text-white">
+              Last Price
+            </h2>
+          </div>
+
+          <p className="text-sm">
             <p className="text-lg font-bold text-green-400">{lastPrice} KKUB</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-400">Trade Fee</p>
-            <p className="text-lg font-bold text-red-400">
-              Maker 0.5% / Taker 0.5%
-            </p>
-          </div>
+          </p>
         </div>
+
+        <div className="ml-[2px] sm:ml-[40px]">
+          <div className="flex items-center space-x-2 mb-4">
+
+            <h2 className="text-2xl font-bold uppercase text-white">
+              Trade Fee
+            </h2>
+          </div>
+
+          <p className="text-sm">
+            <p className="text-lg font-bold text-red-400">  Maker 0.5% / Taker 0.5%
+            </p>
+          </p>
+        </div>
+
+
+
       </div>
 
       {/* Main Grid */}
@@ -665,7 +684,7 @@ if (newOrders.length > 0) {
                   >
                     <span className="text-center">—</span>
                     <span className="text-center truncate">
-                      {price.toFixed(8)} 
+                      {price.toFixed(8)}
                     </span>
                     <span
                       className="text-center truncate overflow-hidden whitespace-nowrap"
@@ -690,8 +709,8 @@ if (newOrders.length > 0) {
             <button
               onClick={() => setTradeType("buy")}
               className={`${tradeType === "buy"
-                  ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
-                  : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
+                ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
+                : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
                 }`}
               style={{
                 backgroundImage:
@@ -705,8 +724,8 @@ if (newOrders.length > 0) {
             <button
               onClick={() => setTradeType("sell")}
               className={`${tradeType === "sell"
-                  ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
-                  : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
+                ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
+                : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
                 }`}
               style={{
                 backgroundImage:
@@ -894,8 +913,8 @@ if (newOrders.length > 0) {
                     )
                   }
                   className={`px-3 py-1 rounded ${filter === f
-                      ? "bg-blue-600 text-white"
-                      : "bg-[#2a2b3c] text-gray-400 hover:text-white"
+                    ? "bg-blue-600 text-white"
+                    : "bg-[#2a2b3c] text-gray-400 hover:text-white"
                     }`}
                 >
                   {label}
@@ -970,8 +989,8 @@ if (newOrders.length > 0) {
         <div className="flex justify-start space-x-8 mb-6 border-b border-gray-700 pb-2">
           <button
             className={`${view === "Orders"
-                ? "text-white font-semibold  border-green-500"
-                : "text-gray-400 hover:text-white "
+              ? "text-white font-semibold  border-green-500"
+              : "text-gray-400 hover:text-white "
               }`}
             onClick={() => setView("Orders")}
           >
@@ -979,8 +998,8 @@ if (newOrders.length > 0) {
           </button>
           <button
             className={`${view === "History"
-                ? "text-white font-semibold  border-green-500"
-                : "text-gray-400 hover:text-white "
+              ? "text-white font-semibold  border-green-500"
+              : "text-gray-400 hover:text-white "
               }`}
             onClick={() => setView("History")}
           >
@@ -988,57 +1007,56 @@ if (newOrders.length > 0) {
           </button>
         </div>
 
-        {view === "Orders" && (
-          <>
-            {/* Table Header */}
-            <div className="grid grid-cols-7 gap-4 text-sm text-gray-400 font-semibold px-2 py-3 border-b border-gray-700">
-              <span className="text-left">Date</span>
-              <span className="text-left">Pair</span>
-              <span className="text-left">Side</span>
-              <span className="text-left">Price</span>
-              <span className="text-left">Amount</span>
-              <span className="text-left">Total</span>
-              <span className="text-center">Action</span>
-            </div>
+{view === "Orders" && (
+  <div className="w-full overflow-x-auto">
+    <div className="inline-block min-w-full whitespace-nowrap">
+      {/* Table Header */}
+      <div className="grid grid-cols-7 gap-x-6 gap-y-2 text-sm text-gray-400 font-semibold px-4 py-3 border-b border-gray-700">
+        <span className="text-left">Date</span>
+        <span className="text-left">Pair</span>
+        <span className="text-left">Side</span>
+        <span className="text-left">Price</span>
+        <span className="text-left">Amount</span>
+        <span className="text-left">Total</span>
+        <span className="text-center">Action</span>
+      </div>
 
-            {/* Table Rows */}
-            {uorders.map((order) => (
-              <div
-                key={order.id}
-                className="grid grid-cols-7 gap-4 text-sm text-white items-center px-2 py-4 border-b border-[#2a2b3c]"
+      {/* Table Rows */}
+      {uorders.map((order) => (
+        <div
+          key={order.id}
+          className="grid grid-cols-7 gap-x-6 gap-y-2 text-sm text-white items-center px-4 py-4 border-b border-[#2a2b3c]"
+        >
+          <span className="text-xs text-gray-400">{order.date.split(" ")[0]}</span>
+          <span>{order.tokenSymbol}/{currencySymbol}</span>
+          <span className={order.type === "buy" ? "text-green-500" : "text-red-500"}>
+            {order.type.toUpperCase()}
+          </span>
+          <span>{order.price.toFixed(8)} KKUB</span>
+          <span>
+            {order.filledAmount}/{order.amount} {order.tokenSymbol}
+          </span>
+          <span>{(order.amount * order.price).toFixed(8)} KKUB</span>
+          {order.filledAmount !== order.amount && order.cancelAt === 0 ? (
+            <div className="flex justify-center">
+              <button
+                onClick={() => handleCancelOrder(order.id)}
+                className="text-xs text-red-500 hover:text-red-600 px-3 py-1 rounded bg-[#3e3f4c] hover:bg-[#4f505c] transition"
               >
-                <span className="text-xs text-gray-400">
-                  {order.date.split(" ")[0]}
-                </span>
-                <span>
-                  {order.tokenSymbol}/{currencySymbol}
-                </span>
-                <span
-                  className={
-                    order.type === "buy" ? "text-green-500" : "text-red-500"
-                  }
-                >
-                  {order.type.toUpperCase()}
-                </span>
-                <span>{order.price.toFixed(8)} KKUB</span>
-                <span>
-                  {order.filledAmount}{"/"}{order.amount} {order.tokenSymbol}
-                </span>
-                <span>{(order.amount * order.price).toFixed(8)} KKUB</span>
-                {order.filledAmount !== order.amount && order.cancelAt === 0 && (
-                  <div className="flex justify-center">
-                  <button
-                    onClick={() => handleCancelOrder(order.id)}
-                    className="text-xs text-red-500 hover:text-red-600 px-3 py-1 rounded bg-[#3e3f4c] hover:bg-[#4f505c] transition"
-                  >
-                    Cancel
-                  </button>
-                </div>
-                )}
-              </div>
-            ))}
-          </>
-        )}
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div />
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+
+
         {view === "History" && (
           <>
             {/* Table Header */}
