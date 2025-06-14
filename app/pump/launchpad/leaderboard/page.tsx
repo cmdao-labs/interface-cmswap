@@ -25,7 +25,7 @@ export default async function LeaderboardPage(props: {
   const token = searchParams?.token || '';
 
   return (
-    <main className="row-start-2 w-full sm:w-1/2 self-center h-full flex flex-col gap-6 items-center sm:items-start mt-[150px]">
+    <main className="row-start-2 w-full sm:w-1/2 self-center h-full flex flex-col gap-6 items-center sm:items-start mt-[100px]">
       <Link href={"/pump/launchpad?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")} prefetch={false} className="underline hover:font-bold">Back to launchpad</Link>
       {/* <span className="text-2xl font-bold my-2">Quest</span>
       <Link href="https://forms.gle/MxQfSDHpyx5tDFvQA" rel="noopener noreferrer" target="_blank" className="w-[300px] h-[420px] rounded-2xl shadow-2xl bg-slate-300 bg-opacity-25 flex flex-col items-center align-center overflow-hidden hover:cursor-pointer hover:shadow-emerald-300">

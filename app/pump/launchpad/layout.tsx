@@ -1,17 +1,17 @@
 'use client';
-import Image from "next/image";
-import Link from "next/link";
+// import Image from "next/image";
+// import Link from "next/link";
 import { useSearchParams, redirect } from "next/navigation";
-import { useState, useEffect } from 'react';
-import { formatEther, createPublicClient, http } from 'viem';
-import { unichain, base } from 'viem/chains';
-import { config } from '@/app/config'
-import { useConnections, useAccount } from 'wagmi';
-import { readContracts } from '@wagmi/core';
-import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
-import { UniswapV2FactoryABI } from '@/app/pump/abi/UniswapV2Factory';
-import { UniswapV2PairABI } from '@/app/pump/abi/UniswapV2Pair';
-import { dataxp } from "@/app/pump/blob/data";
+// import { useState, useEffect } from 'react';
+// import { formatEther, createPublicClient, http } from 'viem';
+// import { unichain, base } from 'viem/chains';
+// import { config } from '@/app/config'
+// import { useConnections, useAccount } from 'wagmi';
+// import { readContracts } from '@wagmi/core';
+// import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
+// import { UniswapV2FactoryABI } from '@/app/pump/abi/UniswapV2Factory';
+// import { UniswapV2PairABI } from '@/app/pump/abi/UniswapV2Pair';
+// import { dataxp } from "@/app/pump/blob/data";
 export const experimental_ppr = true;
 
 export default function BlogLayout({
@@ -20,12 +20,12 @@ export default function BlogLayout({
     children: React.ReactNode
 }) {
     const searchParams = useSearchParams();
-    const mode = searchParams.get('mode') || '';
+    // const mode = searchParams.get('mode') || '';
     const chain = searchParams.get('chain') || '';
-    const connections = useConnections();
-    const account = useAccount();
-    const [xp, setXp] = useState(0);
-    const [level, setLevel] = useState(0);
+    // const connections = useConnections();
+    // const account = useAccount();
+    // const [xp, setXp] = useState(0);
+    // const [level, setLevel] = useState(0);
     
     // let _chain: any = unichain;
     // let _rpc = '';
@@ -186,9 +186,8 @@ export default function BlogLayout({
     };
 
     return (
-        <div className="grid grid-rows-[20px_1fr_10px] items-start justify-items-center min-h-screen pb-20 gap-16 p-4 sm:p-10 font-[family-name:var(--font-geist-sans)] bg-gradient-to-br from-slate-700 via-black to-emerald-900">
-            
-            <header className="mt-[70px] md:mt-[50px] mb-10 row-start-1 flex gap-4 md:gap-8 items-center justify-start md:justify-center text-xs md:text-sm w-full flex-wrap" style={{zIndex: 1}}>
+        <div className={"items-start justify-items-center min-h-screen gap-16 px-4 sm:px-10 pt-4 sm:pt-10 pb-[150px] font-[family-name:var(--font-geist-sans)] bg-gradient-to-br from-slate-700 via-black " + (chain === "monad" ? "to-purple-300" : "") + (chain === "kub" ? "to-[#01ff99]" : "")}>
+            {/* <div className="absolute top-[80px] xl:top-[290px] xl:right-14 flex gap-4 md:gap-8 items-center justify-end md:justify-end text-xs md:text-sm flex-wrap" style={{zIndex: 2}}>
                 <div className="flex flex-row gap-1">
                     <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'kub') {handleChain('kub');}}}><Image src="/96.png" alt="" width={25} height={25} style={{filter: (chain === 'kub' || chain === '') ? "grayscale(0)" : "grayscale(1)"}} /></button>
                     <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'monad') {handleChain('monad');}}}><Image src="/monad.jpg" alt="" width={25} height={25} style={{filter: chain === 'monad' ? "grayscale(0)" : "grayscale(1)"}} /></button>
@@ -197,13 +196,12 @@ export default function BlogLayout({
                     <Link href={"/pump/launchpad/portfolio?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite") + "&addr=" + account.address} prefetch={false} className="underline text-emerald-300 hover:font-bold">Portfolio</Link>
                 }
                 <Link href={"/pump/launchpad/leaderboard?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")} prefetch={false} className="underline text-emerald-300 hover:font-bold">Leaderboard</Link>
-            </header>
-
-            <div className="w-[100px] h-[100px] sm:w-[500px] sm:h-[500px] absolute top-14 right-0" ></div>
+            </div> */}
+            {/* <div className="w-[100px] h-[100px] sm:w-[500px] sm:h-[500px] absolute top-14 right-0" ></div> */}
             {//**
             // style={{backgroundImage: mode === 'pro' ? 'radial-gradient(circle farthest-side at 100% 10%,rgb(110 231 183),#8586ad00 58%)' : 'radial-gradient(circle farthest-side at 100% 10%,#8586ad26,#8586ad00 88%)'}} */
             }
-            <div className="w-[100px] h-[100px] sm:w-[500px] sm:h-[500px] absolute bottom-0 left-0" ></div>
+            {/* <div className="w-[100px] h-[100px] sm:w-[500px] sm:h-[500px] absolute bottom-0 left-0" ></div> */}
             {//**
             // style={{backgroundImage: mode === 'pro' ? 'radial-gradient(circle closest-corner at 0%,rgb(110 231 183) 1%,#0000)' : 'radial-gradient(circle closest-corner at 0%,#8586ad26 14%,#0000)'}}*/
             }

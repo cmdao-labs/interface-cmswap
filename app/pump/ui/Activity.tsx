@@ -236,16 +236,16 @@ export default async function Activity({
             <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
                 <div className="w-1/5 sm:w-1/3">Timestamp</div>
                 <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-end gap-10">
-                    <span className="text-right w-[100px] xl:w-[600px]">Asset</span>
-                    <span className="text-right w-[50px] xl:w-[200px]">Amount</span>
-                    <span className="text-right w-[50px] xl:w-[200px]">Txn</span>
+                    <span className="text-right w-[100px] sm:w-[600px]">Asset</span>
+                    <span className="text-right w-[50px] sm:w-[200px]">Amount</span>
+                    <span className="text-right w-[50px] sm:w-[200px]">Txn</span>
                 </div>
             </div>
             {theresult.map((res: any, index: any) =>
                 <div className="w-full h-[50px] flex flex-row items-center justify-around text-xs md:text-sm py-10 border-t border-gray-800" key={index}>
                     <span className="w-1/5 sm:w-1/3 text-gray-500 text-xs">{new Intl.DateTimeFormat('en-GB', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Bangkok', }).format(new Date(res.timestamp))}</span>
                     <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-end gap-10 text-xs sm:text-sm">
-                        <div className="text-right w-[100px] xl:w-[600px] flex flex-row gap-2 items-center justify-end overflow-hidden">
+                        <div className="text-right w-[100px] sm:w-[600px] flex flex-row gap-2 items-center justify-end overflow-hidden">
                             {res.action === 'buy' && <span className="text-green-500 font-bold">{res.action.toUpperCase()}</span>}
                             {res.action === 'sell' && <span className="text-red-500 font-bold">{res.action.toUpperCase()}</span>}
                             {res.action === 'launch' && <span className="text-emerald-300 font-bold">🚀 {res.action.toUpperCase()} & BUY</span>}
@@ -254,8 +254,8 @@ export default async function Activity({
                             </div>
                             <span className="truncate">{res.ticker}</span>
                         </div>
-                        <span className="text-right w-[50px] xl:w-[200px]">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res.value)}</span>
-                        <Link href={_explorer + "tx/" + res.hash} rel="noopener noreferrer" target="_blank" prefetch={false} className="font-bold text-right w-[50px] xl:w-[200px] underline truncate">{res.hash.slice(0, 5) + '...' + res.hash.slice(61)}</Link>
+                        <span className="text-right w-[50px] sm:w-[200px]">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res.value)}</span>
+                        <Link href={_explorer + "tx/" + res.hash} rel="noopener noreferrer" target="_blank" prefetch={false} className="font-bold text-right w-[50px] sm:w-[200px] underline truncate">{res.hash.slice(0, 5) + '...' + res.hash.slice(61)}</Link>
                     </div>
                 </div>
             )}
