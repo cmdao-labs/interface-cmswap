@@ -16,9 +16,6 @@ import {
   tokens,
   erc20ABI,
   kap20ABI,
-  wrappedNative,
-  unwarppedNative,
-  bkcUnwapped,
   cmSwapRefProgram,
   cmSwapRefProgramContract,
 } from "@/app/lib/25925";

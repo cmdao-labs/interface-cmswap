@@ -34,6 +34,7 @@ const modal = createAppKit({
         96: '/96.png',
         56: '/56.png',
         10143: '/monad.jpg',
+        25925: '/96.png',
 
     },
     features: {

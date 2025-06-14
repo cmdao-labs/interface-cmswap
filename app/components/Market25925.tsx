@@ -6,7 +6,7 @@ import {
   CMswapP2PMarketplace,
   CMswapP2PMarketplaceContract,
   AddrZero,
-  faucetTestTokenContract
+  faucetTestTokenContract,
 } from "../lib/25925";
 import { useAccount } from "wagmi";
 import {
@@ -109,7 +109,9 @@ export default function Market96({
   const [tradeType, setTradeType] = useState<"buy" | "sell">("buy");
   const [price, setPrice] = useState("");
   const [amount, setAmount] = useState("");
-  const [filter, setFilter] = useState<"all" | "Metal Valley" | "Morning Moon Village">("all");
+  const [filter, setFilter] = useState<
+    "all" | "Metal Valley" | "Morning Moon Village"
+  >("all");
   const [searchTerm, setSearchTerm] = useState("");
   const tokenPairs: TokenPair[] = generateTokenPairs(game_tokens);
   const [select, setSelectToken] = useState(tokenPairs[0]);
@@ -117,20 +119,24 @@ export default function Market96({
   const [tokenBal, setTokenBal] = useState(0.0);
   const [onLoading, setOnLoading] = React.useState(false);
   const [view, setView] = useState<"Orders" | "History">("Orders");
-  const [ref, setRef] = React.useState("0x0000000000000000000000000000000000000000");
-  const [txupdate, setTxupdate] = React.useState("")
-  const [lastPrice, setLastPrice] = React.useState("")
+  const [ref, setRef] = React.useState(
+    "0x0000000000000000000000000000000000000000"
+  );
+  const [txupdate, setTxupdate] = React.useState("");
+  const [lastPrice, setLastPrice] = React.useState("");
 
-  const [uorders, setUOrders] = useState<Array<{
-    id: number;
-    date: string;
-    tokenSymbol: string;
-    type: string;
-    price: number;
-    amount: number;
-    filledAmount: number;
-    cancelAt: number;
-  }>
+  const [uorders, setUOrders] = useState<
+    Array<{
+      id: number;
+      date: string;
+      tokenSymbol: string;
+      type: string;
+      price: number;
+      amount: number;
+      filledAmount: number;
+      cancelAt: number;
+      feeLocked: number;
+    }>
   >([]);
 
   const [orders, setOrders] = useState<Order[]>([]);
@@ -196,7 +202,9 @@ export default function Market96({
   }
 
   function matchTokenByAddress(addr: string): Token | undefined {
-    const pair = tokenPairs.find((token) => token.value.toLowerCase() === addr.toLowerCase());
+    const pair = tokenPairs.find(
+      (token) => token.value.toLowerCase() === addr.toLowerCase()
+    );
     if (pair) {
       return {
         name: pair.name,
@@ -206,7 +214,6 @@ export default function Market96({
     }
     return undefined;
   }
-
 
   async function renders() {
     try {
@@ -240,7 +247,7 @@ export default function Market96({
   }
 
   async function fetchMyOrders(address: `0x${string}`) {
-    console.log(`Fetch order of ${address}`)
+    console.log(`Fetch order of ${address}`);
     try {
       const result = await readContracts(config, {
         contracts: [
@@ -253,7 +260,7 @@ export default function Market96({
       });
 
       const rawOrders = result[0]?.result;
-      console.log("order",result[0]?.result)
+      console.log("order", result[0]?.result);
       if (!rawOrders || rawOrders.length < 2) {
         console.warn("No orders found or unexpected structure.");
         return;
@@ -267,11 +274,12 @@ export default function Market96({
       const mappedOrders = orderDetails.map((order: any, index: number) => {
         const amount = Number(order.amount) / 1e18;
         const price = Number(order.pricePerUnit) / 1e18;
-        const tokenSymbolObj = matchTokenByAddress(order.token)
+        const tokenSymbolObj = matchTokenByAddress(order.token);
         const tokenSymbol = tokenSymbolObj ? tokenSymbolObj.name : "Unknown";
 
         const filledAmount = Number(order.filledAmount) / 1e18;
         const cancelAt = Number(order.cancelAt);
+        const feeLocked = Number(order.lockedFee) /1e18;
 
         return {
           id: Number(orderIds[index]),
@@ -281,7 +289,8 @@ export default function Market96({
           price,
           amount,
           filledAmount,
-          cancelAt
+          cancelAt,
+          feeLocked
         };
       });
 
@@ -311,14 +320,17 @@ export default function Market96({
   }
 
   async function fetchOrderData() {
-
     let result = await readContracts(config, {
       contracts: [
-        { ...CMswapP2PMarketplaceContract, functionName: 'getLastTradePrice', args: [select.value, currencyAddr] }
-      ]
-    })
+        {
+          ...CMswapP2PMarketplaceContract,
+          functionName: "getLastTradePrice",
+          args: [select.value, currencyAddr],
+        },
+      ],
+    });
     if (result[0].result !== undefined) {
-      setLastPrice(formatEther(result[0].result))
+      setLastPrice(formatEther(result[0].result));
     }
 
     let result_depth = await readContracts(config, {
@@ -349,7 +361,7 @@ export default function Market96({
         select.value,
         { name: "KKUB", logo: "KKUB", value: "0xkkub" }
       );
-      console.log("buy depth", buyOrders)
+      console.log("buy depth", buyOrders);
       newOrders.push(...buyOrders);
     }
 
@@ -365,7 +377,7 @@ export default function Market96({
         { name: "KKUB", logo: "KKUB", value: "0xkkub" }
       );
 
-      console.log("sell depth", sellOrders)
+      console.log("sell depth", sellOrders);
       newOrders.push(...sellOrders);
     }
 
@@ -374,8 +386,6 @@ export default function Market96({
     } else {
       console.warn("No valid buy or sell orders found.");
     }
-
-
   }
 
   const filteredPairs = tokenPairs.filter((pair) => {
@@ -401,7 +411,7 @@ export default function Market96({
     let approvedToken = tradeType === "buy" ? currencyAddr : select.value;
     let amounts =
       tradeType === "buy"
-        ? (parseFloat(price) * parseFloat(amount) * 1.005)
+        ? parseFloat(price) * parseFloat(amount) * 1.005
         : amount;
     console.log(`Apporve token ${approvedToken}\nAmount ${amounts}`);
 
@@ -417,7 +427,12 @@ export default function Market96({
           ...erc20ABI,
           address: approvedToken as "0xstring",
           functionName: "approve",
-          args: [CMswapP2PMarketplace, parseEther(amounts.toLocaleString(undefined,{minimumFractionDigits:18}))],
+          args: [
+            CMswapP2PMarketplace,
+            parseEther(
+              amounts.toLocaleString(undefined, { minimumFractionDigits: 18 })
+            ),
+          ],
         });
         const h = await writeContract(config, request);
         await waitForTransactionReceipt(config, { hash: h });
@@ -475,9 +490,9 @@ export default function Market96({
         ],
       });
 
-      h = await writeContract(config, request)
-      await waitForTransactionReceipt(config, { hash: h })
-      setTxupdate(h)
+      h = await writeContract(config, request);
+      await waitForTransactionReceipt(config, { hash: h });
+      setTxupdate(h);
     } catch (error) {
       setErrMsg(error as WriteContractErrorType);
     }
@@ -500,18 +515,15 @@ export default function Market96({
     let h;
     let r;
     try {
-
       const { result, request } = await simulateContract(config, {
         ...CMswapP2PMarketplaceContract,
         functionName: "cancelOrder",
-        args: [
-          BigInt(id)
-        ],
+        args: [BigInt(id)],
       });
 
-      h = await writeContract(config, request)
-      await waitForTransactionReceipt(config, { hash: h })
-      setTxupdate(h)
+      h = await writeContract(config, request);
+      await waitForTransactionReceipt(config, { hash: h });
+      setTxupdate(h);
     } catch (error) {
       setErrMsg(error as WriteContractErrorType);
     }
@@ -521,64 +533,65 @@ export default function Market96({
     fetchOrderData();
     renders();
     fetchMyOrders(address as "0xstring");
-  }, [select, txupdate,address]);
+  }, [select, txupdate, address]);
 
   const testNetFaucet = async () => {
-        let h;
+    let h;
     let r;
     try {
-
       const { result, request } = await simulateContract(config, {
         ...faucetTestTokenContract,
         functionName: "claim",
       });
 
-      h = await writeContract(config, request)
-      await waitForTransactionReceipt(config, { hash: h })
-      setTxupdate(h)
+      h = await writeContract(config, request);
+      await waitForTransactionReceipt(config, { hash: h });
+      setTxupdate(h);
     } catch (error) {
       setErrMsg(error as WriteContractErrorType);
     }
-  }
-
+  };
 
   return (
-    <div className="font-mono lg:min-w-[1680px] max-w-[1920px] mt-[120px]">
-    {/* TESTNET FAUCET */}
-    <div className="bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-xl p-6 mb-6 space-y-4">
-      {/* tKUB Faucet */}
-      <div className="flex items-center space-x-3">
-        <span className="text-green-400 text-lg font-semibold">🚰 tKUB Faucet (Gas):</span>
-        <span className="text-white">Bitkub Testnet</span>
-      </div>
-      <div className="ml-6">
-        <a 
-          href="https://faucet.kubchain.com/" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-[#00ff9d] hover:underline"
-        >
-          https://faucet.kubchain.com/
-        </a>
-        <p className="text-sm text-gray-400">(Get up to 5 tKUB per day)</p>
-      </div>
+    <div className="font-mono max-w-[1680px] mx-[30px] lg:[60px] xl:[120px] 2xl:mx-[240px] mt-[120px]">
+      {/* TESTNET FAUCET */}
+      <div className="bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-xl p-6 mb-6 space-y-4">
+        {/* tKUB Faucet */}
+        <div className="flex items-center space-x-3">
+          <span className="text-green-400 text-lg font-semibold">
+            🚰 tKUB Faucet (Gas):
+          </span>
+          <span className="text-white">Bitkub Testnet</span>
+        </div>
+        <div className="ml-6">
+          <a
+            href="https://faucet.kubchain.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#00ff9d] hover:underline"
+          >
+            https://faucet.kubchain.com/
+          </a>
+          <p className="text-sm text-gray-400">(Get up to 5 tKUB per day)</p>
+        </div>
 
-      {/* testKUB & testToken Faucet */}
-      <div className="flex items-center space-x-3 pt-4 border-t border-white/10">
-        <span className="text-green-400 text-lg font-semibold">💧 Token Faucet:</span>
-        <span className="text-white">testKUB & testToken</span>
+        {/* testKUB & testToken Faucet */}
+        <div className="flex items-center space-x-3 pt-4 border-t border-white/10">
+          <span className="text-green-400 text-lg font-semibold">
+            💧 Token Faucet:
+          </span>
+          <span className="text-white">testKUB & testToken</span>
+        </div>
+        <div className="ml-6 flex flex-col sm:flex-row sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
+          <button
+            onClick={() => testNetFaucet()}
+            className="bg-[#00ff9d] text-black font-semibold px-4 py-2 rounded hover:bg-[#00e68a] transition"
+          >
+            CLAIM 100,000 Tokens
+          </button>
+          <p className="text-sm text-gray-400">(Once every 24 hours)</p>
+        </div>
       </div>
-      <div className="ml-6 flex flex-col sm:flex-row sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
-        <button 
-          onClick={() => testNetFaucet()} 
-          className="bg-[#00ff9d] text-black font-semibold px-4 py-2 rounded hover:bg-[#00e68a] transition"
-        >
-          CLAIM 100,000 Tokens
-        </button>
-        <p className="text-sm text-gray-400">(Once every 24 hours)</p>
-      </div>
-    </div>
-
 
       {/* Header */}
       <div className="bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-xl p-6 mb-6 flex flex-col md:flex-row  items-start md:items-center space-y-4 md:space-y-0">
@@ -609,37 +622,36 @@ export default function Market96({
 
         <div className="ml-[2px] sm:ml-[24px]">
           <div className="flex items-center space-x-2 mb-4">
-
             <h2 className="text-2xl font-bold uppercase text-white">
               Last Price
             </h2>
           </div>
 
           <p className="text-sm">
-            <p className="text-lg font-bold text-green-400">{lastPrice} {currencySymbol}</p>
+            <p className="text-lg font-bold text-green-400">
+              {lastPrice} {currencySymbol}
+            </p>
           </p>
         </div>
 
         <div className="ml-[2px] sm:ml-[40px]">
           <div className="flex items-center space-x-2 mb-4">
-
             <h2 className="text-2xl font-bold uppercase text-white">
               Trade Fee
             </h2>
           </div>
 
           <p className="text-sm">
-            <p className="text-lg font-bold text-red-400">  Maker 0.5% / Taker 0.5%
+            <p className="text-lg font-bold text-red-400">
+              {" "}
+              Maker 0.5% / Taker 0.5%
             </p>
           </p>
         </div>
-
-
-
       </div>
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 max-w-[1920px]">
+      <div className="grid grid-cols-1 md:grid-cols-12 grid-rows-1 md:grid-cols-12 gap-6 max-w-[1920px]">
         {/* Left Panel: Order Book and Trade History */}
         <div className="md:col-span-3 rounded-xl flex flex-col space-y-6 w-full">
           <div className="flex flex-col w-full mx-auto flex-1 space-y-6">
@@ -764,10 +776,11 @@ export default function Market96({
           <div className="flex space-x-4 mb-4 bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-xl">
             <button
               onClick={() => setTradeType("buy")}
-              className={`${tradeType === "buy"
-                ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
-                : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
-                }`}
+              className={`${
+                tradeType === "buy"
+                  ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
+                  : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
+              }`}
               style={{
                 backgroundImage:
                   tradeType === "buy"
@@ -779,10 +792,11 @@ export default function Market96({
             </button>
             <button
               onClick={() => setTradeType("sell")}
-              className={`${tradeType === "sell"
-                ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
-                : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
-                }`}
+              className={`${
+                tradeType === "sell"
+                  ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
+                  : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
+              }`}
               style={{
                 backgroundImage:
                   tradeType === "sell"
@@ -819,7 +833,15 @@ export default function Market96({
                 className="focus:outline-none text-gray-400 font-mono text-xs rounded-lg px-3 py-1 w-full text-white placeholder-gray-400 text-right"
                 placeholder="0.00"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const numericValue = parseFloat(value);
+                  if (numericValue < 0.00001) {
+                    setPrice("0.00001");
+                  } else {
+                    setPrice(value);
+                  }
+                }}
               />
               <span className="text-xs text-gray-400">{currencySymbol}</span>
             </div>
@@ -829,11 +851,32 @@ export default function Market96({
               <label className="text-sm text-gray-300 w-24">Amount</label>
               <input
                 type="number"
+                min="0"
+                step="1"
                 className="focus:outline-none text-gray-400 font-mono text-xs rounded-lg px-3 py-1 w-full text-white placeholder-gray-400 text-right"
                 placeholder="0"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+
+                  // ปล่อยให้ใส่ค่าว่าง (สำหรับการ backspace ล้างค่า)
+                  if (value === "") {
+                    setAmount("");
+                    return;
+                  }
+
+                  // ตรวจว่าค่าที่กรอกเป็นจำนวนเต็มบวกเท่านั้น
+                  const numericValue = Number(value);
+
+                  // ป้องกันค่าที่ไม่ใช่จำนวนเต็ม หรือค่าติดลบ
+                  if (!Number.isInteger(numericValue) || numericValue < 0) {
+                    return; // ไม่อัปเดต state ถ้าไม่ผ่าน
+                  }
+
+                  setAmount(value); // ยอมรับค่าที่ถูกต้องเท่านั้น
+                }}
               />
+
               <span className="text-xs text-gray-400">{select.name}</span>
             </div>
 
@@ -892,14 +935,16 @@ export default function Market96({
             <button
               onClick={handleOrder}
               className={`font-bold p-2 w-full text-center rounded-lg transition-all duration-300
-              ${tradeType === "buy"
+              ${
+                tradeType === "buy"
                   ? "text-green-100 hover:brightness-110 active:scale-95"
                   : "text-red-100 hover:brightness-110 active:scale-95"
-                }
-              ${!select?.name
+              }
+              ${
+                !select?.name
                   ? "opacity-50 cursor-not-allowed"
                   : "cursor-pointer"
-                }`}
+              }`}
               style={{
                 backgroundImage:
                   tradeType === "buy"
@@ -968,10 +1013,11 @@ export default function Market96({
                       f as "all" | "Metal Valley" | "Morning Moon Village"
                     )
                   }
-                  className={`px-3 py-1 rounded ${filter === f
-                    ? "bg-blue-600 text-white"
-                    : "bg-[#2a2b3c] text-gray-400 hover:text-white"
-                    }`}
+                  className={`px-3 py-1 rounded ${
+                    filter === f
+                      ? "bg-blue-600 text-white"
+                      : "bg-[#2a2b3c] text-gray-400 hover:text-white"
+                  }`}
                 >
                   {label}
                 </button>
@@ -1044,74 +1090,87 @@ export default function Market96({
         {/* Tabs */}
         <div className="flex justify-start space-x-8 mb-6 border-b border-gray-700 pb-2">
           <button
-            className={`${view === "Orders"
-              ? "text-white font-semibold  border-green-500"
-              : "text-gray-400 hover:text-white "
-              }`}
+            className={`${
+              view === "Orders"
+                ? "text-white font-semibold  border-green-500"
+                : "text-gray-400 hover:text-white "
+            }`}
             onClick={() => setView("Orders")}
           >
             Orders
           </button>
           <button
-            className={`${view === "History"
-              ? "text-white font-semibold  border-green-500"
-              : "text-gray-400 hover:text-white "
-              }`}
+            className={`${
+              view === "History"
+                ? "text-white font-semibold  border-green-500"
+                : "text-gray-400 hover:text-white "
+            }`}
             onClick={() => setView("History")}
           >
             Trade History
           </button>
         </div>
 
-{view === "Orders" && (
-  <div className="w-full overflow-x-auto">
-    <div className="inline-block min-w-full whitespace-nowrap">
-      {/* Table Header */}
-      <div className="grid grid-cols-7 gap-x-6 gap-y-2 text-sm text-gray-400 font-semibold px-4 py-3 border-b border-gray-700">
-        <span className="text-left">Date</span>
-        <span className="text-left">Pair</span>
-        <span className="text-left">Side</span>
-        <span className="text-left">Price</span>
-        <span className="text-left">Amount</span>
-        <span className="text-left">Total</span>
-        <span className="text-center">Action</span>
-      </div>
+        {view === "Orders" && (
+          <div className="w-full overflow-x-auto">
+            <div className="inline-block min-w-full whitespace-nowrap">
+              {/* Table Header */}
+              <div className="grid grid-cols-7 gap-x-6 gap-y-2 text-sm text-gray-400 font-semibold px-4 py-3 border-b border-gray-700">
+                <span className="text-left">Date</span>
+                <span className="text-left">Pair</span>
+                <span className="text-left">Side</span>
+                <span className="text-left">Price</span>
+                <span className="text-left">Amount</span>
+                <span className="text-left">Total</span>
+                <span className="text-center">Action</span>
+              </div>
 
-      {/* Table Rows */}
-      {uorders.map((order) => (
-        <div
-          key={order.id}
-          className="grid grid-cols-7 gap-x-6 gap-y-2 text-sm text-white items-center px-4 py-4 border-b border-[#2a2b3c]"
-        >
-          <span className="text-xs text-gray-400">{order.date.split(" ")[0]}</span>
-          <span>{order.tokenSymbol}/{currencySymbol}</span>
-          <span className={order.type === "buy" ? "text-green-500" : "text-red-500"}>
-            {order.type.toUpperCase()}
-          </span>
-          <span>{order.price.toFixed(8)} {currencySymbol}</span>
-          <span>
-            {order.filledAmount}/{order.amount} {order.tokenSymbol}
-          </span>
-          <span>{(order.amount * order.price).toFixed(8)} {currencySymbol}</span>
-          {order.filledAmount !== order.amount && order.cancelAt === 0 ? (
-            <div className="flex justify-center">
-              <button
-                onClick={() => handleCancelOrder(order.id)}
-                className="text-xs text-red-500 hover:text-red-600 px-3 py-1 rounded bg-[#3e3f4c] hover:bg-[#4f505c] transition"
-              >
-                Cancel
-              </button>
+              {/* Table Rows */}
+              {uorders.map((order) => (
+                <div
+                  key={order.id}
+                  className="grid grid-cols-7 gap-x-6 gap-y-2 text-sm text-white items-center px-4 py-4 border-b border-[#2a2b3c]"
+                >
+                  <span className="text-xs text-gray-400">
+                    {order.date.split(" ")[0]}
+                  </span>
+                  <span>
+                    {order.tokenSymbol}/{currencySymbol}
+                  </span>
+                  <span
+                    className={
+                      order.type === "buy" ? "text-green-500" : "text-red-500"
+                    }
+                  >
+                    {order.type.toUpperCase()}
+                  </span>
+                  <span>
+                    {order.price.toFixed(8)} {currencySymbol}
+                  </span>
+                  <span>
+                    {order.filledAmount}/{order.amount} {order.tokenSymbol}
+                  </span>
+                  <span>
+                    {((order.amount * order.price) + order.feeLocked).toFixed(8)} {currencySymbol}
+                  </span>
+                  {order.filledAmount !== order.amount &&
+                  order.cancelAt === 0 ? (
+                    <div className="flex justify-center">
+                      <button
+                        onClick={() => handleCancelOrder(order.id)}
+                        className="text-xs text-red-500 hover:text-red-600 px-3 py-1 rounded bg-[#3e3f4c] hover:bg-[#4f505c] transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div />
+                  )}
+                </div>
+              ))}
             </div>
-          ) : (
-            <div />
-          )}
-        </div>
-      ))}
-    </div>
-  </div>
-)}
-
-
+          </div>
+        )}
 
         {view === "History" && (
           <>
@@ -1173,11 +1232,15 @@ export default function Market96({
                 >
                   {order.type.toUpperCase()}
                 </span>
-                <span>{order.price.toFixed(2)} {currencySymbol}</span>
+                <span>
+                  {order.price.toFixed(2)} {currencySymbol}
+                </span>
                 <span>
                   {order.amount} {order.fromToken.logo}
                 </span>
-                <span>{(order.amount * order.price).toFixed(2)} {currencySymbol}</span>
+                <span>
+                  {(order.amount * order.price).toFixed(2)} {currencySymbol}
+                </span>
               </div>
             ))}
           </>
