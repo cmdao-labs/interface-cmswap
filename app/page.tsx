@@ -2,12 +2,14 @@
 import React from "react"
 import Link from "next/link"
 import { ExternalLink, Github, FileText, MessageSquare, Facebook, Globe, Palette, HeartHandshake } from "lucide-react"
+import ReferralTracker from './components/Refferal'
 
 export default function Page() {
     const canvasRef = React.useRef<HTMLCanvasElement>(null)
     const visualizationCanvasRef = React.useRef<HTMLCanvasElement>(null)
 
     React.useEffect(() => {
+        
         // Main header canvas animation
         const canvas = canvasRef.current
         if (!canvas) return
@@ -153,6 +155,7 @@ export default function Page() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-700 via-black to-emerald-900 relative overflow-hidden">
+            <ReferralTracker/>
             <div className="absolute inset-0 z-0"><div className="grid-background w-full h-full" /></div>
             <div className="absolute top-[25%] right-[10%] w-24 h-24 md:w-32 md:h-32 floating-element floating-element-1 opacity-30">
                 <div className="relative w-full h-full">

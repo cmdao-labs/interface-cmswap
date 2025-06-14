@@ -92,7 +92,7 @@ export default function Trade({
     v2facAddr = "0x090c6e5ff29251b1ef9ec31605bdd13351ea316c";
     v2routerAddr = "0x3F7582E36843FF79F173c7DC19f517832496f2D8";
     v3qouterAddr = "0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f";
-    socialAddr = "0xdf6516Bd0e28F85f94Fdd6E9E5569ab5f24AbEF6";
+    socialAddr = "0xf8dec288D2438771f65ed59509ab474edaf067Da";
   } else if ((chain === "kub" || chain === "") && mode === "pro") {
     currencyAddr = "0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5";
     bkgafactoryAddr = "0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56";
@@ -100,7 +100,7 @@ export default function Trade({
     v2facAddr = "0x090c6e5ff29251b1ef9ec31605bdd13351ea316c";
     v2routerAddr = "0x3F7582E36843FF79F173c7DC19f517832496f2D8";
     v3qouterAddr = "0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f";
-    socialAddr = "0xdf6516Bd0e28F85f94Fdd6E9E5569ab5f24AbEF6";
+    socialAddr = "0xf8dec288D2438771f65ed59509ab474edaf067Da";
   } else if (chain === "monad" && mode === "pro") {
     currencyAddr = "0x760afe86e5de5fa0ee542fc7b7b713e1c5425701";
     bkgafactoryAddr = "0x6dfc8eecca228c45cc55214edc759d39e5b39c93";
@@ -197,6 +197,7 @@ export default function Trade({
     };
 
   const handleSave = () => {
+    
     const hasError = Object.values(errors).some((v) => v);
     if (hasError) {
       return;
@@ -1290,59 +1291,63 @@ export default function Trade({
               </div>
             </div>
 
-            
             {/* Socials Section */}
-            {result2.status === "success" &&
-              result2.data![5].result === account.address && (
-                <div className="w-full">
-                  <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-4">
-                    {socialItems.map(({ icon, field }) => {
-                      const url = socials[field];
-                      if (!url || url.trim() === "") return null;
+            {(
+              <div className="w-full">
+                <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-4">
+                  {socialItems.map(({ icon, field }) => {
+                    const url = socials[field];
+                    if (!url || url.trim() === "") return null;
 
-                      const platformNames: Record<string, string> = {
-                        fb: "Facebook",
-                        x: "X (Twitter)",
-                        telegram: "Telegram",
-                        website: "Website",
-                      };
+                    const platformNames: Record<string, string> = {
+                      fb: "Facebook",
+                      x: "X (Twitter)",
+                      telegram: "Telegram",
+                      website: "Website",
+                    };
 
-                      return (
-                        <a
-                          key={field}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-3 p-2 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 text-center w-full h-full"
-                        >
-                          <div className="text-green-400">{icon}</div>
-                          <span className="text-green-300 text-sm font-medium">
-                            {platformNames[field] ?? field}
-                          </span>
-                        </a>
-                      );
-                    })}
-                  </div>
-
-                  {/* ปุ่มเพิ่ม Socials */}
-                  <div>
-                    <button
-                      className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                      onClick={() => setShowSocials(!showSocials)}
-                    >
-                      <span className="self-center">Link your social profiles</span>
-                    </button>
-                  </div>
+                    return (
+                      <a
+                        key={field}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-3 p-2 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 text-center w-full h-full"
+                      >
+                        <div className="text-green-400">{icon}</div>
+                        <span className="text-green-300 text-sm font-medium">
+                          {platformNames[field] ?? field}
+                        </span>
+                      </a>
+                    );
+                  })}
                 </div>
+
+                {/* ปุ่มเพิ่ม Socials */}
+              </div>
             )}
-                        <a
+
+            {result2.status === "success" && result2.data![5].result === account.address && (
+              <div>
+                <button
+                  className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                  onClick={() => setShowSocials(!showSocials)}
+                >
+                  <span className="self-center">Link your social profiles</span>
+                </button>
+              </div>
+            )}
+
+            <a
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-3 py-1.5 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 w-full"
             >
               {/* Address Display */}
               <div className="flex items-center gap-1 w-full overflow-hidden">
-                <span className="text-green-300 text-xs font-medium whitespace-nowrap">Contract Address:</span>
+                <span className="text-green-300 text-xs font-medium whitespace-nowrap">
+                  Contract Address:
+                </span>
                 <span className="text-green-300 text-xs font-mono truncate block">
                   {ticker}
                 </span>
@@ -1365,7 +1370,6 @@ export default function Trade({
               </button>
             </a>
 
-            
             {result2.status === "success" && state[2].result ? (
               <>
                 <span className="ml-[20px] text-sm font-bold  text-left">
@@ -1803,28 +1807,28 @@ export default function Trade({
               ))}
             </div>
 
-          {grapthType === "GeckoTerminal" ? (
-            <iframe
-              height="28%"
-              width="100%"
-              id="geckoterminal-embed"
-              title="GeckoTerminal Embed"
-              src={
-                "https://www.geckoterminal.com/" +
-                (chain === "kub"
-                  ? "bitkub_chain"
-                  : chain === "monad"
-                  ? "monad-testnet"
-                  : "") +
-                "/pools/" +
-                lp +
-                "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"
-              }
-              allow="clipboard-write"
-            ></iframe>
-          ) : (
-            <Chart data={graphData} />
-          )}
+            {grapthType === "GeckoTerminal" ? (
+              <iframe
+                height="28%"
+                width="100%"
+                id="geckoterminal-embed"
+                title="GeckoTerminal Embed"
+                src={
+                  "https://www.geckoterminal.com/" +
+                  (chain === "kub"
+                    ? "bitkub_chain"
+                    : chain === "monad"
+                    ? "monad-testnet"
+                    : "") +
+                  "/pools/" +
+                  lp +
+                  "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"
+                }
+                allow="clipboard-write"
+              ></iframe>
+            ) : (
+              <Chart data={graphData} />
+            )}
 
             <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500 pr-4">
               <div className="w-1/5 sm:w-1/3 text-left">Timestamp</div>
@@ -2146,14 +2150,13 @@ export default function Trade({
                               ? Number(formatEther(ethBal)) + (trademode && mode === "pro" ? - 0.00001 : 0 )
                               : Number(formatEther(state[1].result as bigint)) + (trademode && mode === "pro" ? - 0.00001 : 0 );
 
-                            setInputBalance(value.toFixed(6));
-                            qoute(value.toFixed(6));
-                          }}
-                        >
-                          Max
-                        </button>
-                      </div>
-                      
+                          setInputBalance(value.toFixed(6));
+                          qoute(value.toFixed(6));
+                        }}
+                      >
+                        Max
+                      </button>
+                    </div>
                   </div>
                 </>
               ) : (
@@ -2314,48 +2317,49 @@ export default function Trade({
             </div>
 
             {/* Socials Section */}
-            {result2.status === "success" &&
-              result2.data![5].result === account.address && (
-                <div className="w-full">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    {socialItems.map(({ icon, field }) => {
-                      const url = socials[field];
-                      if (!url || url.trim() === "") return null;
+            {result2.status === "success" && (
+              <div className="w-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  {socialItems.map(({ icon, field }) => {
+                    const url = socials[field];
+                    if (!url || url.trim() === "") return null;
 
-                      const platformNames: Record<string, string> = {
-                        fb: "Facebook",
-                        x: "X (Twitter)",
-                        telegram: "Telegram",
-                        website: "Website",
-                      };
+                    const platformNames: Record<string, string> = {
+                      fb: "Facebook",
+                      x: "X (Twitter)",
+                      telegram: "Telegram",
+                      website: "Website",
+                    };
 
-                      return (
-                        <a
-                          key={field}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-3 p-2 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 text-center w-full h-full"
-                        >
-                          <div className="text-green-400">{icon}</div>
-                          <span className="text-green-300 text-sm font-medium">
-                            {platformNames[field] ?? field}
-                          </span>
-                        </a>
-                      );
-                    })}
-                  </div>
-
-                  {/* ปุ่มเพิ่ม Socials */}
-                  <div>
-                    <button
-                      className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                      onClick={() => setShowSocials(!showSocials)}
-                    >
-                      <span className="self-center">Link your social profiles</span>
-                    </button>
-                  </div>
+                    return (
+                      <a
+                        key={field}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-3 p-2 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 text-center w-full h-full"
+                      >
+                        <div className="text-green-400">{icon}</div>
+                        <span className="text-green-300 text-sm font-medium">
+                          {platformNames[field] ?? field}
+                        </span>
+                      </a>
+                    );
+                  })}
                 </div>
+              </div>
+            )}
+
+            {/* ปุ่มเพิ่ม Socials */}
+            {result2.status === "success" && result2.data![5].result === account.address && (
+              <div>
+                <button
+                  className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                  onClick={() => setShowSocials(!showSocials)}
+                >
+                  <span className="self-center">Link your social profiles</span>
+                </button>
+              </div>
             )}
 
             <a
@@ -2365,7 +2369,9 @@ export default function Trade({
             >
               {/* Address Display */}
               <div className="flex items-center gap-1 w-full overflow-hidden">
-                <span className="text-green-300 text-xs font-medium whitespace-nowrap">Contract Address:</span>
+                <span className="text-green-300 text-xs font-medium whitespace-nowrap">
+                  Contract Address:
+                </span>
                 <span className="text-green-300 text-xs font-mono truncate block">
                   {ticker}
                 </span>
@@ -2567,28 +2573,30 @@ export default function Trade({
               Link your social profiles
             </h2>
 
+
+
             <div className="space-y-5 text-white grid ">
               {[
-              {
-                icon: <FaFacebookF className="text-white" />,
-                field: "fb",
-                placeholder: "Facebook",
-              },
-              {
-                icon: <FaTwitter className="text-white" />,
-                field: "x",
-                placeholder: "X (Twitter) URL",
-              },
-              {
-                icon: <BsTwitterX className="text-white" />,
-                field: "telegram",
-                placeholder: "Telegram URL",
-              },
-              {
-                icon: <FaGlobe className="text-white" />,
-                field: "website",
-                placeholder: "Website URL",
-              },
+                {
+                  icon: <FaFacebookF className="text-white" />,
+                  field: "fb",
+                  placeholder: "Facebook",
+                },
+                {
+                  icon: <FaTwitter className="text-white" />,
+                  field: "x",
+                  placeholder: "X (Twitter) URL",
+                },
+                {
+                  icon: <FaTelegramPlane className="text-white" />,
+                  field: "telegram",
+                  placeholder: "Telegram URL",
+                },
+                {
+                  icon: <FaGlobe className="text-white" />,
+                  field: "website",
+                  placeholder: "Website URL",
+                },
               ].map(({ icon, field, placeholder }) => (
                 <div key={field}>
                   <div className="flex items-center gap-3 ">
@@ -2620,11 +2628,16 @@ export default function Trade({
 
                   {/* Character Count */}
                   <p className="text-xs text-right text-[#00ff9d99] mt-1 ml-7">
-                    {socials[field as keyof typeof socials].length}/50 characters
+                    {socials[field as keyof typeof socials].length}/50
+                    characters
                   </p>
                 </div>
               ))}
 
+              <p className="text-xs text-red-500 text-center">
+                🚫 No inappropriate or unethical links.<br />
+                Violations may lead to a ban. Team may edit links if needed.
+              </p>
 
               <button
                 onClick={handleSave}

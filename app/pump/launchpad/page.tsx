@@ -8,6 +8,7 @@ import Event from "@/app/pump/ui/Event";
 import Sort4 from "@/app/pump/ui/Sort4";
 import Sort5 from "@/app/pump/ui/Sort5";
 import Menu from "@/app/pump/ui/Menu";
+import ReferralTracker from '../../components/Refferal'
 
 export const metadata: Metadata = {
     title: "CMswap - PUMP",
@@ -35,8 +36,9 @@ export default async function Launchpad(props: {
   
   return (
     <main className="mt-10 w-full max-w-[1920px] flex flex-col gap-2 items-start justify-start overflow-hidden">
+         <ReferralTracker/>
         <Suspense key={'mode-' + mode + '-chain-' + chain} fallback={
-          <div className="mt-[70px] md:mt-[50px] w-full flex flex-row flex-wrap items-start justify-start overflow-visible" style={{zIndex: 1}}>
+        <div className="mt-[70px] md:mt-[50px] w-full flex flex-row flex-wrap items-start justify-start overflow-visible" style={{zIndex: 1}}>
             <div className="flex flex-row items-center sm:items-start gap-6 mt-1 w-full">
               <div className="p-1 mb-4 bg-slate-700 rounded-lg w-[156px] h-[46px] animate-pulse" />
               <div className="p-1 mb-4 bg-slate-700 rounded-lg w-[156px] h-[46px] animate-pulse" />

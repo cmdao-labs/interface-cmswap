@@ -46,32 +46,49 @@ export default function Swap8899({
 
     React.useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search)
-        const tokenAAddress = searchParams.get('tokenA')?.toLowerCase()
-        const tokenBAddress = searchParams.get('tokenB')?.toLowerCase()
+        const tokenAAddress = searchParams.get('input')?.toLowerCase()
+        const tokenBAddress = searchParams.get('output')?.toLowerCase()
 
-        if (tokenAAddress && tokenBAddress) {
-            const foundTokenA = tokens.find(t => t.value.toLowerCase() === tokenAAddress)
-            const foundTokenB = tokens.find(t => t.value.toLowerCase() === tokenBAddress)
+        const foundTokenA = tokenAAddress ? tokens.find(t => t.value.toLowerCase() === tokenAAddress) : null
+        const foundTokenB = tokenBAddress ? tokens.find(t => t.value.toLowerCase() === tokenBAddress) : null
 
-            if (foundTokenA) setTokenA(foundTokenA)
-            if (foundTokenB) setTokenB(foundTokenB)
+        if (foundTokenA) setTokenA(foundTokenA)
+        if (foundTokenB) setTokenB(foundTokenB)
+
+        if (!tokenAAddress || !tokenBAddress) {
+            if (tokenA?.value && tokenB?.value) {updateURLWithTokens(tokenA.value, tokenB.value, address)}
         } else {
-            if (tokenA?.value && tokenB?.value) {
-                updateURLWithTokens(tokenA.value, tokenB.value)
-            }
+            updateURLWithTokens(tokenAAddress, tokenBAddress, address)
         }
+
         setHasInitializedFromParams(true)
-    }, [])
+        }, [])
 
-    const updateURLWithTokens = (tokenAValue?: string, tokenBValue?: string) => {
-        const url = new URL(window.location.href)
+        React.useEffect(() => {
+            console.log("hasInitializedFromParams : ", hasInitializedFromParams)
+            }, [hasInitializedFromParams])
 
-        if (tokenAValue) { url.searchParams.set('tokenA', tokenAValue) }
-        if (tokenBValue) { url.searchParams.set('tokenB', tokenBValue) }
-        if (!tokenAValue) { url.searchParams.delete('tokenA') }
-        if (!tokenBValue) { url.searchParams.delete('tokenB') }
-        window.history.replaceState({}, '', url.toString())
-    }
+            const updateURLWithTokens = (
+            tokenAValue?: string,
+            tokenBValue?: string,
+            referralCode?: string
+            ) => {
+            const url = new URL(window.location.href)
+
+            if (tokenAValue) url.searchParams.set('input', tokenAValue)
+            else url.searchParams.delete('tokenA')
+
+            if (tokenBValue) url.searchParams.set('output', tokenBValue)
+            else url.searchParams.delete('tokenB')
+
+            if (referralCode && referralCode.startsWith('0x')) {
+                url.searchParams.set('ref', referralCode)
+            } else {
+                url.searchParams.delete('ref')
+            }
+
+            window.history.replaceState({}, '', url.toString())
+        }
 
     function encodePath(tokens: string[], fees: number[]): string {
         let path = "0x"
@@ -1019,6 +1036,7 @@ export default function Swap8899({
 
     React.useEffect(() => {
         const updateRate = async () => {
+                const quote = await getQoute(amountA);  
 /*             if (Number(amountA) !== 0) {
                 const quote = await getQoute(amountA);
                 if (poolSelect === "CMswap" && quote?.CMswapRate) {
@@ -1039,12 +1057,15 @@ export default function Swap8899({
             // Fallback: use TVL values
             if (poolSelect === "CMswap") {
                 setExchangeRate(CMswapTVL.exchangeRate);
+                setAmountB(quote?.CMswapRate || "0")
                 console.log('Fallback Quote Price CMswap', CMswapTVL.exchangeRate);
             } else if (poolSelect === "GameSwap") {
                 setExchangeRate(GameSwapTvl.exchangeRate);
+                setAmountB(quote?.GameswapRate || "0")
                 console.log('Fallback Quote Price GameSwap', GameSwapTvl.exchangeRate);
             } else if (poolSelect === "JibSwap") {
                 setExchangeRate(JibSwapTvl.exchangeRate);
+                setAmountB(quote?.JibswapRate || "0")
                 console.log('Fallback Quote Price JibSwap', JibSwapTvl.exchangeRate);
             }
         };
@@ -1056,35 +1077,31 @@ export default function Swap8899({
     React.useEffect(() => {
         const fetchQuoteAndSetPool = async () => {
             if (!onLoading && CMswapTVL && GameSwapTvl && JibSwapTvl) {
-                const quote = await getQoute(amountA);  // เปลี่ยนเป็น getTokenQuote แทน getQoute
+                const quote = await getQoute(amountA);  
+                console.log("quote Result",quote)
 
                 const rates = {
                     CMswap: Number(quote?.CMswapRate || CMswapTVL.exchangeRate || 0),
                     GameSwap: Number(quote?.GameswapRate || GameSwapTvl.exchangeRate || 0),
                     JibSwap: Number(quote?.JibswapRate || JibSwapTvl.exchangeRate || 0),
                 };
+                
 
-                console.log("Token match:", tokens[0].value === tokenA.value);
-                console.log("Rates:", rates);
-
-                // เลือก pool ที่มีอัตราแลกเปลี่ยนสูงสุด
-                const sortedEntries = Object.entries(rates).sort((a, b) => b[1] - a[1]);  // ลำดับจากสูงสุดไปต่ำสุด
-
-                // เลือก pool ที่มีอัตราแลกเปลี่ยนสูงสุด
-                const [bestPool, bestRate] = sortedEntries[0];
-
-                setBestPool(bestPool);  // ตั้งค่า pool ที่ดีที่สุด
-
-                if (poolSelect === "" && Object.values(rates).every((r) => r !== 0)) {
-                    setPoolSelect(bestPool);  // ถ้ายังไม่ได้เลือก pool ให้เลือก pool ที่ดีที่สุด
-                    console.log("BestPool is", bestPool)
-                }
+                const sortedEntries = Object.entries(rates).sort((a, b) => b[1] - a[1]);
+                const [bestPool] = sortedEntries[0];
+                setBestPool(bestPool);
             }
         };
 
         fetchQuoteAndSetPool();
-    }, [onLoading, CMswapTVL, GameSwapTvl, JibSwapTvl, amountB, amountA]);
+    }, [onLoading, CMswapTVL, GameSwapTvl, JibSwapTvl, amountA,poolSelect]);
 
+    React.useEffect(() => {
+        if (poolSelect === "" && bestPool) {
+            setPoolSelect(bestPool);
+            console.log("BestPool set to", bestPool);
+        }
+    }, [bestPool]);
 
     return (
         <div className='space-y-2'>
@@ -1132,7 +1149,7 @@ export default function Swap8899({
                                                 onSelect={() => {
                                                     setTokenA(token)
                                                     setOpen(false)
-                                                    updateURLWithTokens(token.value, tokenB?.value)
+                                                    updateURLWithTokens(token.value, tokenB?.value,address)
                                                 }}
                                                 className='cursor-pointer'
                                             >
@@ -1205,7 +1222,7 @@ export default function Swap8899({
                                                 onSelect={() => {
                                                     setTokenB(token)
                                                     setOpen2(false)
-                                                    updateURLWithTokens(tokenA?.value, token.value)
+                                                    updateURLWithTokens(tokenA?.value, token.value,address)
                                                 }}
                                                 className='cursor-pointer'
                                             >

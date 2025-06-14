@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'CMswap',
     description: 'The Future of Permissionless Multiverse',
-    images: ['https://cmswap.xyz/CMswap_banner_1200x630.png'],
+    images: ['https://cmswap.xyz/CMswap_banner2_1200x630.png'],
     site: '@CMswap',
     creator: '@CMswap',
   },
