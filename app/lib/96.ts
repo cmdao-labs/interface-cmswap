@@ -72,7 +72,7 @@ export const CMswapUniSmartRoute = '0x01837156518e60362048e78d025a419C51346f55' 
 export const BitkubEvmKYC = '0x409CF41ee862Df7024f289E9F2Ea2F5d0D7f3eb4' as '0xstring' // kyc for unwrap kkub
 export const bkcUnwapped = '0xff76DD8086428EBC4Ed1b14B0e56E95eDc46a315' as '0xstring'
 export const cmSwapRefProgram = '0xf74C099613eF374Aa3cCE75fA8c0B8eF1928f759' as '0xstring'
-export const CMswapP2PMarketplace = '0x355413F3bb01c66ccab48F8a220eED203AaC3A6F' as '0xstring'
+export const CMswapP2PMarketplace = '0xaa2eA24C5Fa6E8Ea267143A81FbDFb365c36c8D8' as '0xstring'
 
 export const v3FactoryContract = { chainId: 96, abi: v3Factory, address: V3_FACTORY } as const
 export const positionManagerContract = { chainId: 96, address: POSITION_MANAGER, abi: NonfungiblePositionManager } as const
