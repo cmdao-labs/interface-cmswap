@@ -1036,6 +1036,7 @@ export default function Swap8899({
 
     React.useEffect(() => {
         const updateRate = async () => {
+                const quote = await getQoute(amountA);  
 /*             if (Number(amountA) !== 0) {
                 const quote = await getQoute(amountA);
                 if (poolSelect === "CMswap" && quote?.CMswapRate) {
@@ -1056,12 +1057,15 @@ export default function Swap8899({
             // Fallback: use TVL values
             if (poolSelect === "CMswap") {
                 setExchangeRate(CMswapTVL.exchangeRate);
+                setAmountB(quote?.CMswapRate || "0")
                 console.log('Fallback Quote Price CMswap', CMswapTVL.exchangeRate);
             } else if (poolSelect === "GameSwap") {
                 setExchangeRate(GameSwapTvl.exchangeRate);
+                setAmountB(quote?.GameswapRate || "0")
                 console.log('Fallback Quote Price GameSwap', GameSwapTvl.exchangeRate);
             } else if (poolSelect === "JibSwap") {
                 setExchangeRate(JibSwapTvl.exchangeRate);
+                setAmountB(quote?.JibswapRate || "0")
                 console.log('Fallback Quote Price JibSwap', JibSwapTvl.exchangeRate);
             }
         };
@@ -1073,35 +1077,31 @@ export default function Swap8899({
     React.useEffect(() => {
         const fetchQuoteAndSetPool = async () => {
             if (!onLoading && CMswapTVL && GameSwapTvl && JibSwapTvl) {
-                const quote = await getQoute(amountA);  // เปลี่ยนเป็น getTokenQuote แทน getQoute
+                const quote = await getQoute(amountA);  
+                console.log("quote Result",quote)
 
                 const rates = {
                     CMswap: Number(quote?.CMswapRate || CMswapTVL.exchangeRate || 0),
                     GameSwap: Number(quote?.GameswapRate || GameSwapTvl.exchangeRate || 0),
                     JibSwap: Number(quote?.JibswapRate || JibSwapTvl.exchangeRate || 0),
                 };
+                
 
-                console.log("Token match:", tokens[0].value === tokenA.value);
-                console.log("Rates:", rates);
-
-                // เลือก pool ที่มีอัตราแลกเปลี่ยนสูงสุด
-                const sortedEntries = Object.entries(rates).sort((a, b) => b[1] - a[1]);  // ลำดับจากสูงสุดไปต่ำสุด
-
-                // เลือก pool ที่มีอัตราแลกเปลี่ยนสูงสุด
-                const [bestPool, bestRate] = sortedEntries[0];
-
-                setBestPool(bestPool);  // ตั้งค่า pool ที่ดีที่สุด
-
-                if (poolSelect === "" && Object.values(rates).every((r) => r !== 0)) {
-                    setPoolSelect(bestPool);  // ถ้ายังไม่ได้เลือก pool ให้เลือก pool ที่ดีที่สุด
-                    console.log("BestPool is", bestPool)
-                }
+                const sortedEntries = Object.entries(rates).sort((a, b) => b[1] - a[1]);
+                const [bestPool] = sortedEntries[0];
+                setBestPool(bestPool);
             }
         };
 
         fetchQuoteAndSetPool();
-    }, [onLoading, CMswapTVL, GameSwapTvl, JibSwapTvl, amountB, amountA]);
+    }, [onLoading, CMswapTVL, GameSwapTvl, JibSwapTvl, amountA,poolSelect]);
 
+    React.useEffect(() => {
+        if (poolSelect === "" && bestPool) {
+            setPoolSelect(bestPool);
+            console.log("BestPool set to", bestPool);
+        }
+    }, [bestPool]);
 
     return (
         <div className='space-y-2'>
