@@ -19,12 +19,26 @@ export default function FeeStructurePage() {
             </thead>
             <tbody>
               {[
-                { func: "Swap", detail: "Liquidity Provider Fee : 0.01% - 1% , Frontend Fee : 0%" },
-                { func: "Swap : Best Rate", detail: "Frontend Fee : 0%" },
+                { func: "Swap", detail:(
+                    <ul className="list-disc list-inside ml-4 text-white">
+                      <li>Liquidity Provider Fee : 0.01% - 1% </li>
+                      <li>Frontend Fee : 0%</li>
+                    </ul>
+                  )},
+                { func: "Swap : Best Rate", detail: (
+                    <ul className="list-disc list-inside ml-4 text-white">
+                      <li>Liquidity Provider Fee: Varies based on third-party swap charges.</li>
+                      <li>Frontend Fee : 0%</li>
+                    </ul>
+                  ) },
                /*  { func: "Swap", detail: "V3 Fee 0.01% - 1% + FrontEnd Fee 0.3%" }, */
                 /* { func: "Trade (P2P)", detail: "Maker Fee 0.5%, Taker Fee 0.5%" }, */
              /*    { func: "Pump Trading on Bonding Curve", detail: "0.5% per transaction" }, */
-                { func: "Pump Token Gradulation Fee", detail: "10% when applying gradulation policy" },
+                { func: "Pump Token Gradulation Fee", detail: (
+                    <ul className="list-disc list-inside ml-4 text-white">
+                      <li>10% when applying gradulation policy </li>
+                    </ul>
+                  )},
                 /* {
                   func: "Pump Promode Token Creation Fee",
                   detail: (
