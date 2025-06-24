@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Github, FileText, MessageSquare, X } from "lucide-react"
+import { Github, FileText, MessageSquare, X,Scale,Percent,ShieldCheck } from "lucide-react"
 
 export default function Footer() {
     return (
@@ -14,11 +14,23 @@ export default function Footer() {
                         </Link>
                         <div className="h-4 w-px bg-[#32ffa7]/20 hidden md:block" />
                         <Link href="https://github.com/coshi190/interface-openbbq" target="_blank" rel="noreferrer" className="text-white/60 hover:text-[#32ffa7] text-xs flex items-center gap-1 font-mono">
-                            <Github className="w-4 h-4" /><span>INTERFACE</span>
+                            <Github className="w-4 h-4  " /><span>INTERFACE</span>
                         </Link>
                         <div className="h-4 w-px bg-[#32ffa7]/20 hidden md:block" />
                         <Link href="http://docs.cmswap.xyz/th" target="_blank" rel="noreferrer" className="text-white/60 hover:text-[#32ffa7] text-xs flex items-center gap-1 hidden md:flex font-mono">
                             <FileText className="w-4 h-4" /><span>DOCS</span>
+                        </Link>
+                        <div className="h-4 w-px bg-[#32ffa7]/20 hidden md:block" />
+                        <Link href="/policy" rel="noreferrer" className="text-white/60 hover:text-[#32ffa7] text-xs flex items-center gap-1 hidden md:flex font-mono">
+                            <ShieldCheck className="w-4 h-4" /><span>POLICY</span>
+                        </Link>
+                        <div className="h-4 w-px bg-[#32ffa7]/20 hidden md:block" />
+                        <Link href="/terms-of-use" rel="noreferrer" className="text-white/60 hover:text-[#32ffa7] text-xs flex items-center gap-1 hidden md:flex font-mono">
+                            <Scale className="w-4 h-4" /><span>TERMS OF USE</span>
+                        </Link>
+                        <div className="h-4 w-px bg-[#32ffa7]/20 hidden md:block" />
+                        <Link href="/fee" rel="noreferrer" className="text-white/60 hover:text-[#32ffa7] text-xs flex items-center gap-1 hidden md:flex font-mono">
+                            <Percent className="w-4 h-4" /><span>FEE</span>
                         </Link>
                     </div>
                     <div className="flex items-center gap-4">
