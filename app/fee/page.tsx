@@ -20,11 +20,12 @@ export default function FeeStructurePage() {
             <tbody>
               {[
                 { func: "Swap", detail: "Liquidity Provider Fee : 0.01% - 1% , Frontend Fee : 0%" },
+                { func: "Swap : Best Rate", detail: "Frontend Fee : 0%" },
                /*  { func: "Swap", detail: "V3 Fee 0.01% - 1% + FrontEnd Fee 0.3%" }, */
                 /* { func: "Trade (P2P)", detail: "Maker Fee 0.5%, Taker Fee 0.5%" }, */
              /*    { func: "Pump Trading on Bonding Curve", detail: "0.5% per transaction" }, */
                 { func: "Pump Token Gradulation Fee", detail: "10% when applying gradulation policy" },
-                {
+                /* {
                   func: "Pump Promode Token Creation Fee",
                   detail: (
                     <ul className="list-disc list-inside ml-4 text-white">
@@ -40,7 +41,7 @@ export default function FeeStructurePage() {
                       <li>KUB chain: 6000 CMM per token creation</li>
                     </ul>
                   ),
-                },
+                }, */
               ].map(({ func, detail }, i) => (
                 <tr
                   key={i}
