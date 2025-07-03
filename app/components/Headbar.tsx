@@ -17,7 +17,7 @@ export default function Headbar() {
 
     return (
         <QueryClientProvider client={queryClient}> 
-            <header className='h-[85px] w-[80%] lg:w-full fixed backdrop-blur-lg text-sm text-white z-999'>
+            <header className='h-[85px] w-full lg:w-full fixed backdrop-blur-lg text-sm text-white z-999'>
                 <div className='flex flex-row items-center justify-between'>
                     <div className="gap-2 flex flex-row items-center p-6">
                         <div className="flex items-center justify-between h-8">
