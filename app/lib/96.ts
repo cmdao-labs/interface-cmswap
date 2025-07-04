@@ -12,6 +12,7 @@ export const tokens: {name: string, value: '0xstring', logo: string}[] = [
     { name: 'ISOLA', value: '0xC8925E89bE4Ce76218a3e52B995C5Ae02662A94F' as '0xstring', logo: '/isola.webp' }, 
     { name: 'KSOLA', value: '0x9cf6dF95b918307Ff81feF70E616a094e9977a28' as '0xstring', logo: '/ksola.webp' },
     { name: 'KJFIN', value: '0x9BEc198c43B0714aEEd3c1bF21498ecBeFEB19F8' as '0xstring', logo: '/kjfin.webp' }, 
+        { name: "MYTOKEN", value: "0xabc123" as "0xstring", logo: "/mytoken.png" },
     // can PR listing here
 ]
 
