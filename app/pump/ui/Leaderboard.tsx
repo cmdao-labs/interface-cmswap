@@ -428,7 +428,7 @@ export default async function Leaderboard({
               <div className="w-[25px] h-[25px] sm:w-[40px] sm:h-[40px] rounded-full overflow-hidden relative">
                   <Image src={buildDataUrl(item.addr)} alt="jazzicon" fill />
               </div>
-              <span>{item.addr.slice(0, 5) + '...' + item.addr.slice(37)}</span>
+              <a href={`${_explorer}/address/${item.addr}`} target="_blank" rel="noopener noreferrer">{item.addr.slice(0, 5) + '...' + item.addr.slice(37)}</a>
               </div>
               <div className="w-2/5 flex flex-row items-center justify-between sm:gap-10">
                 {(rankby === '' || rankby === 'xp') &&
