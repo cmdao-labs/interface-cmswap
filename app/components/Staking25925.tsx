@@ -3,12 +3,20 @@ import { Copy, Plus, ChevronDown, ChevronUp, CopyCheck } from "lucide-react";
 import { Button } from '@/components/ui/button'
 
 const StakingList = () => {
-  const [expandedItem, setExpandedItem] = useState(null);
+  const [expandedItem, setExpandedItem] = useState<number | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState("");
 
   // Chain themes
-  const chainThemes = {
+  type ChainName = "KUB" | "MONAD" | "BINANCE" | "JFIN";
+  const chainThemes: Record<ChainName, {
+    primary: string;
+    secondary: string;
+    accent: string;
+    border: string;
+    bg: string;
+    text: string;
+  }> = {
     KUB: {
       primary: "rgb(34, 197, 94)", // green-500
       secondary: "rgb(22, 163, 74)", // green-600
@@ -117,19 +125,19 @@ const StakingList = () => {
     },
   ];
 
-  const copyToClipboard = (text, type) => {
+  const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
-    setCopiedAddress(type);
+  const getTheme = (chain: string) => chainThemes[(chain as ChainName)] || chainThemes.KUB;
     setTimeout(() => setCopiedAddress(""), 800);
   };
 
-  const toggleExpanded = (id) => {
+  const toggleExpanded = (id: number) => {
     setExpandedItem(expandedItem === id ? null : id);
   };
 
-  const getTheme = (chain) => chainThemes[chain] || chainThemes.KUB;
+  const getTheme = (chain: string) => chainThemes[(chain as ChainName)] ?? chainThemes.KUB;
 
-  const StakingPopup = ({ theme }) => (
+  const StakingPopup = ({ theme }: { theme: typeof chainThemes.KUB }) => (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-gray-900 rounded-xl p-6 max-w-md w-full border border-gray-700 ">
         <div className="flex justify-between items-center mb-4 ">
