@@ -21,7 +21,7 @@ const metadata = {
 
 const modal = createAppKit({
   adapters: [wagmiAdapter],
-    networks: [bsc, base, monadTestnet, bitkub, jbc,bitkubTestnet],
+    networks: [bsc, monadTestnet, bitkub, jbc,bitkubTestnet],
     projectId,
     themeMode: 'dark',
     themeVariables: {
