@@ -1,4 +1,4 @@
-import React from "react"
+/* import React from "react"
 import { useAccount } from "wagmi"
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, parseEther } from "viem"
@@ -607,3 +607,4 @@ export default function Positions25925({
         </>
     )
 }
+ */
