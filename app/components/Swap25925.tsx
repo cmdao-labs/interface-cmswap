@@ -199,8 +199,6 @@ export default function Swap25925({
     const handleSwap = async () => {
         if (wrappedRoute) {
             wrap()
-        } if(mode === "Auto"){
-            swapBestRate()
         } else if (poolSelect === "CMswap") {
             console.log("Swap with CMswap")
             CMswap()
@@ -244,110 +242,6 @@ export default function Swap25925({
         }
         setIsLoading(false)
     }
-    
-const swapBestRate = async () => {
-  setIsLoading(true);
-
-  try {
-    const deadline = Math.floor(Date.now() / 1000) + 60 * 10;
-
-    // 1. เตรียม pathInfos (จาก state ที่เก็บจาก result[0])
-    const pathInfos = bestRateRoutes.map(route => ({
-  amountIn: route.amountIn,
-  amountOut: route.amountOut,
-  path: route.path as readonly `0x${string}`[],  // ✅ แปลงให้ตรง type
-  providerId: route.providerId,
-  feeTiers: route.feeTiers as readonly number[],  // ✅ แปลงให้ตรง type
-}));
-
-
-    // 2. เตรียม common params
-    const amountIn = parseEther(amountA);
-    const amountOutMin = parseEther(amountB) * BigInt(95) / BigInt(100);
-    const to = address ?? (() => { throw new Error("Address is required") })();
-
-    // 3. เคส: ถ้า Token A เป็น Native Token (e.g., KKUB)
-    if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-      const { result, request } = await simulateContract(config, {
-        ...CMswapUniSmartRouteBestRateContract,
-        functionName: 'swapExactETHForTokensWithFee',
-        value: amountIn,
-        args: [
-          pathInfos,
-          [
-            amountOutMin, // amountOutMin
-            '0xCA811301C650C92fD45ed32A81C0B757C61595b6' as '0xstring',           // feeReceiver
-            address as `0xstring`, // to
-            BigInt(deadline), // deadline
-            false, // supportFeeOnTransfer
-            ADDRESS_ZERO as `0xstring`, // ref
-          ]
-        ],
-      });
-
-      const txHash = await writeContract(config, request);
-      await waitForTransactionReceipt(config, { hash: txHash });
-      setTxupdate(txHash);
-
-    } else {
-      // 4. เช็ก Allowance ถ้า tokenA เป็น ERC20
-      let allowanceA;
-
-      if (tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {
-        allowanceA = await readContract(config, {
-          ...kap20ABI,
-          address: tokenA.value as `0xstring`,
-          functionName: 'allowances',
-          args: [to, CMswapUniSmartRoute],
-        });
-      } else {
-        allowanceA = await readContract(config, {
-          ...erc20ABI,
-          address: tokenA.value as `0xstring`,
-          functionName: 'allowance',
-          args: [to, CMswapUniSmartRoute],
-        });
-      }
-
-      if (allowanceA < amountIn) {
-        const { request } = await simulateContract(config, {
-          ...erc20ABI,
-          address: tokenA.value as `0xstring`,
-          functionName: 'approve',
-          args: [CMswapUniSmartRoute, amountIn],
-        });
-
-        const tx = await writeContract(config, request);
-        await waitForTransactionReceipt(config, { hash: tx });
-      }
-
-      // 5. เรียก swapExactTokensForTokensWithFee
-      const { result, request } = await simulateContract(config, {
-        ...CMswapUniSmartRouteBestRateContract,
-        functionName: 'swapExactTokensForTokensWithFee',
-        args: [
-          pathInfos,
-          amountIn,
-          amountOutMin,
-          ADDRESS_ZERO as `0xstring`, // feeReceiver
-          to,
-          BigInt(deadline),
-          false, // supportFeeOnTransfer
-          ADDRESS_ZERO as `0xstring`, // ref
-        ],
-      });
-
-      const txHash = await writeContract(config, request);
-      await waitForTransactionReceipt(config, { hash: txHash });
-      setTxupdate(txHash);
-    }
-
-  } catch (e) {
-    setErrMsg(e as WriteContractErrorType);
-  }
-
-  setIsLoading(false);
-};
 
 
     const CMswap = async () => {

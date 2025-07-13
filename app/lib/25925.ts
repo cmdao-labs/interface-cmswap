@@ -44,8 +44,8 @@ export const V3_STAKER = '0xC216ad61623617Aa01b757A06836AA8D6fb547fF' as '0xstri
 export const v3StakerContract = { chainId: 25925, address: V3_STAKER, abi: v3staker } as const
 export const wrappedNative = { chainId: 25925, abi: WrappedNative, address: tokens[1].value } as const
 export const unwarppedNative = {chainId:25925, abi: WrappedNative, address: tokens[1].value } as const
-//export const CMswapUniSmartRouteContractV2 =  { chainId: 25925, abi: CMswapUniSmartRouteABIV2 , address: CMswapUniSmartRouteV3} as const
-//export const UniswapPairv2PoolABI = { chainId: 25925, abi: UniswapPair} as const
+export const CMswapUniSmartRouteContractV2 =  { chainId: 25925, abi: CMswapUniSmartRouteABIV2 , address: CMswapUniSmartRoute} as const
+export const UniswapPairv2PoolABI = { chainId: 25925, abi: UniswapPair} as const
 export const BitkubEvmKYCContract = {chainId: 25925, abi: BitkubEvmKYCABI, address: BitkubEvmKYC} as const
 //export const CMswapUniSmartRouteBestRateContract = {chainId: 25925, abi: CMswapUniSmartRouteV3, address: CMswapUniSmartRouteBestRate} as const
 
