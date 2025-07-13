@@ -1,54 +1,84 @@
-'use client'
-import React from 'react'
+"use client";
+import React from "react";
 
 export default function FeeStructurePage() {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-start p-8 bg-gradient-to-br from-slate-900 via-black to-emerald-900 text-white">
       <section className="max-w-4xl w-full mt-[60px] md:mt-[120px] bg-gray-900 bg-opacity-30 rounded-xl shadow-lg p-8">
-        <h1 className="text-4xl font-extrabold mb-10 text-[#32ffa7] drop-shadow-lg">Fee Structure</h1>
+        <h1 className="text-4xl font-extrabold mb-10 text-[#32ffa7] drop-shadow-lg">
+          Fee Structure
+        </h1>
         <p className="mb-8 text-lg text-gray-300">
-          The following fees are charged by the <span className="font-semibold text-white">cmswap.xyz</span> platform:
+          The following fees are charged by the{" "}
+          <span className="font-semibold text-white">cmswap.xyz</span> platform:
         </p>
         <div className="overflow-x-auto rounded-md">
           <table className="min-w-full border-collapse">
             <thead>
               <tr className="bg-[#0f2d1a]">
-                <th className="text-left px-6 py-4 font-semibold text-[#32ffa7] border-b border-[#32ffa7]/50">Function</th>
-                <th className="text-left px-6 py-4 font-semibold text-[#32ffa7] border-b border-[#32ffa7]/50">Fee Details</th>
+                <th className="text-left px-6 py-4 font-semibold text-[#32ffa7] border-b border-[#32ffa7]/50">
+                  Function
+                </th>
+                <th className="text-left px-6 py-4 font-semibold text-[#32ffa7] border-b border-[#32ffa7]/50">
+                  Fee Details
+                </th>
               </tr>
             </thead>
             <tbody>
               {[
-                { func: "Swap", detail:(
+                {
+                  func: "Swap",
+                  detail: (
                     <ul className="list-disc list-inside ml-4 text-white">
                       <li>Liquidity Provider Fee : 0.01% - 1% </li>
                       <li>Frontend Fee : 0%</li>
                     </ul>
-                  )},
-                { func: "Swap : Best Rate", detail: (
-                    <ul className="list-disc list-inside ml-4 text-white">
-                      <li>Liquidity Provider Fee: Varies based on third-party swap charges.</li>
-                      <li>Frontend Fee : 0%</li>
-                    </ul>
-                  ) },
-               /*  { func: "Swap", detail: "V3 Fee 0.01% - 1% + FrontEnd Fee 0.3%" }, */
-                /* { func: "Trade (P2P)", detail: "Maker Fee 0.5%, Taker Fee 0.5%" }, */
-             /*    { func: "Pump Trading on Bonding Curve", detail: "0.5% per transaction" }, */
-                { func: "Pump Token Gradulation Fee", detail: (
-                    <ul className="list-disc list-inside ml-4 text-white">
-                      <li>10% when applying gradulation policy </li>
-                    </ul>
-                  )},
-                /* {
-                  func: "Pump Promode Token Creation Fee",
+                  ),
+                },
+                {
+                  func: "Swap : Best Rate",
                   detail: (
                     <ul className="list-disc list-inside ml-4 text-white">
-                      <li>KUB chain: 1 KUB per token creation</li>
-                      <li>Monad chain: 1 MON per token creation</li>
+                      <li>
+                        Liquidity Provider Fee: Varies based on third-party swap
+                        charges.
+                      </li>
+                      <li>Frontend Fee : 0%</li>
+                    </ul>
+                  ),
+                },
+                /*  { func: "Swap", detail: "V3 Fee 0.01% - 1% + FrontEnd Fee 0.3%" }, */
+                /* { func: "Trade (P2P)", detail: "Maker Fee 0.5%, Taker Fee 0.5%" }, */
+                /*    { func: "Pump Trading on Bonding Curve", detail: "0.5% per transaction" }, */
+                {
+                  func: "Pump Creation Fee",
+                  detail: (
+                    <ul className="list-disc list-inside ml-4 text-white">
+                      <li>Kub : 1 KUB for intitials liquidity position.</li>
+                      <li>Monad : 1 MON for intitials liquidity position.</li>
+                      <li>Kub Testnet : 0 tKUB (Virtual Liquidity) </li>
                     </ul>
                   ),
                 },
                 {
+                  func: "Pump Swap Fee",
+                  detail: (
+                    <ul className="list-disc list-inside ml-4 text-white">
+                      <li>Liquidity Position Fee : 1% </li>
+                      <li>Frontend Fee : 0%</li>
+                    </ul>
+                  ),
+                },
+                {
+                  func: "Pump Token Gradulation Fee",
+                  detail: (
+                    <ul className="list-disc list-inside ml-4 text-white">
+                      <li>10% when applying gradulation policy </li>
+                    </ul>
+                  ),
+                },
+
+                /*{
                   func: "Pump Litemode Token Creation Fee",
                   detail: (
                     <ul className="list-disc list-inside ml-4 text-white">
@@ -61,8 +91,12 @@ export default function FeeStructurePage() {
                   key={i}
                   className={i % 2 === 0 ? "bg-[#10381f]" : "bg-[#0d2f19]"}
                 >
-                  <td className="px-6 py-4 border-b border-[#32ffa7]/30 font-medium text-white">{func}</td>
-                  <td className="px-6 py-4 border-b border-[#32ffa7]/30 text-white">{detail}</td>
+                  <td className="px-6 py-4 border-b border-[#32ffa7]/30 font-medium text-white">
+                    {func}
+                  </td>
+                  <td className="px-6 py-4 border-b border-[#32ffa7]/30 text-white">
+                    {detail}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -70,5 +104,5 @@ export default function FeeStructurePage() {
         </div>
       </section>
     </div>
-  )
+  );
 }
