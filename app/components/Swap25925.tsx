@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI, CMswapUniSmartRoute, BitkubEvmKYCContract, unwarppedNative } from '@/app/lib/25925'
+import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI, CMswapUniSmartRoute, BitkubEvmKYCContract, unwarppedNative, CMswapUniSmartRouteBestRateContract, CMswapUniSmartRouteBestRate } from '@/app/lib/25925'
 import { config } from '@/app/config'
 import { ADDRESS_ZERO } from '@uniswap/v3-sdk'
 
@@ -182,6 +182,51 @@ export default function Swap25925({
                 }
             } catch { }
 
+
+            // Best Rate
+try {
+  if (Number(_amount) !== 0) {
+    const getBestPrice = await readContracts(config, {
+      contracts: [
+        {
+          ...CMswapUniSmartRouteBestRateContract,
+          functionName: 'findBestPathAndAmountOut',
+          args: [tokenAvalue, tokenBvalue, parseEther(_amount)],
+        },
+      ],
+    });
+
+    const result = getBestPrice[0]?.result;
+
+    if (result && Array.isArray(result[0])) {
+      const routes = result[0] as {
+        amountOut: bigint;
+        path: string[];
+        providerId: bigint;
+        feeTiers: unknown[];
+        amountIn: bigint;
+      }[];
+
+      console.log(result[0]);
+
+      const validRoutes = routes.filter(route => route.amountOut > 0);
+      setBestRateRoutes(validRoutes);
+      bestRateRoutes.forEach((route, i) => {
+  console.log(`Route ${i}: amountOut = ${formatEther(route.amountOut)}`);
+});
+
+      const total = result[1] as bigint;
+      setTotalAmountOut(formatEther(total));
+    } else {
+      console.warn("Invalid route result from contract");
+    }
+  }
+} catch (error) {
+  console.error("Error in getting BESTRATE V3 quote:", error);
+}
+
+
+
             console.log(`New RATE UPDATED\nCMswap : ${CMswapRate}\nDiamonSwap : ${DiamonSwapRate}\nUdonSwap  :${UdonswapRate}\nPonderFinance : ${ponderRate} `);
             return { CMswapRate, DiamonSwapRate, UdonswapRate, ponderRate }
         }
@@ -244,7 +289,6 @@ export default function Swap25925({
         }
         setIsLoading(false)
     }
-    
 const swapBestRate = async () => {
   setIsLoading(true);
 
