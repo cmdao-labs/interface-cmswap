@@ -1,4 +1,4 @@
-/* import React from 'react'
+import React from 'react'
 import { useAccount } from 'wagmi'
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, parseEther } from 'viem'
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative ,CMswapUniSmartRoute, BitkubEvmKYCContract, unwarppedNative } from '@/app/lib/25925'
+import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI, CMswapUniSmartRoute, BitkubEvmKYCContract, unwarppedNative } from '@/app/lib/25925'
 import { config } from '@/app/config'
 import { ADDRESS_ZERO } from '@uniswap/v3-sdk'
 
@@ -150,7 +150,7 @@ export default function Swap25925({
         if (wrappedRoute) {
             setAmountB(amountIn.toString())
         } else {
-            //**--------- CMswap 
+            //**--------- CMswap */
             try {
                 if (Number(_amount) !== 0) {
                     if (altRoute === undefined) {
@@ -749,7 +749,7 @@ const swapBestRate = async () => {
                     setWrappedRoute(true)
                 } else {
                     setWrappedRoute(false)
-                    //** CMswap
+                    //** CMswap */
                     try {
                         setAltRoute(undefined)
                         const poolState = await readContracts(config, {
@@ -1002,7 +1002,7 @@ const swapBestRate = async () => {
                     } catch {
                         updateExchangeRateCMswapTVL(feeSelect, 0)
                     }
-                    //** DiamonFinance
+                    //** DiamonFinance */
 
                     try {
                         setAltRoute(undefined)
@@ -1039,7 +1039,7 @@ const swapBestRate = async () => {
                         updateExchangeRateDMswapTVL(0)
                     }
 
-                    //** UdonSwap 
+                    //** UdonSwap */
                     try {
                         setAltRoute(undefined)
                         const getPairAddr = await readContracts(config, { contracts: [{ ...CMswapUniSmartRouteContractV2, functionName: 'getPairAddress', args: [BigInt(1), tokenAvalue, tokenBvalue], }] })
@@ -1070,7 +1070,7 @@ const swapBestRate = async () => {
                         updateExchangeRateUdonswapTVL(0)
                     }
 
-                    //** ponder.finance
+                    //** ponder.finance */
                     const updatePonderTvlKey = (value: number, isReverted: boolean) => { setPonderTVL(prevTvl => ({ ...prevTvl, tvl10000: value >= 1e-9 ? value.toString() : '0', isReverted })); };
                     const updateExchangeRatePonderTVL = (exchangeRate: number) => { setPonderTVL(prevTvl => ({ ...prevTvl, exchangeRate: exchangeRate.toString() })); };
 
@@ -1160,6 +1160,7 @@ const swapBestRate = async () => {
             if (CMswapTVL || DMswapTVL || UdonTVL) {
                 try {
                     const quote = await getQoute(amountA);
+                    /*  console.log("Fetched quote:", quote); */
 
                     const CMRate = Number(quote?.CMswapRate) > 0
                         ? Number(quote?.CMswapRate)
@@ -1195,6 +1196,7 @@ const swapBestRate = async () => {
                     const sortedEntries = validRates.sort((a, b) => b[1] - a[1]);
                     const [bestPool, bestRate] = sortedEntries[0];
 
+                    /*                     console.log("Best pool selected:", bestPool, "with rate:", bestRate); */
                     setBestPool(bestPool);
 
                     if (poolSelect === "") {
@@ -1359,7 +1361,7 @@ const swapBestRate = async () => {
             </div>
             {!wrappedRoute && mode === "Manual" &&
                 <div className="mt-6">
-                    {/** LIQUIDITY SELECTION  }
+                    {/** LIQUIDITY SELECTION  */}
                     <div className="flex justify-between items-center my-2">
                         <span className="text-gray-400 font-mono text-xs">Liquidity Available</span>
                     </div>
@@ -1408,7 +1410,7 @@ const swapBestRate = async () => {
                         )}
                     </div>
 
-                    {/** CMswap FEE SELECTION }
+                    {/** CMswap FEE SELECTION  */}
                     {poolSelect === "CMswap" && (
                         <>
                             <div className="flex justify-between items-center my-2">
@@ -1545,4 +1547,3 @@ const swapBestRate = async () => {
         </div>
     )
 }
- */ 
