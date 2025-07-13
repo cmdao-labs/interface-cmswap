@@ -41,27 +41,42 @@ export default function ErrorModal({ errorMsg, setErrMsg }: {
                             </CollapsibleTrigger>
                             <Separator />
                             <CollapsibleContent className="space-y-3">
-                                {errorMsg !== null &&
-                                    <>
-                                        <div>
-                                            <span className="text-xs font-medium">From</span>
-                                            <div className="font-mono text-xs text-muted-foreground truncate">{Object.values(errorMsg)[12]}</div>
-                                        </div>
-                                        <div>
-                                            <span className="text-xs font-medium">To</span>
-                                            <div className="font-mono text-xs text-muted-foreground truncate">{Object.values(errorMsg)[9]}</div>
-                                        </div>
-                                        <div>
-                                            <span className="text-xs font-medium">Function</span>
-                                            <div className="font-mono text-xs text-muted-foreground truncate">{Object.values(errorMsg)[11]}</div>
-                                        </div>
-                                        <div>
-                                            <span className="text-xs font-medium">Arguments</span>
-                                            <div className="font-mono text-xs text-muted-foreground">{Object.values(errorMsg)[8].map((value: string, index: number) => `arg[${index}]: ${value}`).join(", ")}</div>
-                                        </div>
-                                    </>
-                                }                       
-                            </CollapsibleContent>
+  {errorMsg !== null && (
+    <>
+      <div>
+        <span className="text-xs font-medium">From</span>
+        <div className="font-mono text-xs text-muted-foreground overflow-x-auto whitespace-nowrap">
+          {Object.values(errorMsg)[12]}
+        </div>
+      </div>
+      <div>
+        <span className="text-xs font-medium">To</span>
+        <div className="font-mono text-xs text-muted-foreground overflow-x-auto whitespace-nowrap">
+          {Object.values(errorMsg)[9]}
+        </div>
+      </div>
+      <div>
+        <span className="text-xs font-medium">Function</span>
+        <div className="font-mono text-xs text-muted-foreground overflow-x-auto whitespace-nowrap">
+          {Object.values(errorMsg)[11]}
+        </div>
+      </div>
+      <div>
+        <span className="text-xs font-medium">Arguments</span>
+        <div className="font-mono text-xs text-muted-foreground overflow-x-auto text-wrap break-all">
+          {Array.isArray(Object.values(errorMsg)[8]) ? (
+            Object.values(errorMsg)[8].map((value: string, index: number) => (
+              <div key={index}>arg[{index}]: {value}</div>
+            ))
+          ) : (
+            <div>{String(Object.values(errorMsg)[8])}</div>
+          )}
+        </div>
+      </div>
+    </>
+  )}
+</CollapsibleContent>
+
                         </Collapsible>
                     </div>
                 </div>
