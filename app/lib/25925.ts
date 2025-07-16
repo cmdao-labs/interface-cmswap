@@ -6,7 +6,7 @@ import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3st
 // swap
 export const tokens: {name: string, value: '0xstring', logo: string}[] = [
     { name: 'KUB', value: '0xnative' as '0xstring', logo: '/96.png' },
-    { name: 'KKUB', value: '0x37f57ae5c5662191a5d87d94c8a8445ee2e2aba7' as '0xstring', logo: '/96.png' },
+    { name: 'tKKUB', value: '0x700D3ba307E1256e509eD3E45D6f9dff441d6907' as '0xstring', logo: '/96.png' },
     { name: 'testKUB', value: '0xE7f64C5fEFC61F85A8b851d8B16C4E21F91e60c0' as '0xstring', logo: '' },
     { name: 'testToken', value: '0x23352915164527e0AB53Ca5519aec5188aa224A2' as '0xstring', logo: '' },
 ]
@@ -25,11 +25,11 @@ export const game_tokens: Record<string, Token[]> = {
     }
 
 export const AddrZero = '0x0000000000000000000000000000000000000000' as '0xstring'
-export const V3_FACTORY = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142' as '0xstring'
-export const POSITION_MANAGER = '0x5f364Ef9241EAe92A1ea361Fe4976759d7656455' as '0xstring'
-export const positionManagerCreatedAt = BigInt(23850227)
-export const QOUTER_V2 = '0x555756bd5B347853af6F713a2aF6231414BEdEFC' as '0xstring'
-export const ROUTER02 = '0x5a16536BB85a2fA821ec774008d6068ecED79c96' as '0xstring'
+export const V3_FACTORY = '0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b' as '0xstring'
+export const POSITION_MANAGER = '0x690f45C21744eCC4ac0D897ACAC920889c3cFa4b' as '0xstring'
+export const positionManagerCreatedAt = BigInt(23935419)
+export const QOUTER_V2 = '0x3F64C4Dfd224a102A4d705193a7c40899Cf21fFe' as '0xstring'
+export const ROUTER02 = '0x3C5514335dc4E2B0D9e1cc98ddE219c50173c5Be' as '0xstring'
 
 export const CMswapUniSmartRoute = '0x01837156518e60362048e78d025a419C51346f55' as '0xstring'
 export const BitkubEvmKYC = '0x409CF41ee862Df7024f289E9F2Ea2F5d0D7f3eb4' as '0xstring' // kyc for unwrap kkub
