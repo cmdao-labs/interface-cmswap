@@ -3,7 +3,7 @@ import Link from "next/link";
 import { connection } from 'next/server';
 import { readContracts } from '@wagmi/core';
 import { createPublicClient, http, formatEther, erc20Abi } from 'viem'
-import { bitkub, monadTestnet } from 'viem/chains';
+import { bitkub, monadTestnet , bitkubTestnet } from 'viem/chains';
 import { config } from '@/app/config'
 import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
 import { UniswapV2FactoryABI } from '@/app/pump/abi/UniswapV2Factory';
@@ -31,7 +31,13 @@ export default async function Activity({
         _chainId = 10143;
         _explorer = 'https://monad-testnet.socialscan.io/';
         _rpc = process.env.NEXT_PUBLIC_MONAD_RPC as string;
-    } // add chain here
+    } else if (chain === 'kubtestnet'){
+        _chain = bitkubTestnet;
+        _chainId = 25925;
+        _explorer = 'https://testnet.kubscan.com/';
+        _rpc = 'https://rpc-testnet.bitkubchain.io' as string;
+    }
+    // add chain here
     const publicClient = createPublicClient({ 
         chain: _chain,
         transport: http(_rpc)
@@ -55,7 +61,12 @@ export default async function Activity({
         bkgafactoryAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
        _blockcreated = 16912084;
         v2facAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
-    } // add chain and mode here
+    } else if (chain === 'kubtestnet' && mode === 'pro') {
+        currencyAddr = '0x700D3ba307E1256e509eD3E45D6f9dff441d6907';
+        bkgafactoryAddr = '0x46a4073c830031ea19d7b9825080c05f8454e530';
+       _blockcreated = 23935659;
+        v2facAddr = '0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b';
+    }   // add chain and mode here
     const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
     const dataofuniv2factory = {addr: v2facAddr};
     const bkgafactoryContract = {

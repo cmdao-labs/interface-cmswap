@@ -26,7 +26,9 @@ export default async function Table({
     _chainId = 96;
   } else if (chain === 'monad') {
     _chainId = 10143;
-  } // add chain here
+  } else if (chain = 'kubtestnet'){
+    _chainId = 25925;
+  }// add chain here
   let currencyAddr: string = '';
   let bkgafactoryAddr: string = '';
   let v2facAddr: string = '';
@@ -42,7 +44,11 @@ export default async function Table({
     currencyAddr = '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701';
     bkgafactoryAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
     v2facAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
-  } // add chain and mode here
+  } else if (chain === 'kubtestnet' && mode === 'pro') {
+        currencyAddr = '0x700D3ba307E1256e509eD3E45D6f9dff441d6907';
+        bkgafactoryAddr = '0x46a4073c830031ea19d7b9825080c05f8454e530';
+        v2facAddr = '0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b';
+    }// add chain and mode here
   const dataofcurr = {addr: currencyAddr};
   const dataofuniv2factory = {addr: v2facAddr};
   const bkgafactoryContract = {

@@ -26,7 +26,11 @@ export async function generateMetadata(
     } else if (chain === 'monad') {
         chainId = 10143;
         facAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
-    } // add chain here
+    } else if (chain === 'kubtestnet'){
+        chainId = 25925;
+        facAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
+    }// add chain here
+    
     const result = await readContracts(config, {
         contracts: [
             {

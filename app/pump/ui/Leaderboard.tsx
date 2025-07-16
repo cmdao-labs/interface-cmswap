@@ -2,7 +2,7 @@ import Image from "next/image";
 import Jazzicon from '@raugfer/jazzicon';
 import { connection } from 'next/server';
 import { createPublicClient, http, formatEther, erc20Abi } from 'viem';
-import { bitkub, monadTestnet } from 'viem/chains';
+import { bitkub, monadTestnet, bitkubTestnet } from 'viem/chains';
 import { config } from '@/app/config';
 import { readContracts, getBalance } from '@wagmi/core';
 import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
@@ -37,7 +37,12 @@ export default async function Leaderboard({
     _chainId = 10143;
     _explorer = 'https://monad-testnet.socialscan.io/';
     _rpc = process.env.NEXT_PUBLIC_MONAD_RPC as string;
-  } // add chain here
+  } else if (chain === 'kubtestnet'){
+    _chain = bitkubTestnet;
+    _chainId = 25925;
+    _explorer = 'https://testnet.kubscan.com/';
+    _rpc = 'https://rpc-testnet.bitkubchain.io' as string;
+} // add chain here
   const publicClient = createPublicClient({ 
     chain: _chain,
     transport: http(_rpc)
@@ -65,7 +70,13 @@ export default async function Leaderboard({
     _blockcreated = 16912084;
     v2facAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
     v2routerAddr = '0x5a16536bb85a2fa821ec774008d6068eced79c96'
-  } // add chain and mode here
+  }  else if (chain === 'kubtestnet' && mode === 'pro') {
+        currencyAddr = '0x700D3ba307E1256e509eD3E45D6f9dff441d6907';
+        bkgafactoryAddr = '0x46a4073c830031ea19d7b9825080c05f8454e530';
+       _blockcreated = 23935659;
+        v2facAddr = '0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b';
+    v2routerAddr = '0x3C5514335dc4E2B0D9e1cc98ddE219c50173c5Be'
+    }  // add chain and mode here
   const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
   const dataofuniv2factory = {addr: v2facAddr};
   // const dataofuniv2router = {addr: v2routerAddr};

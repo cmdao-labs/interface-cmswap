@@ -21,7 +21,10 @@ export default function Create({
     _chainId = 96;
   } else if (chain === 'monad') {
     _chainId = 10143;
-  } // add chain here
+  } else if (chain === 'kubtestnet'){
+    _chainId = 25925;
+  }
+  // add chain here
   let currencyAddr: string = '';
   let bkgafactoryAddr: string = '';
   if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '') && (token === 'cmm' || token === '')) {
@@ -33,7 +36,11 @@ export default function Create({
   } else if (chain === 'monad' && mode === 'pro') {
     currencyAddr = '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701';
     bkgafactoryAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
-  } // add chain and mode here
+  } else if (chain === 'kubtestnet' && mode === 'pro') {
+        currencyAddr = '0x700D3ba307E1256e509eD3E45D6f9dff441d6907';
+        bkgafactoryAddr = '0x46a4073c830031ea19d7b9825080c05f8454e530';
+    }  
+  // add chain and mode here
   const dataofcurr = {addr: currencyAddr};
   const bkgafactoryContract = {
     address: bkgafactoryAddr as '0xstring',
@@ -83,7 +90,15 @@ export default function Create({
           args: [name, ticker, 'ipfs://' + upload.IpfsHash, desp],
           value: parseEther('0'),
         });
-      } else {
+      } else if (chain === 'kubtestnet' && mode === 'pro') {
+              result = await writeContract(config, {
+          ...bkgafactoryContract,
+          functionName: 'createToken',
+          args: [name, ticker, 'ipfs://' + upload.IpfsHash, desp],
+          value: parseEther('0'),
+        });
+      }
+        else{
         result = await writeContract(config, {
           ...bkgafactoryContract,
           functionName: 'createToken',
@@ -91,7 +106,11 @@ export default function Create({
           value: parseEther('1'),
         });
       }
-      alert("Launch success!, your txn hash: " + (chain === 'kub' && "https://www.kubscan.com/tx/") + (chain === 'monad' && "https://monad-testnet.socialscan.io/") + result);
+      alert("Launch success!, your txn hash: " + 
+        (chain === 'kub' && "https://www.kubscan.com/tx/") + 
+        (chain === 'monad' && "https://monad-testnet.socialscan.io/") +
+        (chain === 'kubtestnet' && "https://testnet.kubscan.com/tx/") 
+        + result);
     } catch (e) {
       console.log(e);
       alert("Launch failed");
@@ -129,7 +148,12 @@ export default function Create({
           <div className="text-teal-900 pt-2 w-full" role="alert">
             <div className="flex">
               <svg className="fill-current h-4 w-4 text-teal-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/></svg>
-              <p className="font-bold text-xs">Deployment cost: {chain === 'kub' && mode === 'pro' && '1 KUB (not included network fee)'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && '6,000 CMM (not included network fee)'}{chain === 'monad' && mode === 'pro' && '1 MON (not included network fee)'}</p>
+              <p className="font-bold text-xs">Deployment cost: 
+                {chain === 'kub' && mode === 'pro' && '1 KUB (not included network fee)'}
+                {chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && '6,000 CMM (not included network fee)'}
+                {chain === 'monad' && mode === 'pro' && '1 MON (not included network fee)'}
+                {chain === 'kubtestnet' && mode === 'pro' && ' 0 tKUB only network fee'}
+              </p>
             </div>
           </div>
           {connections && account.address !== undefined && account.chainId === _chainId ? 

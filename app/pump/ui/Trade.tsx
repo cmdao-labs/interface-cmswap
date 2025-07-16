@@ -19,7 +19,7 @@ import {
   http,
 } from "viem";
 import { Copy, Check, Plus, Coins } from "lucide-react";
-import { bitkub, monadTestnet } from "viem/chains";
+import { bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
 import { config } from "@/app/config";
 import { ERC20FactoryABI } from "@/app/pump/abi/ERC20Factory";
 import { UniswapV2FactoryABI } from "@/app/pump/abi/UniswapV2Factory";
@@ -68,6 +68,11 @@ export default function Trade({
     _chainId = 10143;
     _explorer = "https://monad-testnet.socialscan.io/";
     _rpc = process.env.NEXT_PUBLIC_MONAD_RPC as string;
+  } else if (chain === 'kubtestnet'){
+      _chain = bitkubTestnet;
+      _chainId = 25925;
+      _explorer = 'https://testnet.kubscan.com/';
+      _rpc = 'https://rpc-testnet.bitkubchain.io' as string;
   } // add chain here
   const publicClient = createPublicClient({
     chain: _chain,
@@ -113,7 +118,16 @@ export default function Trade({
     v3qouterAddr = "0x555756bd5b347853af6f713a2af6231414bedefc";
     socialAddr = "0x01837156518e60362048e78d025a419C51346f55";
     graduatedAddr = "0x6dfc8eecca228c45cc55214edc759d39e5b39c93"
-  } // add chain and mode here
+  } else if (chain === "kubtestnet" && mode === "pro") {
+    currencyAddr = "0x700D3ba307E1256e509eD3E45D6f9dff441d6907";
+    bkgafactoryAddr = "	0x46a4073c830031ea19d7b9825080c05f8454e530";
+    _blockcreated = 23935659;
+    v2facAddr = "0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b";
+    v2routerAddr = "0x3C5514335dc4E2B0D9e1cc98ddE219c50173c5Be";
+    v3qouterAddr = "0x3F64C4Dfd224a102A4d705193a7c40899Cf21fFe";
+    socialAddr = "0xc40D6f15E88e44Af2dd3dcF1D76e54d6c2B38eB6";
+  }
+  // add chain and mode here
   const dataofcurr = { addr: currencyAddr, blockcreated: _blockcreated };
   const dataofuniv2factory = { addr: v2facAddr };
   const dataofuniv2router = { addr: v2routerAddr };
@@ -2592,7 +2606,7 @@ export default function Trade({
                   placeholder: "Facebook",
                 },
                 {
-                  icon: <FaTwitter className="text-white" />,
+                  icon: <BsTwitterX className="text-white" />,
                   field: "x",
                   placeholder: "X (Twitter) URL",
                 },
