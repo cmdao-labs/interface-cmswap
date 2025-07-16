@@ -25,6 +25,7 @@ export default function Menu({
                 <div className="flex flex-row gap-1">
                     <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'kub') {handleChain('kub');}}}><Image src="/96.png" alt="" width={25} height={25} style={{filter: (chain === 'kub' || chain === '') ? "grayscale(0)" : "grayscale(1)"}} /></button>
                     <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'monad') {handleChain('monad');}}}><Image src="/monad.jpg" alt="" width={25} height={25} style={{filter: chain === 'monad' ? "grayscale(0)" : "grayscale(1)"}} /></button>
+                    <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'kubtestnet') {handleChain('kubtestnet');}}}><Image src="/96.png" alt="" width={25} height={25} style={{filter: chain === 'kubtestnet' ? "grayscale(0)" : "grayscale(1)"}} /></button>
                 </div>
             }
             {connections && account.address !== undefined &&
