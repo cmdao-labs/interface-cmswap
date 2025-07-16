@@ -3,9 +3,9 @@ import React from "react";
 
 export default function FeeStructurePage() {
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-start p-8 bg-gradient-to-br from-slate-900 via-black to-emerald-900 text-white">
-      <section className="max-w-4xl w-full mt-[60px] md:mt-[120px] bg-gray-900 bg-opacity-30 rounded-xl shadow-lg p-8">
-        <h1 className="text-4xl font-extrabold mb-10 text-[#32ffa7] drop-shadow-lg">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gray-900 text-white px-4 py-8 md:py-16">
+      <section className="w-full max-w-4xl bg-gray-800 border border-green-400/30 rounded-xl p-8 shadow-sm">
+        <h1 className="text-4xl font-extrabold mb-10 text-white "> {/**text-[#32ffa7] */}
           Fee Structure
         </h1>
         <p className="mb-8 text-lg text-gray-300">
@@ -15,7 +15,7 @@ export default function FeeStructurePage() {
         <div className="overflow-x-auto rounded-md">
           <table className="min-w-full border-collapse">
             <thead>
-              <tr className="bg-[#0f2d1a]">
+              <tr className=""> {/**bg-[#0f2d1a] */}
                 <th className="text-left px-6 py-4 font-semibold text-[#32ffa7] border-b border-[#32ffa7]/50">
                   Function
                 </th>
@@ -89,7 +89,7 @@ export default function FeeStructurePage() {
               ].map(({ func, detail }, i) => (
                 <tr
                   key={i}
-                  className={i % 2 === 0 ? "bg-[#10381f]" : "bg-[#0d2f19]"}
+                  /* className={i % 2 === 0 ? "bg-[#10381f]" : "bg-[#0d2f19]"} */
                 >
                   <td className="px-6 py-4 border-b border-[#32ffa7]/30 font-medium text-white">
                     {func}
