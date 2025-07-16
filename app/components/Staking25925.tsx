@@ -470,8 +470,8 @@ const handleUnstaked = async (
         return (
           <button
             key={index}
-            onClick={() => setLockOption(durationNum)}
-            className={`px-3 py-1 rounded-lg text-sm font-medium ${lockOption === durationNum ? theme.primary : theme.bg} ${theme.text} border ${theme.border}`}
+            onClick={() => setLockOption(index)}
+            className={`px-3 py-1 rounded-lg text-sm font-medium ${lockOption === index ? theme.primary : theme.bg} ${theme.text} border ${theme.border}`}
           >
             {durationNum / 86400} Days ({multiplier.toFixed(2)}x)
           </button>
@@ -480,7 +480,9 @@ const handleUnstaked = async (
     </div>
     Unlock at:{" "}
     <span className="text-gray-400">
-      {getUnlockDate(lockOption / 86400).toLocaleString()}
+      {getUnlockDate(
+    Number(programInfo.lockDurations[lockOption]) / 86400
+  ).toLocaleString()}
     </span>
   </>
 )}
