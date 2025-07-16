@@ -210,7 +210,7 @@ const StakingList = ({
       coinName: "tKKUB",
       programName: "Stake tKKUB EARN tT",
       tokenAddress: "0x700D3ba307E1256e509eD3E45D6f9dff441d6907",
-      apr: "25.4%",
+      apr: "-%",
       commission: "",
       programContract: "0x15572Cc3653a08Da1929B0da163eCcC9d1779394",
       isNFT: false,
@@ -226,7 +226,7 @@ const StakingList = ({
       coinName: "tKKUB",
       programName: "LOCK 7 DAYS tKKUB EARN tT",
       tokenAddress: "0x700D3ba307E1256e509eD3E45D6f9dff441d6907",
-      apr: "25.4%",
+      apr: "-%",
       commission: "",
       programContract: "0x5b83F3B1DFF4A8EEb7E0f301f0Cc455D82446d94",
       isNFT: false,
@@ -242,7 +242,7 @@ const StakingList = ({
       coinName: "tKKUB",
       programName: "LOCK tKKUB EARN tT",
       tokenAddress: "0x700D3ba307E1256e509eD3E45D6f9dff441d6907",
-      apr: "25.4%",
+      apr: "-%",
       commission: "",
       programContract: "0x78251fde68c9b176a9a56133e11d42b16cafd748",
       isNFT: false,
@@ -348,8 +348,8 @@ const handleUnstaked = async (
 
 
   const StakingLPPopup = ({ program, theme }: { program: any; theme: typeof chainThemes.KUB }) => (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-xl p-6 max-w-md w-full border border-gray-700">
+    <div className="fixed inset-0  flex items-center justify-center z-50 p-4">
+      <div className=" rounded-xl p-6 max-w-md w-full border border-gray-700">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-white">Add Staking Power</h3>
           <button
