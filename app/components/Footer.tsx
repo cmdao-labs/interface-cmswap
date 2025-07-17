@@ -3,6 +3,7 @@ import { Github, FileText, MessageSquare, X,Scale,Percent,ShieldCheck } from "lu
 import {FaTwitter,FaUsers,FaTelegram } from "react-icons/fa";
 import { BsTwitterX,BsDiscord  } from "react-icons/bs";
 import { MdContacts } from "react-icons/md";
+import { LuChartCandlestick } from "react-icons/lu";
 
 export default function Footer() {
     return (
@@ -13,7 +14,7 @@ export default function Footer() {
                         <span className="text-xs font-mono">CMswap_v0.1.1</span>
 
                         <div className="h-4 w-px bg-[#32ffa7]/20 hidden md:block" />
-                        <Link href="http://docs.cmswap.xyz/th" target="_blank" rel="noreferrer" className="text-white/60 hover:text-[#32ffa7] text-xs flex items-center gap-1  font-mono">
+                        <Link href="https://docs.cmswap.xyz/" target="_blank" rel="noreferrer" className="text-white/60 hover:text-[#32ffa7] text-xs flex items-center gap-1  font-mono">
                             <FileText className="w-4 h-4" /><span>DOCS</span>
                         </Link> 
                         <div className="h-4 w-px bg-[#32ffa7]/20 hidden md:block" />
@@ -46,14 +47,18 @@ export default function Footer() {
                         <Link href="/contact-us" rel="noreferrer" className="text-white/60 hover:text-[#32ffa7] text-xs flex items-center gap-1  font-mono">
                             <MdContacts className="w-4 h-4" /><span>CONTACT US</span>
                         </Link>
-
+{/* 
                          <div className="h-4 w-px bg-[#32ffa7]/20 hidden md:block" />
                         <Link href="/about/tradingview" rel="noreferrer" className="text-white/60 hover:text-[#32ffa7] text-xs flex items-center gap-1  font-mono">
-                            <MdContacts className="w-4 h-4" /><span>ABOUT TRADINGVIEW</span>
+                            <LuChartCandlestick  className="w-4 h-4" /><span>ABOUT TRADINGVIEW</span>
                         </Link>
-                        
+                         */}
                     </div>
                     <div className="flex items-center gap-4">
+                        <Link href="/about/tradingview" rel="noreferrer" className="text-white/60 hover:text-[#32ffa7] text-xs flex items-center gap-1  font-mono">
+                            <LuChartCandlestick  className="w-4 h-4" /><span>ABOUT TRADINGVIEW</span>
+                        </Link>
+                        <div className="h-4 w-px bg-[#32ffa7]/20" />
                         <Link href="https://discord.gg/k92ReT5EYy" target="_blank" rel="noreferrer" className="text-white/60 hover:text-[#32ffa7] text-xs flex items-center gap-1 font-mono">
                             <BsDiscord   className="w-4 h-4" />
                         </Link>

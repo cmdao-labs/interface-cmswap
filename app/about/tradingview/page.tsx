@@ -9,6 +9,7 @@ export default function AboutTradingViewPage() {
                 <p className="mb-6 leading-relaxed text-gray-200">
                     TradingView is one of the most popular platforms for analyzing price charts, tracking market movements, and exploring ideas shared by traders worldwide. Whether you're new to trading or a seasoned investor, TradingView provides powerful tools to help you make smarter, data-driven decisions.
                 </p>
+                <img src="../trading chart2.webp" alt="TradingView Logo" className="mb-6 w-full h-auto" />
 
                 <h2 className="text-2xl font-semibold mt-8 mb-4 text-white"> What Makes TradingView Unique?</h2>
                 <ul className="list-disc ml-6 mb-6 space-y-2">
