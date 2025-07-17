@@ -52,39 +52,35 @@ export default function ContactUsPage() {
 
         <div className="space-y-8">
           {/* Address */}
-          <div className="flex flex-col sm:flex-row items-start gap-4">
+   {/*        <div className="flex flex-col sm:flex-row items-start gap-4">
             <div className="bg-gray-700 border border-green-400/30 p-3 rounded-lg">
               <MapPin className="text-green-400" size={20} />
             </div>
             <div>
               <h3 className="font-semibold text-green-400 mb-1">Address</h3>
               <p className="text-gray-300 leading-relaxed text-sm md:text-base">
-                VKS Computer and Software Co., Ltd.
                 <br />
-                45/271 Moo 6, Bang Krathuk Sub-district
                 <br />
-                Sampran District, Nakhon Pathom 73210
                 <br />
-                Thailand
               </p>
             </div>
           </div>
-
+ */}
           {/* Phone */}
-          <div className="flex flex-col sm:flex-row items-start gap-4">
+{/*           <div className="flex flex-col sm:flex-row items-start gap-4">
             <div className="bg-gray-700 border border-green-400/30 p-3 rounded-lg">
               <Phone className="text-green-400" size={20} />
             </div>
             <div>
               <h3 className="font-semibold text-green-400 mb-1">Phone</h3>
               <a
-                href="tel:+66841842815"
+                href="tel:+"
                 className="text-gray-300 hover:text-green-400 transition-colors text-sm md:text-base"
               >
-                +66 84 184 2815
+                +
               </a>
             </div>
-          </div>
+          </div> */}
 
           {/* Email */}
           <div className="flex flex-col sm:flex-row items-start gap-4">
