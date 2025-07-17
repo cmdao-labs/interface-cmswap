@@ -43,8 +43,8 @@ export default function ContactUsPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-900 text-white px-4 py-8 md:py-16">
-      <div className="w-full max-w-4xl bg-gray-800 border border-green-400/30 rounded-xl p-8 shadow-sm">
+        <div className="min-h-screen w-full flex flex-col items-center justify-start text-sm p-8 bg-gradient-to-br from-slate-700 via-black to-emerald-900 text-white">
+      <div className="w-full max-w-4xl w-full mt-[60px] md:mt-[120px]">
         <h2 className="text-2xl md:text-3xl font-bold mb-8 flex items-center gap-3 justify-center">
           <MessageCircle className="text-white" size={28} />
           <span className="text-white">Contact Us</span>
