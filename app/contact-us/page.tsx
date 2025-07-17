@@ -99,7 +99,7 @@ export default function ContactUsPage() {
           </div>
 
           {/* Business Hours */}
-          <div className="flex flex-col sm:flex-row items-start gap-4">
+{/*           <div className="flex flex-col sm:flex-row items-start gap-4">
             <div className="bg-gray-700 border border-green-400/30 p-3 rounded-lg">
               <Clock className="text-green-400" size={20} />
             </div>
@@ -111,7 +111,7 @@ export default function ContactUsPage() {
                 Every Day: 10:00 AM - 5:00 PM (UTC+7)
               </p>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 
