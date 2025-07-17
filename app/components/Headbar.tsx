@@ -30,7 +30,7 @@ export default function Headbar() {
                                     <Link href="/swap" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono">
                                     <Button variant="ghost" className="cursor-pointer">Swap</Button>
                                     </Link>
-                                    {chainId === 25925 && (
+                                    {chainId === 2 && (
                                         <Link href="/trade" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono">
                                             <Button variant="ghost" className="cursor-pointer">Trade</Button>
                                         </Link>
@@ -42,10 +42,13 @@ export default function Headbar() {
                                     <Button variant="ghost" className="cursor-pointer">Pump</Button>
                                     </Link>
                                     {chainId === 25925 && (
-                                    <>
                                         <Link href="/earn" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono">
                                         <Button variant="ghost" className="cursor-pointer">Earn</Button>
                                         </Link>
+                                    )}
+                                    {chainId === 2 && (
+                                    <>
+                                        
                                         <Link href="/referral" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono">
                                         <Button variant="ghost" className="cursor-pointer">Referral Program</Button>
                                         </Link>
@@ -79,10 +82,11 @@ export default function Headbar() {
                     <div className="md:hidden w-full bg-gray-950 text-white">
                         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                             <Link href="/swap" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer' onClick={handleLinkClick}>Swap</Button></Link>
-                            <Link href="/trade" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer' onClick={handleLinkClick}>Trade</Button></Link>
+                            {chainId === 0 && (<Link href="/trade" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer' onClick={handleLinkClick}>Trade</Button></Link>)}
                             <Link href="/bridge" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer' onClick={handleLinkClick}>Bridge</Button></Link>
                             <Link href="/pump" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer' onClick={handleLinkClick}>Pump</Button></Link>
-                            <Link href="/referral" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer' onClick={handleLinkClick}>Referral Program</Button></Link>
+                            {chainId === 0 && (<Link href="/trade" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer' onClick={handleLinkClick}>Trade</Button></Link>)}
+                            {chainId === 0 && (<Link href="/referral" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer' onClick={handleLinkClick}>Referral Program</Button></Link>)}
                         </div>
                     </div>
                 )}
