@@ -5,7 +5,9 @@ import { type WriteContractErrorType } from '@wagmi/core'
 import ErrorModal from '@/app/components/error-modal'
 
 import LiquidityPool25925 from '../components/LiquidityPool25925'
+import LiquidityPool8899 from '../components/LiquidityPool8899'
 import LiquidityPool96 from '../components/LiquidityPool96'
+import LiquidityPoolCombined from '../components/LiquidityPool_Combined'
 
 export default function Page() {
     const [isLoading, setIsLoading] = React.useState(false)
@@ -22,9 +24,10 @@ export default function Page() {
   <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
 
   <div className="w-full max-w-full">
+{/*     <LiquidityPoolCombined /> */}
     {chainId === 96 && <LiquidityPool96 /> }
+    {chainId === 8899 && <LiquidityPool8899 /> }
     {chainId === 25925 && <LiquidityPool25925 />}
-    {/* {chainId === 96 ? <Ref96 /> : <RefError chainID={Number(chainId)} />} */}
   </div>
 </div>
 
