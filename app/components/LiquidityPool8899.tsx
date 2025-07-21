@@ -2,10 +2,10 @@
 import React, { useState } from 'react';
 import { ChevronDown, TrendingUp, TrendingDown, CodeSquare } from 'lucide-react';
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core'
-import { v3FactoryContract,erc20ABI,v3PoolABI as v3PoolABI_96 } from '@/app/lib/96'
+import { v3FactoryContract,erc20ABI,v3PoolABI as v3PoolABI_8899 } from '@/app/lib/8899'
 import { config } from '@/app/config'
 import { useAccount } from 'wagmi'
-import { bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
+import { jbc,bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
 import {
   formatEther,
   parseEther,
@@ -13,7 +13,7 @@ import {
   createPublicClient,
   http,
 } from "viem";
-import { tokens } from '@/app/lib/96';
+import { tokens } from '@/app/lib/8899';
 import { usePrice } from '@/app/context/getPrice'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -77,63 +77,6 @@ const themes: Record<ThemeId, Theme> = {
   },
 };
 
-const mockPools = [
-  {
-    id: 1,
-    token1: { name: 'SOL', symbol: 'SOL', logo: '🔵' },
-    token2: { name: 'USDC', symbol: 'USDC', logo: '💙' },
-    fee: 0.25,
-    liquidity: 15420000,
-    volume24h: 8520000,
-    fee24h: 21300,
-    apr: 125.4,
-    themeId: 8899
-  },
-  {
-    id: 2,
-    token1: { name: 'RAY', symbol: 'RAY', logo: '⚡' },
-    token2: { name: 'USDC', symbol: 'USDC', logo: '💙' },
-    fee: 0.25,
-    liquidity: 8750000,
-    volume24h: 3200000,
-    fee24h: 8000,
-    apr: 89.2,
-    themeId: 96
-  },
-  {
-    id: 3,
-    token1: { name: 'BONK', symbol: 'BONK', logo: '🐕' },
-    token2: { name: 'SOL', symbol: 'SOL', logo: '🔵' },
-    fee: 0.25,
-    liquidity: 12300000,
-    volume24h: 5600000,
-    fee24h: 14000,
-    apr: 156.8,
-    themeId: 56
-  },
-  {
-    id: 4,
-    token1: { name: 'ORCA', symbol: 'ORCA', logo: '🐋' },
-    token2: { name: 'SOL', symbol: 'SOL', logo: '🔵' },
-    fee: 0.25,
-    liquidity: 4200000,
-    volume24h: 1800000,
-    fee24h: 4500,
-    apr: 67.3,
-    themeId: 3501
-  },
-  {
-    id: 5,
-    token1: { name: 'STEP', symbol: 'STEP', logo: '🟣' },
-    token2: { name: 'USDC', symbol: 'USDC', logo: '💙' },
-    fee: 0.25,
-    liquidity: 2100000,
-    volume24h: 890000,
-    fee24h: 2225,
-    apr: 43.7,
-    themeId: 10143
-  }
-];
 
 const formatNumber = (num: number) => {
   if (num >= 1e9) return `$${(num / 1e9).toFixed(3)} B`;
@@ -171,11 +114,17 @@ const chainConfigs = {
     rpc: 'https://rpc-testnet.bitkubchain.io',
     blocktime: 5
   },
-  // Add more chains here
+  8899: {
+    chain: jbc,
+    chainId: 8899,
+    explorer: 'https://exp.jibchain.net/',
+    rpc: 'https://rpc-l1.jbc.xpool.pw',
+    blocktime: 12
+  }
 };
 
 
-export default function LiquidityPool96() {
+export default function LiquidityPool8899() {
   type SortField = 'liquidity' | 'volume24h' | 'fee24h' | 'apr' | 'name';
   const [sortBy, setSortBy] = useState<SortField>('liquidity');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -198,7 +147,7 @@ export default function LiquidityPool96() {
   >([]);
   const feeOptions = [100, 500, 3000, 10000];
   const { chainId } = useAccount()
-  const selectedChain = chainId || '96'; 
+  const selectedChain = chainId || '8899'; 
   const chainConfig = chainConfigs[selectedChain as keyof typeof chainConfigs];
   const _chain = chainConfig.chain; 
   const { priceList } = usePrice();
@@ -207,6 +156,7 @@ export default function LiquidityPool96() {
     chain: _chain,
     transport: http(chainConfig.rpc),
   });
+
   const generatePairs = (tokens: { name: string; value: string; logo: string }[]) => {
     const pairs: [string, string][] = [];
     for (let i = 0; i < tokens.length; i++) {
@@ -335,7 +285,7 @@ export default function LiquidityPool96() {
                 volume24h: volumeToken * priceA,
                 fee24h: fee24h,
                 apr: apr,
-                themeId: 96,
+                themeId: 8899,
               });
             }
           } catch (error) {
