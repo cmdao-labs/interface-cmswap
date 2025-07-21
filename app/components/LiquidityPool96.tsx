@@ -15,6 +15,8 @@ import {
 } from "viem";
 import { tokens } from '@/app/lib/96';
 import { usePrice } from '@/app/context/getPrice'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 type ThemeId = 96 | 8899 | 56 | 3501 | 10143;
 type Theme = {
@@ -134,13 +136,13 @@ const mockPools = [
 ];
 
 const formatNumber = (num: number) => {
-  if (num >= 1e9) return `$${(num / 1e9).toFixed(1)}B`;
-  if (num >= 1e6) return `$${(num / 1e6).toFixed(1)}M`;
-  if (num >= 1e3) return `$${(num / 1e3).toFixed(1)}K`;
-  return `$${num.toFixed(0)}`;
+  if (num >= 1e9) return `$${(num / 1e9).toFixed(3)} B`;
+  if (num >= 1e6) return `$${(num / 1e6).toFixed(3)} M`;
+  if (num >= 1e3) return `$${(num / 1e3).toFixed(3)} K`;
+  return `$${num.toFixed(3)}`;
 };
 
-const formatPercentage = (num: number) => `${num.toFixed(1)}%`;
+const formatPercentage = (num: number) => `${num.toFixed(2)}%`;
 
 const getTokenNameFromAddress = (address: string): string => {
   const found = tokens.find(t => t.value.toLowerCase() === address.toLowerCase());
@@ -181,8 +183,10 @@ export default function LiquidityPool96() {
     {
       tokenA: string;
       tokenALogo: string;
+      tokenAaddr: string ;
       tokenB: string;
       tokenBLogo: string;
+      tokenBaddr: string ;
       fee: number;
       poolAddress: string;
       liquidity: number;
@@ -316,13 +320,15 @@ export default function LiquidityPool96() {
               const feeRate = feeSelect / 1_000_000;
               const fee24h = volumeToken * feeRate * priceA;
 
-              let apr = ((fee24h * 365) / liquidityUSD) * 100|| 0;
+              let apr = ((fee24h * 365) / liquidityUSD) * 100 || 0;
 
               results.push({
                 tokenA: tokenA.name,
                 tokenALogo: tokenA.logo || '/default2.png',
+                tokenAaddr: tokenA.value as '0xstring',
                 tokenB: tokenB.name,
                 tokenBLogo: tokenB.logo || '/default2.png',
+                tokenBaddr: tokenB.value as '0xstring',
                 fee: feeSelect,
                 poolAddress: poolResult.result,
                 liquidity: liquidityUSD,
@@ -422,7 +428,7 @@ export default function LiquidityPool96() {
         <div className="hidden lg:block">
           <div className=" backdrop-blur-xl rounded-2xl border border-slate-700/50 overflow-hidden">
             {/* Table Header */}
-            <div className="grid grid-cols-5 gap-4 p-6  border-b border-slate-700/50">
+<div className="grid [grid-template-columns:1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 p-6 border-b border-slate-700/50">
               <button 
                 onClick={() => handleSort('name')}
                 className="flex items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors"
@@ -458,6 +464,8 @@ export default function LiquidityPool96() {
                 APR 24H
                 <SortIcon field="apr" />
               </button>
+                <div className="font-medium text-slate-300">Action</div>
+
             </div>
 
             {/* Table Body */}
@@ -467,7 +475,7 @@ export default function LiquidityPool96() {
                 return (
                   <div 
                     key={`${pool.tokenA}-${pool.tokenB}-${pool.fee}-${pool.poolAddress}`} 
-                    className="grid grid-cols-5 gap-4 p-6 hover:bg-slate-800/30 transition-colors cursor-pointer group"
+  className="grid [grid-template-columns:1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 p-6 hover:bg-slate-800/30 transition-colors cursor-pointer group"
                   >
                     {/* Pool */}
                     <div className="flex items-center gap-3">
@@ -517,6 +525,15 @@ export default function LiquidityPool96() {
                       <span className={`font-bold text-lg ${theme.text}`}>
                         {formatPercentage(pool.apr)}
                       </span>
+                    </div>
+                    {/* Action Btn */}
+                    <div className="flex items-center gap-2 whitespace-nowrap">
+                      <Link href={`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=liquidity`}>
+                        <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs">Supply</Button>
+                      </Link>
+                      <Link href={`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=swap`}>
+                        <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs">Swap</Button>
+                      </Link>
                     </div>
                   </div>
                 );
