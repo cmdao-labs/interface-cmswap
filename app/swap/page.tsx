@@ -24,6 +24,8 @@ export default function Page() {
     const [isLoading, setIsLoading] = React.useState(false)
     const [errMsg, setErrMsg] = React.useState<WriteContractErrorType | null>(null)
     const { chainId } = useAccount()
+    const searchParams = useSearchParams();
+    const tabValue = searchParams.get("tab") ?? "swap"; 
 
     return (
         <div className="min-h-screen w-full flex flex-col items-center justify-start text-xs bg-gradient-to-br from-slate-700 via-black to-emerald-900">
@@ -32,7 +34,7 @@ export default function Page() {
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
             <Card className="w-full max-w-xl mx-auto bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-lg overflow-hidden p-2 mb-8 mt-[100px]">
                 <div className="px-4">
-                    <Tabs defaultValue="swap" className="w-full sticky">
+                    <Tabs defaultValue={tabValue} className="w-full sticky">
                         <TabsList className="w-full grid grid-cols-3 bg-[#0a0b1e] rounded-md p-1 mb-4">
                             <TabsTrigger value="swap" className="font-mono text-sm data-[state=active]:bg-[#162638] data-[state=active]:text-[#00ff9d] rounded cursor-pointer">Instant swap</TabsTrigger>
                             <TabsTrigger value="liquidity" className="font-mono text-sm data-[state=active]:bg-[#162638] data-[state=active]:text-[#00ff9d] rounded cursor-pointer">Liquidity</TabsTrigger>
