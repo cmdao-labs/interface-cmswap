@@ -2,7 +2,14 @@
 import React, { useState } from 'react';
 import { ChevronDown, TrendingUp, TrendingDown, CodeSquare } from 'lucide-react';
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core'
-import { v3FactoryContract,erc20ABI,v3PoolABI as v3PoolABI_96 } from '@/app/lib/96'
+import { 
+  v3FactoryContract,
+  erc20ABI,
+  v3PoolABI as v3PoolABI_96,
+  V3_FACTORY as V3_FACTORY_96,
+  V3_FACTORYCreatedAt as V3_FACTORYCreatedAt_96,
+} from '@/app/lib/96'
+
 import { config } from '@/app/config'
 import { useAccount } from 'wagmi'
 import { bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
@@ -224,129 +231,160 @@ export default function LiquidityPool96() {
   React.useEffect(() => {
       if (!priceList || priceList.length < 2) return;
 
-    const fetchPools = async () => {
-      const pairsToCheck = generatePairs(tokens);
-      const results: typeof validPools = [];
+  const fetchPools = async () => {
+    //* FETCH ALL Pool Created V3_FACTORYCreatedAt
+    const logCreateData = await publicClient.getContractEvents({
+      ...v3FactoryContract,
+      eventName: 'PoolCreated',
+      fromBlock: V3_FACTORYCreatedAt_96,
+      toBlock: 'latest',
+    });
 
-      for (const [tokenAName, tokenBName] of pairsToCheck) {
-        const tokenA = tokens.find((t) => t.name === tokenAName);
-        const tokenB = tokens.find((t) => t.name === tokenBName);
-        if (!tokenA || !tokenB) continue;
+    let CreateData = logCreateData.map((res: any) => ({
+      action: 'create',
+      token0: res.args.token0 as "0xstring",
+      token1: res.args.token1 as "0xstring",
+      fee: res.args.fee as "0xstring",
+      pool: res.args.pool as "0xstring",
+      tx: res.transactionHash as "0xstring",
+    }));
 
-        for (const feeSelect of feeOptions) {
-          try {
+    const results: typeof validPools = [];
+    // note : for priority 
+    const currencyTokens = [tokens[2].value, tokens[1].value, tokens[3].value]; 
 
-            const [poolResult] = await readContracts(config,{
-              contracts: [
-                {
-                  ...v3FactoryContract,
-                  functionName: "getPool",
-                  args: [tokenA.value, tokenB.value, feeSelect],
-                },
-              ],
-            });
+    for (const item of CreateData) {
+      let tokenA = tokens.find(t => t.value.toLowerCase() === item.token0.toLowerCase());
+      let tokenB = tokens.find(t => t.value.toLowerCase() === item.token1.toLowerCase());
 
-            let BuyData;
-            let SellData;
-            if (
-              poolResult &&
-              poolResult.status === "success" &&
-              poolResult.result !== "0x0000000000000000000000000000000000000000"
-            ) {
-              //** GET TVL SIZE */
-              const poolStatus = await readContracts(config, {
-                contracts : [
-                  { abi: erc20Abi, address: tokenA.value as "0xstring", functionName: 'balanceOf', args: [poolResult.result as "0xstring"] },
-                  { abi: erc20Abi, address: tokenB.value as "0xstring", functionName: 'balanceOf', args: [poolResult.result as "0xstring"] },
-
-                ]
-              })
-
-              const tokenAamount = poolStatus[0].result !== undefined ? poolStatus[0].result : BigInt(0)
-              const tokenBamount = poolStatus[1].result !== undefined ? poolStatus[1].result : BigInt(0)
-              const priceA = priceList.find(p => p.token === tokenAName)?.priceUSDT ?? 0;
-              const priceB = priceList.find(p => p.token === tokenBName)?.priceUSDT ?? 0;
-              const balanceA = Number(tokenAamount) / 1e18;
-              const balanceB = Number(tokenBamount) / 1e18;
-
-              const liquidityUSD = (balanceA * priceA) + (balanceB * priceB);
-
-
-
-
-
-              //** FETCH LAST 24H TRADED */
-              const blockAmountDaily = 86400 / chainConfig.blocktime; 
-              const currentBlock = await publicClient.getBlockNumber();
-
-              const logBuyData = await publicClient.getContractEvents({
-                abi: erc20Abi,
-                address: tokenA.value as "0xstring",
-                eventName: 'Transfer',
-                args: {
-                  from: poolResult.result as "0xstring"
-                },
-                fromBlock: currentBlock - BigInt(blockAmountDaily),
-                toBlock: 'latest',
-              });
-
-              BuyData = logBuyData.map((res: any) => {
-                return {
-                  action: 'buy',
-                  value: Number(formatEther(res.args.value)),
-                }
-              })
-              const logSellData = await publicClient.getContractEvents({
-                abi: erc20Abi,
-                address: tokenA.value as "0xstring",
-                eventName: 'Transfer',
-                args: {
-                  to: poolResult.result as "0xstring"
-                },
-                fromBlock: currentBlock - BigInt(blockAmountDaily),
-                toBlock: 'latest',
-              });
-
-              SellData = logSellData.map((res: any) => {
-                return {
-                  action: 'sell',
-                  value: Number(formatEther(res.args.value)),
-                } 
-              });
-
-              console.log("Buy Data:", logBuyData);
-              console.log("Sell Data:", logSellData);
-              const volumeToken = [...BuyData, ...SellData].reduce((sum, tx) => sum + tx.value, 0);
-              const feeRate = feeSelect / 1_000_000;
-              const fee24h = volumeToken * feeRate * priceA;
-
-              let apr = ((fee24h * 365) / liquidityUSD) * 100 || 0;
-
-              results.push({
-                tokenA: tokenA.name,
-                tokenALogo: tokenA.logo || '/default2.png',
-                tokenAaddr: tokenA.value as '0xstring',
-                tokenB: tokenB.name,
-                tokenBLogo: tokenB.logo || '/default2.png',
-                tokenBaddr: tokenB.value as '0xstring',
-                fee: feeSelect,
-                poolAddress: poolResult.result,
-                liquidity: liquidityUSD,
-                volume24h: volumeToken * priceA,
-                fee24h: fee24h,
-                apr: apr,
-                themeId: 96,
-              });
-            }
-          } catch (error) {
-            console.error(`Error fetching pool for ${tokenAName}-${tokenBName} fee ${feeSelect}:`, error);
-          }
-        }
+      // Get token symbol if not found
+      if (!tokenA) {
+        const [symbolA] = await readContracts(config, {
+          contracts: [{
+            abi: erc20Abi,
+            address: item.token0,
+            functionName: "symbol"
+          }]
+        });
+        tokenA = {
+          name: symbolA.result ?? 'UNKNOWN',
+          value: item.token0,
+          logo: '/default2.png'
+        };
       }
 
-      setValidPools(results);
-      console.log("Valid pools:", results);
-    };
+      if (!tokenB) {
+        const [symbolB] = await readContracts(config, {
+          contracts: [{
+            abi: erc20Abi,
+            address: item.token1,
+            functionName: "symbol"
+          }]
+        });
+        tokenB = {
+          name: symbolB.result ?? 'UNKNOWN',
+          value: item.token1,
+          logo: '/default2.png'
+        };
+      }
+      try {
+        const poolStatus = await readContracts(config, {
+          contracts : [
+            { abi: erc20Abi, address: tokenA.value, functionName: 'balanceOf', args: [item.pool] },
+            { abi: erc20Abi, address: tokenB.value, functionName: 'balanceOf', args: [item.pool] },
+          ]
+        });
+
+        let tokenAamount = poolStatus[0].result ?? BigInt(0);
+        let tokenBamount = poolStatus[1].result ?? BigInt(0);
+
+        // ✅ No TypeScript error
+        let priceA = priceList.find(p => p.token === tokenA!.name)?.priceUSDT ?? 0;
+        let priceB = priceList.find(p => p.token === tokenB!.name)?.priceUSDT ?? 0;
+        let balanceA = Number(tokenAamount) / 1e18;
+        let balanceB = Number(tokenBamount) / 1e18;
+
+        const liquidityUSD = (balanceA * priceA) + (balanceB * priceB);
+
+        //** FETCH LAST 24H TRADED */
+        const blockAmountDaily = 86400 / chainConfig.blocktime; 
+        const currentBlock = await publicClient.getBlockNumber();
+
+        const logBuyData = await publicClient.getContractEvents({
+          abi: erc20Abi,
+          address: tokenA.value,
+          eventName: 'Transfer',
+          args: { from: item.pool },
+          fromBlock: currentBlock - BigInt(blockAmountDaily),
+          toBlock: 'latest',
+        });
+
+        const BuyData = logBuyData.map((res: any) => ({
+          action: 'buy',
+          value: Number(formatEther(res.args.value)),
+          tx: res.transactionHash,
+        }));
+
+        const logSellData = await publicClient.getContractEvents({
+          abi: erc20Abi,
+          address: tokenA.value,
+          eventName: 'Transfer',
+          args: { to: item.pool },
+          fromBlock: currentBlock - BigInt(blockAmountDaily),
+          toBlock: 'latest',
+        });
+
+        const SellData = logSellData.map((res: any) => ({
+          action: 'sell',
+          value: Number(formatEther(res.args.value)),
+          tx: res.transactionHash,
+        }));
+
+        console.log(`Buy Data for ${tokenA.name}-${tokenB.name}:`, BuyData);
+        console.log(`Sell Data for ${tokenA.name}-${tokenB.name}:`, SellData);
+
+        const volumeToken = [...BuyData, ...SellData].reduce((sum, tx) => sum + tx.value, 0);
+        const feeRate = Number(item.fee) / 1_000_000;
+        const fee24h = volumeToken * feeRate * priceA;
+        const apr = ((fee24h * 365) / liquidityUSD) * 100 || 0;
+
+        // Ensure tokenA is always the first token in the pair
+        // This is to maintain consistency in sorting and display
+        const a = currencyTokens.indexOf(tokenA.value);
+        const b = currencyTokens.indexOf(tokenB.value);
+
+        if ((a !== -1 && b === -1) || (a !== -1 && b !== -1 && b < a)) {
+          [tokenA, tokenB] = [tokenB, tokenA];
+          [tokenAamount, tokenBamount] = [tokenBamount, tokenAamount];
+          [priceA, priceB] = [priceB, priceA];
+          [balanceA, balanceB] = [balanceB, balanceA];
+        }
+
+
+        results.push({
+          tokenA: tokenA.name,
+          tokenALogo: tokenA.logo,
+          tokenAaddr: tokenA.value,
+          tokenB: tokenB.name,
+          tokenBLogo: tokenB.logo,
+          tokenBaddr: tokenB.value,
+          fee: Number(item.fee),
+          poolAddress: item.pool,
+          liquidity: liquidityUSD,
+          volume24h: volumeToken * priceA,
+          fee24h,
+          apr,
+          themeId: 96,
+        });
+
+      } catch (error) {
+        console.error(`Error fetching pool for ${tokenA.name}-${tokenB.name}:`, error);
+      }
+    }
+
+    setValidPools(results);
+    console.log("Valid pools:", results);
+  };
 
     fetchPools();
 
