@@ -46,6 +46,11 @@ export default function Headbar() {
                                         <Button variant="ghost" className="cursor-pointer">Earn</Button>
                                         </Link>
                                     )}
+                                    {typeof chainId === 'number' && [25925, 96,8899].includes(chainId) && (
+                                        <Link href="/liquidity-pool" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono">
+                                        <Button variant="ghost" className="cursor-pointer">Liquidity</Button>
+                                        </Link>
+                                    )}
                                     {chainId === 2 && (
                                     <>
                                         
@@ -85,6 +90,7 @@ export default function Headbar() {
                             {chainId === 0 && (<Link href="/trade" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer' onClick={handleLinkClick}>Trade</Button></Link>)}
                             <Link href="/bridge" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer' onClick={handleLinkClick}>Bridge</Button></Link>
                             <Link href="/pump" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer' onClick={handleLinkClick}>Pump</Button></Link>
+                            <Link href="/liquidity-pool" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer' onClick={handleLinkClick}>Liquidity</Button></Link>
                             {chainId === 0 && (<Link href="/trade" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer' onClick={handleLinkClick}>Trade</Button></Link>)}
                             {chainId === 0 && (<Link href="/referral" className="text-white/70 hover:text-green-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 font-mono"><Button variant="ghost" className='cursor-pointer' onClick={handleLinkClick}>Referral Program</Button></Link>)}
                         </div>
