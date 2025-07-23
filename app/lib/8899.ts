@@ -15,6 +15,7 @@ export const tokens: {name: string, value: '0xstring', logo: string}[] = [
 ]
 
 export const V3_FACTORY = '0x5835f123bDF137864263bf204Cf4450aAD1Ba3a7' as '0xstring'
+export const V3_FACTORYCreatedAt = BigInt(4990175)
 export const POSITION_MANAGER = '0xfC445018B20522F9cEd1350201e179555a7573A1' as '0xstring'
 export const positionManagerCreatedAt = BigInt(4990192)
 export const QOUTER_V2 = '0x5ad32c64A2aEd381299061F32465A22B1f7A2EE2' as '0xstring'
