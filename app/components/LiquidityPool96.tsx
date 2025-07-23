@@ -8,11 +8,12 @@ import {
   v3PoolABI as v3PoolABI_96,
   V3_FACTORY as V3_FACTORY_96,
   V3_FACTORYCreatedAt as V3_FACTORYCreatedAt_96,
+  positionManagerContract as positionManagerContract_96,
 } from '@/app/lib/96'
 
 import { config } from '@/app/config'
 import { useAccount } from 'wagmi'
-import { bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
+import { jbc,bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
 import {
   formatEther,
   parseEther,
@@ -84,64 +85,6 @@ const themes: Record<ThemeId, Theme> = {
   },
 };
 
-const mockPools = [
-  {
-    id: 1,
-    token1: { name: 'SOL', symbol: 'SOL', logo: '🔵' },
-    token2: { name: 'USDC', symbol: 'USDC', logo: '💙' },
-    fee: 0.25,
-    liquidity: 15420000,
-    volume24h: 8520000,
-    fee24h: 21300,
-    apr: 125.4,
-    themeId: 8899
-  },
-  {
-    id: 2,
-    token1: { name: 'RAY', symbol: 'RAY', logo: '⚡' },
-    token2: { name: 'USDC', symbol: 'USDC', logo: '💙' },
-    fee: 0.25,
-    liquidity: 8750000,
-    volume24h: 3200000,
-    fee24h: 8000,
-    apr: 89.2,
-    themeId: 96
-  },
-  {
-    id: 3,
-    token1: { name: 'BONK', symbol: 'BONK', logo: '🐕' },
-    token2: { name: 'SOL', symbol: 'SOL', logo: '🔵' },
-    fee: 0.25,
-    liquidity: 12300000,
-    volume24h: 5600000,
-    fee24h: 14000,
-    apr: 156.8,
-    themeId: 56
-  },
-  {
-    id: 4,
-    token1: { name: 'ORCA', symbol: 'ORCA', logo: '🐋' },
-    token2: { name: 'SOL', symbol: 'SOL', logo: '🔵' },
-    fee: 0.25,
-    liquidity: 4200000,
-    volume24h: 1800000,
-    fee24h: 4500,
-    apr: 67.3,
-    themeId: 3501
-  },
-  {
-    id: 5,
-    token1: { name: 'STEP', symbol: 'STEP', logo: '🟣' },
-    token2: { name: 'USDC', symbol: 'USDC', logo: '💙' },
-    fee: 0.25,
-    liquidity: 2100000,
-    volume24h: 890000,
-    fee24h: 2225,
-    apr: 43.7,
-    themeId: 10143
-  }
-];
-
 const formatNumber = (num: number) => {
   if (num >= 1e9) return `$${(num / 1e9).toFixed(3)} B`;
   if (num >= 1e6) return `$${(num / 1e6).toFixed(3)} M`;
@@ -178,6 +121,13 @@ const chainConfigs = {
     rpc: 'https://rpc-testnet.bitkubchain.io',
     blocktime: 5
   },
+    8899: {
+    chain: jbc,
+    chainId: 8899,
+    explorer: 'https://exp.jibchain.net/',
+    rpc: 'https://rpc-l1.jbc.xpool.pw',
+    blocktime: 12
+  }
   // Add more chains here
 };
 
@@ -186,6 +136,8 @@ export default function LiquidityPool96() {
   type SortField = 'liquidity' | 'volume24h' | 'fee24h' | 'apr' | 'name';
   const [sortBy, setSortBy] = useState<SortField>('liquidity');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [listFilter, setListFilter] = useState<'all' | 'listed' | 'unlisted'>('all');
+
   const [validPools, setValidPools] = useState<
     {
       tokenA: string;
@@ -201,6 +153,7 @@ export default function LiquidityPool96() {
       apr: number;
       fee24h: number;
       themeId: ThemeId;
+      listed: boolean;
     }[]
   >([]);
   const feeOptions = [100, 500, 3000, 10000];
@@ -209,6 +162,7 @@ export default function LiquidityPool96() {
   const chainConfig = chainConfigs[selectedChain as keyof typeof chainConfigs];
   const _chain = chainConfig.chain; 
   const { priceList } = usePrice();
+  const theme = themes[chainId as ThemeId] || themes[96];
 
   const publicClient = createPublicClient({
     chain: _chain,
@@ -252,13 +206,17 @@ export default function LiquidityPool96() {
     const results: typeof validPools = [];
     // note : for priority 
     const currencyTokens = [tokens[2].value, tokens[1].value, tokens[3].value]; 
+    let isListed = true;
 
     for (const item of CreateData) {
+      isListed = true
       let tokenA = tokens.find(t => t.value.toLowerCase() === item.token0.toLowerCase());
       let tokenB = tokens.find(t => t.value.toLowerCase() === item.token1.toLowerCase());
 
       // Get token symbol if not found
       if (!tokenA) {
+        isListed = false;
+        console.error(`Token A not found for address: ${item.token0}`);
         const [symbolA] = await readContracts(config, {
           contracts: [{
             abi: erc20Abi,
@@ -274,6 +232,8 @@ export default function LiquidityPool96() {
       }
 
       if (!tokenB) {
+        isListed = false;
+        console.error(`Token B not found for address: ${item.token1}`);
         const [symbolB] = await readContracts(config, {
           contracts: [{
             abi: erc20Abi,
@@ -298,7 +258,6 @@ export default function LiquidityPool96() {
         let tokenAamount = poolStatus[0].result ?? BigInt(0);
         let tokenBamount = poolStatus[1].result ?? BigInt(0);
 
-        // ✅ No TypeScript error
         let priceA = priceList.find(p => p.token === tokenA!.name)?.priceUSDT ?? 0;
         let priceB = priceList.find(p => p.token === tokenB!.name)?.priceUSDT ?? 0;
         let balanceA = Number(tokenAamount) / 1e18;
@@ -340,10 +299,45 @@ export default function LiquidityPool96() {
           tx: res.transactionHash,
         }));
 
-        console.log(`Buy Data for ${tokenA.name}-${tokenB.name}:`, BuyData);
-        console.log(`Sell Data for ${tokenA.name}-${tokenB.name}:`, SellData);
+        const logAddLiquidity = await publicClient.getContractEvents({
+          ...positionManagerContract_96,
+          eventName: 'IncreaseLiquidity',
+          address: item.pool,
+          fromBlock: currentBlock - BigInt(blockAmountDaily),
+          toBlock: 'latest',
+        })
+        const addLiquidityData = logAddLiquidity.map((res: any) => ({
+          action: 'add',
+          value: Number(formatEther(res.args.value)),
+          tx: res.transactionHash,
+        }));
 
-        const volumeToken = [...BuyData, ...SellData].reduce((sum, tx) => sum + tx.value, 0);
+        const logRemoveLiquidity = await publicClient.getContractEvents({
+          ...positionManagerContract_96,
+          eventName: 'DecreaseLiquidity',
+          address: item.pool,
+          fromBlock: currentBlock - BigInt(blockAmountDaily),
+          toBlock: 'latest',
+        });
+        const removeLiquidityData = logRemoveLiquidity.map((res: any) => ({
+          action: 'remove',
+          value: Number(formatEther(res.args.value)),
+          tx: res.transactionHash,
+        }));
+
+        const liquidityTxs = new Set([
+          ...addLiquidityData.map((item: any) => item.tx),
+          ...removeLiquidityData.map((item: any) => item.tx),
+        ]);
+        // Filter out liquidity transactions from buy/sell data
+        const filteredBuyData = BuyData.filter((item: any) => !liquidityTxs.has(item.tx));
+        const filteredSellData = SellData.filter((item: any) => !liquidityTxs.has(item.tx));
+
+
+        console.log(`Buy Data for ${tokenA.name}-${tokenB.name}:`, filteredBuyData);
+        console.log(`Sell Data for ${tokenA.name}-${tokenB.name}:`, filteredSellData);
+
+        const volumeToken = [...filteredBuyData, ...filteredSellData].reduce((sum, tx) => sum + tx.value, 0);
         const feeRate = Number(item.fee) / 1_000_000;
         const fee24h = volumeToken * feeRate * priceA;
         const apr = ((fee24h * 365) / liquidityUSD) * 100 || 0;
@@ -375,6 +369,7 @@ export default function LiquidityPool96() {
           fee24h,
           apr,
           themeId: 96,
+          listed: isListed,
         });
 
       } catch (error) {
@@ -399,7 +394,13 @@ export default function LiquidityPool96() {
     }
   };
 
-  const sortedPools = [...validPools].sort((a, b) => {
+const sortedPools = [...validPools]
+  .filter(pool => {
+    if (listFilter === 'listed') return pool.listed === true;
+    if (listFilter === 'unlisted') return pool.listed === false;
+    return true; // 'all'
+  })
+  .sort((a, b) => {
     let aVal: number | string;
     let bVal: number | string;
 
@@ -461,6 +462,34 @@ export default function LiquidityPool96() {
             </p>
           </div>
         </div>
+        
+        <div
+          className={`flex items-center gap-1.5 my-4 p-1 rounded-full w-fit 
+                      border ${theme.border} 
+                      shadow-inner shadow-${theme.accent}/10 
+                      backdrop-blur-md bg-[#061f1c]`}
+        >
+          {[
+            { label: 'All', value: 'all' },
+            { label: 'Listed', value: 'listed' },
+            { label: 'Not Listed', value: 'unlisted' }
+          ].map(({ label, value }) => (
+            <button
+              key={value}
+              onClick={() => setListFilter(value as 'all' | 'listed' | 'unlisted')}
+              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200
+                ${
+                  listFilter === value
+                    ? `bg-gradient-to-r ${theme.primary} text-black shadow-lg shadow-${theme.accent}/30`
+                    : `${theme.text} hover:text-white hover:bg-${theme.accent}/10`
+                }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+
 
         {/* Desktop Table */}
         <div className="hidden lg:block">

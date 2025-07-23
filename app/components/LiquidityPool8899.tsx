@@ -2,7 +2,15 @@
 import React, { useState } from 'react';
 import { ChevronDown, TrendingUp, TrendingDown, CodeSquare } from 'lucide-react';
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core'
-import { v3FactoryContract,erc20ABI,v3PoolABI as v3PoolABI_8899 } from '@/app/lib/8899'
+import { 
+  v3FactoryContract,
+  erc20ABI,
+  v3PoolABI as v3PoolABI_8899,
+  V3_FACTORY as V3_FACTORY_8899,
+  V3_FACTORYCreatedAt as V3_FACTORYCreatedAt_8899,
+  positionManagerContract as positionManagerContract_8899,
+} from '@/app/lib/8899'
+
 import { config } from '@/app/config'
 import { useAccount } from 'wagmi'
 import { jbc,bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
@@ -77,7 +85,6 @@ const themes: Record<ThemeId, Theme> = {
   },
 };
 
-
 const formatNumber = (num: number) => {
   if (num >= 1e9) return `$${(num / 1e9).toFixed(3)} B`;
   if (num >= 1e6) return `$${(num / 1e6).toFixed(3)} M`;
@@ -114,20 +121,23 @@ const chainConfigs = {
     rpc: 'https://rpc-testnet.bitkubchain.io',
     blocktime: 5
   },
-  8899: {
+    8899: {
     chain: jbc,
     chainId: 8899,
     explorer: 'https://exp.jibchain.net/',
     rpc: 'https://rpc-l1.jbc.xpool.pw',
     blocktime: 12
   }
+  // Add more chains here
 };
 
 
-export default function LiquidityPool8899() {
+export default function LiquidityPool96() {
   type SortField = 'liquidity' | 'volume24h' | 'fee24h' | 'apr' | 'name';
   const [sortBy, setSortBy] = useState<SortField>('liquidity');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [listFilter, setListFilter] = useState<'all' | 'listed' | 'unlisted'>('all');
+
   const [validPools, setValidPools] = useState<
     {
       tokenA: string;
@@ -143,20 +153,21 @@ export default function LiquidityPool8899() {
       apr: number;
       fee24h: number;
       themeId: ThemeId;
+      listed: boolean;
     }[]
   >([]);
   const feeOptions = [100, 500, 3000, 10000];
   const { chainId } = useAccount()
-  const selectedChain = chainId || '8899'; 
+  const selectedChain = chainId || '96'; 
   const chainConfig = chainConfigs[selectedChain as keyof typeof chainConfigs];
   const _chain = chainConfig.chain; 
   const { priceList } = usePrice();
+  const theme = themes[chainId as ThemeId] || themes[96];
 
   const publicClient = createPublicClient({
     chain: _chain,
     transport: http(chainConfig.rpc),
   });
-
   const generatePairs = (tokens: { name: string; value: string; logo: string }[]) => {
     const pairs: [string, string][] = [];
     for (let i = 0; i < tokens.length; i++) {
@@ -174,129 +185,201 @@ export default function LiquidityPool8899() {
   React.useEffect(() => {
       if (!priceList || priceList.length < 2) return;
 
-    const fetchPools = async () => {
-      const pairsToCheck = generatePairs(tokens);
-      const results: typeof validPools = [];
+  const fetchPools = async () => {
+    //* FETCH ALL Pool Created V3_FACTORYCreatedAt
+    const logCreateData = await publicClient.getContractEvents({
+      ...v3FactoryContract,
+      eventName: 'PoolCreated',
+      fromBlock: V3_FACTORYCreatedAt_8899,
+      toBlock: 'latest',
+    });
 
-      for (const [tokenAName, tokenBName] of pairsToCheck) {
-        const tokenA = tokens.find((t) => t.name === tokenAName);
-        const tokenB = tokens.find((t) => t.name === tokenBName);
-        if (!tokenA || !tokenB) continue;
+    let CreateData = logCreateData.map((res: any) => ({
+      action: 'create',
+      token0: res.args.token0 as "0xstring",
+      token1: res.args.token1 as "0xstring",
+      fee: res.args.fee as "0xstring",
+      pool: res.args.pool as "0xstring",
+      tx: res.transactionHash as "0xstring",
+    }));
 
-        for (const feeSelect of feeOptions) {
-          try {
+    const results: typeof validPools = [];
+    // note : for priority 
+    const currencyTokens = [tokens[2].value, tokens[1].value, tokens[3].value]; 
+    let isListed = true;
 
-            const [poolResult] = await readContracts(config,{
-              contracts: [
-                {
-                  ...v3FactoryContract,
-                  functionName: "getPool",
-                  args: [tokenA.value, tokenB.value, feeSelect],
-                },
-              ],
-            });
+    for (const item of CreateData) {
+      isListed = true
+      let tokenA = tokens.find(t => t.value.toLowerCase() === item.token0.toLowerCase());
+      let tokenB = tokens.find(t => t.value.toLowerCase() === item.token1.toLowerCase());
 
-            let BuyData;
-            let SellData;
-            if (
-              poolResult &&
-              poolResult.status === "success" &&
-              poolResult.result !== "0x0000000000000000000000000000000000000000"
-            ) {
-              //** GET TVL SIZE */
-              const poolStatus = await readContracts(config, {
-                contracts : [
-                  { abi: erc20Abi, address: tokenA.value as "0xstring", functionName: 'balanceOf', args: [poolResult.result as "0xstring"] },
-                  { abi: erc20Abi, address: tokenB.value as "0xstring", functionName: 'balanceOf', args: [poolResult.result as "0xstring"] },
-
-                ]
-              })
-
-              const tokenAamount = poolStatus[0].result !== undefined ? poolStatus[0].result : BigInt(0)
-              const tokenBamount = poolStatus[1].result !== undefined ? poolStatus[1].result : BigInt(0)
-              const priceA = priceList.find(p => p.token === tokenAName)?.priceUSDT ?? 0;
-              const priceB = priceList.find(p => p.token === tokenBName)?.priceUSDT ?? 0;
-              const balanceA = Number(tokenAamount) / 1e18;
-              const balanceB = Number(tokenBamount) / 1e18;
-
-              const liquidityUSD = (balanceA * priceA) + (balanceB * priceB);
-
-
-
-
-
-              //** FETCH LAST 24H TRADED */
-              const blockAmountDaily = 86400 / chainConfig.blocktime; 
-              const currentBlock = await publicClient.getBlockNumber();
-
-              const logBuyData = await publicClient.getContractEvents({
-                abi: erc20Abi,
-                address: tokenA.value as "0xstring",
-                eventName: 'Transfer',
-                args: {
-                  from: poolResult.result as "0xstring"
-                },
-                fromBlock: currentBlock - BigInt(blockAmountDaily),
-                toBlock: 'latest',
-              });
-
-              BuyData = logBuyData.map((res: any) => {
-                return {
-                  action: 'buy',
-                  value: Number(formatEther(res.args.value)),
-                }
-              })
-              const logSellData = await publicClient.getContractEvents({
-                abi: erc20Abi,
-                address: tokenA.value as "0xstring",
-                eventName: 'Transfer',
-                args: {
-                  to: poolResult.result as "0xstring"
-                },
-                fromBlock: currentBlock - BigInt(blockAmountDaily),
-                toBlock: 'latest',
-              });
-
-              SellData = logSellData.map((res: any) => {
-                return {
-                  action: 'sell',
-                  value: Number(formatEther(res.args.value)),
-                } 
-              });
-
-              console.log("Buy Data:", logBuyData);
-              console.log("Sell Data:", logSellData);
-              const volumeToken = [...BuyData, ...SellData].reduce((sum, tx) => sum + tx.value, 0);
-              const feeRate = feeSelect / 1_000_000;
-              const fee24h = volumeToken * feeRate * priceA;
-
-              let apr = ((fee24h * 365) / liquidityUSD) * 100 || 0;
-
-              results.push({
-                tokenA: tokenA.name,
-                tokenALogo: tokenA.logo || '/default2.png',
-                tokenAaddr: tokenA.value as '0xstring',
-                tokenB: tokenB.name,
-                tokenBLogo: tokenB.logo || '/default2.png',
-                tokenBaddr: tokenB.value as '0xstring',
-                fee: feeSelect,
-                poolAddress: poolResult.result,
-                liquidity: liquidityUSD,
-                volume24h: volumeToken * priceA,
-                fee24h: fee24h,
-                apr: apr,
-                themeId: 8899,
-              });
-            }
-          } catch (error) {
-            console.error(`Error fetching pool for ${tokenAName}-${tokenBName} fee ${feeSelect}:`, error);
-          }
-        }
+      // Get token symbol if not found
+      if (!tokenA) {
+        isListed = false;
+        console.error(`Token A not found for address: ${item.token0}`);
+        const [symbolA] = await readContracts(config, {
+          contracts: [{
+            abi: erc20Abi,
+            address: item.token0,
+            functionName: "symbol"
+          }]
+        });
+        tokenA = {
+          name: symbolA.result ?? 'UNKNOWN',
+          value: item.token0,
+          logo: '/default2.png'
+        };
       }
 
-      setValidPools(results);
-      console.log("Valid pools:", results);
-    };
+      if (!tokenB) {
+        isListed = false;
+        console.error(`Token B not found for address: ${item.token1}`);
+        const [symbolB] = await readContracts(config, {
+          contracts: [{
+            abi: erc20Abi,
+            address: item.token1,
+            functionName: "symbol"
+          }]
+        });
+        tokenB = {
+          name: symbolB.result ?? 'UNKNOWN',
+          value: item.token1,
+          logo: '/default2.png'
+        };
+      }
+      try {
+        const poolStatus = await readContracts(config, {
+          contracts : [
+            { abi: erc20Abi, address: tokenA.value, functionName: 'balanceOf', args: [item.pool] },
+            { abi: erc20Abi, address: tokenB.value, functionName: 'balanceOf', args: [item.pool] },
+          ]
+        });
+
+        let tokenAamount = poolStatus[0].result ?? BigInt(0);
+        let tokenBamount = poolStatus[1].result ?? BigInt(0);
+
+        let priceA = priceList.find(p => p.token === tokenA!.name)?.priceUSDT ?? 0;
+        let priceB = priceList.find(p => p.token === tokenB!.name)?.priceUSDT ?? 0;
+        let balanceA = Number(tokenAamount) / 1e18;
+        let balanceB = Number(tokenBamount) / 1e18;
+
+        const liquidityUSD = (balanceA * priceA) + (balanceB * priceB);
+
+        //** FETCH LAST 24H TRADED */
+        const blockAmountDaily = 86400 / chainConfig.blocktime; 
+        const currentBlock = await publicClient.getBlockNumber();
+
+        const logBuyData = await publicClient.getContractEvents({
+          abi: erc20Abi,
+          address: tokenA.value,
+          eventName: 'Transfer',
+          args: { from: item.pool },
+          fromBlock: currentBlock - BigInt(blockAmountDaily),
+          toBlock: 'latest',
+        });
+
+        const BuyData = logBuyData.map((res: any) => ({
+          action: 'buy',
+          value: Number(formatEther(res.args.value)),
+          tx: res.transactionHash,
+        }));
+
+        const logSellData = await publicClient.getContractEvents({
+          abi: erc20Abi,
+          address: tokenA.value,
+          eventName: 'Transfer',
+          args: { to: item.pool },
+          fromBlock: currentBlock - BigInt(blockAmountDaily),
+          toBlock: 'latest',
+        });
+
+        const SellData = logSellData.map((res: any) => ({
+          action: 'sell',
+          value: Number(formatEther(res.args.value)),
+          tx: res.transactionHash,
+        }));
+
+        const logAddLiquidity = await publicClient.getContractEvents({
+          ...positionManagerContract_8899,
+          eventName: 'IncreaseLiquidity',
+          address: item.pool,
+          fromBlock: currentBlock - BigInt(blockAmountDaily),
+          toBlock: 'latest',
+        })
+        const addLiquidityData = logAddLiquidity.map((res: any) => ({
+          action: 'add',
+          value: Number(formatEther(res.args.value)),
+          tx: res.transactionHash,
+        }));
+
+        const logRemoveLiquidity = await publicClient.getContractEvents({
+          ...positionManagerContract_8899,
+          eventName: 'DecreaseLiquidity',
+          address: item.pool,
+          fromBlock: currentBlock - BigInt(blockAmountDaily),
+          toBlock: 'latest',
+        });
+        const removeLiquidityData = logRemoveLiquidity.map((res: any) => ({
+          action: 'remove',
+          value: Number(formatEther(res.args.value)),
+          tx: res.transactionHash,
+        }));
+
+        const liquidityTxs = new Set([
+          ...addLiquidityData.map((item: any) => item.tx),
+          ...removeLiquidityData.map((item: any) => item.tx),
+        ]);
+        // Filter out liquidity transactions from buy/sell data
+        const filteredBuyData = BuyData.filter((item: any) => !liquidityTxs.has(item.tx));
+        const filteredSellData = SellData.filter((item: any) => !liquidityTxs.has(item.tx));
+
+
+        console.log(`Buy Data for ${tokenA.name}-${tokenB.name}:`, filteredBuyData);
+        console.log(`Sell Data for ${tokenA.name}-${tokenB.name}:`, filteredSellData);
+
+        const volumeToken = [...filteredBuyData, ...filteredSellData].reduce((sum, tx) => sum + tx.value, 0);
+        const feeRate = Number(item.fee) / 1_000_000;
+        const fee24h = volumeToken * feeRate * priceA;
+        const apr = ((fee24h * 365) / liquidityUSD) * 100 || 0;
+
+        // Ensure tokenA is always the first token in the pair
+        // This is to maintain consistency in sorting and display
+        const a = currencyTokens.indexOf(tokenA.value);
+        const b = currencyTokens.indexOf(tokenB.value);
+
+        if ((a !== -1 && b === -1) || (a !== -1 && b !== -1 && b < a)) {
+          [tokenA, tokenB] = [tokenB, tokenA];
+          [tokenAamount, tokenBamount] = [tokenBamount, tokenAamount];
+          [priceA, priceB] = [priceB, priceA];
+          [balanceA, balanceB] = [balanceB, balanceA];
+        }
+
+
+        results.push({
+          tokenA: tokenA.name,
+          tokenALogo: tokenA.logo,
+          tokenAaddr: tokenA.value,
+          tokenB: tokenB.name,
+          tokenBLogo: tokenB.logo,
+          tokenBaddr: tokenB.value,
+          fee: Number(item.fee),
+          poolAddress: item.pool,
+          liquidity: liquidityUSD,
+          volume24h: volumeToken * priceA,
+          fee24h,
+          apr,
+          themeId: 96,
+          listed: isListed,
+        });
+
+      } catch (error) {
+        console.error(`Error fetching pool for ${tokenA.name}-${tokenB.name}:`, error);
+      }
+    }
+
+    setValidPools(results);
+    console.log("Valid pools:", results);
+  };
 
     fetchPools();
 
@@ -311,7 +394,13 @@ export default function LiquidityPool8899() {
     }
   };
 
-  const sortedPools = [...validPools].sort((a, b) => {
+const sortedPools = [...validPools]
+  .filter(pool => {
+    if (listFilter === 'listed') return pool.listed === true;
+    if (listFilter === 'unlisted') return pool.listed === false;
+    return true; // 'all'
+  })
+  .sort((a, b) => {
     let aVal: number | string;
     let bVal: number | string;
 
@@ -373,6 +462,34 @@ export default function LiquidityPool8899() {
             </p>
           </div>
         </div>
+        
+        <div
+          className={`flex items-center gap-1.5 my-4 p-1 rounded-full w-fit 
+                      border ${theme.border} 
+                      shadow-inner shadow-${theme.accent}/10 
+                      backdrop-blur-md bg-[#061f1c]`}
+        >
+          {[
+            { label: 'All', value: 'all' },
+            { label: 'Listed', value: 'listed' },
+            { label: 'Not Listed', value: 'unlisted' }
+          ].map(({ label, value }) => (
+            <button
+              key={value}
+              onClick={() => setListFilter(value as 'all' | 'listed' | 'unlisted')}
+              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200
+                ${
+                  listFilter === value
+                    ? `bg-gradient-to-r ${theme.primary} text-black shadow-lg shadow-${theme.accent}/30`
+                    : `${theme.text} hover:text-white hover:bg-${theme.accent}/10`
+                }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+
 
         {/* Desktop Table */}
         <div className="hidden lg:block">
