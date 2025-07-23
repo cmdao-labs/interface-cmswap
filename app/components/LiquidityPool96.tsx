@@ -216,7 +216,7 @@ export default function LiquidityPool96() {
       // Get token symbol if not found
       if (!tokenA) {
         isListed = false;
-        console.error(`Token A not found for address: ${item.token0}`);
+/*         console.error(`Token A not found for address: ${item.token0}`); */
         const [symbolA] = await readContracts(config, {
           contracts: [{
             abi: erc20Abi,
@@ -233,7 +233,7 @@ export default function LiquidityPool96() {
 
       if (!tokenB) {
         isListed = false;
-        console.error(`Token B not found for address: ${item.token1}`);
+/*         console.error(`Token B not found for address: ${item.token1}`); */
         const [symbolB] = await readContracts(config, {
           contracts: [{
             abi: erc20Abi,
