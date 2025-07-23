@@ -28,6 +28,7 @@ export const PriceProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("GeckoTerminal Response:", responseJson.data[0].attributes.token_price_usd);
         let prices = [
           { token: 'KKUB', priceUSDT:  Number(responseJson.data[0].attributes.token_price_usd) ,priceNative: 1}, //* KKUB price IN KUSDT
+          { token: 'tKKUB', priceUSDT:  Number(responseJson.data[0].attributes.token_price_usd) ,priceNative: 1}, //* tKKUB for Testnet
           { token: 'KUSDT', priceUSDT:  1 ,priceNative: 1/Number(responseJson.data[0].attributes.token_price_usd)} //* KKUB price IN KUSDT
         ];
         setPriceList((prev) => [...prev, ...prices]);
