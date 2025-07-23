@@ -434,7 +434,7 @@ const sortedPools = [...validPools]
       <div className="container mx-auto px-4 py-8 ">
         {/* Header */}
         <div className="mb-8  mt-[120px]">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent mb-2">
             Liquidity Pools
           </h1>
           <p className="text-slate-400">Provide liquidity and earn fees</p>
