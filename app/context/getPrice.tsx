@@ -60,12 +60,20 @@ export const PriceProvider = ({ children }: { children: React.ReactNode }) => {
         //** Add Warpped Native Here */
         const kkubPrice = await fetchKKUBPrice();
         const wjbcPrice = await fetchWJBCPrice();
-        //** Add Warpped Native Here */
+        //** Add Price Here */
         const cmmPrices = await fetchCMM(kkubPrice.priceUSDT);
         const cmjPrices = await fetchCMJ(wjbcPrice.priceUSDT);
 
-        const shkPrices = await fetchSHK(cmmPrices, "SHK");
-        const lumiPrices = await fetchLUMI(kkubPrice, "LUMI");
+        const secondaryFetchList = [
+        { fetcher: fetchSHK, args: [cmmPrices, "SHK"] },
+        { fetcher: fetchLUMI, args: [kkubPrice, "LUMI"] },
+        { fetcher: fetchDOIJIB, args: [wjbcPrice, "DOIJIB"] },
+        { fetcher: fetchBB, args: [cmjPrices, "BB"] },
+      ];
+
+      const secondaryPromises = secondaryFetchList.map(item => item.fetcher(item.args[0], item.args[1]));
+      const [shkPrices, lumiPrices, doijibPrices, BBPrices] = await Promise.all(secondaryPromises);
+
       } catch (err) {
         console.error("Failed to load prices:", err);
       } finally {
@@ -76,7 +84,8 @@ export const PriceProvider = ({ children }: { children: React.ReactNode }) => {
     loadPrices();
   }, []);
 
-  const fetchCMJ = async (kkubPrice: any) => {
+    //** Chain 8899 */
+    const fetchCMJ = async (kkubPrice: any) => {
     const mainToken = '0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747';
     const pairToken = '0xE67E280f5a354B4AcA15fA7f0ccbF667CF74F97b';
     const result = await readContracts(config, {
@@ -143,6 +152,142 @@ export const PriceProvider = ({ children }: { children: React.ReactNode }) => {
 
 
     };
+
+    const fetchDOIJIB = async (currencyPrice: any,name: any) => {
+        const main = '0x24599b658b57f91E7643f4F154B16bcd2884f9ac';
+        const pair = '0x7414e2D8Fb8466AfA4F85A240c57CB8615901FFB';
+
+        const result = await readContracts(config, {
+      
+      contracts: [
+        { ...v3FactoryContract_8899, functionName: 'getPool', args: [main, pair, 100] },
+        { ...v3FactoryContract_8899, functionName: 'getPool', args: [main, pair, 500] },
+        { ...v3FactoryContract_8899, functionName: 'getPool', args: [main, pair, 3000] },
+        { ...v3FactoryContract_8899, functionName: 'getPool', args: [main, pair, 10000] },
+      ],
+    });
+
+    const poolAddresses = result
+      .map(res => res.result)
+      .filter((addr): addr is `0x${string}` => typeof addr === 'string' && addr.startsWith('0x'));
+
+    const poolInfos = await readContracts(config, {
+      contracts: poolAddresses.flatMap(poolAddress => [
+        { ...v3PoolABI_8899, address: poolAddress, functionName: 'slot0' },
+        { ...v3PoolABI_8899, address: poolAddress, functionName: 'token0' },
+        { ...v3PoolABI_8899, address: poolAddress, functionName: 'token1' },
+      ]),
+    });
+
+    const pools = [];
+    for (let i = 0; i < poolInfos.length; i += 3) {
+      const slot0 = poolInfos[i].result;
+      const token0 = poolInfos[i + 1].result;
+      const token1 = poolInfos[i + 2].result;
+
+      pools.push({ slot0, token0, token1 });
+    }
+
+    let priceUSDT;
+    let priceNative;
+
+    const prices = pools.map(({ slot0, token0, token1 }) => {
+      if (
+        slot0 &&
+        Array.isArray(slot0) &&
+        (typeof slot0[0] === 'bigint' || typeof slot0[0] === 'number')
+      ) {
+        const sqrtPriceX96 = BigInt(slot0[0]);
+ 
+        const mainAddress = main.toLowerCase();
+        const pairAddress = pair.toLowerCase();
+
+        
+
+        if (token0 && token1 && typeof token0 === 'string' && typeof token1 === 'string') {
+          if (token0.toLowerCase() === mainAddress && token1.toLowerCase() === pairAddress) {
+            return { token: name, priceUSDT: (1/(Number(sqrtPriceX96) / (2 ** 96)) ** 2) * currencyPrice.priceUSDT, priceNative: (1/(Number(sqrtPriceX96) / (2 ** 96)) ** 2) * currencyPrice.priceNative};
+          } else if (token0.toLowerCase() === pairAddress && token1.toLowerCase() === mainAddress) {
+            return { token: name, priceUSDT: (Number(sqrtPriceX96) / (2 ** 96)) ** 2 * currencyPrice.priceUSDT, priceNative: (Number(sqrtPriceX96) / (2 ** 96)) ** 2 * currencyPrice.priceNative};
+          }
+        }
+      }
+      return null;
+    }).filter(Boolean) as { token: string; priceUSDT: number; priceNative: number }[];
+    setPriceList((prev) => [...prev, ...prices]);
+    return {priceUSDT: priceUSDT, priceNative: priceNative};
+
+
+    };
+
+    const fetchBB = async (currencyPrice: any,name: any) => {
+        const main = '0xE67E280f5a354B4AcA15fA7f0ccbF667CF74F97b';
+        const pair = '0x8fcC6e3a23a0255057bfD9A97799b3a995Bf3D24';
+
+        const result = await readContracts(config, {
+      
+      contracts: [
+        { ...v3FactoryContract_8899, functionName: 'getPool', args: [main, pair, 100] },
+        { ...v3FactoryContract_8899, functionName: 'getPool', args: [main, pair, 500] },
+        { ...v3FactoryContract_8899, functionName: 'getPool', args: [main, pair, 3000] },
+        { ...v3FactoryContract_8899, functionName: 'getPool', args: [main, pair, 10000] },
+      ],
+    });
+
+    const poolAddresses = result
+      .map(res => res.result)
+      .filter((addr): addr is `0x${string}` => typeof addr === 'string' && addr.startsWith('0x'));
+
+    const poolInfos = await readContracts(config, {
+      contracts: poolAddresses.flatMap(poolAddress => [
+        { ...v3PoolABI_8899, address: poolAddress, functionName: 'slot0' },
+        { ...v3PoolABI_8899, address: poolAddress, functionName: 'token0' },
+        { ...v3PoolABI_8899, address: poolAddress, functionName: 'token1' },
+      ]),
+    });
+
+    const pools = [];
+    for (let i = 0; i < poolInfos.length; i += 3) {
+      const slot0 = poolInfos[i].result;
+      const token0 = poolInfos[i + 1].result;
+      const token1 = poolInfos[i + 2].result;
+
+      pools.push({ slot0, token0, token1 });
+    }
+
+    let priceUSDT;
+    let priceNative;
+
+    const prices = pools.map(({ slot0, token0, token1 }) => {
+      if (
+        slot0 &&
+        Array.isArray(slot0) &&
+        (typeof slot0[0] === 'bigint' || typeof slot0[0] === 'number')
+      ) {
+        const sqrtPriceX96 = BigInt(slot0[0]);
+ 
+        const mainAddress = main.toLowerCase();
+        const pairAddress = pair.toLowerCase();
+
+        
+
+        if (token0 && token1 && typeof token0 === 'string' && typeof token1 === 'string') {
+          if (token0.toLowerCase() === mainAddress && token1.toLowerCase() === pairAddress) {
+            return { token: name, priceUSDT: (1/(Number(sqrtPriceX96) / (2 ** 96)) ** 2) * currencyPrice.priceUSDT, priceNative: (1/(Number(sqrtPriceX96) / (2 ** 96)) ** 2) * currencyPrice.priceNative};
+          } else if (token0.toLowerCase() === pairAddress && token1.toLowerCase() === mainAddress) {
+            return { token: name, priceUSDT: (Number(sqrtPriceX96) / (2 ** 96)) ** 2 * currencyPrice.priceUSDT, priceNative: (Number(sqrtPriceX96) / (2 ** 96)) ** 2 * currencyPrice.priceNative};
+          }
+        }
+      }
+      return null;
+    }).filter(Boolean) as { token: string; priceUSDT: number; priceNative: number }[];
+    setPriceList((prev) => [...prev, ...prices]);
+    return {priceUSDT: priceUSDT, priceNative: priceNative};
+
+
+    };
+
+    //** Chain 96 */
 
     const fetchCMM = async (kkubPrice: any) => {
         const result = await readContracts(config, {
