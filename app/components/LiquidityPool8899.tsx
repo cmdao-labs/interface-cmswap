@@ -162,7 +162,7 @@ export default function LiquidityPool96() {
   const chainConfig = chainConfigs[selectedChain as keyof typeof chainConfigs];
   const _chain = chainConfig.chain; 
   const { priceList } = usePrice();
-  const theme = themes[chainId as ThemeId] || themes[96];
+  const theme = /* themes[chainId as ThemeId] ||  */themes[96];
 
   const publicClient = createPublicClient({
     chain: _chain,
@@ -333,10 +333,10 @@ export default function LiquidityPool96() {
         const filteredBuyData = BuyData.filter((item: any) => !liquidityTxs.has(item.tx));
         const filteredSellData = SellData.filter((item: any) => !liquidityTxs.has(item.tx));
 
-
+/* 
         console.log(`Buy Data for ${tokenA.name}-${tokenB.name}:`, filteredBuyData);
         console.log(`Sell Data for ${tokenA.name}-${tokenB.name}:`, filteredSellData);
-
+ */
         const volumeToken = [...filteredBuyData, ...filteredSellData].reduce((sum, tx) => sum + tx.value, 0);
         const feeRate = Number(item.fee) / 1_000_000;
         const fee24h = volumeToken * feeRate * priceA;
