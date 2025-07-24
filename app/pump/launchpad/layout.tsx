@@ -254,6 +254,7 @@ export default function BlogLayout({
           <Link href="/terms-of-use" className="hover:underline text-xs" rel="noreferrer">Terms of Use</Link>
           <Link href="/policy" className="hover:underline text-xs" rel="noreferrer">Privacy Policy</Link>
           <Link href="/fee" className="hover:underline text-xs" rel="noreferrer">Fee Structure</Link>
+          <Link href="/about/pump" className="hover:underline text-xs" rel="noreferrer">About Pump</Link>
         </>
       }
     />
