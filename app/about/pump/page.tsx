@@ -20,44 +20,68 @@ export default function AboutTradingViewPage() {
                     Both versions follow the same high-level logic: token creation → curve-based price discovery → Uniswap V3 graduation. But the internal logic and behavior differ significantly.
                 </p>
 
-                <div className="overflow-x-auto text-sm">
-                    <table className="w-full border border-gray-600 text-left mb-6">
-                        <thead className="bg-emerald-800 text-white">
-                            <tr>
-                                <th className="p-2 border">Feature</th>
-                                <th className="p-2 border">PUMP v1</th>
-                                <th className="p-2 border">PUMP v2</th>
-                            </tr>
-                        </thead>
-                        <tbody className="text-gray-200">
-                            <tr>
-                                <td className="p-2 border">Uses Virtual Reserve</td>
-                                <td className="p-2 border">❌</td>
-                                <td className="p-2 border">✅ Smooths early price volatility</td>
-                            </tr>
-                            <tr>
-                                <td className="p-2 border">Graduation Pricing</td>
-                                <td className="p-2 border">✅ Dynamically adjusts based on Uniswap's real price</td>
-                                <td className="p-2 border">❌ Uses static sqrt(initial ratio)</td>
-                            </tr>
-                            <tr>
-                                <td className="p-2 border">AMM Curve</td>
-                                <td className="p-2 border">Pure internal reserves</td>
-                                <td className="p-2 border">Virtual + internal reserves</td>
-                            </tr>
-                            <tr>
-                                <td className="p-2 border">Price Behavior</td>
-                                <td className="p-2 border">⚠️ Sudden jumps on early buys</td>
-                                <td className="p-2 border">✅ Gradual and fairer price growth</td>
-                            </tr>
-                            <tr>
-                                <td className="p-2 border">Config Options</td>
-                                <td className="p-2 border">Limited</td>
-                                <td className="p-2 border">Flexible: virtualAmount, graduation cap, initialNative</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+       <h2 className="text-2xl font-semibold mt-8 mb-4 text-white">Pros & Cons</h2>
+<div className="overflow-x-auto text-sm">
+  <table className="w-full border border-gray-600 text-left mb-6">
+    <thead className="bg-emerald-800 text-white">
+      <tr>
+        <th className="p-2 border">Aspect</th>
+        <th className="p-2 border">PUMP v1</th>
+        <th className="p-2 border">PUMP v2</th>
+      </tr>
+    </thead>
+    <tbody className="text-gray-200">
+      <tr>
+        <td className="p-2 border font-semibold">Advantages</td>
+        <td className="p-2 border">
+          - Simple and minimal logic<br />
+          - Low gas consumption<br />
+          - Instant price reflection after every trade
+        </td>
+        <td className="p-2 border">
+          - Simulated deep liquidity using virtual reserves<br />
+          - Smoother price curve during early trading<br />
+          - Prevents large buyers from draining token supply<br />
+          - Better UX for communities launching fair tokens
+        </td>
+      </tr>
+      <tr>
+        <td className="p-2 border font-semibold">Disadvantages</td>
+        <td className="p-2 border">
+          - High slippage for early buyers<br />
+          - Easily manipulated by bots<br />
+          - Often unfair token distribution in early stage
+        </td>
+        <td className="p-2 border">
+          - Slightly more complex logic<br />
+          - Requires tuning of virtualAmount<br />
+          - Slightly higher gas usage
+        </td>
+      </tr>
+      <tr>
+        <td className="p-2 border font-semibold">Use Case Scenario</td>
+        <td className="p-2 border">
+          Alice buys 0.1 ETH worth of a new token. With shallow liquidity, she receives 800M out of 1B tokens.
+          Later buyers get almost nothing, causing immediate dumps and low retention.
+        </td>
+        <td className="p-2 border">
+          Alice buys the same 0.1 ETH, but with virtual reserves simulating deeper liquidity, she receives only 150M tokens.
+          This leaves room for other buyers, encourages organic price movement, and makes the launch feel more fair.
+        </td>
+      </tr>
+      <tr>
+        <td className="p-2 border font-semibold">Recommended For</td>
+        <td className="p-2 border">
+          Meme coins or test projects where launch speed is more important than fairness
+        </td>
+        <td className="p-2 border">
+          Fair launches, DeFi tools, or community-driven tokens aiming for organic growth and better market structure
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
 
                 <h2 className="text-2xl font-semibold mt-8 mb-4 text-white">Real-World Analogy</h2>
                 <p className="mb-4 leading-relaxed text-gray-200">
