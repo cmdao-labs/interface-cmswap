@@ -26,6 +26,7 @@ export const game_tokens: Record<string, Token[]> = {
 
 export const AddrZero = '0x0000000000000000000000000000000000000000' as '0xstring'
 export const V3_FACTORY = '0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b' as '0xstring'
+export const V3_FACTORYCreatedAt = BigInt(23935400)
 export const POSITION_MANAGER = '0x690f45C21744eCC4ac0D897ACAC920889c3cFa4b' as '0xstring'
 export const positionManagerCreatedAt = BigInt(23935419)
 export const QOUTER_V2 = '0x3F64C4Dfd224a102A4d705193a7c40899Cf21fFe' as '0xstring'

@@ -6,7 +6,8 @@ import { ThemeProvider } from './components/theme-provider'
 import ContextProvider from '@/app/context'
 import Headbar from './components/Headbar'
 import Footer from './components/Footer'
- 
+import { PriceProvider } from './context/getPrice'
+
 const inter = Inter({
     subsets: ['latin'],
     display: 'swap',
@@ -70,9 +71,12 @@ export default async function RootLayout({
                         enableSystem
                         disableTransitionOnChange
                     >
+                      <PriceProvider>
                         <Headbar />
                         {children}
                         <Footer />
+                      </PriceProvider>
+                    
                     </ThemeProvider>
                 </ContextProvider>
             </body>

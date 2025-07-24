@@ -12,7 +12,7 @@ export const tokens: {name: string, value: '0xstring', logo: string}[] = [
     { name: 'ISOLA', value: '0xC8925E89bE4Ce76218a3e52B995C5Ae02662A94F' as '0xstring', logo: '/isola.webp' }, 
     { name: 'KSOLA', value: '0x9cf6dF95b918307Ff81feF70E616a094e9977a28' as '0xstring', logo: '/ksola.webp' },
     { name: 'KJFIN', value: '0x9BEc198c43B0714aEEd3c1bF21498ecBeFEB19F8' as '0xstring', logo: '/kjfin.webp' }, 
-        { name: "SHK", value: "0xF27DF35ead39E2aed24cc05C52db303Ef4C4aA83" as "0xstring", logo: "/SHK.webp" },
+    { name: "SHK", value: "0xF27DF35ead39E2aed24cc05C52db303Ef4C4aA83" as "0xstring", logo: "https://gateway.commudao.xyz/ipfs/bafybeictpc76cigf42dly6c3qtnbu5cbtons4qvsqr4juxcs7g7k4nbche" },
     // can PR listing here
 ]
 
@@ -65,6 +65,7 @@ export const game_tokens: Record<string, Token[]> = {
 
 export const AddrZero = '0x0000000000000000000000000000000000000000' as '0xstring'
 export const V3_FACTORY = '0x090C6E5fF29251B1eF9EC31605Bdd13351eA316C' as '0xstring'
+export const V3_FACTORYCreatedAt = BigInt(25033350)
 export const POSITION_MANAGER = '0xb6b76870549893c6b59E7e979F254d0F9Cca4Cc9' as '0xstring'
 export const positionManagerCreatedAt = BigInt(25033368)
 export const QOUTER_V2 = '0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f' as '0xstring'

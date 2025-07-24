@@ -14,6 +14,7 @@ export default function Menu({
     const chain = searchParams.get('chain') || '';
     const connections = useConnections();
     const account = useAccount();
+    const { chainId } = useAccount()
     
     const handleChain = (term: string) => {
         redirect('/pump/launchpad?chain=' + term + '&mode=pro');
@@ -23,9 +24,9 @@ export default function Menu({
         <div className="flex gap-4 md:gap-8 items-center justify-end md:justify-end text-xs md:text-sm flex-wrap mr-4">
             {chainEnable && 
                 <div className="flex flex-row gap-1">
-                    <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'kub') {handleChain('kub');}}}><Image src="/96.png" alt="" width={25} height={25} style={{filter: (chain === 'kub' || chain === '') ? "grayscale(0)" : "grayscale(1)"}} /></button>
-                    <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'monad') {handleChain('monad');}}}><Image src="/monad.jpg" alt="" width={25} height={25} style={{filter: chain === 'monad' ? "grayscale(0)" : "grayscale(1)"}} /></button>
-                    <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'kubtestnet') {handleChain('kubtestnet');}}}><Image src="/96.png" alt="" width={25} height={25} style={{filter: chain === 'kubtestnet' ? "grayscale(0)" : "grayscale(1)"}} /></button>
+                    { chainId !== undefined && [96,10143,8899].includes(chainId) && <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'kub') {handleChain('kub');}}}><Image src="/96.png" alt="" width={25} height={25} style={{filter: (chain === 'kub' || chain === '') ? "grayscale(0)" : "grayscale(1)"}} /></button>}
+                    { chainId !== undefined && [96,10143,8899].includes(chainId) && <button className="text-white hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'monad') {handleChain('monad');}}}><Image src="/monad.jpg" alt="" width={25} height={25} style={{filter: chain === 'monad' ? "grayscale(0)" : "grayscale(1)"}} /></button>}
+                    { chainId !== undefined && [25925].includes(chainId) && <button className="text-red-500 hover:bg-neutral-800 focus:outline-none rounded-lg p-2 cursor-pointer" onClick={() => {if (chain !== 'kubtestnet') {handleChain('kubtestnet');}}}><span className="flex flexwarp items-center justify-center"><span className="mr-2">Testnet</span> <Image src="/96.png" alt="" width={25} height={25} style={{filter: chain === 'kubtestnet' ? "grayscale(0)" : "grayscale(1)"}} /></span></button>}
                 </div>
             }
             {connections && account.address !== undefined &&
