@@ -82,7 +82,7 @@ export default function AboutTradingViewPage() {
   </table>
 </div>
 
-
+{/* 
                 <h2 className="text-2xl font-semibold mt-8 mb-4 text-white">Real-World Analogy</h2>
                 <p className="mb-4 leading-relaxed text-gray-200">
                     <strong>PUMP v1:</strong> Think of it like a simple vending machine — the price changes fast depending on demand. If someone buys a lot, the next price increases instantly.
@@ -103,7 +103,7 @@ export default function AboutTradingViewPage() {
 
                 <p className="mt-10 text-sm text-muted-foreground">
                     Explore more or deploy your own version — the pump is yours to control.
-                </p>
+                </p> */}
             </section>
         </div>
     )
