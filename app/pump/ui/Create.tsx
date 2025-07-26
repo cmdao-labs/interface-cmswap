@@ -6,6 +6,7 @@ import { formatEther, parseEther, erc20Abi } from 'viem';
 import { writeContract, readContracts } from '@wagmi/core';
 import { config } from '@/app/config';
 import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
+import { ERC20FactoryV2ABI } from '@/app/pump/abi/ERC20FactoryV2';
 
 export default function Create({
   mode, chain, token,
@@ -44,7 +45,7 @@ export default function Create({
   const dataofcurr = {addr: currencyAddr};
   const bkgafactoryContract = {
     address: bkgafactoryAddr as '0xstring',
-    abi: ERC20FactoryABI,
+    abi: chain === 'kubtestnet' ? ERC20FactoryV2ABI : ERC20FactoryABI,
     chainId: _chainId,
   } as const
 
@@ -91,10 +92,11 @@ export default function Create({
           value: parseEther('0'),
         });
       } else if (chain === 'kubtestnet' && mode === 'pro') {
+        // note ipfs://bafkreiexe7q5ptjflrlccf3vtqdbpwk36j3emlsulksx7ot52e3uqyqu3u is fallback logo
               result = await writeContract(config, {
           ...bkgafactoryContract,
           functionName: 'createToken',
-          args: [name, ticker, 'ipfs://' + upload.IpfsHash, desp],
+          args: [name, ticker, 'ipfs://' + upload.IpfsHash, desp,'ipfs://bafkreiexe7q5ptjflrlccf3vtqdbpwk36j3emlsulksx7ot52e3uqyqu3u','l2','l3'],
           value: parseEther('0'),
         });
       }
