@@ -29,7 +29,7 @@ const chainStyles: Record<string, {
             lite: 'radial-gradient(circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3%)',
             pro: 'radial-gradient(circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3%)',
         },
-        supportedModes: [ 'pro'],
+        supportedModes: ['pro'],
     },
 
 };
@@ -40,13 +40,13 @@ export default function Sort4() {
     const { replace } = useRouter();
 
     const mode = searchParams.get('mode') || 'lite';
-    const chain = searchParams.get('chain') || 'base';
+    const chain = searchParams.get('chain') || 'kub';
 
     const chainConfig = chainStyles[chain] || chainStyles.base;
     const { supportedModes } = chainConfig;
 
     const setMode = useCallback((newMode: 'lite' | 'pro') => {
-        if (!supportedModes.includes(newMode)) return; // ป้องกันโหมดที่ไม่รองรับ
+        if (!supportedModes.includes(newMode)) return; 
         const params = new URLSearchParams(searchParams);
         params.set('mode', newMode);
         replace(`${pathname}?${params.toString()}`);
