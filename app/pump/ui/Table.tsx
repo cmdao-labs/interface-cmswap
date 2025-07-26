@@ -5,8 +5,13 @@ import { readContracts } from '@wagmi/core';
 import { erc20Abi } from 'viem'
 import { config } from '@/app/config';
 import { ERC20FactoryETHABI } from '@/app/pump/abi/ERC20FactoryETH';
+import { ERC20FactoryV2ABI } from '@/app/pump/abi/ERC20FactoryV2';
 import { UniswapV2FactoryABI } from '@/app/pump/abi/UniswapV2Factory';
 import { UniswapV2PairABI } from '@/app/pump/abi/UniswapV2Pair';
+import { createPublicClient, http, parseAbiItem } from 'viem';
+import { bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
+import { ERC20FactoryABI } from "../abi/ERC20Factory";
+
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
 export default async function Table({
@@ -21,14 +26,34 @@ export default async function Table({
 }) {
   await connection();
 
+  let _chain: any = null;
   let _chainId = 0;
-  if (chain === 'kub' || chain === '') {
+  let _explorer = "";
+  let _rpc = "";
+  let _blockcreated = BigInt(0);
+  if (chain === "kub" || chain === "") {
+    _chain = bitkub;
     _chainId = 96;
-  } else if (chain === 'monad') {
+    _explorer = "https://www.kubscan.com/";
+      _blockcreated = BigInt(23935659)
+  } else if (chain === "monad") {
+    _chain = monadTestnet;
     _chainId = 10143;
-  } else if (chain = 'kubtestnet'){
-    _chainId = 25925;
-  }// add chain here
+    _explorer = "https://monad-testnet.socialscan.io/";
+    _rpc = process.env.NEXT_PUBLIC_MONAD_RPC as string;
+      _blockcreated = BigInt(23935659)
+  } else if (chain === 'kubtestnet'){
+      _chain = bitkubTestnet;
+      _chainId = 25925;
+      _explorer = 'https://testnet.kubscan.com/';
+      _rpc = 'https://rpc-testnet.bitkubchain.io' as string;
+      _blockcreated = BigInt(23935659)
+  } // add chain here
+  const publicClient = createPublicClient({
+    chain: _chain,
+    transport: http(_rpc),
+  });
+
   let currencyAddr: string = '';
   let bkgafactoryAddr: string = '';
   let v2facAddr: string = '';
@@ -53,7 +78,7 @@ export default async function Table({
   const dataofuniv2factory = {addr: v2facAddr};
   const bkgafactoryContract = {
     address: bkgafactoryAddr as '0xstring',
-    abi: ERC20FactoryETHABI,
+    abi: chain === 'kubtestnet' ? ERC20FactoryV2ABI : ERC20FactoryETHABI  ,
     chainId: _chainId,
   } as const
   const univ2factoryContract = {
@@ -80,56 +105,106 @@ export default async function Table({
         }
     );
   }
-  const result = await readContracts(config, init);
-  const result4 = result.map(async (res: any) => {
-    return await readContracts(config, {
-      contracts: [
-        {
-          address: res.result!,
-          abi: erc20Abi,
-          functionName: 'symbol',
-          chainId: _chainId,
-        },
-        {
-          ...bkgafactoryContract,
-          functionName: 'logo',
-          args: [res.result!],
-        },
-        {
-          ...univ2factoryContract,
-          functionName: 'getPool',
-          args: [res.result!, dataofcurr.addr as '0xstring', 10000],
-        },
-        {
-          ...bkgafactoryContract,
-          functionName: 'creator',
-          args: [res.result!],
-        },
-        {
-          ...bkgafactoryContract,
-          functionName: 'createdTime',
-          args: [res.result!],
-        },
-        {
-          ...bkgafactoryContract,
-          functionName: 'desp',
-          args: [res.result!],
-        },
-      ],
+
+
+type ContractReadResult = { status: "success"; result: string } | { status: "failure"; error: Error };
+
+const resultfinal = await (async () => {
+  let result: ContractReadResult[] = [];
+  let result44: any[] = [];
+
+  if (chain === 'kubtestnet') {
+    const logCreateData = await publicClient.getContractEvents({
+      address: bkgafactoryContract.address,
+      abi: bkgafactoryContract.abi,
+      eventName: 'Creation',
+      fromBlock: BigInt(_blockcreated),
+      toBlock: 'latest',
     });
-  })
-  const result44 = await Promise.all(result4);
-  const result5 = result44.map(async (res) => {
+
+const poolDataPromises = logCreateData.map(async (res: any) => {
+  const tokenData = await readContracts(config, {
+    contracts: [
+      {
+        address: res.args.tokenAddr as `0x${string}`,
+        abi: erc20Abi,
+        functionName: 'symbol',
+        chainId: _chainId,
+      },
+    ],
+  });
+
+  return {
+    tokenAddress: res.args.tokenAddr as `0x${string}`,
+    creator: res.args.creator as `0x${string}`,
+    logo: res.args.logo.startsWith('ipfs://') ? res.args.logo : res.args.link1,
+    createdTime: Number(res.args.createdTime),
+    description: res.args.description,
+    tokenSymbol: tokenData[0].status === 'success' ? tokenData[0].result : undefined
+  };
+});
+
+
+    result44 = await Promise.all(poolDataPromises);
+  } else {
+    result = await readContracts(config, init) as ContractReadResult[];;
+    
+    const result4Promises = result.map(async (res: ContractReadResult) => {
+      if (res.status === 'success') {
+        return await readContracts(config, {
+          contracts: [
+            {
+              address: res.result as '0xstring',
+              abi: erc20Abi,
+              functionName: 'symbol',
+              chainId: _chainId,
+            },
+            {
+              ...bkgafactoryContract,
+              functionName: 'logo',
+              args: [res.result as '0xstring'],
+            },
+            {
+              ...univ2factoryContract,
+              functionName: 'getPool',
+              args: [res.result as '0xstring', dataofcurr.addr as `0x${string}`, 10000],
+            },
+            {
+              ...bkgafactoryContract,
+              functionName: 'creator',
+              args: [res.result as '0xstring'],
+            },
+            {
+              ...bkgafactoryContract,
+              functionName: 'createdTime',
+              args: [res.result as '0xstring'],
+            },
+            {
+              ...bkgafactoryContract,
+              functionName: 'desp',
+              args: [res.result as '0xstring'],
+            },
+          ],
+        });
+      }
+      return [];
+    });
+
+    result44 = await Promise.all(result4Promises);
+  }
+
+  const result5Promises = result44.map(async (res: any[]) => {
+    if (!res[2]?.result) return [];
     return await readContracts(config, {
       contracts: [
         {
-          address: res[2].result!,
+          address: res[2].result,
           abi: UniswapV2PairABI,
           functionName: 'slot0',
           chainId: _chainId,
         },
         {
-          address: res[2].result!,
+          address: res[2].result,
           abi: UniswapV2PairABI,
           functionName: 'token0',
           chainId: _chainId,
@@ -137,13 +212,52 @@ export default async function Table({
       ],
     });
   });
-  const result55 = await Promise.all(result5);
-  const resultfinal = result44.map((item, index) => {
-    const mcap = result55[index][1].result!.toUpperCase() !== dataofcurr.addr.toUpperCase() ? 
-      ((Number(result55[index][0].result![0]) / (2 ** 96)) ** 2) * 1000000000 : 
-      (1 / ((Number(result55[index][0].result![0]) / (2 ** 96)) ** 2)) * 1000000000;
-    return [{result: item[0].result}, {result: item[1].result}, {result: item[2].result}, {result: mcap}, {result: result55[index][1].result}, {result: Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(mcap)}, {result: item[3].result}, {result: Number(item[4].result)}, {result: result[index].result}, {result: item[5].result}]
-  })
+
+  const result55 = await Promise.all(result5Promises);
+  
+  return result44.map((item, index) => {
+
+    if(chain === 'kubtestnet'){
+      /// virtual No Liquidity Pool      
+
+      return [
+        { result: item.tokenSymbol || '' }, // symbol
+        { result: item.logo || '' }, // logo
+        { result: '0x0000000000000000000000000000000000000000' }, // pool
+        { result: 0 }, // mcap
+        { result: '0x0000000000000000000000000000000000000000' }, // token0
+        { result: Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(0) }, // formatted mcap
+        { result: item.creator || '' }, // creator
+        { result: Number(item.createdTime) || 0 }, // createdTime
+        { result: item.tokenAddress || {} }, // original result
+        { result: item.description || '' } // description
+      ];
+    }else{
+      if (!item[2]?.result || !result55[index][0]?.result) return [];
+      console.log(result)
+    
+    const mcap = result55[index][1].result?.toUpperCase() !== dataofcurr.addr.toUpperCase()
+      ? ((Number(result55[index][0].result[0]) / (2 ** 96)) ** 2) * 1000000000
+      : (1 / ((Number(result55[index][0].result[0]) / (2 ** 96)) ** 2)) * 1000000000;
+
+    return [
+      { result: item?.[0].result || '' }, // symbol
+      { result: item[1]?.result || '' }, // logo
+      { result: item[2]?.result || '' }, // pool
+      { result: mcap }, // mcap
+      { result: result55[index][1]?.result || '' }, // token0
+      { result: Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(mcap) }, // formatted mcap
+      { result: item[3]?.result || '' }, // creator
+      { result: Number(item[4]?.result) || 0 }, // createdTime
+      { result: result[index].status === 'success' ? result[index].result : '0x0000000000000000000000000000000000000000' }, // original result
+      { result: item[5]?.result || '' } // description
+    ];}}
+
+)}
+
+)();
+/*     console.log('resultfinal:', resultfinal); */
+
 
   return (
     <div className="w-full h-full flex flex-row flex-wrap items-start justify-start overflow-visible" style={{zIndex: 1}}>
