@@ -7,6 +7,7 @@ import { writeContract, readContracts } from '@wagmi/core';
 import { config } from '@/app/config';
 import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
 import { ERC20FactoryV2ABI } from '@/app/pump/abi/ERC20FactoryV2';
+import { redirect } from 'next/navigation';
 
 export default function Create({
   mode, chain, token,
@@ -99,6 +100,7 @@ export default function Create({
           args: [name, ticker, 'ipfs://' + upload.IpfsHash, desp,'ipfs://bafkreiexe7q5ptjflrlccf3vtqdbpwk36j3emlsulksx7ot52e3uqyqu3u','l2','l3'],
           value: parseEther('0'),
         });
+        
       }
         else{
         result = await writeContract(config, {
@@ -108,11 +110,14 @@ export default function Create({
           value: parseEther('1'),
         });
       }
-      alert("Launch success!, your txn hash: " + 
+
+/*       alert("Launch success!, your txn hash: " + 
         (chain === 'kub' && "https://www.kubscan.com/tx/") + 
         (chain === 'monad' && "https://monad-testnet.socialscan.io/") +
         (chain === 'kubtestnet' && "https://testnet.kubscan.com/tx/") 
-        + result);
+        + result); */
+    redirect(`/pump/launchpad?chain=${chain}&mode=${mode}`);
+
     } catch (e) {
       console.log(e);
       alert("Launch failed");
