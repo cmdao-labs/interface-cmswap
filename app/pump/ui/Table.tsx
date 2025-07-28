@@ -275,7 +275,29 @@ const poolDataPromises = logCreateData.map(async (res: any) => {
                 </div>
                 <div className="w-1/2 flex flex-col gap-4 item-center justify-center">
                   <span className="font-mono font-bold text-2xl truncate">{res[0].result}</span>
-                  <span className={"}font-bold text-xl " + (chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>{res[5].result} {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
+                  {(() => {
+                    let textColor = "";
+                    let tokenSymbol = "";
+
+                    if (chain === 'kub' ) {
+                      textColor = "text-emerald-300";
+                      if (mode === 'pro') tokenSymbol = 'KUB';
+                      else if (mode === 'lite' && (token === 'cmm' || token === '')) tokenSymbol = 'CMM';
+                    } else if (chain === 'monad') {
+                      textColor = "text-purple-300";
+                      if (mode === 'pro') tokenSymbol = 'MON';
+                   } else if(chain === 'kubtestnet') {
+                     textColor = "text-emerald-300";
+                      if (mode === 'pro') tokenSymbol = 'tKUB';
+                   }
+
+                    return (
+                      <span className={`font-bold text-xl ${textColor}`}>
+                        {res[5].result} {tokenSymbol}
+                      </span>
+                    );
+                  })()}
+
                   <span className="text-xs text-gray-500 truncate">{res[9].result}</span>
                   <span className="text-xs">[CA: {res[8].result!.slice(0, 5)}...{res[8].result!.slice(37)}]</span>
                   <span className="text-xs">
