@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { connection } from 'next/server';
 import { readContracts } from '@wagmi/core';
-import { erc20Abi } from 'viem'
+import { erc20Abi, formatEther, parseEther } from 'viem'
 import { config } from '@/app/config';
 import { ERC20FactoryETHABI } from '@/app/pump/abi/ERC20FactoryETH';
 import { ERC20FactoryV2ABI } from '@/app/pump/abi/ERC20FactoryV2';
@@ -131,6 +131,23 @@ const poolDataPromises = logCreateData.map(async (res: any) => {
         functionName: 'symbol',
         chainId: _chainId,
       },
+      {
+        address: res.args.tokenAddr as `0x${string}`,
+        abi: erc20Abi,
+        functionName: 'totalSupply',
+        chainId: _chainId,
+      },
+      {
+        ...bkgafactoryContract,
+        functionName: 'pumpReserve',
+        args : [res.args.tokenAddr as '0xstring'],
+        chainId: _chainId,
+      },
+      {
+        ...bkgafactoryContract,
+        functionName: 'virtualAmount',
+        chainId: _chainId,
+      },
     ],
   });
 
@@ -140,7 +157,10 @@ const poolDataPromises = logCreateData.map(async (res: any) => {
     logo: res.args.logo.startsWith('ipfs://') ? res.args.logo : res.args.link1,
     createdTime: Number(res.args.createdTime),
     description: res.args.description,
-    tokenSymbol: tokenData[0].status === 'success' ? tokenData[0].result : undefined
+    tokenSymbol: tokenData[0].status === 'success' ? tokenData[0].result : undefined,
+    totalSupply: tokenData[1].status === 'success' ? tokenData[1].result : undefined,
+    pumpReserve: tokenData[2].status === 'success' ? tokenData[2].result : undefined,
+    virtualAmount: tokenData[3].status === 'success' ? tokenData[3].result : undefined
   };
 });
 
@@ -219,14 +239,26 @@ const poolDataPromises = logCreateData.map(async (res: any) => {
 
     if(chain === 'kubtestnet'){
       /// virtual No Liquidity Pool      
+      const pump0 = Number(item.pumpReserve[0]);
+      const pump1 = Number(item.pumpReserve[1]);
+      const virtualAmount = Number(item.virtualAmount);
+
+      const price = (pump0 + virtualAmount) / pump1;
+      const supplyReadable = formatEther(item.totalSupply.toString());
+      const mcap = parseFloat(supplyReadable) * price;
+
+      console.log("supply", supplyReadable);
+      console.log("price", price);
+      console.log("mcap", mcap);
+
 
       return [
         { result: item.tokenSymbol || '' }, // symbol
         { result: item.logo || '' }, // logo
         { result: '0x0000000000000000000000000000000000000000' }, // pool
-        { result: 0 }, // mcap
+        { result: mcap }, // mcap
         { result: '0x0000000000000000000000000000000000000000' }, // token0
-        { result: Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(0) }, // formatted mcap
+        { result: Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(mcap) }, // formatted mcap
         { result: item.creator || '' }, // creator
         { result: Number(item.createdTime) || 0 }, // createdTime
         { result: item.tokenAddress || {} }, // original result
@@ -267,7 +299,11 @@ const poolDataPromises = logCreateData.map(async (res: any) => {
           (a: any, b: any) => {if (sort === 'created' && order === 'ascending') {return Number(b[7].result) - Number(a[7].result)} else if (sort === 'created' && order === 'descending') {return Number(a[7].result) - Number(b[7].result)} else if (sort === 'mcap' && order === 'ascending') {return b[3].result - a[3].result} else if (sort === 'mcap' && order === 'descending') {return a[3].result - b[3].result} else {return b[3].result - a[3].result}}
         ).map((res: any, index) => 
           <div key={index} className="p-2 w-full 2xl:w-1/3 hover:scale-[1.02]">
-              <Link href={"launchpad/token?ticker=" + res[8].result + '&lp=' + res[2].result + '&chain=' + chain + (mode === 'pro' ? '&mode=pro' : '&mode=lite')} prefetch={false} className="w-full h-[220px] flex flex-row item-center justify-around bg-gray-800 shadow-xl rounded-lg">
+            <Link
+              href={`launchpad/token?ticker=${res[8].result}${res[2].result !== "0x0000000000000000000000000000000000000000" ? `&lp=${res[2].result}` : ''}&chain=${chain}${mode === 'pro' ? '&mode=pro' : '&mode=lite'}`}
+              prefetch={false}
+              className="w-full h-[220px] flex flex-row item-center justify-around bg-gray-800 shadow-xl rounded-lg"
+            >
                 <div className="h-[150px] w-[150px] sm:h-[180px] sm:w-[180px] self-center overflow-hidden flex flex-wrap content-center justify-center">
                   <div className="h-full w-full relative">
                     <Image src={res[1].result!.slice(0, 7) === 'ipfs://' ? "https://gateway.commudao.xyz/ipfs/" + res[1].result!.slice(7) : "https://gateway.commudao.xyz/ipfs/" + res[1].result!} alt="token_waiting_for_approve" fill />
