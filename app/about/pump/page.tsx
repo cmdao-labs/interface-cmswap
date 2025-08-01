@@ -20,10 +20,57 @@ export default function AboutPumpPage() {
                     This version launches a Uniswap V3 concentrated liquidity pool immediately. The token creator pays a creation fee, which is used to seed the pool with real ETH/token liquidity. Prices are determined based on Uniswap’s AMM math.
                 </p>
 
-                <h3 className="text-xl font-semibold mt-6 mb-2 text-white">PUMP v2 — Virtual Liquidity Curve</h3>
+                <h3 className="text-xl font-semibold mt-6 mb-2 text-white">PUMP v2 — Virtual Liquidity & Graduation</h3>
                 <p className="mb-4 leading-relaxed text-gray-200">
-                    PUMP v2 introduces a new mechanism: virtual liquidity. Instead of deploying a Uniswap pool upfront, it simulates one internally using predefined reserves. This makes early trades smoother and less vulnerable to slippage or front-running, while giving the token time to grow before “graduating” into real liquidity.
+                    PUMP v2 introduces a unique mechanism: <strong>virtual liquidity</strong>. Instead of creating a real Uniswap pool upfront, it simulates one internally using predefined reserves. This allows smoother early trading, limits slippage and bot exploitation, and gives the token time to build value before transitioning to real liquidity.
                 </p>
+
+                <h2 className="text-2xl font-semibold mt-10 mb-4 text-white">Why Virtual Liquidity?</h2>
+                <p className="mb-4 leading-relaxed text-gray-200">
+                    Virtual liquidity lets tokens launch without requiring real intitals Native Token upfront, reducing risk while enabling fairer, organic growth. It creates a simulated bonding curve that mimics deep liquidity, so early trades don't face extreme price impact or bot abuse.
+                </p>
+                <ul className="list-disc list-inside mb-6 text-gray-200 space-y-1">
+                    <li>Prevents front-running and instant rug pulls</li>
+                    <li>Controls early price volatility using internal math</li>
+                    <li>Requires no upfront liquidity from token creators</li>
+                    <li>Allows projects to build community before exposure to open markets</li>
+                </ul>
+
+                <h2 className="text-2xl font-semibold mt-10 mb-4 text-white">Why Use a 14x Virtual-to-Graduation Ratio?</h2>
+                <p className="mb-4 leading-relaxed text-gray-200">
+                    PUMP v2 uses a default ratio where the <strong>graduation reserve</strong> is approximately <strong>14 times larger</strong> than the <strong>virtual reserve</strong>. This is designed to:
+                </p>
+                <ul className="list-disc list-inside mb-6 text-gray-200 space-y-1">
+                    <li>Make early prices conservative — avoiding unrealistic pump values</li>
+                    <li>Ensure enough Native Token accumulates before launching a real market</li>
+                    <li>Prevent early buyers from dumping after graduation at an inflated virtual price</li>
+                </ul>
+                <p className="mb-4 leading-relaxed text-gray-200">
+                    This ratio encourages long-term sustainability while still allowing organic growth and trading during the early phase.
+                </p>
+
+                <h2 className="text-2xl font-semibold mt-10 mb-4 text-white">Before vs After Graduation</h2>
+                <p className="mb-4 leading-relaxed text-gray-200">
+                    <strong>Before Graduation</strong>, trades happen against simulated liquidity. The price follows a bonding curve that responds to internal reserves and a virtual amount. These trades are fast, low-gas, and immune to DEX bots — but prices can appear high due to limited real backing.
+                </p>
+                <p className="mb-4 leading-relaxed text-gray-200">
+                    <strong>After Graduation</strong>, the contract migrates the token into a real <strong>Uniswap V3 pool</strong> using the actual Native/token reserves accumulated. LP tokens are burned (sent to <code>0xdead</code>) to lock the liquidity permanently.
+                </p>
+                <p className="mb-4 leading-relaxed text-gray-200">
+                    This transition changes pricing logic entirely — now governed by Uniswap’s AMM and the real market price may shift down from the virtual price, especially if the token was overbought early, but the curve becomes real, transparent, and decentralized.
+                </p>
+
+                <h3 className="text-xl font-semibold mt-6 mb-2 text-white">Things to Consider:</h3>
+                <ul className="list-disc list-inside mb-6 text-gray-200 space-y-1">
+                    <li>If early buyers paid high virtual prices, they may face lower real prices after graduation</li>
+                    <li>Gradual accumulation is key — rushing to graduate too early may hurt long-term value</li>
+                </ul>
+
+                <p className="mb-10 leading-relaxed text-gray-200">
+                    With carefully tuned parameters and a well-timed graduation, PUMP v2 offers a powerful launchpad for long-term, community-first token ecosystems.
+                </p>
+
+
 
                 <img src="../pump chart1.png" alt="Pump Logic Illustration" className="mb-6 w-full h-auto rounded" />
 
