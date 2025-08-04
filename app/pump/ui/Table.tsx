@@ -154,7 +154,12 @@ const poolDataPromises = logCreateData.map(async (res: any) => {
   return {
     tokenAddress: res.args.tokenAddr as `0x${string}`,
     creator: res.args.creator as `0x${string}`,
-    logo: res.args.logo.startsWith('ipfs://') ? res.args.logo : res.args.link1,
+    logo:
+      res.args.logo &&
+      res.args.logo.startsWith("ipfs://") &&
+      !res.args.logo.startsWith("ipfs://undefined")
+        ? res.args.logo
+        : res.args.link1,
     createdTime: Number(res.args.createdTime),
     description: res.args.description,
     tokenSymbol: tokenData[0].status === 'success' ? tokenData[0].result : undefined,
