@@ -513,7 +513,6 @@ export default function Trade({
           setPrice(price);
       
         } else {
-          console.log("This")
           const result2: any = await readContracts(config, {
             contracts: [
               {
@@ -594,41 +593,22 @@ export default function Trade({
             ],
           });
 
-          console.log(result3[0].result);
-          const sqrtPriceX96 =
-            Number(formatEther(state[3].result![0])) / 2 ** 96;
-          const isToken0 =
-            result3[1].result?.toUpperCase() !== currencyAddr.toUpperCase();
+          const sqrtPriceX96 = result3[0] && result3[0].status === "success" && result3[0].result !== undefined 
+            ? Number(result3[0].result[0]) / (2 ** 96) 
+            : 0;          
+          const isToken0 = result3[1].result?.toUpperCase() !== currencyAddr.toUpperCase();
           const price = isToken0 ? sqrtPriceX96 ** 2 : 1 / sqrtPriceX96 ** 2;
-          const denominator = 8640;
-          const progressValue = ((price * 100) / denominator).toFixed(2);
+          const getItems = reachData.find((item) => item.chain === chain)
+
+          const denominator = getItems ? mode === 'pro' ? Number(getItems?.proAmount) : Number(getItems?.lite) : 1;
+          
+          const progressValue = ((Number(price) * 100) / denominator).toFixed(2);
           setProgress(Number(progressValue));
-          setPrice(Number(price) | 0);
+          setPrice(Number(price));
 
-          const mcap =
-            result3[0].status === "success"
-              ? result3![1].result!.toUpperCase() !==
-                dataofcurr.addr.toUpperCase()
-                ? Intl.NumberFormat("en-US", {
-                    notation: "compact",
-                    compactDisplay: "short",
-                  }).format(
-                    (Number(formatEther(state[3].result![0])) / 2 ** 96) ** 2 *
-                      1000000000
-                  )
-                : Intl.NumberFormat("en-US", {
-                    notation: "compact",
-                    compactDisplay: "short",
-                  }).format(
-                    (1 / (Number(state[3].result![0]) / 2 ** 96) ** 2) *
-                      1000000000
-                  )
-              : 0;
-          setMcap(Number(mcap) | 0);
+          const mcap = price !== 0 ? price * 1000000000 : 0;
 
-          console.log("Progressing", Number(progressValue));
-          console.log("Price", Number(price));
-          console.log("Mcap", Number(mcap));
+          setMcap(Number(mcap));
         }
       } catch (error) {
         console.error("error with reason", error);
@@ -1525,7 +1505,7 @@ export default function Trade({
                 theme.text
               }
             >
-              {mcap}
+              {Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(mcap)}
             </span>{" "}
             {
               reachData && Array.isArray(reachData)
@@ -1728,7 +1708,7 @@ export default function Trade({
                     (chain === "monad" ? "text-purple-300" : "")
                   }
                 >
-                  {mcap}
+              {Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(mcap)}
                 </span>{" "}
                 {chain === "kub" && mode === "pro" && "KUB"}
                 {chain === "kub" &&
