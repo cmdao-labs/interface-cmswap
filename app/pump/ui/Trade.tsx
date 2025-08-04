@@ -22,7 +22,7 @@ import { Copy, Check, Plus, Coins } from "lucide-react";
 import { bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
 import { config } from "@/app/config";
 import { ERC20FactoryABI } from "@/app/pump/abi/ERC20Factory";
-import { ERC20FactoryV2ABI } from '@/app/pump/abi/ERC20FactoryV2';
+import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
 import { UniswapV2FactoryABI } from "@/app/pump/abi/UniswapV2Factory";
 import { UniswapV2PairABI } from "@/app/pump/abi/UniswapV2Pair";
 import { UniswapV2RouterABI } from "@/app/pump/abi/UniswapV2Router";
@@ -132,17 +132,19 @@ export default function Trade({
     _chainId = 10143;
     _explorer = "https://monad-testnet.socialscan.io/";
     _rpc = process.env.NEXT_PUBLIC_MONAD_RPC as string;
-  } else if (chain === 'kubtestnet'){
-      _chain = bitkubTestnet;
-      _chainId = 25925;
-      _explorer = 'https://testnet.kubscan.com/';
-      _rpc = 'https://rpc-testnet.bitkubchain.io' as string;
+  } else if (chain === "kubtestnet") {
+    _chain = bitkubTestnet;
+    _chainId = 25925;
+    _explorer = "https://testnet.kubscan.com/";
+    _rpc = "https://rpc-testnet.bitkubchain.io" as string;
   } // add chain here
   const publicClient = createPublicClient({
     chain: _chain,
     transport: http(_rpc),
   });
-  const [theme, setTheme] = React.useState(themes[Number(_chainId)] || themes[96]);
+  const [theme, setTheme] = React.useState(
+    themes[Number(_chainId)] || themes[96]
+  );
 
   let currencyAddr: string = "";
   let bkgafactoryAddr: string = "";
@@ -164,7 +166,7 @@ export default function Trade({
     v2routerAddr = "0x3F7582E36843FF79F173c7DC19f517832496f2D8";
     v3qouterAddr = "0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f";
     socialAddr = "0xf8dec288D2438771f65ed59509ab474edaf067Da";
-    graduatedAddr = "0x7479A1e11e9940CAb6ee6c44aa1a72F3F02EEd8b"
+    graduatedAddr = "0x7479A1e11e9940CAb6ee6c44aa1a72F3F02EEd8b";
   } else if ((chain === "kub" || chain === "") && mode === "pro") {
     currencyAddr = "0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5";
     bkgafactoryAddr = "0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56";
@@ -173,7 +175,7 @@ export default function Trade({
     v2routerAddr = "0x3F7582E36843FF79F173c7DC19f517832496f2D8";
     v3qouterAddr = "0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f";
     socialAddr = "0xf8dec288D2438771f65ed59509ab474edaf067Da";
-    graduatedAddr = "0xd1D024be49c90f7bA83fb97c1857D45B98Ad294b"
+    graduatedAddr = "0xd1D024be49c90f7bA83fb97c1857D45B98Ad294b";
   } else if (chain === "monad" && mode === "pro") {
     currencyAddr = "0x760afe86e5de5fa0ee542fc7b7b713e1c5425701";
     bkgafactoryAddr = "0x6dfc8eecca228c45cc55214edc759d39e5b39c93";
@@ -182,7 +184,7 @@ export default function Trade({
     v2routerAddr = "0x5a16536bb85a2fa821ec774008d6068eced79c96";
     v3qouterAddr = "0x555756bd5b347853af6f713a2af6231414bedefc";
     socialAddr = "0x01837156518e60362048e78d025a419C51346f55";
-    graduatedAddr = "0x6dfc8eecca228c45cc55214edc759d39e5b39c93"
+    graduatedAddr = "0x6dfc8eecca228c45cc55214edc759d39e5b39c93";
   } else if (chain === "kubtestnet" && mode === "pro") {
     currencyAddr = "0x700D3ba307E1256e509eD3E45D6f9dff441d6907";
     bkgafactoryAddr = "0x46a4073c830031ea19d7b9825080c05f8454e530";
@@ -190,13 +192,31 @@ export default function Trade({
     v2facAddr = "0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b";
     v2routerAddr = "0x3C5514335dc4E2B0D9e1cc98ddE219c50173c5Be";
     v3qouterAddr = "0x3F64C4Dfd224a102A4d705193a7c40899Cf21fFe";
-    socialAddr = "0xc40D6f15E88e44Af2dd3dcF1D76e54d6c2B38eB6";
+    socialAddr = "0x6F17157b4EcD3734A9EA8ED4bfE78694e3695b90";
   }
 
   const reachData = [
-    { chain: "kub", proAmount: "2000", proSymbol: "KUB", lite: "100000", liteSymbol: "CMM" },
-    { chain: "kubtestnet", proAmount: "47800", proSymbol: "KUB", lite: "", liteSymbol: "" },
-    { chain: "monad", proAmount: "1", proSymbol: "MON", lite: "", liteSymbol: "" }
+    {
+      chain: "kub",
+      proAmount: "2000",
+      proSymbol: "KUB",
+      lite: "100000",
+      liteSymbol: "CMM",
+    },
+    {
+      chain: "kubtestnet",
+      proAmount: "47800",
+      proSymbol: "tKUB",
+      lite: "",
+      liteSymbol: "",
+    },
+    {
+      chain: "monad",
+      proAmount: "1",
+      proSymbol: "MON",
+      lite: "",
+      liteSymbol: "",
+    },
   ];
 
   // add chain and mode here
@@ -205,15 +225,15 @@ export default function Trade({
   const dataofuniv2router = { addr: v2routerAddr };
   const dataofuniv3qouter = { addr: v3qouterAddr };
   const bkgafactoryContract = {
-      address: bkgafactoryAddr as '0xstring',
-      abi: chain === 'kubtestnet' ? ERC20FactoryV2ABI : ERC20FactoryABI  ,
-      chainId: _chainId,
-    } as const
+    address: bkgafactoryAddr as "0xstring",
+    abi: chain === "kubtestnet" ? ERC20FactoryV2ABI : ERC20FactoryABI,
+    chainId: _chainId,
+  } as const;
   const graduatedContract = {
     address: graduatedAddr as "0xstring",
     abi: ERC20FactoryABI,
     chainId: _chainId,
-  }
+  };
   const univ2factoryContract = {
     address: dataofuniv2factory.addr as "0xstring",
     abi: UniswapV2FactoryABI,
@@ -277,20 +297,20 @@ export default function Trade({
     website: false,
   });
 
-  const [price,setPrice] = useState(0)
-  const [mcap,setMcap] = useState(0)
-  const [symbol,setSymbol] = useState(null)
-  const [name,setName] = useState(null)
+  const [price, setPrice] = useState(0);
+  const [mcap, setMcap] = useState(0);
+  const [symbol, setSymbol] = useState(null);
+  const [name, setName] = useState(null);
   const [creator, setCreator] = useState<string | null>(null);
   const [createTime, setCreateTime] = useState<number | null>(null);
 
-  const [logo,setLogo] = useState(null)
-  const [description,setDescription] = useState(null)
-  const [progress,setProgress] = useState(0)
+  const [logo, setLogo] = useState(null);
+  const [description, setDescription] = useState(null);
+  const [progress, setProgress] = useState(0);
 
-  React.useEffect(()=>{
-    console.log("Ticker Addr",ticker)
-  },[ticker])
+  React.useEffect(() => {
+    console.log("Ticker Addr", ticker);
+  }, [ticker]);
   const isValidUrl = (url: string) => {
     return (
       url === "" || url.startsWith("http://") || url.startsWith("https://")
@@ -301,8 +321,6 @@ export default function Trade({
     return `${progress}%`;
   };
 
-
-
   const handleChange =
     (field: keyof typeof socials) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -312,7 +330,6 @@ export default function Trade({
     };
 
   const handleSave = () => {
-    
     const hasError = Object.values(errors).some((v) => v);
     if (hasError) {
       return;
@@ -365,256 +382,258 @@ export default function Trade({
   };
 
   React.useEffect(() => {
-
-     const fetch0 = async() => {
+    const fetch0 = async () => {
       try {
-        if(chain === 'kubtestnet'){
-        const result2: any = await readContracts(config, {
-        contracts: [
-          {
-            ...tickerContract,
-            functionName: "name",
-          },
-          {
-            ...tickerContract,
-            functionName: "symbol",
-          }
-         
-        ],
-      });
+        if (chain == "kubtestnet") {
+          const result2: any = await readContracts(config, {
+            contracts: [
+              {
+                ...tickerContract,
+                functionName: "name",
+              },
+              {
+                ...tickerContract,
+                functionName: "symbol",
+              },
+            ],
+          });
 
-      const logCreateData = await publicClient.getContractEvents({
-      ...bkgafactoryContract,
-      eventName: 'Creation',
-      fromBlock: BigInt(_blockcreated),
-      toBlock: 'latest',
-    });
+          const logCreateData = await publicClient.getContractEvents({
+            ...bkgafactoryContract,
+            eventName: "Creation",
+            fromBlock: BigInt(_blockcreated),
+            toBlock: "latest",
+          });
 
-  const poolDataPromises = logCreateData.map(async (res: any) => {
-    const tokenData = await readContracts(config, {
-      contracts: [
-        {
-          address: res.args.tokenAddr as `0x${string}`,
-          abi: erc20Abi,
-          functionName: 'symbol',
-          chainId: _chainId,
-        },
-        {
-          address: res.args.tokenAddr as `0x${string}`,
-          abi: erc20Abi,
-          functionName: 'totalSupply',
-          chainId: _chainId,
-        },
-        {
-          ...bkgafactoryContract,
-          functionName: 'pumpReserve',
-          args : [res.args.tokenAddr as '0xstring'],
-          chainId: _chainId,
-        },
-        {
-          ...bkgafactoryContract,
-          functionName: 'virtualAmount',
-          chainId: _chainId,
-        },
-      ],
-    });
+          const poolDataPromises = logCreateData.map(async (res: any) => {
+            const tokenData = await readContracts(config, {
+              contracts: [
+                {
+                  address: res.args.tokenAddr as `0x${string}`,
+                  abi: erc20Abi,
+                  functionName: "symbol",
+                  chainId: _chainId,
+                },
+                {
+                  address: res.args.tokenAddr as `0x${string}`,
+                  abi: erc20Abi,
+                  functionName: "totalSupply",
+                  chainId: _chainId,
+                },
+                {
+                  ...bkgafactoryContract,
+                  functionName: "pumpReserve",
+                  args: [res.args.tokenAddr as "0xstring"],
+                  chainId: _chainId,
+                },
+                {
+                  ...bkgafactoryContract,
+                  functionName: "virtualAmount",
+                  chainId: _chainId,
+                },
+              ],
+            });
 
-    return {
-      tokenAddress: res.args.tokenAddr as `0x${string}`,
-      creator: res.args.creator as `0x${string}`,
-logo: res.args.logo && res.args.logo.startsWith('ipfs://') && !res.args.logo.startsWith('ipfs://undefined') ? res.args.logo : res.args.link1,      createdTime: Number(res.args.createdTime),
-      description: res.args.description,
-      tokenSymbol: tokenData[0].status === 'success' ? tokenData[0].result : undefined,
-      totalSupply: tokenData[1].status === 'success' ? tokenData[1].result : undefined,
-      pumpReserve: tokenData[2].status === 'success' ? tokenData[2].result : undefined,
-      virtualAmount: tokenData[3].status === 'success' ? tokenData[3].result : undefined
-    };
-  });
-  
-    const result44 = await Promise.all(poolDataPromises);
-    console.log("Result44",result44)
-    const getToken = result44.find((item) => item.tokenAddress.toLowerCase() === ticker.toLowerCase());
+            return {
+              tokenAddress: res.args.tokenAddr as `0x${string}`,
+              creator: res.args.creator as `0x${string}`,
+              logo:
+                res.args.logo &&
+                res.args.logo.startsWith("ipfs://") &&
+                !res.args.logo.startsWith("ipfs://undefined")
+                  ? res.args.logo
+                  : res.args.link1,
+              createdTime: Number(res.args.createdTime),
+              description: res.args.description,
+              tokenSymbol:
+                tokenData[0].status === "success"
+                  ? tokenData[0].result
+                  : undefined,
+              totalSupply:
+                tokenData[1].status === "success"
+                  ? tokenData[1].result
+                  : undefined,
+              pumpReserve:
+                tokenData[2].status === "success"
+                  ? tokenData[2].result
+                  : undefined,
+              virtualAmount:
+                tokenData[3].status === "success"
+                  ? tokenData[3].result
+                  : undefined,
+            };
+          });
 
-      console.log(result2)
+          const result44 = await Promise.all(poolDataPromises);
+          const getToken = result44.find(
+            (item) => item.tokenAddress.toLowerCase() === ticker.toLowerCase()
+          );
 
-      const symbol =  result2[1].result
-      const name =  result2[0].result
-      const creator = getToken?.creator
-      const createTime =  Number(getToken?.createdTime)
-      const logo = getToken?.logo 
-      const description = getToken?.description
+          const symbol = result2[1].result;
+          const name = result2[0].result;
+          const creator = getToken?.creator;
+          const createTime = Number(getToken?.createdTime);
+          const logo = getToken?.logo;
+          const description = getToken?.description;
+          const va = getToken?.virtualAmount !== undefined ? Number(formatEther(getToken?.virtualAmount)) : 0;
 
-      setSymbol(symbol)
-      setName(name)
-      setCreator(creator as '0xstring');
-      setCreateTime(createTime);
-      setLogo(logo)
-      setDescription(description)
+          setSymbol(symbol);
+          setName(name);
+          setCreator(creator as "0xstring");
+          setCreateTime(createTime);
+          setLogo(logo);
+          setDescription(description);
 
-      const result3 = useReadContracts({
-        contracts: [
-          {
-            address: lp as "0xstring",
-            abi: UniswapV2PairABI,
-            functionName: "slot0",
-            chainId: _chainId,
-          },
-          {
-            address: lp as "0xstring",
-            abi: UniswapV2PairABI,
-            functionName: "token0",
-            chainId: _chainId,
-          },
-        ],
-      });
-
-    if (result3.status !== "success") {
-        setProgress(0);
-        return;
-      }
-      const sqrtPriceX96 = Number(state[3].result![0]) / 2 ** 96;
-      const isToken0 = result3.data![1].result?.toUpperCase() !== currencyAddr.toUpperCase();
-      const price = isToken0 ? sqrtPriceX96 ** 2 : 1 / (sqrtPriceX96 ** 2);
+          const pump0 =
+            getToken?.pumpReserve &&
+            Array.isArray(getToken.pumpReserve) &&
+            getToken.pumpReserve[0] !== undefined
+              ? Number(formatEther(getToken.pumpReserve[0]))
+              : 0;
+          const pump1 =
+            getToken?.pumpReserve &&
+            Array.isArray(getToken.pumpReserve) &&
+            getToken.pumpReserve[1] !== undefined
+              ? Number(formatEther(getToken.pumpReserve[1]))
+              : 0;
+    
+          console.log("getToken",getToken);
+          console.log("Pump0",pump0)
+          console.log("VA",va)
+          console.log("Pump1",pump1)
+          const price = (pump0 + va) / pump1;
+          const mcap = 1000000000 * price;
+          const denominator = chain === "kubtestnet" && mode === "pro" ? 47800 / 1000000000 : 1;
+          const progressValue = ((price * 100) / denominator).toFixed(2);
+          console.log("Progressing ", progressValue);
+          console.log("Price", price);
+          console.log("Mcap", mcap);
+          setProgress(Number(progressValue));
+          setMcap(mcap);
+          setPrice(price);
       
-      const denominator = (chain === "kubtestnet" && mode === "pro" ? 47800/1000000000 : 1) 
-      const progressValue = ((price * 100) / denominator).toFixed(2);
-      setProgress(Number(progressValue));
-      setPrice(Number(price) | 0)
+        } else {
+          console.log("This")
+          const result2: any = await readContracts(config, {
+            contracts: [
+              {
+                ...tickerContract,
+                functionName: "name",
+              },
+              {
+                ...tickerContract,
+                functionName: "symbol",
+              },
+              {
+                ...bkgafactoryContract,
+                functionName: "desp",
+                args: [ticker as "0xstring"],
+              },
+              {
+                ...bkgafactoryContract,
+                functionName: "logo",
+                args: [ticker as "0xstring"],
+              },
+              {
+                ...univ2factoryContract,
+                functionName: "getPool",
+                args: [
+                  ticker as "0xstring",
+                  dataofcurr.addr as "0xstring",
+                  10000,
+                ],
+              },
+              {
+                ...bkgafactoryContract,
+                functionName: "creator",
+                args: [ticker as "0xstring"],
+              },
+              {
+                ...bkgafactoryContract,
+                functionName: "createdTime",
+                args: [ticker as "0xstring"],
+              },
+            ],
+          });
 
-      const mcap = result3.status === "success"
-                ? result3.data![1].result!.toUpperCase() !==
-                  dataofcurr.addr.toUpperCase()
-                  ? Intl.NumberFormat("en-US", {
-                      notation: "compact",
-                      compactDisplay: "short",
-                    }).format(
-                      (Number(state[3].result![0]) / 2 ** 96) ** 2 * 1000000000
-                    )
-                  : Intl.NumberFormat("en-US", {
-                      notation: "compact",
-                      compactDisplay: "short",
-                    }).format(
-                      (1 / (Number(state[3].result![0]) / 2 ** 96) ** 2) *
-                        1000000000
-                    ) : 0
-      setMcap(Number(mcap) | 0)
+          const symbol = result2[1].result;
+          const name = result2[0].result;
+          const creator = result2[5].result;
+          const createTime = result2[6].result;
+          const logo = result2[3].result;
+          const description = result2[2].result;
 
+          setSymbol(symbol);
+          setName(name);
+          setCreator(creator);
+          setCreateTime(createTime);
+          setLogo(logo);
+          setDescription(description);
 
-      }else {
+          console.log("Symbol :", symbol);
+          console.log("Name :", name);
+          console.log("Create By :", creator);
+          console.log("Create At :", createTime);
+          console.log("Logo URL :", logo);
+          console.log("Description :", description);
 
-        
-        const result2: any = await readContracts(config, {
-        contracts: [
-          {
-            ...tickerContract,
-            functionName: "name",
-          },
-          {
-            ...tickerContract,
-            functionName: "symbol",
-          },
-          {
-            ...bkgafactoryContract,
-            functionName: "desp",
-            args: [ticker as "0xstring"],
-          },
-          {
-            ...bkgafactoryContract,
-            functionName: "logo",
-            args: [ticker as "0xstring"],
-          },
-          {
-            ...univ2factoryContract,
-            functionName: "getPool",
-            args: [ticker as "0xstring", dataofcurr.addr as "0xstring", 10000],
-          },
-          {
-            ...bkgafactoryContract,
-            functionName: "creator",
-            args: [ticker as "0xstring"],
-          },
-          {
-            ...bkgafactoryContract,
-            functionName: "createdTime",
-            args: [ticker as "0xstring"],
-          },
-        ],
-      });
+          const result3 = await readContracts(config, {
+            contracts: [
+              {
+                address: lp as "0xstring",
+                abi: UniswapV2PairABI,
+                functionName: "slot0",
+                chainId: _chainId,
+              },
+              {
+                address: lp as "0xstring",
+                abi: UniswapV2PairABI,
+                functionName: "token0",
+                chainId: _chainId,
+              },
+            ],
+          });
 
+          console.log(result3[0].result);
+          const sqrtPriceX96 =
+            Number(formatEther(state[3].result![0])) / 2 ** 96;
+          const isToken0 =
+            result3[1].result?.toUpperCase() !== currencyAddr.toUpperCase();
+          const price = isToken0 ? sqrtPriceX96 ** 2 : 1 / sqrtPriceX96 ** 2;
+          const denominator = 8640;
+          const progressValue = ((price * 100) / denominator).toFixed(2);
+          setProgress(Number(progressValue));
+          setPrice(Number(price) | 0);
 
-      const symbol =  result2[1].result
-      const name =  result2[0].result
-      const creator = result2[5].result
-      const createTime =  result2[6].result
-      const logo = result2[3].result
-      const description = result2[2].result
+          const mcap =
+            result3[0].status === "success"
+              ? result3![1].result!.toUpperCase() !==
+                dataofcurr.addr.toUpperCase()
+                ? Intl.NumberFormat("en-US", {
+                    notation: "compact",
+                    compactDisplay: "short",
+                  }).format(
+                    (Number(formatEther(state[3].result![0])) / 2 ** 96) ** 2 *
+                      1000000000
+                  )
+                : Intl.NumberFormat("en-US", {
+                    notation: "compact",
+                    compactDisplay: "short",
+                  }).format(
+                    (1 / (Number(state[3].result![0]) / 2 ** 96) ** 2) *
+                      1000000000
+                  )
+              : 0;
+          setMcap(Number(mcap) | 0);
 
-      setSymbol(symbol)
-      setName(name)
-      setCreator(creator)
-      setCreateTime(createTime)
-      setLogo(logo)
-      setDescription(description)
-
-      console.log("Symbol :",symbol)
-      console.log("Name :",name)
-      console.log("Create By :",creator)
-      console.log("Create At :",createTime)
-      console.log("Logo URL :",logo)
-      console.log("Description :",description)
-
-      const result3 = useReadContracts({
-        contracts: [
-          {
-            address: lp as "0xstring",
-            abi: UniswapV2PairABI,
-            functionName: "slot0",
-            chainId: _chainId,
-          },
-          {
-            address: lp as "0xstring",
-            abi: UniswapV2PairABI,
-            functionName: "token0",
-            chainId: _chainId,
-          },
-        ],
-      });
-
-    if (result3.status !== "success") {
-        setProgress(0);
-        return;
-      }
-      const sqrtPriceX96 = Number(state[3].result![0]) / 2 ** 96;
-      const isToken0 = result3.data![1].result?.toUpperCase() !== currencyAddr.toUpperCase();
-      const price = isToken0 ? sqrtPriceX96 ** 2 : 1 / (sqrtPriceX96 ** 2);
-      const denominator = 8640;
-      const progressValue = ((price * 100) / denominator).toFixed(2);
-      setProgress(Number(progressValue));
-      setPrice(Number(price) | 0)
-
-      const mcap = result3.status === "success"
-                ? result3.data![1].result!.toUpperCase() !==
-                  dataofcurr.addr.toUpperCase()
-                  ? Intl.NumberFormat("en-US", {
-                      notation: "compact",
-                      compactDisplay: "short",
-                    }).format(
-                      (Number(state[3].result![0]) / 2 ** 96) ** 2 * 1000000000
-                    )
-                  : Intl.NumberFormat("en-US", {
-                      notation: "compact",
-                      compactDisplay: "short",
-                    }).format(
-                      (1 / (Number(state[3].result![0]) / 2 ** 96) ** 2) *
-                        1000000000
-                    ) : 0
-      setMcap(Number(mcap) | 0)
-      }
+          console.log("Progressing", Number(progressValue));
+          console.log("Price", Number(price));
+          console.log("Mcap", Number(mcap));
+        }
       } catch (error) {
-        console.error("error with reason",error)
+        console.error("error with reason", error);
       }
-
-  }
+    };
 
     const fetch1 = async () => {
       const nativeBal =
@@ -808,9 +827,8 @@ logo: res.args.logo && res.args.logo.startsWith('ipfs://') && !res.args.logo.sta
           };
         });
       } else {
-
-      if(chain !== 'kubtestnet'){
-        const result9 = await publicClient.getContractEvents({
+        if (chain !== "kubtestnet") {
+          const result9 = await publicClient.getContractEvents({
             address: ticker as "0xstring",
             abi: erc20Abi,
             eventName: "Transfer",
@@ -868,73 +886,73 @@ logo: res.args.logo && res.args.logo.startsWith('ipfs://') && !res.args.logo.sta
           if (resGraduate[0] !== undefined) {
             setGradHash(resGraduate[0].transactionHash);
           }
-      }else{
-          {/** FETCHING V2 */}
+        } else {
+          {
+            /** FETCHING V2 */
+          }
           const result9 = await publicClient.getContractEvents({
-          address: ticker as "0xstring",
-          abi: erc20Abi,
-          eventName: "Transfer",
-          args: {
-            from: bkgafactoryAddr as "0xstring",
-          },
-          fromBlock: BigInt(dataofcurr.blockcreated),
-          toBlock: "latest",
-        });
-        fulldatabuy = result9
-          .map((res: any) => {
-            const value = Number(formatEther(res.args.value));
-            if (value === 0) {
-              return null;
-            }
-            return {
-              action: value === 90661089.38801491 ? "launch" : "buy",
-              value,
-              from: res.args.to,
-              hash: res.transactionHash,
-              block: res.blockNumber,
-            };
-          })
-          .filter((item: any) => item !== null);
-        console.log("FULL DATA",fulldatabuy)
-        const result10 = await publicClient.getContractEvents({
-          address: ticker as "0xstring",
-          abi: erc20Abi,
-          eventName: "Transfer",
-          args: {
-            to: bkgafactoryAddr as "0xstring",
-          },
-          fromBlock: BigInt(dataofcurr.blockcreated),
-          toBlock: "latest",
-        });
-        fulldatasell = result10.map((res: any) => {
-          return {
-            action: "sell",
-            value: Number(formatEther(res.args.value)),
-            from: res.args.from,
-            hash: res.transactionHash,
-            block: res.blockNumber,
-          };
-        });
-        const resGraduate = (
-          await publicClient.getContractEvents({
+            address: ticker as "0xstring",
             abi: erc20Abi,
-            address: bkgafactoryAddr as "0xstring",
             eventName: "Transfer",
             args: {
-              to: "0x0000000000000000000000000000000000000000",
+              from: bkgafactoryAddr as "0xstring",
             },
             fromBlock: BigInt(dataofcurr.blockcreated),
             toBlock: "latest",
-          })
-        ).filter((res) => {
-          return res.args.value === BigInt("12405643876881199591159421");
-        });
-        if (resGraduate[0] !== undefined) {
-          setGradHash(resGraduate[0].transactionHash);
+          });
+          fulldatabuy = result9
+            .map((res: any) => {
+              const value = Number(formatEther(res.args.value));
+              if (value === 0) {
+                return null;
+              }
+              return {
+                action: value === 90661089.38801491 ? "launch" : "buy",
+                value,
+                from: res.args.to,
+                hash: res.transactionHash,
+                block: res.blockNumber,
+              };
+            })
+            .filter((item: any) => item !== null);
+          console.log("FULL DATA", fulldatabuy);
+          const result10 = await publicClient.getContractEvents({
+            address: ticker as "0xstring",
+            abi: erc20Abi,
+            eventName: "Transfer",
+            args: {
+              to: bkgafactoryAddr as "0xstring",
+            },
+            fromBlock: BigInt(dataofcurr.blockcreated),
+            toBlock: "latest",
+          });
+          fulldatasell = result10.map((res: any) => {
+            return {
+              action: "sell",
+              value: Number(formatEther(res.args.value)),
+              from: res.args.from,
+              hash: res.transactionHash,
+              block: res.blockNumber,
+            };
+          });
+          const resGraduate = (
+            await publicClient.getContractEvents({
+              abi: erc20Abi,
+              address: bkgafactoryAddr as "0xstring",
+              eventName: "Transfer",
+              args: {
+                to: "0x0000000000000000000000000000000000000000",
+              },
+              fromBlock: BigInt(dataofcurr.blockcreated),
+              toBlock: "latest",
+            })
+          ).filter((res) => {
+            return res.args.value === BigInt("12405643876881199591159421");
+          });
+          if (resGraduate[0] !== undefined) {
+            setGradHash(resGraduate[0].transactionHash);
+          }
         }
-      }
-
-  
       }
       const mergedata = fulldatasell.slice(1).concat(fulldatabuy);
       const _timestamparr = mergedata.map(async (res: any) => {
@@ -959,7 +977,7 @@ logo: res.args.logo && res.args.logo.startsWith('ipfs://') && !res.args.logo.sta
         .sort((a: any, b: any) => {
           return b.timestamp - a.timestamp;
         });
-      console.log("Final Logs Result",theresult);
+      console.log("Final Logs Result", theresult);
       setHx(theresult);
     };
 
@@ -1030,13 +1048,13 @@ logo: res.args.logo && res.args.logo.startsWith('ipfs://') && !res.args.logo.sta
 
     if (hash === "") {
       fetchGraph();
-      fetchLogs(); 
+      fetchLogs();
       fetch0();
       fetch1();
     } else {
       setInterval(fetch0, 5000);
-       setInterval(fetchGraph, 5000);
-      setInterval(fetchLogs, 5000); 
+      setInterval(fetchGraph, 5000);
+      setInterval(fetchLogs, 5000);
       setInterval(fetch1, 5000);
     }
   }, [hash]);
@@ -1044,7 +1062,7 @@ logo: res.args.logo && res.args.logo.startsWith('ipfs://') && !res.args.logo.sta
   const qoute = useDebouncedCallback(async (value: string) => {
     try {
       if (Number(value) !== 0) {
-        if (chain !== 'kubtestnet') {
+        if (chain !== "kubtestnet") {
           const qouteOutput = await simulateContract(config, {
             ...univ3QouterContract,
             functionName: "quoteExactInputSingle",
@@ -1087,10 +1105,17 @@ logo: res.args.logo && res.args.logo.startsWith('ipfs://') && !res.args.logo.sta
           });
 
           // Define getAmountOut function
-          const getAmountOut = (_inputAmount: number, _inputReserve: bigint, _outputReserve: bigint): number => {
+          const getAmountOut = (
+            _inputAmount: number,
+            _inputReserve: bigint,
+            _outputReserve: bigint
+          ): number => {
             const inputAmountWithFee = _inputAmount * 99; // Apply 99/100 multiplier for fee
-            const numerator = BigInt(Math.floor(inputAmountWithFee)) * _outputReserve;
-            const denominator = _inputReserve * BigInt(100) + BigInt(Math.floor(inputAmountWithFee));
+            const numerator =
+              BigInt(Math.floor(inputAmountWithFee)) * _outputReserve;
+            const denominator =
+              _inputReserve * BigInt(100) +
+              BigInt(Math.floor(inputAmountWithFee));
             return Number(numerator / denominator);
           };
 
@@ -1102,14 +1127,22 @@ logo: res.args.logo && res.args.logo.startsWith('ipfs://') && !res.args.logo.sta
           }
 
           // Extract results with safety checks
-          const pumpReserve = result[0].result && Array.isArray(result[0].result) && result[0].result.length === 2 
-            ? [BigInt(result[0].result[0] || 0), BigInt(result[0].result[1] || 0)] 
-            : [BigInt(0), BigInt(10000)];
-          
-          const virtualAmount = result[1].result ? BigInt(result[1].result) : BigInt(0);
-          
-          const fee = result[2].result 
-            ? Number(formatEther(result[2].result)) 
+          const pumpReserve =
+            result[0].result &&
+            Array.isArray(result[0].result) &&
+            result[0].result.length === 2
+              ? [
+                  BigInt(result[0].result[0] || 0),
+                  BigInt(result[0].result[1] || 0),
+                ]
+              : [BigInt(0), BigInt(10000)];
+
+          const virtualAmount = result[1].result
+            ? BigInt(result[1].result)
+            : BigInt(0);
+
+          const fee = result[2].result
+            ? Number(formatEther(result[2].result))
             : 0;
 
           // Calculate amount after fee
@@ -1119,9 +1152,17 @@ logo: res.args.logo && res.args.logo.startsWith('ipfs://') && !res.args.logo.sta
 
           // Calculate output based on trade mode
           const amountOut = trademode
-            ? getAmountOut(amountInAfterFee, virtualAmount + pumpReserve[0], pumpReserve[1])
-            : getAmountOut(amountInAfterFee, pumpReserve[1], pumpReserve[0] + virtualAmount);
-          console.log(amountOut)
+            ? getAmountOut(
+                amountInAfterFee,
+                virtualAmount + pumpReserve[0],
+                pumpReserve[1]
+              )
+            : getAmountOut(
+                amountInAfterFee,
+                pumpReserve[1],
+                pumpReserve[0] + virtualAmount
+              );
+          console.log(amountOut);
           // Format output to string for consistency
           setOutputBalance(amountOut.toFixed(18)); // Match formatEther precision
         }
@@ -1134,17 +1175,72 @@ logo: res.args.logo && res.args.logo.startsWith('ipfs://') && !res.args.logo.sta
     }
   }, 300);
 
-const trade = async () => {
-  try {
-    let result: any = "";
-    if (chain !== 'kubtestnet') {
-      // Existing logic for non-kubtestnet chains
-      if (mode === "pro") {
-        if (!trademode) {
+  const trade = async () => {
+    try {
+      let result: any = "";
+      if (chain !== "kubtestnet") {
+        // Existing logic for non-kubtestnet chains
+        if (mode === "pro") {
+          if (!trademode) {
+            const allowance = await readContracts(config, {
+              contracts: [
+                {
+                  address: ticker as "0xstring",
+                  abi: erc20Abi,
+                  functionName: "allowance",
+                  args: [
+                    account.address as "0xstring",
+                    dataofuniv2router.addr as "0xstring",
+                  ],
+                  chainId: _chainId,
+                },
+              ],
+            });
+            if (
+              Number(formatEther(allowance[0].result!)) < Number(inputBalance)
+            ) {
+              const { request } = await simulateContract(config, {
+                address: ticker as "0xstring",
+                abi: erc20Abi,
+                functionName: "approve",
+                args: [
+                  dataofuniv2router.addr as "0xstring",
+                  parseEther(String(Number(inputBalance) + 1)),
+                ],
+                chainId: _chainId,
+              });
+              const h = await writeContract(config, request);
+              await waitForTransactionReceipt(config, { hash: h });
+            }
+          }
+          result = await writeContract(config, {
+            ...univ2RouterContract,
+            functionName: "exactInputSingle",
+            args: [
+              {
+                tokenIn: trademode
+                  ? (dataofcurr.addr as "0xstring")
+                  : (ticker as "0xstring"),
+                tokenOut: trademode
+                  ? (ticker as "0xstring")
+                  : (dataofcurr.addr as "0xstring"),
+                fee: 10000,
+                recipient: account.address as "0xstring",
+                amountIn: parseEther(inputBalance),
+                amountOutMinimum:
+                  (parseEther(outputBalance) * BigInt(95)) / BigInt(100),
+                sqrtPriceLimitX96: BigInt(0),
+              },
+            ],
+            value: trademode ? parseEther(inputBalance) : BigInt(0),
+          });
+        } else {
           const allowance = await readContracts(config, {
             contracts: [
               {
-                address: ticker as "0xstring",
+                address: trademode
+                  ? (dataofcurr.addr as "0xstring")
+                  : (ticker as "0xstring"),
                 abi: erc20Abi,
                 functionName: "allowance",
                 args: [
@@ -1155,9 +1251,13 @@ const trade = async () => {
               },
             ],
           });
-          if (Number(formatEther(allowance[0].result!)) < Number(inputBalance)) {
+          if (
+            Number(formatEther(allowance[0].result!)) < Number(inputBalance)
+          ) {
             const { request } = await simulateContract(config, {
-              address: ticker as "0xstring",
+              address: trademode
+                ? (dataofcurr.addr as "0xstring")
+                : (ticker as "0xstring"),
               abi: erc20Abi,
               functionName: "approve",
               args: [
@@ -1169,148 +1269,96 @@ const trade = async () => {
             const h = await writeContract(config, request);
             await waitForTransactionReceipt(config, { hash: h });
           }
-        }
-        result = await writeContract(config, {
-          ...univ2RouterContract,
-          functionName: "exactInputSingle",
-          args: [
-            {
-              tokenIn: trademode
-                ? (dataofcurr.addr as "0xstring")
-                : (ticker as "0xstring"),
-              tokenOut: trademode
-                ? (ticker as "0xstring")
-                : (dataofcurr.addr as "0xstring"),
-              fee: 10000,
-              recipient: account.address as "0xstring",
-              amountIn: parseEther(inputBalance),
-              amountOutMinimum:
-                (parseEther(outputBalance) * BigInt(95)) / BigInt(100),
-              sqrtPriceLimitX96: BigInt(0),
-            },
-          ],
-          value: trademode ? parseEther(inputBalance) : BigInt(0),
-        });
-      } else {
-        const allowance = await readContracts(config, {
-          contracts: [
-            {
-              address: trademode
-                ? (dataofcurr.addr as "0xstring")
-                : (ticker as "0xstring"),
-              abi: erc20Abi,
-              functionName: "allowance",
-              args: [
-                account.address as "0xstring",
-                dataofuniv2router.addr as "0xstring",
-              ],
-              chainId: _chainId,
-            },
-          ],
-        });
-        if (Number(formatEther(allowance[0].result!)) < Number(inputBalance)) {
-          const { request } = await simulateContract(config, {
-            address: trademode
-              ? (dataofcurr.addr as "0xstring")
-              : (ticker as "0xstring"),
-            abi: erc20Abi,
-            functionName: "approve",
+          result = await writeContract(config, {
+            ...univ2RouterContract,
+            functionName: "exactInputSingle",
             args: [
-              dataofuniv2router.addr as "0xstring",
-              parseEther(String(Number(inputBalance) + 1)),
+              {
+                tokenIn: trademode
+                  ? (dataofcurr.addr as "0xstring")
+                  : (ticker as "0xstring"),
+                tokenOut: trademode
+                  ? (ticker as "0xstring")
+                  : (dataofcurr.addr as "0xstring"),
+                fee: 10000,
+                recipient: account.address as "0xstring",
+                amountIn: parseEther(inputBalance),
+                amountOutMinimum:
+                  (parseEther(outputBalance) * BigInt(95)) / BigInt(100),
+                sqrtPriceLimitX96: BigInt(0),
+              },
             ],
+          });
+        }
+      } else {
+        // kubtestnet branch
+        if (trademode) {
+          // Buy: Native currency -> Token
+          result = await writeContract(config, {
+            ...bkgafactoryContract,
+            functionName: "buy",
+            args: [
+              ticker as "0xstring", // _tokenAddr
+              (parseEther(outputBalance) * BigInt(95)) / BigInt(100), // _minToken
+            ],
+            value: parseEther(inputBalance), // msg.value
             chainId: _chainId,
           });
-          const h = await writeContract(config, request);
-          await waitForTransactionReceipt(config, { hash: h });
-        }
-        result = await writeContract(config, {
-          ...univ2RouterContract,
-          functionName: "exactInputSingle",
-          args: [
-            {
-              tokenIn: trademode
-                ? (dataofcurr.addr as "0xstring")
-                : (ticker as "0xstring"),
-              tokenOut: trademode
-                ? (ticker as "0xstring")
-                : (dataofcurr.addr as "0xstring"),
-              fee: 10000,
-              recipient: account.address as "0xstring",
-              amountIn: parseEther(inputBalance),
-              amountOutMinimum:
-                (parseEther(outputBalance) * BigInt(95)) / BigInt(100),
-              sqrtPriceLimitX96: BigInt(0),
-            },
-          ],
-        });
-      }
-    } else {
-      // kubtestnet branch
-      if (trademode) {
-        // Buy: Native currency -> Token
-        result = await writeContract(config, {
-          ...bkgafactoryContract,
-          functionName: "buy",
-          args: [
-            ticker as "0xstring", // _tokenAddr
-            (parseEther(outputBalance) * BigInt(95)) / BigInt(100), // _minToken
-          ],
-          value: parseEther(inputBalance), // msg.value
-          chainId: _chainId,
-        });
-      } else {
-        // Sell: Token -> Native currency
-        const allowance = await readContracts(config, {
-          contracts: [
-            {
+        } else {
+          // Sell: Token -> Native currency
+          const allowance = await readContracts(config, {
+            contracts: [
+              {
+                address: ticker as "0xstring",
+                abi: erc20Abi,
+                functionName: "allowance",
+                args: [
+                  account.address as "0xstring",
+                  bkgafactoryContract.address as "0xstring",
+                ],
+                chainId: _chainId,
+              },
+            ],
+          });
+          console.log("allowance",allowance)
+          if (
+            Number(formatEther(allowance[0].result!)) < Number(inputBalance)
+          ) {
+            const { request } = await simulateContract(config, {
               address: ticker as "0xstring",
               abi: erc20Abi,
-              functionName: "allowance",
+              functionName: "approve",
               args: [
-                account.address as "0xstring",
                 bkgafactoryContract.address as "0xstring",
+                parseEther(String(Number(inputBalance) + 1)),
               ],
               chainId: _chainId,
-            },
-          ],
-        });
-        if (Number(formatEther(allowance[0].result!)) < Number(inputBalance)) {
-          const { request } = await simulateContract(config, {
-            address: ticker as "0xstring",
-            abi: erc20Abi,
-            functionName: "approve",
+            });
+            const h = await writeContract(config, request);
+            await waitForTransactionReceipt(config, { hash: h });
+          }
+          result = await writeContract(config, {
+            ...bkgafactoryContract,
+            functionName: "sell",
             args: [
-              bkgafactoryContract.address as "0xstring",
-              parseEther(String(Number(inputBalance) + 1)),
+              ticker as "0xstring", // _tokenAddr
+              parseEther(inputBalance), // _tokenSold
+              (parseEther(outputBalance) * BigInt(90)) / BigInt(100), // _minToken
             ],
             chainId: _chainId,
           });
-          const h = await writeContract(config, request);
-          await waitForTransactionReceipt(config, { hash: h });
         }
-        result = await writeContract(config, {
-          ...bkgafactoryContract,
-          functionName: "sell",
-          args: [
-            ticker as "0xstring", // _tokenAddr
-            parseEther(inputBalance), // _tokenSold
-            (parseEther(outputBalance) * BigInt(95)) / BigInt(100), // _minToken
-          ],
-          chainId: _chainId,
-        });
       }
+      setHeadnoti(true);
+      setHash(result);
+      setInputBalance("");
+      setOutputBalance("0");
+    } catch (error) {
+      console.error("Error in trade execution:", error);
+      setHeadnoti(false);
+      setHash("");
     }
-    setHeadnoti(true);
-    setHash(result);
-    setInputBalance("");
-    setOutputBalance("0");
-  } catch (error) {
-    console.error("Error in trade execution:", error);
-    setHeadnoti(false);
-    setHash("");
-  }
-};
+  };
 
   const setSocial = async () => {
     let result = await writeContract(config, {
@@ -1351,8 +1399,21 @@ const trade = async () => {
     <main className="row-start-2 w-full flex flex-col gap-4 justify-center items-center mt-[60px] md:mt-1">
       {/* HEADER TOPBAR */}
       <div className="mt-[20px] md:mt-[50px] w-full max-w-[1920px] flex flex-col gap-4 mb-2">
-        <div className="w-full flex flex-row justify-between flex-wrap gap-4 mt-4" style={{zIndex: 1}}>
-          <Link href={"/pump/launchpad?chain=" + chain + (mode === "pro" ? "&mode=pro" : "&mode=lite")} prefetch={false} className="underline hover:font-bold p-4 xl:ml-4">Back to launchpad</Link>
+        <div
+          className="w-full flex flex-row justify-between flex-wrap gap-4 mt-4"
+          style={{ zIndex: 1 }}
+        >
+          <Link
+            href={
+              "/pump/launchpad?chain=" +
+              chain +
+              (mode === "pro" ? "&mode=pro" : "&mode=lite")
+            }
+            prefetch={false}
+            className="underline hover:font-bold p-4 xl:ml-4"
+          >
+            Back to launchpad
+          </Link>
           <Menu chainEnable={false} />
         </div>
         {headnoti && (
@@ -1374,49 +1435,125 @@ const trade = async () => {
               Close
             </button>
           </div>
-        )}     
-        <div className={"xl:hidden w-full xl:w-1/3 self-center bg-neutral-900 p-2 rounded-2xl flex flex-row justify-around border-solid border-2 " + (chain === 'kub' ? "border-emerald-300" : "") + (chain === 'monad' ? "border-purple-300" : "")} style={{ zIndex: 1 }}>
-          <span 
-            className={!tabmode ? "text-black font-bold p-2 w-1/2 bg-black text-center rounded-lg" : "text-gray-400 underline hover:font-bold p-2 w-1/2 text-center"}
-            style={{backgroundImage: !tabmode ? theme.btn : 'none'}}
-            onClick={() => {setTabmode(false);}}
+        )}
+        <div
+          className={
+            "xl:hidden w-full xl:w-1/3 self-center bg-neutral-900 p-2 rounded-2xl flex flex-row justify-around border-solid border-2 " +
+            (chain === "kub" ? "border-emerald-300" : "") +
+            (chain === "monad" ? "border-purple-300" : "")
+          }
+          style={{ zIndex: 1 }}
+        >
+          <span
+            className={
+              !tabmode
+                ? "text-black font-bold p-2 w-1/2 bg-black text-center rounded-lg"
+                : "text-gray-400 underline hover:font-bold p-2 w-1/2 text-center"
+            }
+            style={{ backgroundImage: !tabmode ? theme.btn : "none" }}
+            onClick={() => {
+              setTabmode(false);
+            }}
           >
             Info
           </span>
           <span
-            className={tabmode ? "text-black font-bold p-2 w-1/2 bg-black text-center rounded-lg" : "text-gray-400 underline hover:font-bold p-2 w-1/2 text-center"}
-            style={{backgroundImage: tabmode ? theme.btn : 'none'}}
-            onClick={() => {setTabmode(true);}}
+            className={
+              tabmode
+                ? "text-black font-bold p-2 w-1/2 bg-black text-center rounded-lg"
+                : "text-gray-400 underline hover:font-bold p-2 w-1/2 text-center"
+            }
+            style={{ backgroundImage: tabmode ? theme.btn : "none" }}
+            onClick={() => {
+              setTabmode(true);
+            }}
           >
             Trade
           </span>
         </div>
         <div className="ml-[14px] lg:ml-[28px] hidden xl:block w-full flex flex-col items-center md:flex-row flex-wrap justify-between text-xs xl:text-md">
-          <span className={"text-2xl mr-6 " + (chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>{name}</span>
+          <span
+            className={
+              "text-2xl mr-6 " +
+              (chain === "kub" ? "text-emerald-300" : "") +
+              (chain === "monad" ? "text-purple-300" : "")
+            }
+          >
+            {name}
+          </span>
           <span className="mr-6">{"[" + symbol + "]"}</span>
           <span className="mr-6">
             Price:{" "}
-            <span className={(chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>
+            <span
+              className={
+                theme.text
+              }
+            >
               {price}
             </span>{" "}
-            {chain === "kub" && mode === "pro" && "KUB"}
-            {chain === "kub" &&
-              mode === "lite" &&
-              (token === "cmm" || token === "") &&
-              "CMM"}
-            {chain === "monad" && mode === "pro" && "MON"}
+          {
+              reachData && Array.isArray(reachData)
+                ? (() => {
+                    const item = reachData.find(
+                      (item) => item?.chain === chain
+                    );
+                    if (!item) return "";
+                    if (
+                      mode === "pro" &&
+                      item.proAmount &&
+                      item.proSymbol
+                    ) {
+                      return `${item.proSymbol}`;
+                    }
+                    if (
+                      mode === "lite" &&
+                      item.lite &&
+                      item.liteSymbol &&
+                      (token === item.liteSymbol || token === "")
+                    ) {
+                      return `${item.liteSymbol}`;
+                    }
+                    return "";
+                  })()
+                : ""
+            }
           </span>
           <span className="mr-6">
             Market Cap:{" "}
-            <span className={(chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>
+            <span
+              className={
+                theme.text
+              }
+            >
               {mcap}
             </span>{" "}
-            {chain === "kub" && mode === "pro" && "KUB"}
-            {chain === "kub" &&
-              mode === "lite" &&
-              (token === "cmm" || token === "") &&
-              "CMM"}
-            {chain === "monad" && mode === "pro" && "MON"}
+            {
+              reachData && Array.isArray(reachData)
+                ? (() => {
+                    const item = reachData.find(
+                      (item) => item?.chain === chain
+                    );
+                    if (!item) return "";
+                    if (
+                      mode === "pro" &&
+                      item.proAmount &&
+                      item.proSymbol
+                    ) {
+                      return `${item.proSymbol}`;
+                    }
+                    if (
+                      mode === "lite" &&
+                      item.lite &&
+                      item.liteSymbol &&
+                      (token === item.liteSymbol || token === "")
+                    ) {
+                      return `${item.liteSymbol}`;
+                    }
+                    return "";
+                  })()
+                : ""
+            }
+  
           </span>
           {creator !== null && (
             <span className="mr-6">
@@ -1426,7 +1563,7 @@ const trade = async () => {
                   _explorer +
                   "address/" +
                   creator +
-                  (chain === "kub" ? "/?tab=tokens" : "") +
+                  (["kub","kubtestnet"].includes(chain) ? "/?tab=tokens" : "") +
                   (chain === "monad" ? "#tokens" : "")
                 }
                 rel="noopener noreferrer"
@@ -1494,7 +1631,9 @@ const trade = async () => {
             </span>
           )}
           <span className="flex items-center gap-1 mr-6">
-            <span>CA: {ticker.slice(0, 5)}...{ticker.slice(37)}</span>
+            <span>
+              CA: {ticker.slice(0, 5)}...{ticker.slice(37)}
+            </span>
             <button
               onClick={() => copyToClipboard(ticker)}
               className="flex items-center gap-2 bg-water-300 hover:bg-neutral-700 px-3 py-2 rounded-md transition-colors text-xs cursor-pointer"
@@ -1521,12 +1660,10 @@ const trade = async () => {
                       symbol: symbol,
                       decimals: 18,
                       image:
-                        logo !== null &&
-                        String(logo).slice(0, 7) === "ipfs://"
+                        logo !== null && String(logo).slice(0, 7) === "ipfs://"
                           ? "https://gateway.commudao.xyz/ipfs/" +
                             String(logo).slice(7)
-                          : "https://gateway.commudao.xyz/ipfs/" +
-                            String(logo),
+                          : "https://gateway.commudao.xyz/ipfs/" + String(logo),
                     },
                   },
                 });
@@ -1542,12 +1679,7 @@ const trade = async () => {
               className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm"
               title="View on Etherscan"
             >
-              <Image
-                src="/bs.png"
-                alt="blockscout"
-                height={16}
-                width={16}
-              />
+              <Image src="/bs.png" alt="blockscout" height={16} width={16} />
             </Link>
           </span>
         </div>
@@ -1556,13 +1688,29 @@ const trade = async () => {
       {/** PC */}
       <div className="w-full text-center max-w-[1920px] flex flex-row flex-wrap gap-12 items-center xl:items-start justify-around">
         {!tabmode ? (
-          <div className="block xl:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start" style={{ zIndex: 1 }}>
+          <div
+            className="block xl:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start"
+            style={{ zIndex: 1 }}
+          >
             <div className="w-full flex flex-col items-start xl:flex-row flex-wrap justify-between text-xs xl:text-md">
-              <span className={"text-2xl mr-6 " + (chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>{name}</span>
+              <span
+                className={
+                  "text-2xl mr-6 " +
+                  (chain === "kub" ? "text-emerald-300" : "") +
+                  (chain === "monad" ? "text-purple-300" : "")
+                }
+              >
+                {name}
+              </span>
               <span className="mr-6">{"[" + symbol + "]"}</span>
               <span className="mr-6">
                 Price:{" "}
-                <span className={(chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>
+                <span
+                  className={
+                    (chain === "kub" ? "text-emerald-300" : "") +
+                    (chain === "monad" ? "text-purple-300" : "")
+                  }
+                >
                   {price}
                 </span>{" "}
                 {chain === "kub" && mode === "pro" && "KUB"}
@@ -1574,7 +1722,12 @@ const trade = async () => {
               </span>
               <span className="mr-6">
                 Market Cap:{" "}
-                <span className={(chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>
+                <span
+                  className={
+                    (chain === "kub" ? "text-emerald-300" : "") +
+                    (chain === "monad" ? "text-purple-300" : "")
+                  }
+                >
                   {mcap}
                 </span>{" "}
                 {chain === "kub" && mode === "pro" && "KUB"}
@@ -1660,7 +1813,9 @@ const trade = async () => {
                 </span>
               )}
               <span className="flex items-center gap-1 mr-6">
-                <span>CA: {ticker.slice(0, 5)}...{ticker.slice(37)}</span>
+                <span>
+                  CA: {ticker.slice(0, 5)}...{ticker.slice(37)}
+                </span>
                 <button
                   onClick={() => copyToClipboard(ticker)}
                   className="flex items-center gap-2 bg-water-300 hover:bg-neutral-700 px-3 py-2 rounded-md transition-colors text-xs cursor-pointer"
@@ -1684,8 +1839,7 @@ const trade = async () => {
                         type: "ERC20",
                         options: {
                           address: ticker,
-                          symbol:
-                            symbol,
+                          symbol: symbol,
                           decimals: 18,
                           image:
                             logo !== null &&
@@ -1739,8 +1893,7 @@ const trade = async () => {
                   </div>
                   <div className="flex-1 min-w-0 h-[125px] overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
                     <span className="text-xs break-words">
-                      Description:{" "}
-                      {description}
+                      Description: {description}
                     </span>
                   </div>
                 </div>
@@ -1748,7 +1901,7 @@ const trade = async () => {
             </div>
 
             {/* Socials Section */}
-            {(
+            {
               <div className="w-full">
                 <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-4">
                   {socialItems.map(({ icon, field }) => {
@@ -1781,7 +1934,7 @@ const trade = async () => {
 
                 {/* ปุ่มเพิ่ม Socials */}
               </div>
-            )}
+            }
 
             {creator !== null && creator === account.address && (
               <div>
@@ -1826,7 +1979,7 @@ const trade = async () => {
               </button>
             </a>
 
-            { name !== null && state[2].result ? (
+            {name !== null && state[2].result ? (
               <>
                 <span className="ml-[20px] text-sm font-bold  text-left">
                   🔥 This token has graduated!:{" "}
@@ -1836,7 +1989,11 @@ const trade = async () => {
                       rel="noopener noreferrer"
                       target="_blank"
                       prefetch={false}
-                      className={"underline " + (chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}
+                      className={
+                        "underline " +
+                        (chain === "kub" ? "text-emerald-300" : "") +
+                        (chain === "monad" ? "text-purple-300" : "")
+                      }
                     >
                       Txn hash
                     </Link>
@@ -1852,18 +2009,21 @@ const trade = async () => {
             ) : (
               <>
                 <div className="w-full text-sm flex flex-col gap-2 justify-start  text-left">
-                  <span>
-                    Bonding curve progress:{" "}
-                    {progress + "%"}
-                  </span>
+                  <span>Bonding curve progress: {progress + "%"}</span>
                   <div className="has-tooltip">
                     <span className="tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs">
                       {`When the market cap reaches ${
                         reachData && Array.isArray(reachData)
                           ? (() => {
-                              const item = reachData.find(item => item?.chain === chain);
+                              const item = reachData.find(
+                                (item) => item?.chain === chain
+                              );
                               if (!item) return "";
-                              if (mode === "pro" && item.proAmount && item.proSymbol) {
+                              if (
+                                mode === "pro" &&
+                                item.proAmount &&
+                                item.proSymbol
+                              ) {
                                 return `${item.proAmount} ${item.proSymbol}`;
                               }
                               if (
@@ -1890,302 +2050,369 @@ const trade = async () => {
               </>
             )}
             <div className="w-full h-[800px] mt-8 p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center">
-                <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">{holder.length} Holders</span>
-                <div className="w-full overflow-x-hidden overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
-                    {holder
-                    .sort((a, b) => {
+              <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">
+                {holder.length} Holders
+              </span>
+              <div className="w-full overflow-x-hidden overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
+                {holder
+                  .sort((a, b) => {
                     return b.value - a.value;
-                    })
-                    .map((res, index) => (
-                        <div
-                            className="w-full h-[50px] flex flex-row items-center justify-between text-xs lg:text-md py-2 border-b border-gray-800"
-                            key={index}
+                  })
+                  .map((res, index) => (
+                    <div
+                      className="w-full h-[50px] flex flex-row items-center justify-between text-xs lg:text-md py-2 border-b border-gray-800"
+                      key={index}
+                    >
+                      <div className="flex flex-row items-center justify-start gap-6 overflow-hidden">
+                        <span>{index + 1}.</span>
+                        <Link
+                          href={
+                            _explorer +
+                            "address/" +
+                            res.addr +
+                            (chain === "kub" ? "/?tab=tokens" : "") +
+                            (chain === "monad" ? "#tokens" : "")
+                          }
+                          rel="noopener noreferrer"
+                          target="_blank"
+                          prefetch={false}
+                          className={
+                            "font-bold " +
+                            (res.addr.toUpperCase() ===
+                              String(creator).toUpperCase() ||
+                            res.addr.toUpperCase() === lp.toUpperCase()
+                              ? chain === "kub"
+                                ? "text-emerald-300"
+                                : chain === "monad"
+                                ? "text-purple-300"
+                                : ""
+                              : "")
+                          }
                         >
-                            <div className="flex flex-row items-center justify-start gap-6 overflow-hidden">
-                                <span>{index + 1}.</span>
-                                <Link
-                                    href={_explorer + "address/" + res.addr + (chain === "kub" ? "/?tab=tokens" : "") + (chain === "monad" ? "#tokens" : "")}
-                                    rel="noopener noreferrer"
-                                    target="_blank"
-                                    prefetch={false}
-                                    className={
-                                        "font-bold " +
-                                        (res.addr.toUpperCase() === String(creator).toUpperCase() || res.addr.toUpperCase() === lp.toUpperCase() ? 
-                                            chain === 'kub' ? "text-emerald-300" : chain === 'monad' ? "text-purple-300" : "" :
-                                            ""
-                                        )
-                                    }
-                                >
-                                    {res.addr.slice(0, 5) + "..." + res.addr.slice(37)}{" "}
-                                    {res.addr.toUpperCase() === String(creator).toUpperCase() && "[Creator 🧑‍💻]"}
-                                    {res.addr.toUpperCase() === lp.toUpperCase() && "[Bonding curve]"}
-                                </Link>
-                            </div>
-                            <span className="mr-6 text-right w-[50px] sm:w-[200px]">{res.value.toFixed(4)}%</span>
-                        </div>
-                    ))}
-                </div>
+                          {res.addr.slice(0, 5) + "..." + res.addr.slice(37)}{" "}
+                          {res.addr.toUpperCase() ===
+                            String(creator).toUpperCase() && "[Creator 🧑‍💻]"}
+                          {res.addr.toUpperCase() === lp.toUpperCase() &&
+                            "[Bonding curve]"}
+                        </Link>
+                      </div>
+                      <span className="mr-6 text-right w-[50px] sm:w-[200px]">
+                        {res.value.toFixed(4)}%
+                      </span>
+                    </div>
+                  ))}
+              </div>
             </div>
           </div>
         ) : (
           <div className="block xl:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start">
-            <div className={"px-4 py-4 w-full h-[380px] border-2 border-l-8 border-solid flex flex-col item-center justify-around bg-gray-900 " + (chain === 'kub' ? "border-emerald-300" : "") + (chain === 'monad' ? "border-purple-300" : "")} style={{zIndex: 1}}>
-            <div className="w-3/4 flex items-baseline space-x-2 mx-2 my-2">
-              <div className="text-2xl font-bold max-w-[240px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
-                {symbol !== null && symbol}
+            <div
+              className={
+                "px-4 py-4 w-full h-[380px] border-2 border-l-8 border-solid flex flex-col item-center justify-around bg-gray-900 " +
+                (chain === "kub" ? "border-emerald-300" : "") +
+                (chain === "monad" ? "border-purple-300" : "")
+              }
+              style={{ zIndex: 1 }}
+            >
+              <div className="w-3/4 flex items-baseline space-x-2 mx-2 my-2">
+                <div className="text-2xl font-bold max-w-[240px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
+                  {symbol !== null && symbol}
+                </div>
               </div>
-            </div>
-            <div className="w-full bg-gray-800 self-center p-2 mb-3 rounded-2xl flex flex-row justify-around">
-              <span
-                className={trademode ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg" : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"}
-                style={{backgroundImage: trademode ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(34, 197, 94) 0%, rgb(20, 83, 45) 60%, rgba(34, 197, 94, 0.2) 100%)" : "none"}}
-                onClick={() => {
-                  setTrademode(true);
-                  setInputBalance("");
-                  setOutputBalance("0");
-                }}
-              >
-                Buy
-              </span>
-              <span
-                className={!trademode ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg" : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"}
-                style={{backgroundImage: !trademode ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(239, 68, 68) 0%, rgb(139, 15, 15) 60%, rgba(239, 68, 68, 0.2) 100%)" : "none"}}
-                onClick={() => {
-                  setTrademode(false);
-                  setInputBalance("");
-                  setOutputBalance("0");
-                }}
-              >
-                Sell
-              </span>
-            </div>
-            <div className="w-full flex flex-row justify-between text-2xl">
-              <input
-                className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-2/5 font-bold bg-transparent"
-                placeholder="0"
-                value={inputBalance}
-                onChange={(event) => {
-                  setInputBalance(event.target.value);
-                  qoute(event.target.value);
-                }}
-                type="number"
-              />
-              <span className="mr-[20px] w-3/5 text-right truncate">
-                {trademode
-                  ? chain === "kub" && mode === "pro"
-                    ? "KUB"
-                    : chain === "kub" &&
-                      mode === "lite" &&
-                      (token === "cmm" || token === "")
-                    ? "CMM"
-                    : chain === "monad" && mode === "pro"
-                    ? "MON"
-                    : ""
-                  : symbol}
-              </span>
-            </div>
-            <div className="mr-[20px] self-end text-sm">
-              {mode === "pro" ? (
-                <>
-                  <div className="flex flex-col gap-2 w-full">
-                    <div className="text-right text-gray font-mono text-sm">
-                      {Intl.NumberFormat("en-US", {
-                        notation: "compact",
-                        compactDisplay: "short",
-                      }).format(
-                        Number(
-                          formatEther(
-                            trademode ? ethBal : (state[1].result as bigint)
+              <div className="w-full bg-gray-800 self-center p-2 mb-3 rounded-2xl flex flex-row justify-around">
+                <span
+                  className={
+                    trademode
+                      ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
+                      : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
+                  }
+                  style={{
+                    backgroundImage: trademode
+                      ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(34, 197, 94) 0%, rgb(20, 83, 45) 60%, rgba(34, 197, 94, 0.2) 100%)"
+                      : "none",
+                  }}
+                  onClick={() => {
+                    setTrademode(true);
+                    setInputBalance("");
+                    setOutputBalance("0");
+                  }}
+                >
+                  Buy
+                </span>
+                <span
+                  className={
+                    !trademode
+                      ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
+                      : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
+                  }
+                  style={{
+                    backgroundImage: !trademode
+                      ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(239, 68, 68) 0%, rgb(139, 15, 15) 60%, rgba(239, 68, 68, 0.2) 100%)"
+                      : "none",
+                  }}
+                  onClick={() => {
+                    setTrademode(false);
+                    setInputBalance("");
+                    setOutputBalance("0");
+                  }}
+                >
+                  Sell
+                </span>
+              </div>
+              <div className="w-full flex flex-row justify-between text-2xl">
+                <input
+                  className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-2/5 font-bold bg-transparent"
+                  placeholder="0"
+                  value={inputBalance}
+                  onChange={(event) => {
+                    setInputBalance(event.target.value);
+                    qoute(event.target.value);
+                  }}
+                  type="number"
+                />
+                <span className="mr-[20px] w-3/5 text-right truncate">
+                  {trademode
+                    ? chain === "kub" && mode === "pro"
+                      ? "KUB"
+                      : chain === "kub" &&
+                        mode === "lite" &&
+                        (token === "cmm" || token === "")
+                      ? "CMM"
+                      : chain === "monad" && mode === "pro"
+                      ? "MON"
+                      : ""
+                    : symbol}
+                </span>
+              </div>
+              <div className="mr-[20px] self-end text-sm">
+                {mode === "pro" ? (
+                  <>
+                    <div className="flex flex-col gap-2 w-full">
+                      <div className="text-right text-gray font-mono text-sm">
+                        {Intl.NumberFormat("en-US", {
+                          notation: "compact",
+                          compactDisplay: "short",
+                        }).format(
+                          Number(
+                            formatEther(
+                              trademode ? ethBal : (state[1].result as bigint)
+                            )
                           )
-                        )
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-2 justify-end mb-4">
-                      <button
-                        className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
-                        onClick={() => {
-                          setInputBalance("");
-                          setOutputBalance("");
-                        }}
-                      >
-                        Reset
-                      </button>
-                      {(trademode && mode === "pro" ? [0.1, 0.5, 1] : [25, 50, 75]).map((value) => (
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2 justify-end mb-4">
                         <button
-                          key={value}
                           className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
                           onClick={() => {
-                            if (trademode) {
-                              // fix amount (0.1, 0.5, 1)
-                              const adjusted = value;
-                              setInputBalance(adjusted.toFixed(6));
-                              qoute(adjusted.toFixed(6));
-                            } else {
-                              // percent (25%, 50%, 75%)
-                              const balance = BigInt(state[1].result as bigint);
-                              const amount = (balance * BigInt(value)) / BigInt(100);
-                              const adjusted = Number(formatEther(amount));
-                              setInputBalance(adjusted.toFixed(6));
-                              qoute(adjusted.toFixed(6));
-                            }
+                            setInputBalance("");
+                            setOutputBalance("");
                           }}
                         >
-                          {trademode ? value : `${value}%`}
+                          Reset
                         </button>
-                      ))}
-                      <button
-                        className="px-3 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
-                        onClick={() => {
-                          const value = trademode
-                            ? Number(formatEther(ethBal)) + (trademode && mode === "pro" ? - 0.00001 : 0 )
-                            : Number(formatEther(state[1].result as bigint)) + (trademode && mode === "pro" ? - 0.00001 : 0 );
+                        {(trademode && mode === "pro"
+                          ? [0.1, 0.5, 1]
+                          : [25, 50, 75]
+                        ).map((value) => (
+                          <button
+                            key={value}
+                            className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
+                            onClick={() => {
+                              if (trademode) {
+                                // fix amount (0.1, 0.5, 1)
+                                const adjusted = value;
+                                setInputBalance(adjusted.toFixed(6));
+                                qoute(adjusted.toFixed(6));
+                              } else {
+                                // percent (25%, 50%, 75%)
+                                const balance = BigInt(
+                                  state[1].result as bigint
+                                );
+                                const amount =
+                                  (balance * BigInt(value)) / BigInt(100);
+                                const adjusted = Number(formatEther(amount));
+                                setInputBalance(adjusted.toFixed(6));
+                                qoute(adjusted.toFixed(6));
+                              }
+                            }}
+                          >
+                            {trademode ? value : `${value}%`}
+                          </button>
+                        ))}
+                        <button
+                          className="px-3 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
+                          onClick={() => {
+                            const value = trademode
+                              ? Number(formatEther(ethBal)) +
+                                (trademode && mode === "pro" ? -0.00001 : 0)
+                              : Number(formatEther(state[1].result as bigint)) +
+                                (trademode && mode === "pro" ? -0.00001 : 0);
 
-                          setInputBalance(value.toFixed(6));
-                          qoute(value.toFixed(6));
-                        }}
-                      >
-                        Max
-                      </button>
+                            setInputBalance(value.toFixed(6));
+                            qoute(value.toFixed(6));
+                          }}
+                        >
+                          Max
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex flex-col gap-2 w-full">
-                    <div className="text-right text-gray-300 font-mono text-sm">
-                      {Intl.NumberFormat("en-US", {
-                        notation: "compact",
-                        compactDisplay: "short",
-                      }).format(
-                        Number(
-                          formatEther(
-                            trademode
-                              ? (state[0].result as bigint)
-                              : (state[1].result as bigint)
+                  </>
+                ) : (
+                  <>
+                    <div className="flex flex-col gap-2 w-full">
+                      <div className="text-right text-gray-300 font-mono text-sm">
+                        {Intl.NumberFormat("en-US", {
+                          notation: "compact",
+                          compactDisplay: "short",
+                        }).format(
+                          Number(
+                            formatEther(
+                              trademode
+                                ? (state[0].result as bigint)
+                                : (state[1].result as bigint)
+                            )
                           )
-                        )
-                      )}
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        <button
+                          className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
+                          onClick={() => {
+                            setInputBalance("");
+                            setOutputBalance("");
+                          }}
+                        >
+                          Reset
+                        </button>
+
+                        {(trademode && mode === "pro"
+                          ? [0.1, 0.5, 1]
+                          : [25, 50, 75]
+                        ).map((value) => (
+                          <button
+                            key={value}
+                            className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
+                            onClick={() => {
+                              if (trademode && mode === "pro") {
+                                // fixed amount 0.1, 0.5, 1
+                                const adjusted = value;
+                                setInputBalance(adjusted.toFixed(6));
+                                qoute(adjusted.toFixed(6));
+                              } else {
+                                // percent 25%, 50%, 75%
+                                const balance = BigInt(
+                                  state[1].result as bigint
+                                );
+                                const amount =
+                                  (balance * BigInt(value)) / BigInt(100);
+                                const adjusted = Number(formatEther(amount));
+                                setInputBalance(adjusted.toFixed(6));
+                                qoute(adjusted.toFixed(6));
+                              }
+                            }}
+                          >
+                            {trademode && mode === "pro" ? value : `${value}%`}
+                          </button>
+                        ))}
+
+                        <button
+                          className="px-3 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
+                          onClick={() => {
+                            const maxValue = trademode
+                              ? String(formatEther(state[0].result as bigint))
+                              : String(formatEther(state[1].result as bigint));
+                            setInputBalance(maxValue);
+                            qoute(maxValue);
+                          }}
+                        >
+                          Max
+                        </button>
+                      </div>
                     </div>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <button
-                        className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
-                        onClick={() => {
-                          setInputBalance("");
-                          setOutputBalance("");
-                        }}
-                      >
-                        Reset
-                      </button>
-
-                      {(trademode && mode ==="pro" ? [0.1, 0.5, 1] : [25, 50, 75]).map((value) => (
-                      <button
-                        key={value}
-                        className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
-                        onClick={() => {
-                          if (trademode && mode === "pro") {
-                            // fixed amount 0.1, 0.5, 1
-                            const adjusted = value;
-                            setInputBalance(adjusted.toFixed(6));
-                            qoute(adjusted.toFixed(6));
-                          } else {
-                            // percent 25%, 50%, 75%
-                            const balance = BigInt(state[1].result as bigint);
-                            const amount = (balance * BigInt(value)) / BigInt(100);
-                            const adjusted = Number(formatEther(amount));
-                            setInputBalance(adjusted.toFixed(6));
-                            qoute(adjusted.toFixed(6));
-                          }
-                        }}
-                      >
-                        {trademode && mode === "pro" ? value : `${value}%`}
-                      </button>
-                    ))}
-
-
-                      <button
-                        className="px-3 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
-                        onClick={() => {
-                          const maxValue = trademode
-                            ? String(formatEther(state[0].result as bigint))
-                            : String(formatEther(state[1].result as bigint));
-                          setInputBalance(maxValue);
-                          qoute(maxValue);
-                        }}
-                      >
-                        Max
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="w-full flex flex-row justify-between text-2xl font-bold">
-              <span className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-2/5 font-bold bg-transparent text-left">
-                {Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short",}).format(Number(outputBalance))}
-              </span>
-              <span className={"mr-[20px] w-3/5 text-right truncate "  + (chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>
-                {!trademode
-                  ? chain === "kub" && mode === "pro"
-                    ? "KUB"
-                    : chain === "kub" &&
-                      mode === "lite" &&
-                      (token === "cmm" || token === "")
-                    ? "CMM"
-                    : chain === "monad" && mode === "pro"
-                    ? "MON"
-                    : ""
-                  : symbol}
-              </span>
-            </div>
-            <div className="mr-[20px] self-end text-sm">
-              {mode === "pro" ? (
-                <span className="text-gray-300">
-                  {!trademode
-                    ? Intl.NumberFormat("en-US", {
-                        notation: "compact",
-                        compactDisplay: "short",
-                      }).format(Number(formatEther(ethBal))) + " "
-                    : Intl.NumberFormat("en-US", {
-                        notation: "compact",
-                        compactDisplay: "short",
-                      }).format(
-                        Number(formatEther(state[1].result as bigint))
-                      ) + " "}
+                  </>
+                )}
+              </div>
+              <div className="w-full flex flex-row justify-between text-2xl font-bold">
+                <span className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-2/5 font-bold bg-transparent text-left">
+                  {Intl.NumberFormat("en-US", {
+                    notation: "compact",
+                    compactDisplay: "short",
+                  }).format(Number(outputBalance))}
                 </span>
+                <span
+                  className={
+                    "mr-[20px] w-3/5 text-right truncate " +
+                    (chain === "kub" ? "text-emerald-300" : "") +
+                    (chain === "monad" ? "text-purple-300" : "")
+                  }
+                >
+                  {!trademode
+                    ? chain === "kub" && mode === "pro"
+                      ? "KUB"
+                      : chain === "kub" &&
+                        mode === "lite" &&
+                        (token === "cmm" || token === "")
+                      ? "CMM"
+                      : chain === "monad" && mode === "pro"
+                      ? "MON"
+                      : ""
+                    : symbol}
+                </span>
+              </div>
+              <div className="mr-[20px] self-end text-sm">
+                {mode === "pro" ? (
+                  <span className="text-gray-300">
+                    {!trademode
+                      ? Intl.NumberFormat("en-US", {
+                          notation: "compact",
+                          compactDisplay: "short",
+                        }).format(Number(formatEther(ethBal))) + " "
+                      : Intl.NumberFormat("en-US", {
+                          notation: "compact",
+                          compactDisplay: "short",
+                        }).format(
+                          Number(formatEther(state[1].result as bigint))
+                        ) + " "}
+                  </span>
+                ) : (
+                  <span className="text-gray-300">
+                    {!trademode
+                      ? Intl.NumberFormat("en-US", {
+                          notation: "compact",
+                          compactDisplay: "short",
+                        }).format(
+                          Number(formatEther(state[0].result as bigint))
+                        ) + " "
+                      : Intl.NumberFormat("en-US", {
+                          notation: "compact",
+                          compactDisplay: "short",
+                        }).format(
+                          Number(formatEther(state[1].result as bigint))
+                        ) + " "}
+                  </span>
+                )}
+              </div>
+              {connections &&
+              account.address !== undefined &&
+              account.chainId === _chainId ? (
+                <button
+                  className={
+                    "w-3/4 self-center p-2 my-3 rounded-2xl font-bold text-slate-900 underline hover-effect hover:text-white cursor-pointer " +
+                    theme.tradebtn
+                  }
+                  onClick={trade}
+                >
+                  <span className="self-center">Trade</span>
+                </button>
               ) : (
-                <span className="text-gray-300">
-                  {!trademode
-                    ? Intl.NumberFormat("en-US", {
-                        notation: "compact",
-                        compactDisplay: "short",
-                      }).format(
-                        Number(formatEther(state[0].result as bigint))
-                      ) + " "
-                    : Intl.NumberFormat("en-US", {
-                        notation: "compact",
-                        compactDisplay: "short",
-                      }).format(
-                        Number(formatEther(state[1].result as bigint))
-                      ) + " "}
-                </span>
+                <button
+                  className="w-3/4 self-center p-2 my-3 rounded-2xl font-bold bg-gray-500 cursor-not-allowed"
+                  disabled
+                >
+                  <span className="self-center text-slate-900">Trade</span>
+                </button>
               )}
-            </div>
-            {connections && account.address !== undefined && account.chainId === _chainId ? (
-              <button
-                className={"w-3/4 self-center p-2 my-3 rounded-2xl font-bold text-slate-900 underline hover-effect hover:text-white cursor-pointer " + theme.tradebtn}
-                onClick={trade}
-              >
-                <span className="self-center">Trade</span>
-              </button>
-            ) : (
-              <button
-                className="w-3/4 self-center p-2 my-3 rounded-2xl font-bold bg-gray-500 cursor-not-allowed"
-                disabled
-              >
-                <span className="self-center text-slate-900">Trade</span>
-              </button>
-            )}
             </div>
             <div className="w-full flex justify-end items-end gap-2 mt-3 text-xs">
               {["CMswap", "GeckoTerminal"].map((type) => (
@@ -2439,14 +2666,30 @@ const trade = async () => {
         </div>
 
         <div className="hidden xl:block w-full xl:w-1/4 h-fit xl:h-[1500px] flex flex-col gap-8 z-1">
-          <div className={"p-6 w-full h-[380px] border-2 border-l-8 border-solid flex flex-col item-center justify-around bg-gray-900 " + (chain === 'kub' ? "border-emerald-300" : "") + (chain === 'monad' ? "border-purple-300" : "")}>
+          <div
+            className={
+              "p-6 w-full h-[380px] border-2 border-l-8 border-solid flex flex-col item-center justify-around bg-gray-900 " +
+              (chain === "kub" ? "border-emerald-300" : "") +
+              (chain === "monad" ? "border-purple-300" : "")
+            }
+          >
             <div className="w-3/4 flex items-baseline space-x-2 mx-2 my-2">
-              <div className="text-2xl font-bold max-w-[240px] overflow-x-scroll whitespace-nowrap scrollbar-hide">{symbol}</div>
+              <div className="text-2xl font-bold max-w-[240px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
+                {symbol}
+              </div>
             </div>
             <div className="w-full bg-gray-800 self-center p-2  mb-3 rounded-2xl flex flex-row justify-around">
-              <span 
-                className={trademode ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg" : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"}
-                style={{backgroundImage: trademode ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(34, 197, 94) 0%, rgb(20, 83, 45) 60%, rgba(34, 197, 94, 0.2) 100%)" : "none"}}
+              <span
+                className={
+                  trademode
+                    ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
+                    : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
+                }
+                style={{
+                  backgroundImage: trademode
+                    ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(34, 197, 94) 0%, rgb(20, 83, 45) 60%, rgba(34, 197, 94, 0.2) 100%)"
+                    : "none",
+                }}
                 onClick={() => {
                   setTrademode(true);
                   setInputBalance("");
@@ -2456,8 +2699,16 @@ const trade = async () => {
                 Buy
               </span>
               <span
-                className={!trademode ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg" : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"}
-                style={{backgroundImage: !trademode ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(239, 68, 68) 0%, rgb(139, 15, 15) 60%, rgba(239, 68, 68, 0.2) 100%)" : "none"}}
+                className={
+                  !trademode
+                    ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
+                    : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
+                }
+                style={{
+                  backgroundImage: !trademode
+                    ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(239, 68, 68) 0%, rgb(139, 15, 15) 60%, rgba(239, 68, 68, 0.2) 100%)"
+                    : "none",
+                }}
                 onClick={() => {
                   setTrademode(false);
                   setInputBalance("");
@@ -2470,7 +2721,7 @@ const trade = async () => {
             <div className="w-full flex flex-row justify-between text-2xl">
               <input
                 className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-2/5 font-bold bg-transparent"
-                placeholder="0" 
+                placeholder="0"
                 value={inputBalance}
                 onChange={(event) => {
                   setInputBalance(event.target.value);
@@ -2510,46 +2761,51 @@ const trade = async () => {
                     </div>
 
                     <div className="flex flex-wrap gap-2 justify-end mb-4">
+                      <button
+                        className="px-2 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
+                        onClick={() => {
+                          setInputBalance("");
+                          setOutputBalance("");
+                        }}
+                      >
+                        Reset
+                      </button>
+                      {(trademode && mode === "pro"
+                        ? [0.1, 0.5, 1]
+                        : [25, 50, 75]
+                      ).map((value) => (
                         <button
+                          key={value}
                           className="px-2 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
                           onClick={() => {
-                            setInputBalance("");
-                            setOutputBalance("");
+                            if (trademode) {
+                              // fix amount (0.1, 0.5, 1)
+                              const adjusted = value;
+                              setInputBalance(adjusted.toFixed(6));
+                              qoute(adjusted.toFixed(6));
+                            } else {
+                              // percent (25%, 50%, 75%)
+                              const balance = BigInt(state[1].result as bigint);
+                              const amount =
+                                (balance * BigInt(value)) / BigInt(100);
+                              const adjusted = Number(formatEther(amount));
+                              setInputBalance(adjusted.toFixed(6));
+                              qoute(adjusted.toFixed(6));
+                            }
                           }}
                         >
-                          Reset
+                          {trademode ? value : `${value}%`}
                         </button>
-                        {(trademode && mode === "pro" ? [0.1, 0.5, 1] : [25, 50, 75]).map((value) => (
-                          <button
-                            key={value}
-                            className="px-2 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
-                            onClick={() => {
-                              if (trademode) {
-                                // fix amount (0.1, 0.5, 1)
-                                const adjusted = value;
-                                setInputBalance(adjusted.toFixed(6));
-                                qoute(adjusted.toFixed(6));
-                              } else {
-                                // percent (25%, 50%, 75%)
-                                const balance = BigInt(state[1].result as bigint);
-                                const amount = (balance * BigInt(value)) / BigInt(100);
-                                const adjusted = Number(formatEther(amount));
-                                setInputBalance(adjusted.toFixed(6));
-                                qoute(adjusted.toFixed(6));
-                              }
-                            }}
-                          >
-                            {trademode ? value : `${value}%`} 
-                          </button>
-                        ))}
+                      ))}
 
-
-                        <button
-                          className="px-2 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
-                          onClick={() => {
-                            const value = trademode
-                              ? Number(formatEther(ethBal)) + (trademode && mode === "pro" ? - 0.00001 : 0 )
-                              : Number(formatEther(state[1].result as bigint)) + (trademode && mode === "pro" ? - 0.00001 : 0 );
+                      <button
+                        className="px-2 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
+                        onClick={() => {
+                          const value = trademode
+                            ? Number(formatEther(ethBal)) +
+                              (trademode && mode === "pro" ? -0.00001 : 0)
+                            : Number(formatEther(state[1].result as bigint)) +
+                              (trademode && mode === "pro" ? -0.00001 : 0);
 
                           setInputBalance(value.toFixed(6));
                           qoute(value.toFixed(6));
@@ -2624,15 +2880,26 @@ const trade = async () => {
                 </>
               )}
             </div>
-            <div className={"w-full flex flex-row justify-between text-2xl font-bold " + (chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>
+            <div
+              className={
+                "w-full flex flex-row justify-between text-2xl font-bold " +
+                (chain === "kub" ? "text-emerald-300" : "") +
+                (chain === "monad" ? "text-purple-300" : "")
+              }
+            >
               <span className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-2/5 font-bold bg-transparent text-left">
-                {Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(Number(outputBalance))}
+                {Intl.NumberFormat("en-US", {
+                  notation: "compact",
+                  compactDisplay: "short",
+                }).format(Number(outputBalance))}
               </span>
               <span className="mr-[20px] w-3/5 text-right truncate">
                 {!trademode
                   ? chain === "kub" && mode === "pro"
                     ? "KUB"
-                    : chain === "kub" && mode === "lite" && (token === "cmm" || token === "")
+                    : chain === "kub" &&
+                      mode === "lite" &&
+                      (token === "cmm" || token === "")
                     ? "CMM"
                     : chain === "monad" && mode === "pro"
                     ? "MON"
@@ -2673,9 +2940,14 @@ const trade = async () => {
                 </span>
               )}
             </div>
-            {connections && account.address !== undefined && account.chainId === _chainId ? (
+            {connections &&
+            account.address !== undefined &&
+            account.chainId === _chainId ? (
               <button
-                className={"w-3/4 self-center p-2 my-3 rounded-2xl font-bold text-slate-900 underline hover-effect hover:text-white cursor-pointer " + theme.tradebtn}
+                className={
+                  "w-3/4 self-center p-2 my-3 rounded-2xl font-bold text-slate-900 underline hover-effect hover:text-white cursor-pointer " +
+                  theme.tradebtn
+                }
                 onClick={trade}
               >
                 <span className="self-center">Trade</span>
@@ -2699,8 +2971,7 @@ const trade = async () => {
                         ? String(logo).startsWith("ipfs://")
                           ? "https://gateway.commudao.xyz/ipfs/" +
                             String(logo).slice(7)
-                          : "https://gateway.commudao.xyz/ipfs/" +
-                            String(logo)
+                          : "https://gateway.commudao.xyz/ipfs/" + String(logo)
                         : "https://gateway.commudao.xyz/ipfs/"
                     }
                     alt="token_waiting_for_approve"
@@ -2710,8 +2981,7 @@ const trade = async () => {
                 </div>
                 <div className="flex-1 min-w-0 h-[125px] overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
                   <span className="text-xs break-words">
-                    Description:{" "}
-                    {description !== null && description}
+                    Description: {description !== null && description}
                   </span>
                 </div>
               </div>
@@ -2795,7 +3065,7 @@ const trade = async () => {
               </button>
             </a>
 
-            { state[2].result ? (
+            {state[2].result ? (
               <>
                 <span className="ml-[20px] text-sm font-bold">
                   🔥 This token has graduated!:{" "}
@@ -2805,7 +3075,11 @@ const trade = async () => {
                       rel="noopener noreferrer"
                       target="_blank"
                       prefetch={false}
-                      className={"underline " + (chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}
+                      className={
+                        "underline " +
+                        (chain === "kub" ? "text-emerald-300" : "") +
+                        (chain === "monad" ? "text-purple-300" : "")
+                      }
                     >
                       Txn hash
                     </Link>
@@ -2821,18 +3095,21 @@ const trade = async () => {
             ) : (
               <>
                 <div className="ml-[20px] text-sm flex flex-col gap-2 justify-start">
-                 <span>
-                    Bonding curve progress:{" "}
-                    {progress + "%"}
-                  </span>
+                  <span>Bonding curve progress: {progress + "%"}</span>
                   <div className="has-tooltip">
                     <span className="tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs">
                       {`When the market cap reaches ${
                         reachData && Array.isArray(reachData)
                           ? (() => {
-                              const item = reachData.find(item => item?.chain === chain);
+                              const item = reachData.find(
+                                (item) => item?.chain === chain
+                              );
                               if (!item) return "";
-                              if (mode === "pro" && item.proAmount && item.proSymbol) {
+                              if (
+                                mode === "pro" &&
+                                item.proAmount &&
+                                item.proSymbol
+                              ) {
                                 return `${item.proAmount} ${item.proSymbol}`;
                               }
                               if (
@@ -2852,58 +3129,72 @@ const trade = async () => {
                 </div>
                 <div className="ml-[20px] mr-[20px] h-4 bg-gray-400 rounded-lg overflow-hidden mb-2">
                   <div
-                    className={"h-4 rounded-lg "  + (chain === 'kub' ? "bg-emerald-300" : "") + (chain === 'monad' ? "bg-purple-300" : "")}
+                    className={
+                      "h-4 rounded-lg " +
+                      (chain === "kub" ? "bg-emerald-300" : "") +
+                      (chain === "monad" ? "bg-purple-300" : "")
+                    }
                     style={{ width: calculateBondingCurveWidth(progress) }}
-                     
                   />
                 </div>
               </>
             )}
           </div>
           <div className="w-full h-[800px] mt-8 p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center">
-            <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">{holder.length} Holders</span>
+            <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">
+              {holder.length} Holders
+            </span>
             <div className="w-full overflow-x-hidden overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
-                {holder
+              {holder
                 .sort((a, b) => {
-                    return b.value - a.value;
+                  return b.value - a.value;
                 })
                 .map((res, index) => (
-                    <div
-                        className="w-full h-[50px] flex flex-row items-center justify-between text-xs lg:text-md py-2 border-b border-gray-800"
-                        key={index}
-                    >
-                        <div className="flex flex-row items-center justify-start gap-6 overflow-hidden">
-                            <span>{index + 1}.</span>
-                            <Link
-                                href={
-                                    _explorer +
-                                    "address/" +
-                                    res.addr +
-                                    (chain === "kub" ? "/?tab=tokens" : "") +
-                                    (chain === "monad" ? "#tokens" : "")
-                                }
-                                rel="noopener noreferrer"
-                                target="_blank"
-                                prefetch={false}
-                                className={
-                                    "font-bold text-left " +
-                                    (res.addr.toUpperCase() === String(creator).toUpperCase() || res.addr.toUpperCase() === lp.toUpperCase() ? 
-                                    chain === 'kub' ? "text-emerald-300" : chain === 'monad' ? "text-purple-300" : "" :
-                                    "")
-                                }
-                            >
-                                {res.addr.slice(0, 5) + "..." + res.addr.slice(37)}{" "}
-                                {res.addr.toUpperCase() === String(creator).toUpperCase() && "[Creator 🧑‍💻]"}
-                                {res.addr.toUpperCase() === lp.toUpperCase() && "[Bonding curve]"}
-                            </Link>
-                            <span className="mr-6 text-right  w-[50px] sm:w-[200px]">{res.value.toFixed(4)}%</span>
-                        </div>
+                  <div
+                    className="w-full h-[50px] flex flex-row items-center justify-between text-xs lg:text-md py-2 border-b border-gray-800"
+                    key={index}
+                  >
+                    <div className="flex flex-row items-center justify-start gap-6 overflow-hidden">
+                      <span>{index + 1}.</span>
+                      <Link
+                        href={
+                          _explorer +
+                          "address/" +
+                          res.addr +
+                          (chain === "kub" ? "/?tab=tokens" : "") +
+                          (chain === "monad" ? "#tokens" : "")
+                        }
+                        rel="noopener noreferrer"
+                        target="_blank"
+                        prefetch={false}
+                        className={
+                          "font-bold text-left " +
+                          (res.addr.toUpperCase() ===
+                            String(creator).toUpperCase() ||
+                          res.addr.toUpperCase() === lp.toUpperCase()
+                            ? chain === "kub"
+                              ? "text-emerald-300"
+                              : chain === "monad"
+                              ? "text-purple-300"
+                              : ""
+                            : "")
+                        }
+                      >
+                        {res.addr.slice(0, 5) + "..." + res.addr.slice(37)}{" "}
+                        {res.addr.toUpperCase() ===
+                          String(creator).toUpperCase() && "[Creator 🧑‍💻]"}
+                        {res.addr.toUpperCase() === lp.toUpperCase() &&
+                          "[Bonding curve]"}
+                      </Link>
+                      <span className="mr-6 text-right  w-[50px] sm:w-[200px]">
+                        {res.value.toFixed(4)}%
+                      </span>
                     </div>
+                  </div>
                 ))}
             </div>
           </div>
         </div>
-
       </div>
 
       {/* Social Modal */}
@@ -2919,8 +3210,6 @@ const trade = async () => {
             <h2 className="text-2xl font-semibold mb-6 text-center text-[#00ff9d] drop-shadow-[0_0_4px_#00ff9d]">
               Link your social profiles
             </h2>
-
-
 
             <div className="space-y-5 text-white grid ">
               {[
@@ -2953,7 +3242,7 @@ const trade = async () => {
                       placeholder={placeholder}
                       value={socials[field as keyof typeof socials]}
                       onChange={handleChange(field as keyof typeof socials)}
-                      maxLength={50}
+                      maxLength={200}
                       className={`flex-1 bg-transparent pl-4 border ${
                         errors[field as keyof typeof errors]
                           ? "border-red-500"
@@ -2975,14 +3264,15 @@ const trade = async () => {
 
                   {/* Character Count */}
                   <p className="text-xs text-right text-[#00ff9d99] mt-1 ml-7">
-                    {socials[field as keyof typeof socials].length}/50
+                    {socials[field as keyof typeof socials].length}/200
                     characters
                   </p>
                 </div>
               ))}
 
               <p className="text-xs text-red-500 text-center">
-                🚫 No inappropriate or unethical links.<br />
+                🚫 No inappropriate or unethical links.
+                <br />
                 Violations may lead to a ban. Team may edit links if needed.
               </p>
 
