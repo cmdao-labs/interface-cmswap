@@ -22,6 +22,7 @@ import { Copy, Check, Plus, Coins } from "lucide-react";
 import { bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
 import { config } from "@/app/config";
 import { ERC20FactoryABI } from "@/app/pump/abi/ERC20Factory";
+import { ERC20FactoryV2ABI } from '@/app/pump/abi/ERC20FactoryV2';
 import { UniswapV2FactoryABI } from "@/app/pump/abi/UniswapV2Factory";
 import { UniswapV2PairABI } from "@/app/pump/abi/UniswapV2Pair";
 import { UniswapV2RouterABI } from "@/app/pump/abi/UniswapV2Router";
@@ -29,6 +30,69 @@ import { UniswapV3QouterABI } from "@/app/pump/abi/UniswapV3Qouter";
 import { SocialsABI } from "@/app/pump/abi/Socials";
 import Chart from "@/app/components/Chart";
 import Menu from "@/app/pump/ui/Menu";
+
+const themes: any = {
+  96: {
+    primary: "from-green-400 to-emerald-400",
+    secondary: "from-green-600 to-emerald-600",
+    accent: "green-400",
+    glow: "",
+    border: "border-green-400/30",
+    text: "text-green-300",
+    btn: "radial-gradient(circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3%)",
+    tradebtn: "bg-emerald-300",
+  },
+  25925: {
+    primary: "from-green-400 to-emerald-400",
+    secondary: "from-green-600 to-emerald-600",
+    accent: "green-400",
+    glow: "",
+    border: "border-green-400/30",
+    text: "text-green-300",
+    btn: "radial-gradient(circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3%)",
+    tradebtn: "bg-emerald-300",
+  },
+  8899: {
+    primary: "from-blue-400 to-cyan-400",
+    secondary: "from-blue-600 to-cyan-600",
+    accent: "blue-400",
+    glow: "",
+    border: "border-blue-400/30",
+    text: "text-blue-300",
+    btn: "linear-gradient(135deg, #3B82F6, #06B6D4)",
+    tradebtn: "bg-emerald-300",
+  },
+  56: {
+    primary: "from-yellow-400 to-amber-400",
+    secondary: "from-yellow-600 to-amber-600",
+    accent: "yellow-400",
+    glow: "",
+    border: "border-yellow-400/30",
+    text: "text-yellow-300",
+    btn: "linear-gradient(135deg, #FBBF24, #F59E0B)",
+    tradebtn: "bg-emerald-300",
+  },
+  3501: {
+    primary: "from-red-400 to-rose-400",
+    secondary: "from-red-600 to-rose-600",
+    accent: "red-400",
+    glow: "",
+    border: "border-red-400/30",
+    text: "text-red-300",
+    btn: "linear-gradient(135deg, #F87171, #F43F5E)",
+    tradebtn: "bg-emerald-300",
+  },
+  10143: {
+    primary: "from-purple-400 to-violet-400",
+    secondary: "from-purple-600 to-violet-600",
+    accent: "purple-400",
+    glow: "",
+    border: "border-purple-400/30",
+    text: "text-purple-300",
+    btn: "linear-gradient(135deg, #D6BEF7, #A683EF)",
+    tradebtn: "bg-purple-300",
+  },
+};
 
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 const { ethereum } = window as any;
@@ -78,6 +142,7 @@ export default function Trade({
     chain: _chain,
     transport: http(_rpc),
   });
+  const [theme, setTheme] = React.useState(themes[Number(_chainId)] || themes[96]);
 
   let currencyAddr: string = "";
   let bkgafactoryAddr: string = "";
@@ -120,23 +185,30 @@ export default function Trade({
     graduatedAddr = "0x6dfc8eecca228c45cc55214edc759d39e5b39c93"
   } else if (chain === "kubtestnet" && mode === "pro") {
     currencyAddr = "0x700D3ba307E1256e509eD3E45D6f9dff441d6907";
-    bkgafactoryAddr = "	0x46a4073c830031ea19d7b9825080c05f8454e530";
+    bkgafactoryAddr = "0x46a4073c830031ea19d7b9825080c05f8454e530";
     _blockcreated = 23935659;
     v2facAddr = "0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b";
     v2routerAddr = "0x3C5514335dc4E2B0D9e1cc98ddE219c50173c5Be";
     v3qouterAddr = "0x3F64C4Dfd224a102A4d705193a7c40899Cf21fFe";
     socialAddr = "0xc40D6f15E88e44Af2dd3dcF1D76e54d6c2B38eB6";
   }
+
+  const reachData = [
+    { chain: "kub", proAmount: "2000", proSymbol: "KUB", lite: "100000", liteSymbol: "CMM" },
+    { chain: "kubtestnet", proAmount: "47800", proSymbol: "KUB", lite: "", liteSymbol: "" },
+    { chain: "monad", proAmount: "1", proSymbol: "MON", lite: "", liteSymbol: "" }
+  ];
+
   // add chain and mode here
   const dataofcurr = { addr: currencyAddr, blockcreated: _blockcreated };
   const dataofuniv2factory = { addr: v2facAddr };
   const dataofuniv2router = { addr: v2routerAddr };
   const dataofuniv3qouter = { addr: v3qouterAddr };
   const bkgafactoryContract = {
-    address: bkgafactoryAddr as "0xstring",
-    abi: ERC20FactoryABI,
-    chainId: _chainId,
-  } as const;
+      address: bkgafactoryAddr as '0xstring',
+      abi: chain === 'kubtestnet' ? ERC20FactoryV2ABI : ERC20FactoryABI  ,
+      chainId: _chainId,
+    } as const
   const graduatedContract = {
     address: graduatedAddr as "0xstring",
     abi: ERC20FactoryABI,
@@ -205,11 +277,31 @@ export default function Trade({
     website: false,
   });
 
+  const [price,setPrice] = useState(0)
+  const [mcap,setMcap] = useState(0)
+  const [symbol,setSymbol] = useState(null)
+  const [name,setName] = useState(null)
+  const [creator, setCreator] = useState<string | null>(null);
+  const [createTime, setCreateTime] = useState<number | null>(null);
+
+  const [logo,setLogo] = useState(null)
+  const [description,setDescription] = useState(null)
+  const [progress,setProgress] = useState(0)
+
+  React.useEffect(()=>{
+    console.log("Ticker Addr",ticker)
+  },[ticker])
   const isValidUrl = (url: string) => {
     return (
       url === "" || url.startsWith("http://") || url.startsWith("https://")
     );
   };
+
+  const calculateBondingCurveWidth = (progress: number) => {
+    return `${progress}%`;
+  };
+
+
 
   const handleChange =
     (field: keyof typeof socials) =>
@@ -240,61 +332,6 @@ export default function Trade({
     { icon: <FaTelegramPlane className="text-white" />, field: "telegram" },
     { icon: <FaGlobe className="text-white" />, field: "website" },
   ];
-
-  const result2: any = useReadContracts({
-    contracts: [
-      {
-        ...tickerContract,
-        functionName: "name",
-      },
-      {
-        ...tickerContract,
-        functionName: "symbol",
-      },
-      {
-        ...bkgafactoryContract,
-        functionName: "desp",
-        args: [ticker as "0xstring"],
-      },
-      {
-        ...bkgafactoryContract,
-        functionName: "logo",
-        args: [ticker as "0xstring"],
-      },
-      {
-        ...univ2factoryContract,
-        functionName: "getPool",
-        args: [ticker as "0xstring", dataofcurr.addr as "0xstring", 10000],
-      },
-      {
-        ...bkgafactoryContract,
-        functionName: "creator",
-        args: [ticker as "0xstring"],
-      },
-      {
-        ...bkgafactoryContract,
-        functionName: "createdTime",
-        args: [ticker as "0xstring"],
-      },
-    ],
-  });
-
-  const result3 = useReadContracts({
-    contracts: [
-      {
-        address: lp as "0xstring",
-        abi: UniswapV2PairABI,
-        functionName: "slot0",
-        chainId: _chainId,
-      },
-      {
-        address: lp as "0xstring",
-        abi: UniswapV2PairABI,
-        functionName: "token0",
-        chainId: _chainId,
-      },
-    ],
-  });
 
   const socialsResult = useReadContracts({
     contracts: [
@@ -327,8 +364,259 @@ export default function Trade({
     }, 2000);
   };
 
-  useEffect(() => {
-    const fetch0 = async () => {
+  React.useEffect(() => {
+
+     const fetch0 = async() => {
+      try {
+        if(chain === 'kubtestnet'){
+        const result2: any = await readContracts(config, {
+        contracts: [
+          {
+            ...tickerContract,
+            functionName: "name",
+          },
+          {
+            ...tickerContract,
+            functionName: "symbol",
+          }
+         
+        ],
+      });
+
+      const logCreateData = await publicClient.getContractEvents({
+      ...bkgafactoryContract,
+      eventName: 'Creation',
+      fromBlock: BigInt(_blockcreated),
+      toBlock: 'latest',
+    });
+
+  const poolDataPromises = logCreateData.map(async (res: any) => {
+    const tokenData = await readContracts(config, {
+      contracts: [
+        {
+          address: res.args.tokenAddr as `0x${string}`,
+          abi: erc20Abi,
+          functionName: 'symbol',
+          chainId: _chainId,
+        },
+        {
+          address: res.args.tokenAddr as `0x${string}`,
+          abi: erc20Abi,
+          functionName: 'totalSupply',
+          chainId: _chainId,
+        },
+        {
+          ...bkgafactoryContract,
+          functionName: 'pumpReserve',
+          args : [res.args.tokenAddr as '0xstring'],
+          chainId: _chainId,
+        },
+        {
+          ...bkgafactoryContract,
+          functionName: 'virtualAmount',
+          chainId: _chainId,
+        },
+      ],
+    });
+
+    return {
+      tokenAddress: res.args.tokenAddr as `0x${string}`,
+      creator: res.args.creator as `0x${string}`,
+logo: res.args.logo && res.args.logo.startsWith('ipfs://') && !res.args.logo.startsWith('ipfs://undefined') ? res.args.logo : res.args.link1,      createdTime: Number(res.args.createdTime),
+      description: res.args.description,
+      tokenSymbol: tokenData[0].status === 'success' ? tokenData[0].result : undefined,
+      totalSupply: tokenData[1].status === 'success' ? tokenData[1].result : undefined,
+      pumpReserve: tokenData[2].status === 'success' ? tokenData[2].result : undefined,
+      virtualAmount: tokenData[3].status === 'success' ? tokenData[3].result : undefined
+    };
+  });
+  
+    const result44 = await Promise.all(poolDataPromises);
+    console.log("Result44",result44)
+    const getToken = result44.find((item) => item.tokenAddress.toLowerCase() === ticker.toLowerCase());
+
+      console.log(result2)
+
+      const symbol =  result2[1].result
+      const name =  result2[0].result
+      const creator = getToken?.creator
+      const createTime =  Number(getToken?.createdTime)
+      const logo = getToken?.logo 
+      const description = getToken?.description
+
+      setSymbol(symbol)
+      setName(name)
+      setCreator(creator as '0xstring');
+      setCreateTime(createTime);
+      setLogo(logo)
+      setDescription(description)
+
+      const result3 = useReadContracts({
+        contracts: [
+          {
+            address: lp as "0xstring",
+            abi: UniswapV2PairABI,
+            functionName: "slot0",
+            chainId: _chainId,
+          },
+          {
+            address: lp as "0xstring",
+            abi: UniswapV2PairABI,
+            functionName: "token0",
+            chainId: _chainId,
+          },
+        ],
+      });
+
+    if (result3.status !== "success") {
+        setProgress(0);
+        return;
+      }
+      const sqrtPriceX96 = Number(state[3].result![0]) / 2 ** 96;
+      const isToken0 = result3.data![1].result?.toUpperCase() !== currencyAddr.toUpperCase();
+      const price = isToken0 ? sqrtPriceX96 ** 2 : 1 / (sqrtPriceX96 ** 2);
+      
+      const denominator = (chain === "kubtestnet" && mode === "pro" ? 47800/1000000000 : 1) 
+      const progressValue = ((price * 100) / denominator).toFixed(2);
+      setProgress(Number(progressValue));
+      setPrice(Number(price) | 0)
+
+      const mcap = result3.status === "success"
+                ? result3.data![1].result!.toUpperCase() !==
+                  dataofcurr.addr.toUpperCase()
+                  ? Intl.NumberFormat("en-US", {
+                      notation: "compact",
+                      compactDisplay: "short",
+                    }).format(
+                      (Number(state[3].result![0]) / 2 ** 96) ** 2 * 1000000000
+                    )
+                  : Intl.NumberFormat("en-US", {
+                      notation: "compact",
+                      compactDisplay: "short",
+                    }).format(
+                      (1 / (Number(state[3].result![0]) / 2 ** 96) ** 2) *
+                        1000000000
+                    ) : 0
+      setMcap(Number(mcap) | 0)
+
+
+      }else {
+
+        
+        const result2: any = await readContracts(config, {
+        contracts: [
+          {
+            ...tickerContract,
+            functionName: "name",
+          },
+          {
+            ...tickerContract,
+            functionName: "symbol",
+          },
+          {
+            ...bkgafactoryContract,
+            functionName: "desp",
+            args: [ticker as "0xstring"],
+          },
+          {
+            ...bkgafactoryContract,
+            functionName: "logo",
+            args: [ticker as "0xstring"],
+          },
+          {
+            ...univ2factoryContract,
+            functionName: "getPool",
+            args: [ticker as "0xstring", dataofcurr.addr as "0xstring", 10000],
+          },
+          {
+            ...bkgafactoryContract,
+            functionName: "creator",
+            args: [ticker as "0xstring"],
+          },
+          {
+            ...bkgafactoryContract,
+            functionName: "createdTime",
+            args: [ticker as "0xstring"],
+          },
+        ],
+      });
+
+
+      const symbol =  result2[1].result
+      const name =  result2[0].result
+      const creator = result2[5].result
+      const createTime =  result2[6].result
+      const logo = result2[3].result
+      const description = result2[2].result
+
+      setSymbol(symbol)
+      setName(name)
+      setCreator(creator)
+      setCreateTime(createTime)
+      setLogo(logo)
+      setDescription(description)
+
+      console.log("Symbol :",symbol)
+      console.log("Name :",name)
+      console.log("Create By :",creator)
+      console.log("Create At :",createTime)
+      console.log("Logo URL :",logo)
+      console.log("Description :",description)
+
+      const result3 = useReadContracts({
+        contracts: [
+          {
+            address: lp as "0xstring",
+            abi: UniswapV2PairABI,
+            functionName: "slot0",
+            chainId: _chainId,
+          },
+          {
+            address: lp as "0xstring",
+            abi: UniswapV2PairABI,
+            functionName: "token0",
+            chainId: _chainId,
+          },
+        ],
+      });
+
+    if (result3.status !== "success") {
+        setProgress(0);
+        return;
+      }
+      const sqrtPriceX96 = Number(state[3].result![0]) / 2 ** 96;
+      const isToken0 = result3.data![1].result?.toUpperCase() !== currencyAddr.toUpperCase();
+      const price = isToken0 ? sqrtPriceX96 ** 2 : 1 / (sqrtPriceX96 ** 2);
+      const denominator = 8640;
+      const progressValue = ((price * 100) / denominator).toFixed(2);
+      setProgress(Number(progressValue));
+      setPrice(Number(price) | 0)
+
+      const mcap = result3.status === "success"
+                ? result3.data![1].result!.toUpperCase() !==
+                  dataofcurr.addr.toUpperCase()
+                  ? Intl.NumberFormat("en-US", {
+                      notation: "compact",
+                      compactDisplay: "short",
+                    }).format(
+                      (Number(state[3].result![0]) / 2 ** 96) ** 2 * 1000000000
+                    )
+                  : Intl.NumberFormat("en-US", {
+                      notation: "compact",
+                      compactDisplay: "short",
+                    }).format(
+                      (1 / (Number(state[3].result![0]) / 2 ** 96) ** 2) *
+                        1000000000
+                    ) : 0
+      setMcap(Number(mcap) | 0)
+      }
+      } catch (error) {
+        console.error("error with reason",error)
+      }
+
+  }
+
+    const fetch1 = async () => {
       const nativeBal =
         account.address !== undefined
           ? await getBalance(config, { address: account.address as "0xstring" })
@@ -520,34 +808,100 @@ export default function Trade({
           };
         });
       } else {
+
+      if(chain !== 'kubtestnet'){
         const result9 = await publicClient.getContractEvents({
+            address: ticker as "0xstring",
+            abi: erc20Abi,
+            eventName: "Transfer",
+            args: {
+              from: lp as "0xstring",
+            },
+            fromBlock: BigInt(dataofcurr.blockcreated),
+            toBlock: "latest",
+          });
+          fulldatabuy = result9.map((res: any) => {
+            return {
+              action:
+                Number(formatEther(res.args.value)) === 90661089.38801491
+                  ? "launch"
+                  : "buy",
+              value: Number(formatEther(res.args.value)),
+              from: res.args.to,
+              hash: res.transactionHash,
+              block: res.blockNumber,
+            };
+          });
+          const result10 = await publicClient.getContractEvents({
+            address: ticker as "0xstring",
+            abi: erc20Abi,
+            eventName: "Transfer",
+            args: {
+              to: lp as "0xstring",
+            },
+            fromBlock: BigInt(dataofcurr.blockcreated),
+            toBlock: "latest",
+          });
+          fulldatasell = result10.map((res: any) => {
+            return {
+              action: "sell",
+              value: Number(formatEther(res.args.value)),
+              from: res.args.from,
+              hash: res.transactionHash,
+              block: res.blockNumber,
+            };
+          });
+          const resGraduate = (
+            await publicClient.getContractEvents({
+              abi: erc20Abi,
+              address: lp as "0xstring",
+              eventName: "Transfer",
+              args: {
+                to: "0x0000000000000000000000000000000000000000",
+              },
+              fromBlock: BigInt(dataofcurr.blockcreated),
+              toBlock: "latest",
+            })
+          ).filter((res) => {
+            return res.args.value === BigInt("12405643876881199591159421");
+          });
+          if (resGraduate[0] !== undefined) {
+            setGradHash(resGraduate[0].transactionHash);
+          }
+      }else{
+          {/** FETCHING V2 */}
+          const result9 = await publicClient.getContractEvents({
           address: ticker as "0xstring",
           abi: erc20Abi,
           eventName: "Transfer",
           args: {
-            from: lp as "0xstring",
+            from: bkgafactoryAddr as "0xstring",
           },
           fromBlock: BigInt(dataofcurr.blockcreated),
           toBlock: "latest",
         });
-        fulldatabuy = result9.map((res: any) => {
-          return {
-            action:
-              Number(formatEther(res.args.value)) === 90661089.38801491
-                ? "launch"
-                : "buy",
-            value: Number(formatEther(res.args.value)),
-            from: res.args.to,
-            hash: res.transactionHash,
-            block: res.blockNumber,
-          };
-        });
+        fulldatabuy = result9
+          .map((res: any) => {
+            const value = Number(formatEther(res.args.value));
+            if (value === 0) {
+              return null;
+            }
+            return {
+              action: value === 90661089.38801491 ? "launch" : "buy",
+              value,
+              from: res.args.to,
+              hash: res.transactionHash,
+              block: res.blockNumber,
+            };
+          })
+          .filter((item: any) => item !== null);
+        console.log("FULL DATA",fulldatabuy)
         const result10 = await publicClient.getContractEvents({
           address: ticker as "0xstring",
           abi: erc20Abi,
           eventName: "Transfer",
           args: {
-            to: lp as "0xstring",
+            to: bkgafactoryAddr as "0xstring",
           },
           fromBlock: BigInt(dataofcurr.blockcreated),
           toBlock: "latest",
@@ -564,7 +918,7 @@ export default function Trade({
         const resGraduate = (
           await publicClient.getContractEvents({
             abi: erc20Abi,
-            address: lp as "0xstring",
+            address: bkgafactoryAddr as "0xstring",
             eventName: "Transfer",
             args: {
               to: "0x0000000000000000000000000000000000000000",
@@ -578,6 +932,9 @@ export default function Trade({
         if (resGraduate[0] !== undefined) {
           setGradHash(resGraduate[0].transactionHash);
         }
+      }
+
+  
       }
       const mergedata = fulldatasell.slice(1).concat(fulldatabuy);
       const _timestamparr = mergedata.map(async (res: any) => {
@@ -602,9 +959,10 @@ export default function Trade({
         .sort((a: any, b: any) => {
           return b.timestamp - a.timestamp;
         });
-      console.log(theresult);
+      console.log("Final Logs Result",theresult);
       setHx(theresult);
     };
+
     const fetchGraph = async () => {
       console.log(`fetch token pair ${ticker} with ${currencyAddr}}`);
       const result = await readContracts(config, {
@@ -672,21 +1030,149 @@ export default function Trade({
 
     if (hash === "") {
       fetchGraph();
-      fetchLogs();
+      fetchLogs(); 
       fetch0();
+      fetch1();
     } else {
-      setInterval(fetchGraph, 5000);
-      setInterval(fetchLogs, 5000);
       setInterval(fetch0, 5000);
+       setInterval(fetchGraph, 5000);
+      setInterval(fetchLogs, 5000); 
+      setInterval(fetch1, 5000);
     }
   }, [hash]);
 
   const qoute = useDebouncedCallback(async (value: string) => {
     try {
       if (Number(value) !== 0) {
-        const qouteOutput = await simulateContract(config, {
-          ...univ3QouterContract,
-          functionName: "quoteExactInputSingle",
+        if (chain !== 'kubtestnet') {
+          const qouteOutput = await simulateContract(config, {
+            ...univ3QouterContract,
+            functionName: "quoteExactInputSingle",
+            args: [
+              {
+                tokenIn: trademode
+                  ? (dataofcurr.addr as "0xstring")
+                  : (ticker as "0xstring"),
+                tokenOut: trademode
+                  ? (ticker as "0xstring")
+                  : (dataofcurr.addr as "0xstring"),
+                amountIn: parseEther(value),
+                fee: 10000,
+                sqrtPriceLimitX96: BigInt(0),
+              },
+            ],
+          });
+          setOutputBalance(formatEther(qouteOutput.result[0]));
+        } else {
+          // kubtestnet branch
+          const result = await readContracts(config, {
+            contracts: [
+              {
+                ...bkgafactoryContract,
+                functionName: "pumpReserve",
+                args: [ticker as "0xstring"],
+                chainId: _chainId,
+              },
+              {
+                ...bkgafactoryContract,
+                functionName: "virtualAmount",
+                chainId: _chainId,
+              },
+              {
+                ...bkgafactoryContract,
+                functionName: "pumpFee",
+                chainId: _chainId,
+              },
+            ],
+          });
+
+          // Define getAmountOut function
+          const getAmountOut = (_inputAmount: number, _inputReserve: bigint, _outputReserve: bigint): number => {
+            const inputAmountWithFee = _inputAmount * 99; // Apply 99/100 multiplier for fee
+            const numerator = BigInt(Math.floor(inputAmountWithFee)) * _outputReserve;
+            const denominator = _inputReserve * BigInt(100) + BigInt(Math.floor(inputAmountWithFee));
+            return Number(numerator / denominator);
+          };
+
+          // Check if result is valid
+          if (!result || !Array.isArray(result) || result.length < 3) {
+            console.error("Invalid contract result:", result);
+            setOutputBalance("");
+            return;
+          }
+
+          // Extract results with safety checks
+          const pumpReserve = result[0].result && Array.isArray(result[0].result) && result[0].result.length === 2 
+            ? [BigInt(result[0].result[0] || 0), BigInt(result[0].result[1] || 0)] 
+            : [BigInt(0), BigInt(10000)];
+          
+          const virtualAmount = result[1].result ? BigInt(result[1].result) : BigInt(0);
+          
+          const fee = result[2].result 
+            ? Number(formatEther(result[2].result)) 
+            : 0;
+
+          // Calculate amount after fee
+          const inputAmount = Number(value);
+          const feeAmount = (inputAmount * fee) / 10000;
+          const amountInAfterFee = inputAmount - feeAmount;
+
+          // Calculate output based on trade mode
+          const amountOut = trademode
+            ? getAmountOut(amountInAfterFee, virtualAmount + pumpReserve[0], pumpReserve[1])
+            : getAmountOut(amountInAfterFee, pumpReserve[1], pumpReserve[0] + virtualAmount);
+          console.log(amountOut)
+          // Format output to string for consistency
+          setOutputBalance(amountOut.toFixed(18)); // Match formatEther precision
+        }
+      } else {
+        setOutputBalance("");
+      }
+    } catch (error) {
+      console.error("Error in quote calculation:", error);
+      setOutputBalance("");
+    }
+  }, 300);
+
+const trade = async () => {
+  try {
+    let result: any = "";
+    if (chain !== 'kubtestnet') {
+      // Existing logic for non-kubtestnet chains
+      if (mode === "pro") {
+        if (!trademode) {
+          const allowance = await readContracts(config, {
+            contracts: [
+              {
+                address: ticker as "0xstring",
+                abi: erc20Abi,
+                functionName: "allowance",
+                args: [
+                  account.address as "0xstring",
+                  dataofuniv2router.addr as "0xstring",
+                ],
+                chainId: _chainId,
+              },
+            ],
+          });
+          if (Number(formatEther(allowance[0].result!)) < Number(inputBalance)) {
+            const { request } = await simulateContract(config, {
+              address: ticker as "0xstring",
+              abi: erc20Abi,
+              functionName: "approve",
+              args: [
+                dataofuniv2router.addr as "0xstring",
+                parseEther(String(Number(inputBalance) + 1)),
+              ],
+              chainId: _chainId,
+            });
+            const h = await writeContract(config, request);
+            await waitForTransactionReceipt(config, { hash: h });
+          }
+        }
+        result = await writeContract(config, {
+          ...univ2RouterContract,
+          functionName: "exactInputSingle",
           args: [
             {
               tokenIn: trademode
@@ -695,27 +1181,23 @@ export default function Trade({
               tokenOut: trademode
                 ? (ticker as "0xstring")
                 : (dataofcurr.addr as "0xstring"),
-              amountIn: parseEther(value),
               fee: 10000,
+              recipient: account.address as "0xstring",
+              amountIn: parseEther(inputBalance),
+              amountOutMinimum:
+                (parseEther(outputBalance) * BigInt(95)) / BigInt(100),
               sqrtPriceLimitX96: BigInt(0),
             },
           ],
+          value: trademode ? parseEther(inputBalance) : BigInt(0),
         });
-        setOutputBalance(formatEther(qouteOutput.result[0]));
       } else {
-        setOutputBalance("");
-      }
-    } catch {}
-  }, 300);
-
-  const trade = async () => {
-    let result: any = "";
-    if (mode === "pro") {
-      if (!trademode) {
         const allowance = await readContracts(config, {
           contracts: [
             {
-              address: ticker as "0xstring",
+              address: trademode
+                ? (dataofcurr.addr as "0xstring")
+                : (ticker as "0xstring"),
               abi: erc20Abi,
               functionName: "allowance",
               args: [
@@ -728,7 +1210,9 @@ export default function Trade({
         });
         if (Number(formatEther(allowance[0].result!)) < Number(inputBalance)) {
           const { request } = await simulateContract(config, {
-            address: ticker as "0xstring",
+            address: trademode
+              ? (dataofcurr.addr as "0xstring")
+              : (ticker as "0xstring"),
             abi: erc20Abi,
             functionName: "approve",
             args: [
@@ -740,87 +1224,93 @@ export default function Trade({
           const h = await writeContract(config, request);
           await waitForTransactionReceipt(config, { hash: h });
         }
+        result = await writeContract(config, {
+          ...univ2RouterContract,
+          functionName: "exactInputSingle",
+          args: [
+            {
+              tokenIn: trademode
+                ? (dataofcurr.addr as "0xstring")
+                : (ticker as "0xstring"),
+              tokenOut: trademode
+                ? (ticker as "0xstring")
+                : (dataofcurr.addr as "0xstring"),
+              fee: 10000,
+              recipient: account.address as "0xstring",
+              amountIn: parseEther(inputBalance),
+              amountOutMinimum:
+                (parseEther(outputBalance) * BigInt(95)) / BigInt(100),
+              sqrtPriceLimitX96: BigInt(0),
+            },
+          ],
+        });
       }
-      result = await writeContract(config, {
-        ...univ2RouterContract,
-        functionName: "exactInputSingle",
-        args: [
-          {
-            tokenIn: trademode
-              ? (dataofcurr.addr as "0xstring")
-              : (ticker as "0xstring"),
-            tokenOut: trademode
-              ? (ticker as "0xstring")
-              : (dataofcurr.addr as "0xstring"),
-            fee: 10000,
-            recipient: account.address as "0xstring",
-            amountIn: parseEther(inputBalance),
-            amountOutMinimum:
-              (parseEther(outputBalance) * BigInt(95)) / BigInt(100),
-            sqrtPriceLimitX96: BigInt(0),
-          },
-        ],
-        value: trademode ? parseEther(inputBalance) : BigInt(0),
-      });
     } else {
-      const allowance = await readContracts(config, {
-        contracts: [
-          {
-            address: trademode
-              ? (dataofcurr.addr as "0xstring")
-              : (ticker as "0xstring"),
+      // kubtestnet branch
+      if (trademode) {
+        // Buy: Native currency -> Token
+        result = await writeContract(config, {
+          ...bkgafactoryContract,
+          functionName: "buy",
+          args: [
+            ticker as "0xstring", // _tokenAddr
+            (parseEther(outputBalance) * BigInt(95)) / BigInt(100), // _minToken
+          ],
+          value: parseEther(inputBalance), // msg.value
+          chainId: _chainId,
+        });
+      } else {
+        // Sell: Token -> Native currency
+        const allowance = await readContracts(config, {
+          contracts: [
+            {
+              address: ticker as "0xstring",
+              abi: erc20Abi,
+              functionName: "allowance",
+              args: [
+                account.address as "0xstring",
+                bkgafactoryContract.address as "0xstring",
+              ],
+              chainId: _chainId,
+            },
+          ],
+        });
+        if (Number(formatEther(allowance[0].result!)) < Number(inputBalance)) {
+          const { request } = await simulateContract(config, {
+            address: ticker as "0xstring",
             abi: erc20Abi,
-            functionName: "allowance",
+            functionName: "approve",
             args: [
-              account.address as "0xstring",
-              dataofuniv2router.addr as "0xstring",
+              bkgafactoryContract.address as "0xstring",
+              parseEther(String(Number(inputBalance) + 1)),
             ],
             chainId: _chainId,
-          },
-        ],
-      });
-      if (Number(formatEther(allowance[0].result!)) < Number(inputBalance)) {
-        const { request } = await simulateContract(config, {
-          address: trademode
-            ? (dataofcurr.addr as "0xstring")
-            : (ticker as "0xstring"),
-          abi: erc20Abi,
-          functionName: "approve",
+          });
+          const h = await writeContract(config, request);
+          await waitForTransactionReceipt(config, { hash: h });
+        }
+        result = await writeContract(config, {
+          ...bkgafactoryContract,
+          functionName: "sell",
           args: [
-            dataofuniv2router.addr as "0xstring",
-            parseEther(String(Number(inputBalance) + 1)),
+            ticker as "0xstring", // _tokenAddr
+            parseEther(inputBalance), // _tokenSold
+            (parseEther(outputBalance) * BigInt(95)) / BigInt(100), // _minToken
           ],
           chainId: _chainId,
         });
-        const h = await writeContract(config, request);
-        await waitForTransactionReceipt(config, { hash: h });
       }
-      result = await writeContract(config, {
-        ...univ2RouterContract,
-        functionName: "exactInputSingle",
-        args: [
-          {
-            tokenIn: trademode
-              ? (dataofcurr.addr as "0xstring")
-              : (ticker as "0xstring"),
-            tokenOut: trademode
-              ? (ticker as "0xstring")
-              : (dataofcurr.addr as "0xstring"),
-            fee: 10000,
-            recipient: account.address as "0xstring",
-            amountIn: parseEther(inputBalance),
-            amountOutMinimum:
-              (parseEther(outputBalance) * BigInt(95)) / BigInt(100),
-            sqrtPriceLimitX96: BigInt(0),
-          },
-        ],
-      });
     }
     setHeadnoti(true);
     setHash(result);
     setInputBalance("");
     setOutputBalance("0");
-  };
+  } catch (error) {
+    console.error("Error in trade execution:", error);
+    setHeadnoti(false);
+    setHash("");
+  }
+};
 
   const setSocial = async () => {
     let result = await writeContract(config, {
@@ -888,37 +1378,26 @@ export default function Trade({
         <div className={"xl:hidden w-full xl:w-1/3 self-center bg-neutral-900 p-2 rounded-2xl flex flex-row justify-around border-solid border-2 " + (chain === 'kub' ? "border-emerald-300" : "") + (chain === 'monad' ? "border-purple-300" : "")} style={{ zIndex: 1 }}>
           <span 
             className={!tabmode ? "text-black font-bold p-2 w-1/2 bg-black text-center rounded-lg" : "text-gray-400 underline hover:font-bold p-2 w-1/2 text-center"}
-            style={{backgroundImage: !tabmode && chain === 'kub' ? 'radial-gradient( circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3% )' : !tabmode && chain === 'monad' ? 'linear-gradient(135deg, #D6BEF7, #A683EF)' : 'none'}}
+            style={{backgroundImage: !tabmode ? theme.btn : 'none'}}
             onClick={() => {setTabmode(false);}}
           >
             Info
           </span>
           <span
             className={tabmode ? "text-black font-bold p-2 w-1/2 bg-black text-center rounded-lg" : "text-gray-400 underline hover:font-bold p-2 w-1/2 text-center"}
-            style={{backgroundImage: tabmode && chain === 'kub' ? 'radial-gradient( circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3% )' : tabmode && chain === 'monad' ? 'linear-gradient(135deg, #D6BEF7, #A683EF)' : 'none'}}
+            style={{backgroundImage: tabmode ? theme.btn : 'none'}}
             onClick={() => {setTabmode(true);}}
           >
             Trade
           </span>
         </div>
         <div className="ml-[14px] lg:ml-[28px] hidden xl:block w-full flex flex-col items-center md:flex-row flex-wrap justify-between text-xs xl:text-md">
-          <span className={"text-2xl mr-6 " + (chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>{result2.status === "success" && result2.data![0].result}</span>
-          <span className="mr-6">{result2.status === "success" && "[" + result2.data![1].result + "]"}</span>
+          <span className={"text-2xl mr-6 " + (chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>{name}</span>
+          <span className="mr-6">{"[" + symbol + "]"}</span>
           <span className="mr-6">
             Price:{" "}
             <span className={(chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>
-              {result3.status === "success"
-                ? result3.data![1].result!.toUpperCase() !==
-                  dataofcurr.addr.toUpperCase()
-                  ? Intl.NumberFormat("en-US", {
-                      notation: "compact",
-                      compactDisplay: "short",
-                    }).format((Number(state[3].result![0]) / 2 ** 96) ** 2)
-                  : Intl.NumberFormat("en-US", {
-                      notation: "compact",
-                      compactDisplay: "short",
-                    }).format(1 / (Number(state[3].result![0]) / 2 ** 96) ** 2)
-                : "Fetching..."}
+              {price}
             </span>{" "}
             {chain === "kub" && mode === "pro" && "KUB"}
             {chain === "kub" &&
@@ -930,23 +1409,7 @@ export default function Trade({
           <span className="mr-6">
             Market Cap:{" "}
             <span className={(chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>
-              {result3.status === "success"
-                ? result3.data![1].result!.toUpperCase() !==
-                  dataofcurr.addr.toUpperCase()
-                  ? Intl.NumberFormat("en-US", {
-                      notation: "compact",
-                      compactDisplay: "short",
-                    }).format(
-                      (Number(state[3].result![0]) / 2 ** 96) ** 2 * 1000000000
-                    )
-                  : Intl.NumberFormat("en-US", {
-                      notation: "compact",
-                      compactDisplay: "short",
-                    }).format(
-                      (1 / (Number(state[3].result![0]) / 2 ** 96) ** 2) *
-                        1000000000
-                    )
-                : "Fetching..."}
+              {mcap}
             </span>{" "}
             {chain === "kub" && mode === "pro" && "KUB"}
             {chain === "kub" &&
@@ -955,14 +1418,14 @@ export default function Trade({
               "CMM"}
             {chain === "monad" && mode === "pro" && "MON"}
           </span>
-          {result2.status === "success" && (
+          {creator !== null && (
             <span className="mr-6">
               Creator:{" "}
               <Link
                 href={
                   _explorer +
                   "address/" +
-                  result2.data![5].result +
+                  creator +
                   (chain === "kub" ? "/?tab=tokens" : "") +
                   (chain === "monad" ? "#tokens" : "")
                 }
@@ -971,28 +1434,28 @@ export default function Trade({
                 prefetch={false}
                 className="text-right w-[30px] xl:w-[200px]"
               >
-                {result2.data![5].result.slice(0, 5)}...
-                {result2.data![5].result.slice(37)}
+                {String(creator).slice(0, 5)}...
+                {String(creator).slice(37)}
               </Link>{" "}
               ·····{" "}
               {Number(Number(Date.now() / 1000).toFixed(0)) -
-                Number(result2.data![6].result) <
+                Number(createTime) <
                 60 &&
                 rtf.format(
-                  Number(result2.data![6].result) -
+                  Number(createTime) -
                     Number(Number(Date.now() / 1000).toFixed(0)),
                   "second"
                 )}
               {Number(Number(Date.now() / 1000).toFixed(0)) -
-                Number(result2.data![6].result) >=
+                Number(createTime) >=
                 60 &&
                 Number(Number(Date.now() / 1000).toFixed(0)) -
-                  Number(result2.data![6].result) <
+                  Number(createTime) <
                   3600 &&
                 rtf.format(
                   Number(
                     Number(
-                      (Number(result2.data![6].result) -
+                      (Number(createTime) -
                         Number(Number(Date.now() / 1000).toFixed(0))) /
                         60
                     ).toFixed(0)
@@ -1000,15 +1463,15 @@ export default function Trade({
                   "minute"
                 )}
               {Number(Number(Date.now() / 1000).toFixed(0)) -
-                Number(result2.data![6].result) >=
+                Number(createTime) >=
                 3600 &&
                 Number(Number(Date.now() / 1000).toFixed(0)) -
-                  Number(result2.data![6].result) <
+                  Number(createTime) <
                   86400 &&
                 rtf.format(
                   Number(
                     Number(
-                      (Number(result2.data![6].result) -
+                      (Number(createTime) -
                         Number(Number(Date.now() / 1000).toFixed(0))) /
                         3600
                     ).toFixed(0)
@@ -1016,12 +1479,12 @@ export default function Trade({
                   "hour"
                 )}
               {Number(Number(Date.now() / 1000).toFixed(0)) -
-                Number(result2.data![6].result) >=
+                Number(createTime) >=
                 86400 &&
                 rtf.format(
                   Number(
                     Number(
-                      (Number(result2.data![6].result) -
+                      (Number(createTime) -
                         Number(Number(Date.now() / 1000).toFixed(0))) /
                         86400
                     ).toFixed(0)
@@ -1055,17 +1518,15 @@ export default function Trade({
                     type: "ERC20",
                     options: {
                       address: ticker,
-                      symbol:
-                        result2.status === "success" &&
-                        result2.data![1].result,
+                      symbol: symbol,
                       decimals: 18,
                       image:
-                        result2.status === "success" &&
-                        result2.data![3].result!.slice(0, 7) === "ipfs://"
+                        logo !== null &&
+                        String(logo).slice(0, 7) === "ipfs://"
                           ? "https://gateway.commudao.xyz/ipfs/" +
-                            result2.data![3].result!.slice(7)
+                            String(logo).slice(7)
                           : "https://gateway.commudao.xyz/ipfs/" +
-                            result2.data![3].result!,
+                            String(logo),
                     },
                   },
                 });
@@ -1097,23 +1558,12 @@ export default function Trade({
         {!tabmode ? (
           <div className="block xl:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start" style={{ zIndex: 1 }}>
             <div className="w-full flex flex-col items-start xl:flex-row flex-wrap justify-between text-xs xl:text-md">
-              <span className={"text-2xl mr-6 " + (chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>{result2.status === "success" && result2.data![0].result}</span>
-              <span className="mr-6">{result2.status === "success" && "[" + result2.data![1].result + "]"}</span>
+              <span className={"text-2xl mr-6 " + (chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>{name}</span>
+              <span className="mr-6">{"[" + symbol + "]"}</span>
               <span className="mr-6">
                 Price:{" "}
                 <span className={(chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>
-                  {result3.status === "success"
-                    ? result3.data![1].result!.toUpperCase() !==
-                      dataofcurr.addr.toUpperCase()
-                      ? Intl.NumberFormat("en-US", {
-                          notation: "compact",
-                          compactDisplay: "short",
-                        }).format((Number(state[3].result![0]) / 2 ** 96) ** 2)
-                      : Intl.NumberFormat("en-US", {
-                          notation: "compact",
-                          compactDisplay: "short",
-                        }).format(1 / (Number(state[3].result![0]) / 2 ** 96) ** 2)
-                    : "Fetching..."}
+                  {price}
                 </span>{" "}
                 {chain === "kub" && mode === "pro" && "KUB"}
                 {chain === "kub" &&
@@ -1125,23 +1575,7 @@ export default function Trade({
               <span className="mr-6">
                 Market Cap:{" "}
                 <span className={(chain === 'kub' ? "text-emerald-300" : "") + (chain === 'monad' ? "text-purple-300" : "")}>
-                  {result3.status === "success"
-                    ? result3.data![1].result!.toUpperCase() !==
-                      dataofcurr.addr.toUpperCase()
-                      ? Intl.NumberFormat("en-US", {
-                          notation: "compact",
-                          compactDisplay: "short",
-                        }).format(
-                          (Number(state[3].result![0]) / 2 ** 96) ** 2 * 1000000000
-                        )
-                      : Intl.NumberFormat("en-US", {
-                          notation: "compact",
-                          compactDisplay: "short",
-                        }).format(
-                          (1 / (Number(state[3].result![0]) / 2 ** 96) ** 2) *
-                            1000000000
-                        )
-                    : "Fetching..."}
+                  {mcap}
                 </span>{" "}
                 {chain === "kub" && mode === "pro" && "KUB"}
                 {chain === "kub" &&
@@ -1150,14 +1584,14 @@ export default function Trade({
                   "CMM"}
                 {chain === "monad" && mode === "pro" && "MON"}
               </span>
-              {result2.status === "success" && (
+              {creator !== null && (
                 <span className="mr-6">
                   Creator:{" "}
                   <Link
                     href={
                       _explorer +
                       "address/" +
-                      result2.data![5].result +
+                      creator +
                       (chain === "kub" ? "/?tab=tokens" : "") +
                       (chain === "monad" ? "#tokens" : "")
                     }
@@ -1166,28 +1600,28 @@ export default function Trade({
                     prefetch={false}
                     className="text-right w-[30px] xl:w-[200px]"
                   >
-                    {result2.data![5].result.slice(0, 5)}...
-                    {result2.data![5].result.slice(37)}
+                    {String(creator).slice(0, 5)}...
+                    {String(creator).slice(37)}
                   </Link>{" "}
                   ·····{" "}
                   {Number(Number(Date.now() / 1000).toFixed(0)) -
-                    Number(result2.data![6].result) <
+                    Number(createTime) <
                     60 &&
                     rtf.format(
-                      Number(result2.data![6].result) -
+                      Number(createTime) -
                         Number(Number(Date.now() / 1000).toFixed(0)),
                       "second"
                     )}
                   {Number(Number(Date.now() / 1000).toFixed(0)) -
-                    Number(result2.data![6].result) >=
+                    Number(createTime) >=
                     60 &&
                     Number(Number(Date.now() / 1000).toFixed(0)) -
-                      Number(result2.data![6].result) <
+                      Number(createTime) <
                       3600 &&
                     rtf.format(
                       Number(
                         Number(
-                          (Number(result2.data![6].result) -
+                          (Number(createTime) -
                             Number(Number(Date.now() / 1000).toFixed(0))) /
                             60
                         ).toFixed(0)
@@ -1195,15 +1629,15 @@ export default function Trade({
                       "minute"
                     )}
                   {Number(Number(Date.now() / 1000).toFixed(0)) -
-                    Number(result2.data![6].result) >=
+                    Number(createTime) >=
                     3600 &&
                     Number(Number(Date.now() / 1000).toFixed(0)) -
-                      Number(result2.data![6].result) <
+                      Number(createTime) <
                       86400 &&
                     rtf.format(
                       Number(
                         Number(
-                          (Number(result2.data![6].result) -
+                          (Number(createTime) -
                             Number(Number(Date.now() / 1000).toFixed(0))) /
                             3600
                         ).toFixed(0)
@@ -1211,12 +1645,12 @@ export default function Trade({
                       "hour"
                     )}
                   {Number(Number(Date.now() / 1000).toFixed(0)) -
-                    Number(result2.data![6].result) >=
+                    Number(createTime) >=
                     86400 &&
                     rtf.format(
                       Number(
                         Number(
-                          (Number(result2.data![6].result) -
+                          (Number(createTime) -
                             Number(Number(Date.now() / 1000).toFixed(0))) /
                             86400
                         ).toFixed(0)
@@ -1251,16 +1685,15 @@ export default function Trade({
                         options: {
                           address: ticker,
                           symbol:
-                            result2.status === "success" &&
-                            result2.data![1].result,
+                            symbol,
                           decimals: 18,
                           image:
-                            result2.status === "success" &&
-                            result2.data![3].result!.slice(0, 7) === "ipfs://"
+                            logo !== null &&
+                            String(logo).slice(0, 7) === "ipfs://"
                               ? "https://gateway.commudao.xyz/ipfs/" +
-                                result2.data![3].result!.slice(7)
+                                String(logo).slice(7)
                               : "https://gateway.commudao.xyz/ipfs/" +
-                                result2.data![3].result!,
+                                String(logo),
                         },
                       },
                     });
@@ -1291,12 +1724,12 @@ export default function Trade({
                   <div className="mr-2">
                     <Image
                       src={
-                        result2.status === "success"
-                          ? result2.data![3].result!.startsWith("ipfs://")
+                        logo !== null
+                          ? String(logo).startsWith("ipfs://")
                             ? "https://gateway.commudao.xyz/ipfs/" +
-                              result2.data![3].result!.slice(7)
+                              String(logo).slice(7)
                             : "https://gateway.commudao.xyz/ipfs/" +
-                              result2.data![3].result!
+                              String(logo)
                           : "https://gateway.commudao.xyz/ipfs/"
                       }
                       alt="token_waiting_for_approve"
@@ -1307,7 +1740,7 @@ export default function Trade({
                   <div className="flex-1 min-w-0 h-[125px] overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
                     <span className="text-xs break-words">
                       Description:{" "}
-                      {result2.status === "success" && result2.data![2].result}
+                      {description}
                     </span>
                   </div>
                 </div>
@@ -1350,7 +1783,7 @@ export default function Trade({
               </div>
             )}
 
-            {result2.status === "success" && result2.data![5].result === account.address && (
+            {creator !== null && creator === account.address && (
               <div>
                 <button
                   className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
@@ -1393,7 +1826,7 @@ export default function Trade({
               </button>
             </a>
 
-            {result2.status === "success" && state[2].result ? (
+            { name !== null && state[2].result ? (
               <>
                 <span className="ml-[20px] text-sm font-bold  text-left">
                   🔥 This token has graduated!:{" "}
@@ -1421,92 +1854,37 @@ export default function Trade({
                 <div className="w-full text-sm flex flex-col gap-2 justify-start  text-left">
                   <span>
                     Bonding curve progress:{" "}
-                    {result3.status === "success" &&
-                      Intl.NumberFormat("en-US", {
-                        notation: "compact",
-                        compactDisplay: "short",
-                      }).format(
-                        result3.data![1].result?.toUpperCase() !==
-                          currencyAddr.toUpperCase()
-                          ? ((Number(state[3].result![0]) / 2 ** 96) ** 2 *
-                              100) /
-                              ((chain === "kub" && mode === "pro"
-                                ? 0.000002
-                                : 1) *
-                                (chain === "kub" &&
-                                mode === "lite" &&
-                                (token === "cmm" || token === "")
-                                  ? 0.0001
-                                  : 1) *
-                                (chain === "monad" && mode === "pro" ? 1 : 1))
-                          : ((1 /
-                              (Number(state[3].result![0]) / 2 ** 96) ** 2) *
-                              100) /
-                              ((chain === "kub" && mode === "pro"
-                                ? 0.000002
-                                : 1) *
-                                (chain === "kub" &&
-                                mode === "lite" &&
-                                (token === "cmm" || token === "")
-                                  ? 0.0001
-                                  : 1) *
-                                (chain === "monad" && mode === "pro" ? 1 : 1))
-                      )}
-                    %
+                    {progress + "%"}
                   </span>
                   <div className="has-tooltip">
                     <span className="tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs">
-                      {"When the market cap reaches " +
-                        (chain === "kub" && mode === "pro" ? "2,000 KUB" : "") +
-                        (chain === "kub" &&
-                        mode === "lite" &&
-                        (token === "cmm" || token === "")
-                          ? "100,000 CMM"
-                          : "") +
-                        (chain === "monad" && mode === "pro" ? "1 MON" : "") +
-                        ", 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee."}
+                      {`When the market cap reaches ${
+                        reachData && Array.isArray(reachData)
+                          ? (() => {
+                              const item = reachData.find(item => item?.chain === chain);
+                              if (!item) return "";
+                              if (mode === "pro" && item.proAmount && item.proSymbol) {
+                                return `${item.proAmount} ${item.proSymbol}`;
+                              }
+                              if (
+                                mode === "lite" &&
+                                item.lite &&
+                                item.liteSymbol &&
+                                (token === item.liteSymbol || token === "")
+                              ) {
+                                return `${item.lite} ${item.liteSymbol}`;
+                              }
+                              return "";
+                            })()
+                          : ""
+                      }, 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.`}
                     </span>
                   </div>
                 </div>
                 <div className="w-full mx-14 h-4 bg-gray-400 rounded-lg overflow-hidden mb-2">
                   <div
                     className="h-4 bg-emerald-300 rounded-lg"
-                    style={{
-                      width:
-                        result3.status === "success"
-                          ? result3.data![1].result?.toUpperCase() !==
-                            currencyAddr.toUpperCase()
-                            ? ((Number(state[3].result![0]) / 2 ** 96) ** 2 *
-                                100) /
-                                ((chain === "kub" && mode === "pro"
-                                  ? 0.000002
-                                  : 1) *
-                                  (chain === "kub" &&
-                                  mode === "lite" &&
-                                  (token === "cmm" || token === "")
-                                    ? 0.0001
-                                    : 1) *
-                                  (chain === "monad" && mode === "pro"
-                                    ? 1
-                                    : 1)) +
-                              "%"
-                            : ((1 /
-                                (Number(state[3].result![0]) / 2 ** 96) ** 2) *
-                                100) /
-                                ((chain === "kub" && mode === "pro"
-                                  ? 0.000002
-                                  : 1) *
-                                  (chain === "kub" &&
-                                  mode === "lite" &&
-                                  (token === "cmm" || token === "")
-                                    ? 0.0001
-                                    : 1) *
-                                  (chain === "monad" && mode === "pro"
-                                    ? 1
-                                    : 1)) +
-                              "%"
-                          : "0%",
-                    }}
+                    style={{ width: calculateBondingCurveWidth(progress) }}
                   />
                 </div>
               </>
@@ -1532,14 +1910,14 @@ export default function Trade({
                                     prefetch={false}
                                     className={
                                         "font-bold " +
-                                        (res.addr.toUpperCase() === result2.data![5].result.toUpperCase() || res.addr.toUpperCase() === lp.toUpperCase() ? 
+                                        (res.addr.toUpperCase() === String(creator).toUpperCase() || res.addr.toUpperCase() === lp.toUpperCase() ? 
                                             chain === 'kub' ? "text-emerald-300" : chain === 'monad' ? "text-purple-300" : "" :
                                             ""
                                         )
                                     }
                                 >
                                     {res.addr.slice(0, 5) + "..." + res.addr.slice(37)}{" "}
-                                    {res.addr.toUpperCase() === result2.data![5].result.toUpperCase() && "[Creator 🧑‍💻]"}
+                                    {res.addr.toUpperCase() === String(creator).toUpperCase() && "[Creator 🧑‍💻]"}
                                     {res.addr.toUpperCase() === lp.toUpperCase() && "[Bonding curve]"}
                                 </Link>
                             </div>
@@ -1554,7 +1932,7 @@ export default function Trade({
             <div className={"px-4 py-4 w-full h-[380px] border-2 border-l-8 border-solid flex flex-col item-center justify-around bg-gray-900 " + (chain === 'kub' ? "border-emerald-300" : "") + (chain === 'monad' ? "border-purple-300" : "")} style={{zIndex: 1}}>
             <div className="w-3/4 flex items-baseline space-x-2 mx-2 my-2">
               <div className="text-2xl font-bold max-w-[240px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
-                {result2.status === "success" && result2.data![1].result}
+                {symbol !== null && symbol}
               </div>
             </div>
             <div className="w-full bg-gray-800 self-center p-2 mb-3 rounded-2xl flex flex-row justify-around">
@@ -1603,7 +1981,7 @@ export default function Trade({
                     : chain === "monad" && mode === "pro"
                     ? "MON"
                     : ""
-                  : result2.status === "success" && result2.data![1].result}
+                  : symbol}
               </span>
             </div>
             <div className="mr-[20px] self-end text-sm">
@@ -1757,7 +2135,7 @@ export default function Trade({
                     : chain === "monad" && mode === "pro"
                     ? "MON"
                     : ""
-                  : result2.status === "success" && result2.data![1].result}
+                  : symbol}
               </span>
             </div>
             <div className="mr-[20px] self-end text-sm">
@@ -1795,7 +2173,7 @@ export default function Trade({
             </div>
             {connections && account.address !== undefined && account.chainId === _chainId ? (
               <button
-                className={"w-3/4 self-center p-2 my-3 rounded-2xl font-bold text-slate-900 underline hover-effect hover:text-white cursor-pointer " + (chain === 'kub' ? "bg-emerald-300" : "") + (chain === 'monad' ? "bg-purple-300" : "")}
+                className={"w-3/4 self-center p-2 my-3 rounded-2xl font-bold text-slate-900 underline hover-effect hover:text-white cursor-pointer " + theme.tradebtn}
                 onClick={trade}
               >
                 <span className="self-center">Trade</span>
@@ -2063,7 +2441,7 @@ export default function Trade({
         <div className="hidden xl:block w-full xl:w-1/4 h-fit xl:h-[1500px] flex flex-col gap-8 z-1">
           <div className={"p-6 w-full h-[380px] border-2 border-l-8 border-solid flex flex-col item-center justify-around bg-gray-900 " + (chain === 'kub' ? "border-emerald-300" : "") + (chain === 'monad' ? "border-purple-300" : "")}>
             <div className="w-3/4 flex items-baseline space-x-2 mx-2 my-2">
-              <div className="text-2xl font-bold max-w-[240px] overflow-x-scroll whitespace-nowrap scrollbar-hide">{result2.status === "success" && result2.data![1].result}</div>
+              <div className="text-2xl font-bold max-w-[240px] overflow-x-scroll whitespace-nowrap scrollbar-hide">{symbol}</div>
             </div>
             <div className="w-full bg-gray-800 self-center p-2  mb-3 rounded-2xl flex flex-row justify-around">
               <span 
@@ -2111,7 +2489,7 @@ export default function Trade({
                     : chain === "monad" && mode === "pro"
                     ? "MON"
                     : ""
-                  : result2.status === "success" && result2.data![1].result}
+                  : symbol}
               </span>
             </div>
             <div className="mr-[20px] self-end text-sm">
@@ -2259,7 +2637,7 @@ export default function Trade({
                     : chain === "monad" && mode === "pro"
                     ? "MON"
                     : ""
-                  : result2.status === "success" && result2.data![1].result}
+                  : symbol}
               </span>
             </div>
             <div className="mr-[20px] self-end text-sm">
@@ -2297,7 +2675,7 @@ export default function Trade({
             </div>
             {connections && account.address !== undefined && account.chainId === _chainId ? (
               <button
-                className={"w-3/4 self-center p-2 my-3 rounded-2xl font-bold text-slate-900 underline hover-effect hover:text-white cursor-pointer "  + (chain === 'kub' ? "bg-emerald-300" : "") + (chain === 'monad' ? "bg-purple-300" : "")}
+                className={"w-3/4 self-center p-2 my-3 rounded-2xl font-bold text-slate-900 underline hover-effect hover:text-white cursor-pointer " + theme.tradebtn}
                 onClick={trade}
               >
                 <span className="self-center">Trade</span>
@@ -2317,12 +2695,12 @@ export default function Trade({
                 <div className="mr-2">
                   <Image
                     src={
-                      result2.status === "success"
-                        ? result2.data![3].result!.startsWith("ipfs://")
+                      logo !== null
+                        ? String(logo).startsWith("ipfs://")
                           ? "https://gateway.commudao.xyz/ipfs/" +
-                            result2.data![3].result!.slice(7)
+                            String(logo).slice(7)
                           : "https://gateway.commudao.xyz/ipfs/" +
-                            result2.data![3].result!
+                            String(logo)
                         : "https://gateway.commudao.xyz/ipfs/"
                     }
                     alt="token_waiting_for_approve"
@@ -2333,14 +2711,14 @@ export default function Trade({
                 <div className="flex-1 min-w-0 h-[125px] overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
                   <span className="text-xs break-words">
                     Description:{" "}
-                    {result2.status === "success" && result2.data![2].result}
+                    {description !== null && description}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Socials Section */}
-            {result2.status === "success" && (
+            {
               <div className="w-full">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   {socialItems.map(({ icon, field }) => {
@@ -2371,10 +2749,10 @@ export default function Trade({
                   })}
                 </div>
               </div>
-            )}
+            }
 
             {/* ปุ่มเพิ่ม Socials */}
-            {result2.status === "success" && result2.data![5].result === account.address && (
+            {creator === account.address && (
               <div>
                 <button
                   className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
@@ -2417,7 +2795,7 @@ export default function Trade({
               </button>
             </a>
 
-            {result2.status === "success" && state[2].result ? (
+            { state[2].result ? (
               <>
                 <span className="ml-[20px] text-sm font-bold">
                   🔥 This token has graduated!:{" "}
@@ -2443,94 +2821,40 @@ export default function Trade({
             ) : (
               <>
                 <div className="ml-[20px] text-sm flex flex-col gap-2 justify-start">
-                  <span>
+                 <span>
                     Bonding curve progress:{" "}
-                    {result3.status === "success" &&
-                      Intl.NumberFormat("en-US", {
-                        notation: "compact",
-                        compactDisplay: "short",
-                      }).format(
-                        result3.data![1].result?.toUpperCase() !==
-                          currencyAddr.toUpperCase()
-                          ? ((Number(state[3].result![0]) / 2 ** 96) ** 2 *
-                              100) /
-                              ((chain === "kub" && mode === "pro"
-                                ? 0.000002
-                                : 1) *
-                                (chain === "kub" &&
-                                mode === "lite" &&
-                                (token === "cmm" || token === "")
-                                  ? 0.0001
-                                  : 1) *
-                                (chain === "monad" && mode === "pro" ? 1 : 1))
-                          : ((1 /
-                              (Number(state[3].result![0]) / 2 ** 96) ** 2) *
-                              100) /
-                              ((chain === "kub" && mode === "pro"
-                                ? 0.000002
-                                : 1) *
-                                (chain === "kub" &&
-                                mode === "lite" &&
-                                (token === "cmm" || token === "")
-                                  ? 0.0001
-                                  : 1) *
-                                (chain === "monad" && mode === "pro" ? 1 : 1))
-                      )}
-                    %
+                    {progress + "%"}
                   </span>
                   <div className="has-tooltip">
                     <span className="tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs">
-                      {"When the market cap reaches " +
-                        (chain === "kub" && mode === "pro" ? "2,000 KUB" : "") +
-                        (chain === "kub" &&
-                        mode === "lite" &&
-                        (token === "cmm" || token === "")
-                          ? "100,000 CMM"
-                          : "") +
-                        (chain === "monad" && mode === "pro" ? "1 MON" : "") +
-                        ", 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee."}
+                      {`When the market cap reaches ${
+                        reachData && Array.isArray(reachData)
+                          ? (() => {
+                              const item = reachData.find(item => item?.chain === chain);
+                              if (!item) return "";
+                              if (mode === "pro" && item.proAmount && item.proSymbol) {
+                                return `${item.proAmount} ${item.proSymbol}`;
+                              }
+                              if (
+                                mode === "lite" &&
+                                item.lite &&
+                                item.liteSymbol &&
+                                (token === item.liteSymbol || token === "")
+                              ) {
+                                return `${item.lite} ${item.liteSymbol}`;
+                              }
+                              return "";
+                            })()
+                          : ""
+                      }, 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.`}
                     </span>
                   </div>
                 </div>
                 <div className="ml-[20px] mr-[20px] h-4 bg-gray-400 rounded-lg overflow-hidden mb-2">
                   <div
                     className={"h-4 rounded-lg "  + (chain === 'kub' ? "bg-emerald-300" : "") + (chain === 'monad' ? "bg-purple-300" : "")}
-                    style={{
-                      width:
-                        result3.status === "success"
-                          ? result3.data![1].result?.toUpperCase() !==
-                            currencyAddr.toUpperCase()
-                            ? ((Number(state[3].result![0]) / 2 ** 96) ** 2 *
-                                100) /
-                                ((chain === "kub" && mode === "pro"
-                                  ? 0.000002
-                                  : 1) *
-                                  (chain === "kub" &&
-                                  mode === "lite" &&
-                                  (token === "cmm" || token === "")
-                                    ? 0.0001
-                                    : 1) *
-                                  (chain === "monad" && mode === "pro"
-                                    ? 1
-                                    : 1)) +
-                              "%"
-                            : ((1 /
-                                (Number(state[3].result![0]) / 2 ** 96) ** 2) *
-                                100) /
-                                ((chain === "kub" && mode === "pro"
-                                  ? 0.000002
-                                  : 1) *
-                                  (chain === "kub" &&
-                                  mode === "lite" &&
-                                  (token === "cmm" || token === "")
-                                    ? 0.0001
-                                    : 1) *
-                                  (chain === "monad" && mode === "pro"
-                                    ? 1
-                                    : 1)) +
-                              "%"
-                          : "0%",
-                    }}
+                    style={{ width: calculateBondingCurveWidth(progress) }}
+                     
                   />
                 </div>
               </>
@@ -2563,13 +2887,13 @@ export default function Trade({
                                 prefetch={false}
                                 className={
                                     "font-bold text-left " +
-                                    (res.addr.toUpperCase() === result2.data![5].result.toUpperCase() || res.addr.toUpperCase() === lp.toUpperCase() ? 
+                                    (res.addr.toUpperCase() === String(creator).toUpperCase() || res.addr.toUpperCase() === lp.toUpperCase() ? 
                                     chain === 'kub' ? "text-emerald-300" : chain === 'monad' ? "text-purple-300" : "" :
                                     "")
                                 }
                             >
                                 {res.addr.slice(0, 5) + "..." + res.addr.slice(37)}{" "}
-                                {res.addr.toUpperCase() === result2.data![5].result.toUpperCase() && "[Creator 🧑‍💻]"}
+                                {res.addr.toUpperCase() === String(creator).toUpperCase() && "[Creator 🧑‍💻]"}
                                 {res.addr.toUpperCase() === lp.toUpperCase() && "[Bonding curve]"}
                             </Link>
                             <span className="mr-6 text-right  w-[50px] sm:w-[200px]">{res.value.toFixed(4)}%</span>
