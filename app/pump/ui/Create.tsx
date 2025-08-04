@@ -8,6 +8,7 @@ import { config } from '@/app/config';
 import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
 import { ERC20FactoryV2ABI } from '@/app/pump/abi/ERC20FactoryV2';
 import { redirect } from 'next/navigation';
+import CustomPopup from "@/app/components/popup-modal";
 
 export default function Create({
   mode, chain, token,
@@ -55,15 +56,53 @@ export default function Create({
   const [name, setName] = useState('');
   const [ticker, setTicker] = useState('');
   const [desp, setDesp] = useState('');
+  const [popupState, setPopupState] = useState({
+    isOpen: false,
+    header: '',
+    description: '',
+    actionButton: null as React.ReactNode | null,
+    footer: null as React.ReactNode | null,
+  });
+  
+  const handleIpfsUpload = (upload: any) => {
+    if (!upload || upload.IpfsHash === undefined) {
+      setPopupState({
+        isOpen: true,
+        header: 'IPFS Upload Failed',
+        description: 'Upload IPFS Fail, please contact support.',
+        actionButton: null,
+        footer: <span>Contact support at <Link href={"https://discord.gg/k92ReT5EYy"} target="_blank" rel="noreferrer" className="underline hover:font-bold ">Discord</Link></span>,
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const closePopup = () => {
+    setPopupState({ ...popupState, isOpen: false });
+  };
 
   const _launch = async () => {
     try {
-      alert('Your token is launching, pls wait a sec...')
+      setPopupState({
+        isOpen: true,
+        header: 'Creating Token',
+        description: 'Your token is being launched, please wait...',
+        actionButton: null,
+        footer: null,
+      });
       const data = new FormData();
       data.set("file", file);
       const uploadRequest = await fetch("/pump/api/files", { method: "POST", body: data, });
       const upload = await uploadRequest.json();
       console.log(name, ticker, desp, 'ipfs://' + upload.IpfsHash);
+
+      if(upload.IpfsHash === undefined){
+        handleIpfsUpload(upload);
+        return;
+      }
+      
+
       let result = '';
       if (mode === 'lite' && (token === 'cmm' || token === '')) {
         const allowance = await readContracts(config, {
@@ -110,6 +149,24 @@ export default function Create({
           value: parseEther('1'),
         });
       }
+      
+      setPopupState({
+        isOpen: true,
+        header: 'Launch Successful',
+        description: 'Your token has been launched successfully!',
+        actionButton: (
+          <button
+            onClick={() => {
+              closePopup();
+              redirect(`/pump/launchpad?chain=${chain}&mode=${mode}`);
+            }}
+            className={`px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600`}
+          >
+            Go to Launchpad
+          </button>
+        ),
+        footer: null,
+      });
 
 /*       alert("Launch success!, your txn hash: " + 
         (chain === 'kub' && "https://www.kubscan.com/tx/") + 
@@ -120,9 +177,16 @@ export default function Create({
 
     } catch (e) {
       console.log(e);
-      alert("Launch failed");
+        setPopupState({
+        isOpen: true,
+        header: 'Launch Failed',
+        description: `Launch fail with reason ${e}`,
+        actionButton: null,
+        footer: null,
+      });
     }
   }
+
   const launch = () => {
     _launch();
     setName('');
@@ -167,7 +231,18 @@ export default function Create({
             <button className="w-1/2 p-2 mb-3 rounded-2xl font-bold bg-emerald-300 text-slate-900 underline hover:bg-sky-500 hover:text-white cursor-pointer" type="submit"><span className="self-center">Launch!</span></button> :
             <button className="w-1/2 p-2 mb-3 rounded-2xl font-bold bg-gray-500 cursor-not-allowed"><span className="self-center">Launch!</span></button>
           }
+
         </form>
+      <CustomPopup
+        isOpen={popupState.isOpen}
+        onClose={closePopup}
+        header={popupState.header}
+        description={popupState.description}
+        actionButton={popupState.actionButton}
+        footer={popupState.footer}
+      />
     </main>
+
+    
   );
 }
