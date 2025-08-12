@@ -12,7 +12,12 @@ import { tokens as tokens8899, v3FactoryContract as v3FactoryContract8899, erc20
 import { tokens as tokens25925, 
   StakingFactoryV2 as StakingFactoryV2_25925,
   StakingFactoryV2Contract as StakingFactoryV2Contract_25925, 
-  erc20ABI as erc20ABI25925, v3PoolABI as v3PoolABI25925, V3_FACTORY as V3_FACTORY25925, V3_FACTORYCreatedAt as V3_FACTORYCreatedAt25925, positionManagerContract as positionManagerContract25925 } from '@/app/lib/25925';
+  v3FactoryContract as v3FactoryContract25925,
+  erc20ABI as erc20ABI25925,
+  v3PoolABI as v3PoolABI25925,
+  V3_FACTORY as V3_FACTORY25925,
+  V3_FACTORYCreatedAt as V3_FACTORYCreatedAt25925,
+  positionManagerContract as positionManagerContract25925} from '@/app/lib/25925';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Button } from '@/components/ui/button';
@@ -128,6 +133,7 @@ const chainConfigs: Record<number, ChainConfig> = {
       V3_FACTORY: V3_FACTORY25925,
       V3_FACTORYCreatedAt: V3_FACTORYCreatedAt25925,
       positionManagerContract: positionManagerContract25925,
+      v3FactoryContract: v3FactoryContract25925,
       StakingFactoryV2Contract: StakingFactoryV2Contract_25925,
       StakingFactoryV2_Addr: StakingFactoryV2_25925 as '0xstring'
     },
@@ -308,11 +314,13 @@ const CreateEarnProgram = () => {
     if (!priceList || priceList.length < 2) return;
 
     const fetchPools = async () => {
+      const seenPairs = new Set<string>();
+
       try {
         const logCreateData = await publicClient.getContractEvents({
-          ...selectedChainConfig.lib.v3FactoryContract,
+          ...lib.v3FactoryContract,
           eventName: 'PoolCreated',
-          fromBlock: selectedChainConfig.lib.V3_FACTORYCreatedAt,
+          fromBlock: lib.V3_FACTORYCreatedAt,
           toBlock: 'latest',
         });
 
@@ -443,18 +451,24 @@ const CreateEarnProgram = () => {
               [balanceA, balanceB] = [balanceB, balanceA];
             }
 
-            results.push({
-              id: `${tokenA.name}-${tokenB.name}-${item.fee}`,
-              name: `${tokenA.name}/${tokenB.name}`,
-              apr: `${apr.toFixed(2)}%`,
-              tvl: `$${liquidityUSD.toFixed(3)}`,
-              volume: `$${volumeToken * priceA}`,
-              tokenA: tokenA.value,
-              tokenB: tokenB.value,
-              fee: Number(item.fee),
-              poolAddress: item.pool,
-              listed: isListed,
-            });
+            const pairKey = [tokenA.name, tokenB.name].sort().join('|');
+
+            if (!seenPairs.has(pairKey)) {
+              seenPairs.add(pairKey);
+
+              results.push({
+                id: `${tokenA.name}-${tokenB.name}-${item.fee}`,
+                name: `${tokenA.name}/${tokenB.name}`,
+                apr: `${apr.toFixed(2)}%`,
+                tvl: `$${liquidityUSD.toFixed(3)}`,
+                volume: `$${(volumeToken * priceA).toFixed(3)}`,
+                tokenA: tokenA.value,
+                tokenB: tokenB.value,
+                fee: Number(item.fee),
+                poolAddress: item.pool,
+                listed: isListed,
+              });
+            }
           } catch (error) {
             console.error(`Error fetching pool for ${tokenA.name}-${tokenB.name}:`, error);
           }
@@ -687,6 +701,68 @@ const CreateEarnProgram = () => {
 
 
       }else if(stakingType === 'Concentrate Liquidity Staking' ){
+                // allowanace
+        const allowance = await readContract(config, {
+              abi: erc20Abi,
+              address: rewardToken as `0x${string}`,
+              functionName: 'allowance',
+              args: [address as `0x${string}`, lib.StakingFactoryV2_Addr],
+            });
+
+            if (allowance < parseEther(rewardAmount)) {
+              const { request } = await simulateContract(config, {
+                abi: erc20Abi,
+                address: rewardToken as `0x${string}`,
+                functionName: 'approve',
+                args: [lib.StakingFactoryV2_Addr, parseEther(rewardAmount)],
+              });
+              const h = await writeContract(config, request);
+              await waitForTransactionReceipt(config, { hash: h });
+            }
+
+        const programName =
+          selectLockOption === '1'
+            ? `Fixable Lock ${selectTokenInfo?.name} earn ${rewardTokenInfo?.name}`
+            : selectLockOption === '2'
+            ? `Multiple Lock ${selectTokenInfo?.name} earn ${rewardTokenInfo?.name}`
+            : `Staking ${selectTokenInfo?.name} earn ${rewardTokenInfo?.name}`;
+
+        // create
+        const multiLocksTime = multiLocks.map(lock => BigInt(lock.time));
+        const multiLocksPower = multiLocks.map(lock => BigInt(lock.multiplier));
+
+        const { request } = await simulateContract(config, {
+          ...selectedChainConfig.lib.StakingFactoryV2Contract,
+          functionName: 'createProject',
+          args: [
+            {
+              name: programName,
+              stakingOrPMToken: selectToken as `0x${string}`,
+              rewardToken: rewardToken as `0x${string}`,
+              tokenA: "0x0000000000000000000000000000000000000000",
+              tokenB: "0x0000000000000000000000000000000000000000",
+              poolFees: [] as number[], // uint24[]
+              totalRewards: parseEther(rewardAmount),
+              mode: BigInt(selectLockOption),
+              lockDurations:
+                selectLockOption === '1'
+                  ? [BigInt(singleUnlockTime)]
+                  : selectLockOption === '2'
+                  ? multiLocksTime
+                  : [],
+              powerMultipliers: selectLockOption === '2' ? multiLocksPower : [],
+              projectOwner: address as `0x${string}`,
+              startBlockReward: BigInt(estimatedStartBlock),
+              endBlockReward: BigInt(Number(estimatedStartBlock) + Number(effectiveDuration)),
+              userLockMaximum: parseEther(maxUserToken),
+              poolLockMaximum: parseEther(maxPoolToken)
+            }
+          ]
+        });
+
+          const h = await writeContract(config, request)
+          await waitForTransactionReceipt(config, { hash: h })
+
       }
     } catch (error) {
       console.error(error)
