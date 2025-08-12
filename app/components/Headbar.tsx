@@ -41,7 +41,7 @@ export default function Headbar() {
                                     <Link href="/pump" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono">
                                     <Button variant="ghost" className="cursor-pointer">Pump</Button>
                                     </Link>
-                                    {chainId === 2 && (
+                                    {typeof chainId === 'number' && [25925].includes(chainId) && (
                                         <Link href="/earn" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono">
                                         <Button variant="ghost" className="cursor-pointer">Earn</Button>
                                         </Link>
