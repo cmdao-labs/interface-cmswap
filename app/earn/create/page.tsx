@@ -3,18 +3,24 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Search, Check } from 'lucide-react';
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction } from '@wagmi/core';
 import { config } from '@/app/config';
-import { tokens } from '@/app/lib/25925';
+import { erc20ABI, StakingFactoryV2, tokens } from '@/app/lib/25925';
 import { formatEther, parseEther, createPublicClient, http, erc20Abi } from 'viem';
 import { usePrice } from '@/app/context/getPrice';
 import { bitkub, jbc, bitkubTestnet } from 'viem/chains';
 import { tokens as tokens96, v3FactoryContract as v3FactoryContract96, erc20ABI as erc20ABI96, v3PoolABI as v3PoolABI96, V3_FACTORY as V3_FACTORY96, V3_FACTORYCreatedAt as V3_FACTORYCreatedAt96, positionManagerContract as positionManagerContract96 } from '@/app/lib/96';
 import { tokens as tokens8899, v3FactoryContract as v3FactoryContract8899, erc20ABI as erc20ABI8899, v3PoolABI as v3PoolABI8899, V3_FACTORY as V3_FACTORY8899, V3_FACTORYCreatedAt as V3_FACTORYCreatedAt8899, positionManagerContract as positionManagerContract8899 } from '@/app/lib/8899';
-import { tokens as tokens25925, v3FactoryContract as v3FactoryContract25925, erc20ABI as erc20ABI25925, v3PoolABI as v3PoolABI25925, V3_FACTORY as V3_FACTORY25925, V3_FACTORYCreatedAt as V3_FACTORYCreatedAt25925, positionManagerContract as positionManagerContract25925 } from '@/app/lib/25925';
+import { tokens as tokens25925, 
+  StakingFactoryV2 as StakingFactoryV2_25925,
+  StakingFactoryV2Contract as StakingFactoryV2Contract_25925, 
+  erc20ABI as erc20ABI25925, v3PoolABI as v3PoolABI25925, V3_FACTORY as V3_FACTORY25925, V3_FACTORYCreatedAt as V3_FACTORYCreatedAt25925, positionManagerContract as positionManagerContract25925 } from '@/app/lib/25925';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Button } from '@/components/ui/button';
 import { useAccount } from 'wagmi';
 import { UniswapV2PairABI } from '@/app/pump/abi/UniswapV2Pair';
+import { intervalToDuration } from 'date-fns';
+import DateTimePicker from '@/app/components/DateSelector';
+import { Copy, CopyCheck, Plus, Minus } from "lucide-react";
 
 type ThemeId = 25925;
 type Theme = {
@@ -49,14 +55,7 @@ type ChainConfig = {
   rpc: string;
   blocktime: number;
   tokens: { name: string; value: string; logo: string }[];
-  lib: {
-    v3FactoryContract: any;
-    erc20ABI: any;
-    v3PoolABI: any;
-    V3_FACTORY: string;
-    V3_FACTORYCreatedAt: bigint;
-    positionManagerContract: any;
-  };
+  lib: any;
 };
 
 const themes: Record<ThemeId, Theme> = {
@@ -73,7 +72,7 @@ const themes: Record<ThemeId, Theme> = {
 
 const chains = {
   kubtestnet: {
-    name: 'kub testnet',
+    name: 'KUB Testnet',
     color: 'rgb(20, 184, 166)',
     accent: 'border-green-500',
     bg: 'bg-teal-900/20',
@@ -124,12 +123,13 @@ const chainConfigs: Record<number, ChainConfig> = {
     blocktime: 5,
     tokens: tokens25925,
     lib: {
-      v3FactoryContract: v3FactoryContract25925,
       erc20ABI: erc20ABI25925,
       v3PoolABI: v3PoolABI25925,
       V3_FACTORY: V3_FACTORY25925,
       V3_FACTORYCreatedAt: V3_FACTORYCreatedAt25925,
       positionManagerContract: positionManagerContract25925,
+      StakingFactoryV2Contract: StakingFactoryV2Contract_25925,
+      StakingFactoryV2_Addr: StakingFactoryV2_25925 as '0xstring'
     },
   },
 };
@@ -144,28 +144,31 @@ const CreateEarnProgram = () => {
   const [rewardToken, setRewardToken] = useState('');
   const [rewardTokenSymbol, setRewardTokenSymbol] = useState('');
   const [rewardAmount, setRewardAmount] = useState('');
-  const [duration, setDuration] = useState('7');
-  const [startDate, setStartDate] = useState('');
+  const [duration, setDuration] = useState('120960');
+  const [startDate, setStartDate] = useState<{
+    timestamp: number;
+    formatted: string;
+  } | null>(null);
   const [stakingType, setStakingType] = useState<string | null>(null);
   const [poolFees, setPoolFees] = useState<string[]>([]);
   const [selectLockOption, setSelectLockOption] = useState('');
-  const [singleUnlockTime, setSingleUnlockTime] = useState('');
-  const [multiLocks, setMultiLocks] = useState([{ time: '', multiplier: '' }]);
+  const [singleUnlockTime, setSingleUnlockTime] = useState('17280');
+  const [multiLocks, setMultiLocks] = useState([{ time: '17280', multiplier: '100' }]);
   const [customDuration, setCustomDuration] = useState('');
   const [validPools, setValidPools] = useState<Pool[]>([]);
   const [openReward, setOpenReward] = useState(false);
-  const [blockNumber, setBlockNumber] = useState(0);
+  const [blocks, setBlocks] = useState<{ blockNumber: number; blockTimestamp: number }[]>([]);
+
   const [firstRewardBlock, setFirstRewardBlock] = useState(0);
   const [endRewardBlock, setEndBlockNumber] = useState(0);
   const [searchInput, setSearchInput] = useState('');
   const [maxPoolToken, setMaxPoolToken] = useState('');
   const [maxUserToken, setMaxUserToken] = useState('');
+  const [avgBlockTime, setAverageTime] = useState(0);
+  const [copiedAddress, setCopiedAddress] = useState("");
 
   const { priceList } = usePrice();
-  const { chainId } = useAccount();
-  const now = new Date();
-  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  const minDateTimeLocal = tomorrow.toISOString().slice(0, 16);
+  const { chainId,address } = useAccount();
   const rewardAmountRef = useRef<HTMLInputElement>(null);
   const unlockRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -175,6 +178,7 @@ const CreateEarnProgram = () => {
   const effectiveDuration = duration === '-' ? customDuration : duration;
 
   const selectedChainConfig = chainConfigs[chainId || 96];
+  const { chain, rpc, blocktime, tokens, lib } = selectedChainConfig;
   const publicClient = createPublicClient({
     chain: selectedChainConfig.chain,
     transport: http(selectedChainConfig.rpc),
@@ -203,101 +207,101 @@ const CreateEarnProgram = () => {
     return `$${num.toFixed(3)}`;
   };
 
-const fetchTokenData = async (
-  tokenAddress: string,
-  setInfo: (info: { name: string; symbol: string; totalSupply: string } | null) => void
-) => {
-  if (!tokenAddress) return;
+  const fetchTokenData = async (
+    tokenAddress: string,
+    setInfo: (info: { name: string; symbol: string; totalSupply: string } | null) => void
+  ) => {
+    if (!tokenAddress) return;
 
-  try {
-    // เรียกข้อมูล name, symbol, totalSupply ก่อน
-    const basicResult = await readContracts(config, {
-      contracts: [
-        { abi: erc20Abi, address: tokenAddress as `0x${string}`, functionName: 'name' },
-        { abi: erc20Abi, address: tokenAddress as `0x${string}`, functionName: 'symbol' },
-        { abi: erc20Abi, address: tokenAddress as `0x${string}`, functionName: 'totalSupply' },
-      ],
-    });
-
-    const nameResult = basicResult[0].result;
-    const symbolResult = basicResult[1].result;
-    const totalSupplyResult = basicResult[2].result;
-
-    if (
-      nameResult === undefined ||
-      symbolResult === undefined ||
-      totalSupplyResult === undefined
-    ) {
-      console.error(`Unexpected undefined value in basicResult for ${tokenAddress}`);
-      setInfo(null);
-      return;
-    }
-
-    const name = String(nameResult);
-    const symbol = String(symbolResult);
-    const totalSupply = formatEther(totalSupplyResult as bigint);
-    // ทดสอบว่าเป็น LP token หรือไม่ โดยพยายามเรียก token0 และ token1
     try {
-      const lpResult = await readContracts(config, {
+      // เรียกข้อมูล name, symbol, totalSupply ก่อน
+      const basicResult = await readContracts(config, {
         contracts: [
-          { abi: UniswapV2PairABI, address: tokenAddress as `0x${string}`, functionName: 'token0' },
-          { abi: UniswapV2PairABI, address: tokenAddress as `0x${string}`, functionName: 'token1' },
+          { abi: erc20Abi, address: tokenAddress as `0x${string}`, functionName: 'name' },
+          { abi: erc20Abi, address: tokenAddress as `0x${string}`, functionName: 'symbol' },
+          { abi: erc20Abi, address: tokenAddress as `0x${string}`, functionName: 'totalSupply' },
         ],
       });
 
-      if (
-        lpResult[0].status === 'success' &&
-        lpResult[1].status === 'success' &&
-        lpResult[0].result &&
-        lpResult[1].result
-      ) {
-        const [token0Addr, token1Addr] = [lpResult[0].result as string, lpResult[1].result as string];
+      const nameResult = basicResult[0].result;
+      const symbolResult = basicResult[1].result;
+      const totalSupplyResult = basicResult[2].result;
 
-        // เรียก symbol ของ token0 และ token1
-        const tokenSymbols = await readContracts(config, {
+      if (
+        nameResult === undefined ||
+        symbolResult === undefined ||
+        totalSupplyResult === undefined
+      ) {
+        console.error(`Unexpected undefined value in basicResult for ${tokenAddress}`);
+        setInfo(null);
+        return;
+      }
+
+      const name = String(nameResult);
+      const symbol = String(symbolResult);
+      const totalSupply = formatEther(totalSupplyResult as bigint);
+      // ทดสอบว่าเป็น LP token หรือไม่ โดยพยายามเรียก token0 และ token1
+      try {
+        const lpResult = await readContracts(config, {
           contracts: [
-            { abi: erc20Abi, address: token0Addr as `0x${string}`, functionName: 'symbol' },
-            { abi: erc20Abi, address: token1Addr as `0x${string}`, functionName: 'symbol' },
+            { abi: UniswapV2PairABI, address: tokenAddress as `0x${string}`, functionName: 'token0' },
+            { abi: UniswapV2PairABI, address: tokenAddress as `0x${string}`, functionName: 'token1' },
           ],
         });
 
         if (
-          tokenSymbols[0].status === 'success' &&
-          tokenSymbols[1].status === 'success' &&
-          tokenSymbols[0].result &&
-          tokenSymbols[1].result
+          lpResult[0].status === 'success' &&
+          lpResult[1].status === 'success' &&
+          lpResult[0].result &&
+          lpResult[1].result
         ) {
-          const symbol0 = String(tokenSymbols[0].result);
-          const symbol1 = String(tokenSymbols[1].result);
+          const [token0Addr, token1Addr] = [lpResult[0].result as string, lpResult[1].result as string];
 
-          // ประกอบชื่อใหม่สำหรับ LP Token
-          const combinedSymbol = `${symbol0}-${symbol1} ${symbol}`;
-          const combinedName = `${symbol0}-${symbol1} ${name}`;
-
-          setInfo({
-            name: combinedName,
-            symbol: combinedSymbol,
-            totalSupply,
+          // เรียก symbol ของ token0 และ token1
+          const tokenSymbols = await readContracts(config, {
+            contracts: [
+              { abi: erc20Abi, address: token0Addr as `0x${string}`, functionName: 'symbol' },
+              { abi: erc20Abi, address: token1Addr as `0x${string}`, functionName: 'symbol' },
+            ],
           });
-          return;
+
+          if (
+            tokenSymbols[0].status === 'success' &&
+            tokenSymbols[1].status === 'success' &&
+            tokenSymbols[0].result &&
+            tokenSymbols[1].result
+          ) {
+            const symbol0 = String(tokenSymbols[0].result);
+            const symbol1 = String(tokenSymbols[1].result);
+
+            // ประกอบชื่อใหม่สำหรับ LP Token
+            const combinedSymbol = `${symbol0}-${symbol1} ${symbol}`;
+            const combinedName = `${symbol0}-${symbol1} ${name}`;
+
+            setInfo({
+              name: combinedName,
+              symbol: combinedSymbol,
+              totalSupply,
+            });
+            return;
+          }
         }
+      } catch (lpError) {
+        // ถ้าเรียก token0/token1 ไม่ได้ แสดงว่าไม่ใช่ LP Token
       }
-    } catch (lpError) {
-      // ถ้าเรียก token0/token1 ไม่ได้ แสดงว่าไม่ใช่ LP Token
+
+      // ถ้าไม่ใช่ LP Token ก็แสดงข้อมูลปกติ
+      setInfo({
+        name,
+        symbol,
+        totalSupply,
+      });
+
+    } catch (error) {
+      console.error(`Error fetching token data for ${tokenAddress}:`, error);
+      setInfo(null);
     }
-
-    // ถ้าไม่ใช่ LP Token ก็แสดงข้อมูลปกติ
-    setInfo({
-      name,
-      symbol,
-      totalSupply,
-    });
-
-  } catch (error) {
-    console.error(`Error fetching token data for ${tokenAddress}:`, error);
-    setInfo(null);
-  }
-};
+  };
 
 
   useEffect(() => {
@@ -462,18 +466,98 @@ const fetchTokenData = async (
       }
     };
 
+
+
+
     fetchPools();
   }, [priceList, selectedChainConfig]);
 
   useEffect(() => {
-    const fetchCurrentBlock = async () => {
+    const getAverageBlockTime = async () => {
       try {
-        const currentBlock = await publicClient.getBlockNumber();
-        setBlockNumber(Number(currentBlock));
+        const latestBlockNumber = await publicClient.getBlockNumber();
+        const oldBlockNumber = latestBlockNumber - BigInt(100);
+
+        const [latestBlock, oldBlock] = await Promise.all([
+          publicClient.getBlock({ blockNumber: latestBlockNumber }),
+          publicClient.getBlock({ blockNumber: oldBlockNumber }),
+        ]);
+
+        const latestTime = Number(latestBlock.timestamp);
+        const oldTime = Number(oldBlock.timestamp);
+        const averageTime = (latestTime - oldTime) / 100;
+        setAverageTime(averageTime)
+        console.log(`Last 100 Blocks Time avg is ${averageTime}`)
+        return averageTime;
+      } catch (err) {
+        console.error("Error in getAverageBlockTime:", err);
+        return null;
+      }
+    };
+    getAverageBlockTime();
+  }, [chainId])
+
+  const convertBlocksToTimeString = (blocks: number, avgBlockTime: number): string => {
+    if (blocks <= 0 || avgBlockTime <= 0) return '0 seconds';
+
+    const totalSeconds = blocks * avgBlockTime;
+
+    const duration = intervalToDuration({
+      start: 0,
+      end: totalSeconds * 1000,
+    });
+
+    const { years, months, days, hours, minutes, seconds } = duration;
+
+    const parts: string[] = [];
+
+    if (years) parts.push(years === 1 ? '1 year' : `${years} years`);
+    if (months) parts.push(months === 1 ? '1 month' : `${months} months`);
+    if (days) parts.push(days === 1 ? '1 day' : `${days} days`);
+    if (hours) parts.push(hours === 1 ? '1 hour' : `${hours} hours`);
+    if (minutes) parts.push(minutes === 1 ? '1 minute' : `${minutes} minutes`);
+    if (seconds) parts.push(seconds === 1 ? '1 second' : `${seconds} seconds`);
+
+    if (parts.length === 0) return '0 seconds';
+    if (parts.length === 1) return parts[0];
+
+    const last = parts.pop();
+    return parts.join(', ') + ' and ' + last;
+  };
+
+  const copyToClipboard = (text: string, type: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedAddress(type);
+    setTimeout(() => setCopiedAddress(""), 800);
+  };
+
+  const getRewardRatePerDay = (
+    rewardAmount: string | number,
+    effectiveDuration: string | number,
+    avgBlockTime: number
+  ): string => {
+    if (!rewardAmount || !effectiveDuration || avgBlockTime <= 0) return '0.00';
+
+    const totalDays = (Number(effectiveDuration) * avgBlockTime) / 86400;
+    const rate = Number(rewardAmount) / totalDays;
+
+    return rate.toFixed(2);
+  };
+
+  useEffect(() => {
+    async function fetchCurrentBlock() {
+      try {
+        const block = await publicClient.getBlock();
+        if (!block) return;
+        setBlocks(prev => [{
+          blockNumber: Number(block.number),
+          blockTimestamp: Number(block.timestamp),
+        }, ...prev]);
       } catch (e) {
         console.error('Error fetching current block:', e);
       }
-    };
+    }
+
     fetchCurrentBlock();
   }, [publicClient]);
 
@@ -495,7 +579,7 @@ const fetchTokenData = async (
       setEndBlockNumber(0);
       return;
     }
-    const startTimestamp = new Date(startDate).getTime() / 1000;
+    const startTimestamp = new Date(startDate.timestamp).getTime() / 1000;
     const durationSeconds = Number(effectiveDuration) * 24 * 60 * 60;
     const endTimestamp = startTimestamp + durationSeconds;
     if (!firstRewardBlock) {
@@ -512,23 +596,105 @@ const fetchTokenData = async (
     }
   }, [searchInput, openReward]);
 
-  const handleStartDateChange = (value: string) => {
-    setStartDate(value);
-    if (!value) return;
-    const startTimestamp = Math.floor(new Date(value).getTime() / 1000);
-    publicClient.getBlockNumber().then((currentBlock) => {
-      publicClient.getBlock({ blockNumber: currentBlock }).then((block) => {
-        const currentTimestamp = Number(block.timestamp);
-        const secondsUntilStart = startTimestamp - currentTimestamp;
-        if (secondsUntilStart <= 0) {
-          setFirstRewardBlock(Number(currentBlock));
-          return;
-        }
-        const blocksUntilStart = Math.ceil(secondsUntilStart / selectedChainConfig.blocktime);
-        setFirstRewardBlock(Number(currentBlock) + blocksUntilStart);
-      });
-    });
-  };
+  function estimateBlockNumberByTimestamp(
+    startTimestamp: number,
+    currentBlockNumber: number,
+    currentBlockTimestamp: number,
+    avgBlockTime: number
+  ) {
+
+    let diff = (startTimestamp / 1000) - currentBlockTimestamp
+/*     console.log("Diff : ", diff)
+    console.log("Blocks : ", diff / avgBlockTime) */
+
+    let estimatedBlock = Math.round(currentBlockNumber + (diff / avgBlockTime));
+
+    return estimatedBlock > 0 ? estimatedBlock : 0;
+  }
+
+
+  const estimatedStartBlock = estimateBlockNumberByTimestamp(
+    startDate?.timestamp || 0,
+    blocks.length > 0 ? blocks[0].blockNumber : 0,
+    blocks.length > 0 ? blocks[0].blockTimestamp : 0,
+    avgBlockTime
+  );
+
+  const createPool = async () => {
+    try {
+        if(stakingType === 'Token Staking'){
+        // allowanace
+        const allowance = await readContract(config, {
+              abi: erc20Abi,
+              address: rewardToken as `0x${string}`,
+              functionName: 'allowance',
+              args: [address as `0x${string}`, lib.StakingFactoryV2_Addr],
+            });
+
+            if (allowance < parseEther(rewardAmount)) {
+              const { request } = await simulateContract(config, {
+                abi: erc20Abi,
+                address: rewardToken as `0x${string}`,
+                functionName: 'approve',
+                args: [lib.StakingFactoryV2_Addr, parseEther(rewardAmount)],
+              });
+              const h = await writeContract(config, request);
+              await waitForTransactionReceipt(config, { hash: h });
+            }
+
+        const programName =
+          selectLockOption === '1'
+            ? `Fixable Lock ${selectTokenInfo?.name} earn ${rewardTokenInfo?.name}`
+            : selectLockOption === '2'
+            ? `Multiple Lock ${selectTokenInfo?.name} earn ${rewardTokenInfo?.name}`
+            : `Staking ${selectTokenInfo?.name} earn ${rewardTokenInfo?.name}`;
+
+        // create
+        const multiLocksTime = multiLocks.map(lock => BigInt(lock.time));
+        const multiLocksPower = multiLocks.map(lock => BigInt(lock.multiplier));
+
+        const { request } = await simulateContract(config, {
+          ...selectedChainConfig.lib.StakingFactoryV2Contract,
+          functionName: 'createProject',
+          args: [
+            {
+              name: programName,
+              stakingOrPMToken: selectToken as `0x${string}`,
+              rewardToken: rewardToken as `0x${string}`,
+              tokenA: "0x0000000000000000000000000000000000000000",
+              tokenB: "0x0000000000000000000000000000000000000000",
+              poolFees: [] as number[], // uint24[]
+              totalRewards: parseEther(rewardAmount),
+              mode: BigInt(selectLockOption),
+              lockDurations:
+                selectLockOption === '1'
+                  ? [BigInt(singleUnlockTime)]
+                  : selectLockOption === '2'
+                  ? multiLocksTime
+                  : [],
+              powerMultipliers: selectLockOption === '2' ? multiLocksPower : [],
+              projectOwner: address as `0x${string}`,
+              startBlockReward: BigInt(estimatedStartBlock),
+              endBlockReward: BigInt(Number(estimatedStartBlock) + Number(effectiveDuration)),
+              userLockMaximum: parseEther(maxUserToken),
+              poolLockMaximum: parseEther(maxPoolToken)
+            }
+          ]
+        });
+
+          const h = await writeContract(config, request)
+          await waitForTransactionReceipt(config, { hash: h })
+
+
+      }else if(stakingType === 'Concentrate Liquidity Staking' ){
+      }
+    } catch (error) {
+      console.error(error)
+    }
+
+  }
+
+
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center mb-8">
@@ -540,9 +706,8 @@ const fetchTokenData = async (
       ].map((step, index, arr) => (
         <div key={step.number} className="flex items-center">
           <div
-            className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-              currentStep >= step.number ? `${currentTheme.accent} ${currentTheme.bg}` : ` ${currentTheme.border} ${currentTheme.hover}`
-            }`}
+            className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${currentStep >= step.number ? `${currentTheme.accent} ${currentTheme.bg}` : ` ${currentTheme.border} ${currentTheme.hover}`
+              }`}
           >
             {currentStep > step.number ? (
               <Check className={`w-5 h-5 ${currentTheme.text}`} />
@@ -566,11 +731,10 @@ const fetchTokenData = async (
         <button
           key={key}
           onClick={() => setSelectedChain(key as ChainKey)}
-          className={`px-4 py-2 rounded-lg border transition-all ${
-            selectedChain === key
-              ? `${chain.accent} ${chain.bg} ${chain.text}`
-              : ` ${currentTheme.border} ${currentTheme.hover}`
-          }`}
+          className={`px-4 py-2 rounded-lg border transition-all ${selectedChain === key
+            ? `${chain.accent} ${chain.bg} ${chain.text}`
+            : ` ${currentTheme.border} ${currentTheme.hover}`
+            }`}
         >
           {chain.name}
         </button>
@@ -602,9 +766,8 @@ const fetchTokenData = async (
                     <div
                       key={type.name}
                       onClick={() => setStakingType(type.name)}
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        stakingType === type.name ? `${currentTheme.accent} ${currentTheme.bg}` : `border ${currentTheme.border} ${currentTheme.border} `
-                      }`}
+                      className={`p-4 border rounded-lg cursor-pointer transition-all ${stakingType === type.name ? `${currentTheme.accent} ${currentTheme.bg}` : `border ${currentTheme.border} ${currentTheme.border} `
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
@@ -619,11 +782,10 @@ const fetchTokenData = async (
                 <button
                   onClick={() => stakingType && setCurrentStep(2)}
                   disabled={!stakingType}
-                  className={`w-full py-3 rounded-lg font-medium transition-all ${
-                    stakingType
-                      ? `${currentTheme.text} ${currentTheme.bg} border ${currentTheme.accent} hover:opacity-80`
-                      : ' text-gray-400 cursor-not-allowed'
-                  }`}
+                  className={`w-full py-3 rounded-lg font-medium transition-all ${stakingType
+                    ? `${currentTheme.text} ${currentTheme.bg} border ${currentTheme.accent} hover:opacity-80`
+                    : ' text-gray-400 cursor-not-allowed'
+                    }`}
                 >
                   Continue
                 </button>
@@ -658,9 +820,8 @@ const fetchTokenData = async (
                           setSelectToken(token.value);
                           fetchTokenData(token.value, setSelectTokenInfo);
                         }}
-                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                          selectToken === token.value ? `${currentTheme.accent} ${currentTheme.bg}` : `${currentTheme.border} ${currentTheme.hover}`
-                        }`}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all ${selectToken === token.value ? `${currentTheme.accent} ${currentTheme.bg}` : `${currentTheme.border} ${currentTheme.hover}`
+                          }`}
                       >
                         <div className="flex items-center gap-3">
                           <img src={token.logo || '/default2.png'} alt={token.name} className="w-8 h-8 rounded-full" />
@@ -693,7 +854,12 @@ const fetchTokenData = async (
                 </div>
                 <div className="flex gap-3">
                   <button
-                    onClick={() => setCurrentStep(1)}
+                    onClick={() => {
+                      setCurrentStep(1)
+                      setSelectedPool(null)
+                      setSelectToken('')
+                    }
+                    }
                     className="flex-1 py-3 border border-gray-500 text-gray-300 rounded-lg font-medium transition-colors"
                   >
                     Back
@@ -701,9 +867,8 @@ const fetchTokenData = async (
                   <button
                     onClick={() => selectToken && setCurrentStep(3)}
                     disabled={!selectToken}
-                    className={`flex-1 py-3 rounded-lg font-medium transition-all ${
-                      selectToken ? `${currentTheme.text} ${currentTheme.bg} border ${currentTheme.accent} hover:opacity-80` : 'border border-gray-500 text-gray-400 cursor-not-allowed'
-                    }`}
+                    className={`flex-1 py-3 rounded-lg font-medium transition-all ${selectToken ? `${currentTheme.text} ${currentTheme.bg} border ${currentTheme.accent} hover:opacity-80` : 'border border-gray-500 text-gray-400 cursor-not-allowed'
+                      }`}
                   >
                     Continue
                   </button>
@@ -731,9 +896,8 @@ const fetchTokenData = async (
                     <div
                       key={pool.id}
                       onClick={() => setSelectedPool(pool)}
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        selectedPool?.id === pool.id ? `${currentTheme.accent} ${currentTheme.bg}` : `${currentTheme.border} ${currentTheme.hover}`
-                      }`}
+                      className={`p-4 border rounded-lg cursor-pointer transition-all ${selectedPool?.id === pool.id ? `${currentTheme.accent} ${currentTheme.bg}` : `${currentTheme.border} ${currentTheme.hover}`
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -743,7 +907,7 @@ const fetchTokenData = async (
                           </div>
                           <div>
                             <h3 className="font-medium text-white">{pool.name}</h3>
-{/*                             <p className="text-sm text-gray-400">Fee: {(pool.fee / 10000)}%</p>
+                            {/*                             <p className="text-sm text-gray-400">Fee: {(pool.fee / 10000)}%</p>
  */}                          </div>
                         </div>
                         <div className="text-right">
@@ -771,11 +935,10 @@ const fetchTokenData = async (
                       <button
                         key={fee}
                         onClick={() => toggleFee(fee)}
-                        className={`px-4 py-2 rounded-full border text-sm transition ${
-                          poolFees.includes(fee)
-                            ? `${currentTheme.bg} ${currentTheme.text} ring-2 ring-offset-1 ring-primary`
-                            : ' text-gray-400 hover:bg-gray-700 hover:text-gray-300'
-                        }`}
+                        className={`px-4 py-2 rounded-full border text-sm transition ${poolFees.includes(fee)
+                          ? `${currentTheme.bg} ${currentTheme.text} ring-2 ring-offset-1 ring-primary`
+                          : ' text-gray-400 hover:bg-gray-700 hover:text-gray-300'
+                          }`}
                       >
                         {Number(fee) / 10000}%
                       </button>
@@ -785,7 +948,12 @@ const fetchTokenData = async (
                 </div>
                 <div className="flex gap-3">
                   <button
-                    onClick={() => setCurrentStep(1)}
+                    onClick={() => {
+                      setCurrentStep(1)
+                      setSelectedPool(null)
+                      setSelectToken('')
+                    }
+                    }
                     className="flex-1 py-3 border border-gray-500 text-gray-300 rounded-lg font-medium hover:bg-gray-600 transition-colors"
                   >
                     Back
@@ -793,9 +961,8 @@ const fetchTokenData = async (
                   <button
                     onClick={() => selectedPool && setCurrentStep(3)}
                     disabled={!selectedPool}
-                    className={`flex-1 py-3 rounded-lg font-medium transition-all ${
-                      selectedPool ? `${currentTheme.text} ${currentTheme.bg} border ${currentTheme.accent} hover:opacity-80` : 'border border-gray-500 text-gray-400 cursor-not-allowed'
-                    }`}
+                    className={`flex-1 py-3 rounded-lg font-medium transition-all ${selectedPool ? `${currentTheme.text} ${currentTheme.bg} border ${currentTheme.accent} hover:opacity-80` : 'border border-gray-500 text-gray-400 cursor-not-allowed'
+                      }`}
                   >
                     Continue
                   </button>
@@ -949,42 +1116,70 @@ const fetchTokenData = async (
                       </div>
                       {selectLockOption === '1' && (
                         <div className="space-y-2">
-                          <label className="block text-sm font-medium text-white">Unlock Time (seconds)</label>
+                          <label className="block text-sm font-medium text-white">Unlock Time (blocks)</label>
                           <input
                             type="number"
                             ref={unlockRef}
-                            placeholder="Enter unlock time (in seconds)"
+                            placeholder="Enter unlock time (in blocks)"
                             className="w-full p-2 rounded-md border  text-white"
                             value={singleUnlockTime}
-                            onChange={(e) => setSingleUnlockTime(e.target.value)}
+                            onChange={(e) => {
+                              let value = e.target.value;
+                              value = value.replace(/,/g, '');
+                              if (isNaN(Number(value)) || value === '') {
+                                value = '1';
+                              } else if (Number(value) < 1) {
+                                value = '1';
+                              }
+                              setSingleUnlockTime(value);
+                            }}
                           />
+                          <div className="text-gray-400 text-sm">Lock for {singleUnlockTime} blocks (~ {convertBlocksToTimeString(Number(singleUnlockTime), avgBlockTime)})</div>
+
                         </div>
                       )}
                       {selectLockOption === '2' && (
                         <div className="space-y-4">
                           <label className="block text-sm font-semibold text-white">Multiple Lock Options</label>
+
                           {multiLocks.map((item, index) => (
                             <div key={index} className="flex flex-col md:flex-row gap-4 items-start md:items-center /30 p-4 rounded-lg border">
-                              <div className="w-full md:w-1/2">
-                                <label className="block text-sm font-medium text-white mb-1">Unlock Time (seconds)</label>
+                              <div className="w-full md:w-1/3">
+                                <label className="block text-sm font-medium text-white mb-1">Unlock Time (Blocks)</label>
                                 <input
                                   type="number"
                                   placeholder="e.g., 3600"
+                                  min={1}
                                   className="w-full p-2 rounded-md border  text-white"
                                   value={item.time}
                                   onChange={(e) => {
+                                    let value = e.target.value;
+                                    value = value.replace(/,/g, '');
+                                    if (isNaN(Number(value)) || value === '') {
+                                      value = '1';
+                                    } else if (Number(value) < 1) {
+                                      value = '1';
+                                    }
                                     const updated = [...multiLocks];
-                                    updated[index].time = e.target.value;
+                                    updated[index].time = value;
                                     setMultiLocks(updated);
                                   }}
+
                                 />
                               </div>
-                              <div className="w-full md:w-1/2">
+                              <div className="w-full md:w-1/3">
+                                <label className="block text-sm font-medium text-white mb-1">Estimated Time</label>
+                                <div className='w-full p-2 rounded-md border  text-white'>
+                                  {convertBlocksToTimeString(Number(multiLocks[index].time), avgBlockTime)}
+                                </div>
+                              </div>
+                              <div className="w-full md:w-1/3">
                                 <label className="block text-sm font-medium text-white mb-1">Power Multiplier (%)</label>
                                 <input
                                   type="number"
                                   placeholder="e.g., 80 or 120"
                                   className="w-full p-2 rounded-md border  text-white"
+                                  min={1}
                                   value={item.multiplier}
                                   onChange={(e) => {
                                     const updated = [...multiLocks];
@@ -1002,55 +1197,71 @@ const fetchTokenData = async (
                               </button>
                             </div>
                           ))}
+
                           <button
                             type="button"
                             className="px-4 py-2 rounded-md border text-sm font-medium hover:bg-gray-700 hover:text-white"
-                            onClick={() => setMultiLocks([...multiLocks, { time: '', multiplier: '' }])}
+                            onClick={() => setMultiLocks([...multiLocks, { time: '17280', multiplier: '120' }])}
                           >
                             + Add
                           </button>
                         </div>
                       )}
                     </div>
+
+
                     <div className="space-y-4">
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Reward Duration (Days)</label>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">First Block Reward</label>
+                      <DateTimePicker
+                        onSelect={(timestamp) => {
+                          const date = new Date(timestamp);
+                          setStartDate({
+                            timestamp,
+                            formatted: date.toLocaleString('en-US')
+                          });
+                        }}
+                      />
+                      {/*                       <div className="text-gray-400 text-sm">Curr : {blocks[0].blockNumber} </div>
+ */}                      <div className="text-gray-400 text-sm">First Reward will start at block number : {estimatedStartBlock} </div>
+
+                    </div>
+
+                    <div className="space-y-4">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Reward Duration (Blocks)</label>
                       <select
                         value={duration}
                         onChange={(e) => setDuration(e.target.value)}
                         className="w-full px-4 py-3 bg-gray-700 border rounded-lg text-white focus:outline-none focus:border-gray-500"
                       >
-                        <option value="7">7 Days</option>
-                        <option value="14">14 Days</option>
-                        <option value="30">30 Days</option>
-                        <option value="90">90 Days</option>
-                        <option value="365">365 Days</option>
-                        <option value="-">Custom Days</option>
+                        {[7, 14, 30, 90, 365].map((day) => {
+                          const blocks = Math.ceil((day * 86400) / avgBlockTime);
+                          return (
+                            <option key={day} value={blocks}>
+                              {`${blocks.toLocaleString()} Blocks ( ~${day} Days )`}
+                            </option>
+                          );
+                        })}
+
+                        <option value="-">Custom Blocks</option>
                       </select>
+
                       {duration === '-' && (
-                        <input
-                          type="number"
-                          min={1}
-                          placeholder="Enter custom days"
-                          value={customDuration}
-                          ref={customDurationRef}
-                          onChange={(e) => setCustomDuration(e.target.value)}
-                          className="mt-2 w-full px-4 py-3  border border-gray-600 rounded-lg text-white focus:outline-none focus:border-gray-500"
-                        />
+                        <span>
+
+                          <input
+                            type="number"
+                            min={1}
+                            placeholder="Enter custom reward duration (Blocks)"
+                            value={customDuration}
+                            ref={customDurationRef}
+                            onChange={(e) => setCustomDuration(e.target.value)}
+                            className="mt-2 w-full px-4 py-3  border border-gray-600 rounded-lg text-white focus:outline-none focus:border-gray-500"
+                          />
+                          <div className="text-gray-400 text-sm">Selected Reward Duration: {effectiveDuration} Blocks (~ {convertBlocksToTimeString(Number(effectiveDuration), avgBlockTime)})</div>
+
+                        </span>
                       )}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
-                        <input
-                          type="datetime-local"
-                          value={startDate}
-                          min={minDateTimeLocal}
-                          onChange={(e) => handleStartDateChange(e.target.value)}
-                          className="w-full px-4 py-3  border border-gray-600 rounded-lg text-white focus:outline-none focus:border-gray-500"
-                        />
-                      </div>
-                      <div className="text-gray-400 text-sm">Selected duration: {effectiveDuration} days</div>
-                      <p className="mt-2">Current Block Number: {blockNumber}</p>
-                      <p className="mt-2">Estimated First Block Number: {firstRewardBlock}</p>
-                      <p className="mt-2">Estimated End Block Number: {endRewardBlock}</p>
+
                     </div>
                     <div className="space-y-4">
                       <label className="block text-sm font-medium text-gray-300 mb-2">Maximum Pool Staked Token (Ether)</label>
@@ -1070,24 +1281,23 @@ const fetchTokenData = async (
                         className="w-full px-4 py-3  border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-gray-500"
                       />
                     </div>
-                    <div className={`p-4 rounded-lg ${currentTheme.bg} border ${currentTheme.accent}`}>
+
+                    {/* <div className={`p-4 rounded-lg ${currentTheme.bg} border ${currentTheme.accent}`}>
                       <h3 className={`font-medium ${currentTheme.text} mb-2`}>Reward Summary</h3>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-gray-400">Daily Reward Rate:</span>
+                          <span className="text-gray-400">Emission rate:</span>
                           <span className="text-white">
-                            {rewardAmount && effectiveDuration && !isNaN(parseFloat(rewardAmount)) && !isNaN(parseInt(effectiveDuration))
-                              ? (parseFloat(rewardAmount) / parseInt(effectiveDuration)).toFixed(2)
-                              : '0.00'}{' '}
-                            {rewardTokenSymbol || 'tokens'}/day
+                            {getRewardRatePerDay(rewardAmount, effectiveDuration, avgBlockTime)} {rewardTokenSymbol || 'tokens'}/day
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-400">Total Duration:</span>
-                          <span className="text-white">{duration !== '-' ? duration : customDuration || 0} days</span>
+                          <span className="text-white">{convertBlocksToTimeString(Number(effectiveDuration), avgBlockTime)}</span>
                         </div>
                       </div>
-                    </div>
+                    </div> */}
+
                   </>
                 ) : (
                   <>
@@ -1204,51 +1414,77 @@ const fetchTokenData = async (
                         </div>
                       </div>
                       <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-2">Program Duration (Days)</label>
-                          <select
-                            value={duration}
-                            onChange={(e) => setDuration(e.target.value)}
-                            className="w-full px-4 py-3  border border-gray-600 rounded-lg text-white focus:outline-none focus:border-gray-500"
-                          >
-                            <option value="7">7 Days</option>
-                            <option value="14">14 Days</option>
-                            <option value="30">30 Days</option>
-                            <option value="90">90 Days</option>
-                            <option value="365">365 Days</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
-                          <input
-                            type="datetime-local"
-                            value={startDate}
-                            min={minDateTimeLocal}
-                            onChange={(e) => handleStartDateChange(e.target.value)}
-                            className="w-full px-4 py-3  border border-gray-600 rounded-lg text-white focus:outline-none focus:border-gray-500"
-                          />
-                        </div>
-                        <div className="text-gray-400 text-sm">Selected duration: {effectiveDuration} days</div>
-                        <p className="mt-2">Current Block Number: {blockNumber}</p>
-                        <p className="mt-2">Estimated First Block Number: {firstRewardBlock}</p>
-                        <p className="mt-2">Estimated End Block Number: {endRewardBlock}</p>
+
+                        <label className="block text-sm font-medium text-gray-300 mb-2">First Block Reward</label>
+                        <DateTimePicker
+                          onSelect={(timestamp) => {
+                            const date = new Date(timestamp);
+                            setStartDate({
+                              timestamp,
+                              formatted: date.toLocaleString('en-US')
+                            });
+                          }}
+                        />
                       </div>
+
+                      <div className="space-y-4">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Reward Duration (Blocks)</label>
+                        <select
+                          value={duration}
+                          onChange={(e) => setDuration(e.target.value)}
+                          className="w-full px-4 py-3 bg-gray-700 border rounded-lg text-white focus:outline-none focus:border-gray-500"
+                        >
+                          {[7, 14, 30, 90, 365].map((day) => {
+                            const blocks = Math.ceil((day * 86400) / avgBlockTime);
+                            return (
+                              <option key={day} value={blocks}>
+                                {`${blocks.toLocaleString()} Blocks ( ~${day} Days )`}
+                              </option>
+                            );
+                          })}
+
+                          <option value="-">Custom Blocks</option>
+                        </select>
+
+                        {duration === '-' && (
+                          <span>
+
+                            <input
+                              type="number"
+                              min={1}
+                              placeholder="Enter custom reward duration (Blocks)"
+                              value={customDuration}
+                              ref={customDurationRef}
+                              onChange={(e) => setCustomDuration(e.target.value)}
+                              className="mt-2 w-full px-4 py-3  border border-gray-600 rounded-lg text-white focus:outline-none focus:border-gray-500"
+                            />
+                            <div className="text-gray-400 text-sm">Selected Reward Duration: {effectiveDuration} Blocks (~ {convertBlocksToTimeString(Number(effectiveDuration), avgBlockTime)})</div>
+
+                          </span>
+                        )}
+
+                      </div>
+
                     </div>
-                    <div className={`p-4 rounded-lg ${currentTheme.bg} border ${currentTheme.accent}`}>
+
+                    {/* <div className={`p-4 rounded-lg ${currentTheme.bg} border ${currentTheme.accent}`}>
                       <h3 className={`font-medium ${currentTheme.text} mb-2`}>Reward Summary</h3>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-gray-400">Daily Reward Rate:</span>
+                          <span className="text-gray-400">Emission rate:</span>
                           <span className="text-white">
-                            {rewardAmount && duration ? (parseFloat(rewardAmount) / parseInt(duration)).toFixed(2) : '0.00'} {rewardTokenSymbol || 'tokens'}/day
+                            {getRewardRatePerDay(rewardAmount, effectiveDuration, avgBlockTime)} {rewardTokenSymbol || 'tokens'}/day
                           </span>
+
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-400">Total Duration:</span>
-                          <span className="text-white">{duration} days</span>
+                          <span className="text-white">{convertBlocksToTimeString(Number(effectiveDuration), avgBlockTime)}</span>
                         </div>
                       </div>
-                    </div>
+                    </div> */}
+
+
                   </>
                 )}
                 <div className="flex gap-3">
@@ -1261,11 +1497,10 @@ const fetchTokenData = async (
                   <button
                     onClick={() => setCurrentStep(4)}
                     disabled={!rewardToken || !rewardAmount || !startDate}
-                    className={`flex-1 py-3 rounded-lg font-medium transition-all ${
-                      rewardToken && rewardAmount && startDate
-                        ? `${currentTheme.text} ${currentTheme.bg} border ${currentTheme.accent} hover:opacity-80`
-                        : 'border border-gray-500 text-gray-400 cursor-not-allowed'
-                    }`}
+                    className={`flex-1 py-3 rounded-lg font-medium transition-all ${rewardToken && rewardAmount && startDate
+                      ? `${currentTheme.text} ${currentTheme.bg} border ${currentTheme.accent} hover:opacity-80`
+                      : 'border border-gray-500 text-gray-400 cursor-not-allowed'
+                      }`}
                   >
                     Continue
                   </button>
@@ -1276,107 +1511,250 @@ const fetchTokenData = async (
             {currentStep === 4 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-2">Review Farm Details</h2>
-                  <p className="text-gray-400">Confirm your farming program configuration</p>
+                  <h2 className="text-3xl font-bold text-white mb-2 tracking-wide" style={{ letterSpacing: '0.04em' }}>
+                    Review Farm Details
+                  </h2>
+                  <p className="text-gray-400 text-base tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                    Confirm your farming program configuration
+                  </p>
                 </div>
                 <div className="space-y-4">
-                  <div className="p-4  border border-gray-600 rounded-lg">
-                    <h3 className="font-medium text-white mb-3">Program Information</h3>
+                  <div className="p-4 border border-gray-600 rounded-lg">
+                    <h3 className="font-semibold text-white mb-3 text-xl tracking-wide" style={{ letterSpacing: '0.03em' }}>
+                      Program Information
+                    </h3>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-gray-400">Staking Type:</span>
-                        <span className="text-white ml-2">{stakingType}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Chain:</span>
-                        <span className="text-white ml-2">{currentTheme.name}</span>
+                        <div className="text-gray-400 ml-2 text-sm tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                          {selectLockOption === '1'
+                            ? "Lock : "
+                            : selectLockOption === '2'
+                              ? "Multiple Lock : "
+                              : "Staking : "}
+                          <span className={`${currentTheme.text} tracking-wide`} style={{ letterSpacing: '0.025em', fontSize: '0.9rem' }}>
+                            {selectTokenInfo?.name}
+                          </span>{" "}
+                          → Earn{" "}
+                          <span className={`${currentTheme.text} tracking-wide`} style={{ letterSpacing: '0.025em', fontSize: '0.9rem' }}>
+                            {rewardTokenInfo?.name}
+                          </span>
+                        </div>
+                        <div className="text-gray-400 ml-2 text-sm tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                          Staked Duration :{" "}
+                          <span className={`${currentTheme.text} tracking-wide`} style={{ letterSpacing: '0.025em', fontSize: '0.9rem' }}>
+                            {parseInt(effectiveDuration).toLocaleString()}
+                          </span>{" "}
+                          Blocks (~ {convertBlocksToTimeString(Number(effectiveDuration), avgBlockTime)})
+                        </div>
+                        <div className="text-gray-400 ml-2 text-sm tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                          Chain :{" "}
+                          <span className={`${currentTheme.text} tracking-wide`} style={{ letterSpacing: '0.025em', fontSize: '0.9rem' }}>
+                            {currentTheme.name}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  { (
-                  <div className="p-4  border border-gray-600 rounded-lg">
-                    <h3 className="font-medium text-white mb-3">Pool Information</h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="p-4 border border-gray-600 rounded-lg">
+                    <h3 className="font-semibold text-white mb-3 text-xl tracking-wide" style={{ letterSpacing: '0.03em' }}>
+                      Pool Information
+                    </h3>
+                    <div>
+                      <span className="text-gray-400 text-sm tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                        {stakingType === "Token Staking" ? "Token Staked:" : "Pool:"}
+                      </span>
+                      <span className="text-white ml-2 tracking-wide" style={{ letterSpacing: '0.02em', fontSize: '0.9rem' }}>
+                        {stakingType === "Token Staking" ? selectTokenInfo?.name : selectedPool?.name}
+                      </span>
+                    </div>
+
+                  <div className="flex items-center gap-2 text-sm text-gray-400 tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                    <span>Contract Address:</span>
+                    <button
+                      onClick={() =>
+                        copyToClipboard(
+                          (stakingType === "Token Staking" ? selectToken : selectedPool?.poolAddress) || '',
+                          "stakingCa"
+                        )
+                      }
+                      className="flex items-center gap-1 text-white transition-colors"
+                    >
+                      <span>
+                        {stakingType === "Token Staking"
+                          ? selectToken
+                          : selectedPool?.poolAddress || "N/A"}
+                      </span>
+                      {copiedAddress === "stakingCa" ? <CopyCheck size={16} /> : <Copy size={16} />}
+                    </button>
+                  </div>
+
+
+                    {stakingType !== "Token Staking" && (
                       <div>
-                        <span className="text-gray-400">{stakingType === 'Token Staking' ? "Staked Token:" : "Pool:"}</span>
-                        <span className="text-white ml-2">{stakingType === 'Token Staking' ? selectTokenInfo?.name  : selectedPool?.name}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">{stakingType === 'Token Staking' ? "Token Supply:" : "Current APR:"}</span>
-                        <span className={`ml-2 ${currentTheme.text}`}>{stakingType === 'Token Staking' ? selectTokenInfo?.totalSupply  : selectedPool?.apr}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">{stakingType === 'Token Staking' ? "Token Symbol:" : "TVL:"}</span>
-                        <span className="text-white ml-2">{stakingType === 'Token Staking' ? selectTokenInfo?.symbol  : selectedPool?.tvl}</span>
-                      </div>
-                      { stakingType !== 'Token Staking' && (<div>
-                        <span className="text-gray-400">Fee:</span>
-                        <span className="text-white ml-2">
-                        {poolFees
-                            .map(fee => Number(fee))                 
-                            .sort((a, b) => a - b)                  
-                            .map(fee => `${(fee / 10000).toFixed(2)}%`) 
-                            .join(', ')}
+                        <span className="text-gray-400 text-sm tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                          Fee:
                         </span>
-                      </div>)}
-                    </div>
-                  </div>
-                  )}
-
-
-                  <div className="p-4  border border-gray-600 rounded-lg">
-                    <h3 className="font-medium text-white mb-3">Reward Configuration</h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-400">Reward Token:</span>
-                        <span className="text-white ml-2">{rewardToken}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Total Amount:</span>
-                        <span className="text-white ml-2">{rewardAmount}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Duration:</span>
-                        <span className="text-white ml-2">{duration} days</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Start Date:</span>
-                        <span className="text-white ml-2">{startDate}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className={`p-4 rounded-lg ${currentTheme.bg} border ${currentTheme.accent}`}>
-                    <h3 className={`font-medium ${currentTheme.text} mb-3`}>Estimated Metrics</h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-400">Daily Reward Rate:</span>
-                        <span className="text-white ml-2">
-                          {(parseFloat(rewardAmount) / parseInt(duration)).toFixed(2)} {rewardTokenSymbol || 'tokens'}/day
+                        <span className={`${currentTheme.text} ml-2 tracking-wide`} style={{ letterSpacing: '0.02em', fontSize: '0.9rem' }}>
+                          {poolFees
+                            .map((fee) => Number(fee))
+                            .sort((a, b) => a - b)
+                            .map((fee) => `${(fee / 10000).toFixed(2)}%`)
+                            .join(", ")}
                         </span>
                       </div>
-                      <div>
-                        <span className="text-gray-400">Estimated APR Boost:</span>
-                        <span className={`ml-2 ${currentTheme.text}`}>+{((parseFloat(rewardAmount) / parseInt(duration)) * 365 / 100000 * 100).toFixed(1)}%</span>
-                      </div>
+                    )}
+
+                    <div className="space-y-4">
+                      <span className="text-gray-400 text-sm tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                        Lock Durations :{" "}
+                      </span>
+                      {selectLockOption !== "1" && selectLockOption !== "2" && (
+                        <span className="text-white tracking-wide" style={{ letterSpacing: '0.02em', fontSize: '0.9rem' }}>
+                          No Lock
+                        </span>
+                      )}
+
+                      {selectLockOption === "1" && (
+                        <span className="text-white tracking-wide" style={{ letterSpacing: '0.02em', fontSize: '0.9rem' }}>
+                          {singleUnlockTime} Blocks
+                        </span>
+                      )}
+
+                      {selectLockOption === "2" && (
+                        <div className="space-y-4 mt-2">
+                          {multiLocks.map((item, index) => (
+                            <div key={index} className="space-y-1 ml-2 my-2 rounded-lg ">
+                              <div className="text-gray-400 text-sm tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                                Unlock Time (Blocks) :{" "}
+                                <span className="text-white tracking-wide" style={{ letterSpacing: '0.02em', fontSize: '0.9rem' }}>
+                                  {item.time || "-"}
+                                </span>{" "}
+                                ({convertBlocksToTimeString(Number(multiLocks[index].time), avgBlockTime)})
+                              </div>
+                              <div className="text-gray-400 text-sm tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                                Power Multiplier (%) :{" "}
+                                <span className="text-white tracking-wide" style={{ letterSpacing: '0.02em', fontSize: '0.9rem' }}>
+                                  {item.multiplier || "-"}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+<div>
+  <span className="text-gray-400 text-sm tracking-normal" style={{ letterSpacing: '0.015em' }}>
+    Block reward range:
+  </span>
+  <span
+    className="ml-2 text-white tracking-wide"
+    style={{ letterSpacing: '0.02em', fontSize: '0.9rem' }}
+  >
+    {estimatedStartBlock}{" - "}{Number(estimatedStartBlock) + Number(effectiveDuration)}
+  </span>
+</div>
+
+           
+
+                    <div>
+                      <span className="text-gray-400 text-sm tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                        Maximum Lock per User :{" "}
+                      </span>
+                      <span className={`ml-2 text-white tracking-wide`} style={{ letterSpacing: '0.02em', fontSize: '0.9rem' }}>
+                        {Number(maxUserToken) === 0 ? "Unlimited" : Number(maxUserToken)} {rewardTokenInfo?.name}{" "}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-400 text-sm tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                        Maximum Pool Lock Token :{" "}
+                      </span>
+                      <span className={`ml-2 text-white tracking-wide`} style={{ letterSpacing: '0.02em', fontSize: '0.9rem' }}>
+                        {Number(maxPoolToken) === 0 ? "Unlimited" : Number(maxPoolToken)} {rewardTokenInfo?.name}{" "}
+                      </span>
                     </div>
                   </div>
                 </div>
+
+                <div className="p-4 border border-gray-600 rounded-lg">
+                  <h3 className="font-semibold text-white mb-3 text-xl tracking-wide" style={{ letterSpacing: '0.03em' }}>
+                    Reward Information
+                  </h3>
+                  <div>
+                    <span className="text-gray-400 text-sm tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                      Reward Token :{" "}
+                    </span>
+                    <span className="text-white ml-2 tracking-wide" style={{ letterSpacing: '0.02em', fontSize: '0.9rem' }}>
+                      {rewardTokenInfo?.name} ({rewardTokenInfo?.symbol})
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-sm text-gray-400 tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                    <span>Contract Address :</span>
+                    <button
+                      onClick={() =>
+                        copyToClipboard(
+                          rewardToken,
+                          "reward"
+                        )
+                      }
+                      className="flex items-center gap-1 text-white transition-colors"
+                    >
+                      <span>
+                        {rewardToken}
+                      </span>
+                      {copiedAddress === "reward" ? <CopyCheck size={16} /> : <Copy size={16} />}
+                    </button>
+                  </div>
+
+                  <div>
+                    <span className="text-gray-400 text-sm tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                      Total Reward {" :"}
+                    </span>
+                    <span className={`ml-2 text-white tracking-wide`} style={{ letterSpacing: '0.02em', fontSize: '0.9rem' }}>
+                      {Number(rewardAmount).toLocaleString()} {rewardTokenInfo?.symbol}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-gray-400 text-sm tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                      Reward Durations {" : "}
+                      <span className='text-white'> {Number(effectiveDuration).toLocaleString()} Blocks ({convertBlocksToTimeString(Number(effectiveDuration), avgBlockTime)})
+                      </span>
+                    </span>
+                    <span className={`ml-2 text-white tracking-wide`} style={{ letterSpacing: '0.02em', fontSize: '0.9rem' }}>
+                      {" "}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-gray-400 text-sm tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                      Emission rate :{" "}
+                    </span>
+                    <span className="text-white tracking-wide" style={{ letterSpacing: '0.02em', fontSize: '0.9rem' }}>
+                      {getRewardRatePerDay(rewardAmount, effectiveDuration, avgBlockTime)} {rewardTokenSymbol || "tokens"}/day
+                    </span>
+                  </div>
+                </div>
+
                 <div className="flex gap-3">
                   <button
                     onClick={() => setCurrentStep(3)}
-                    className="flex-1 py-3 border boder-gray-500 text-gray-300 rounded-lg font-medium  transition-colors"
+                    className="flex-1 py-3 border border-gray-500 text-gray-300 rounded-lg font-medium tracking-wide transition-colors"
                   >
                     Back
                   </button>
                   <button
-                    className={`flex-1 py-3 rounded-lg font-medium transition-all ${currentTheme.text} ${currentTheme.bg} border ${currentTheme.accent} hover:opacity-80`}
+                    className={`flex-1 py-3 rounded-lg font-medium tracking-wide transition-all ${currentTheme.text} ${currentTheme.bg} border ${currentTheme.accent} hover:opacity-80`}
+                    onClick={()=> createPool()}
                   >
                     Create Farm
                   </button>
                 </div>
               </div>
             )}
+
           </div>
         </div>
       </div>
