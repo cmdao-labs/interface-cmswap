@@ -318,10 +318,28 @@ export default function BridgeInterface() {
                                     </PopoverContent>
                                 </Popover>
                             </div>
-                            <div className="flex justify-between items-center mt-2">
-                                <span />
-                                <span className="text-gray-400 font-mono text-xs">{tokenA.name !== 'Choose Token' ? Number(sourceBalance).toFixed(4) + ' ' + tokenA.name : '0.0000'}</span>
-                            </div>
+                        <div className="flex justify-between items-center mt-2 text-xs font-mono">
+  <span />
+  
+  <span className="text-gray-400">
+    {tokenA.name !== 'Choose Token'
+      ? `${Number(sourceBalance).toFixed(4)} ${tokenA.name}`
+      : '0.0000'}
+<button
+  onClick={() => {
+    const truncated = Math.floor(Number(sourceBalance) * 10000) / 10000;
+    setDepositValue(String(truncated));
+  }}
+  className="text-green-400 ml-2 border px-2 py-[4px] font-semibold hover:text-blue-500 transition-colors duration-150 cursor-pointer"
+>
+  MAX
+</button>
+
+  </span>
+  
+
+</div>
+
                         </div>
 
                         <div className="p-3 rounded bg-[#0a0b1e]/50 border border-[#00ff9d]/10">
