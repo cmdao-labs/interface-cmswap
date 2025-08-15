@@ -1,6 +1,6 @@
 import { createPublicClient, http, erc20Abi } from 'viem'
 import { bitkub } from 'viem/chains'
-import { kap20abi,CMswapP2PMarketplaceABI,cmSwapRefProgramABI,testnetTokenFaucetTradeABI } from '@/app/lib/abi'
+import { kap20abi,CMswapP2PMarketplaceABI,cmSwapRefProgramABI,testnetTokenFaucetTradeABI, stakingV2FactoryABI } from '@/app/lib/abi'
 import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3staker, WrappedNative,CMswapUniSmartRouteABIV2,CMswapUniSmartRouteV3,UniswapPair,BitkubEvmKYCABI,bkcUnwappedKKUB } from '@/app/lib/abi'
 
 // swap
@@ -49,6 +49,9 @@ export const CMswapUniSmartRouteContractV2 =  { chainId: 25925, abi: CMswapUniSm
 export const UniswapPairv2PoolABI = { chainId: 25925, abi: UniswapPair} as const
 export const BitkubEvmKYCContract = {chainId: 25925, abi: BitkubEvmKYCABI, address: BitkubEvmKYC} as const
 //export const CMswapUniSmartRouteBestRateContract = {chainId: 25925, abi: CMswapUniSmartRouteV3, address: CMswapUniSmartRouteBestRate} as const
+
+export const StakingFactoryV2 = '0xB2335f770497Caaa9DE22f1296f172939AB786Ca' as '0xstring'
+export const StakingFactoryV2Contract = {chainId: 25925, abi: stakingV2FactoryABI, address: StakingFactoryV2} as const 
 
 
 //** TestNet Contract */

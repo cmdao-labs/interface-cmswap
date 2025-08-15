@@ -1,55 +1,15 @@
 'use client';
 import Image from "next/image";
 import { readContracts } from '@wagmi/core';
-import {
-  formatEther,
-  parseEther,
-  erc20Abi,
-  createPublicClient,
-  http,
-} from "viem";
+import { formatEther, erc20Abi } from 'viem';
 import { config } from '@/app/config';
 import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
-import { ERC20FactoryV2ABI } from '@/app/pump/abi/ERC20FactoryV2';
 import { UniswapV2FactoryABI } from '@/app/pump/abi/UniswapV2Factory';
 import { UniswapV2PairABI } from '@/app/pump/abi/UniswapV2Pair';
 // import { BKCOracleABI } from '@/app/pump/abi/BKCoracle';
 import { Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 const { ethereum } = window as any
-import { jbc,bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
-
-const chainConfigs = {
-  96: {
-    chain: bitkub,
-    chainId: 96,
-    explorer: 'https://www.kubscan.com/',
-    rpc: '', 
-    blocktime: 5
-  },
-  10143: {
-    chain: monadTestnet,
-    chainId: 10143,
-    explorer: 'https://monad-testnet.socialscan.io/',
-    rpc: process.env.NEXT_PUBLIC_MONAD_RPC as string,
-    blocktime: 1
-  },
-  25925: {
-    chain: bitkubTestnet,
-    chainId: 25925,
-    explorer: 'https://testnet.kubscan.com/',
-    rpc: 'https://rpc-testnet.bitkubchain.io',
-    blocktime: 5
-  },
-    8899: {
-    chain: jbc,
-    chainId: 8899,
-    explorer: 'https://exp.jibchain.net/',
-    rpc: 'https://rpc-l1.jbc.xpool.pw',
-    blocktime: 12
-  }
-  // Add more chains here
-};
 
 export default function Dashboard({
     addr, mode, chain, token,
@@ -71,34 +31,19 @@ export default function Dashboard({
   //     functionName: 'latestAnswer',
   //   });
   // }
-
-  const chainNameToIdMap: Record<string, number> = {
-    kub: 96,
-    monad: 10143,
-    kubtestnet: 25925,
-    jbc: 8899,
-  };
-  const selectedChainId = chainNameToIdMap[chain] ?? 96;
-  const chainConfig = chainConfigs[selectedChainId as keyof typeof chainConfigs];
-  if (!chainConfig) throw new Error(`Unsupported chain: ${chain}`);
-  if (!chainConfig.rpc) throw new Error(`Missing RPC for chain: ${chain}`);
-  const publicClient = createPublicClient({
-    chain: chainConfig.chain,
-    transport: http(chainConfig.rpc),
-  });
-
-  let _chainId = chainConfig.chainId;
-  let _chain = chainConfig.chain;
-  let _explorer = chainConfig.explorer;
-  let _rpc = chainConfig.rpc;
-
-
+  let _chainId = 0;
+  if (chain === 'kub' || chain === '') {
+    _chainId = 96;
+  } else if (chain === 'monad') {
+    _chainId = 10143;
+  } else if (chain === 'kubtestnet'){
+    _chainId = 25925;
+  } 
   // add chain here
   let currencyAddr: string = '';
   let bkgafactoryAddr: string = '';
   let _blockcreated: number = 1;
   let v2facAddr: string = '';
-
   if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '') && (token === 'cmm' || token === '')) {
     currencyAddr = '0x9b005000a10ac871947d99001345b01c1cef2790';
     bkgafactoryAddr = '0x10d7c3bDc6652bc3Dd66A33b9DD8701944248c62';
@@ -114,18 +59,18 @@ export default function Dashboard({
     bkgafactoryAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
     _blockcreated = 16912084;
     v2facAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
-  } else if (chain === 'kubtestnet') {
-      currencyAddr = '0x700D3ba307E1256e509eD3E45D6f9dff441d6907';
-      bkgafactoryAddr = '0x46a4073C830031eA19D7b9825080c05F8454E530';
-      _blockcreated = 23935659;
-      v2facAddr = '0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b';
-  } 
+  } else if (chain === 'kubtestnet' && mode === 'pro') {
+        currencyAddr = '0x700D3ba307E1256e509eD3E45D6f9dff441d6907';
+        bkgafactoryAddr = '0x46a4073c830031ea19d7b9825080c05f8454e530';
+       _blockcreated = 23935659;
+        v2facAddr = '0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b';
+    } 
   // add chain and mode here
   const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
   const dataofuniv2factory = {addr: v2facAddr};
   const bkgafactoryContract = {
     address: bkgafactoryAddr as '0xstring',
-    abi: chain === 'kubtestnet' ? ERC20FactoryV2ABI : ERC20FactoryABI ,
+    abi: ERC20FactoryABI,
     chainId: _chainId,
   } as const
   const univ2factoryContract = {
@@ -139,7 +84,6 @@ export default function Dashboard({
 
   useEffect(() => {
     const fetch0 = async () => {
-      
       const indexCount = await readContracts(config, {
         contracts: [
           {
@@ -149,34 +93,16 @@ export default function Dashboard({
         ],
       });
       const init: any = {contracts: []};
-
-      if(chain === 'kubtestnet'){
-        const logCreateData = await publicClient.getContractEvents({
-        ...bkgafactoryContract,
-        eventName: 'Creation',
-        fromBlock: BigInt(_blockcreated),
-        toBlock: 'latest',
-      });
-
-      const addressList = logCreateData.map((res: any) => ({
-        address: res.tokenAddr as '0xstring',
-        tx: res.transactionHash,
-      }));
-
-      }else{
-        for (let i = 0; i <= Number(indexCount[0].result) - 1; i++) {
-          init.contracts.push(
-              {
-                ...bkgafactoryContract,
-                functionName: 'index',
-                args: [BigInt(i + 1)],
-              }
-          );
-        }
+      for (let i = 0; i <= Number(indexCount[0].result) - 1; i++) {
+        init.contracts.push(
+            {
+              ...bkgafactoryContract,
+              functionName: 'index',
+              args: [BigInt(i + 1)],
+            }
+        );
       }
-
       const result = await readContracts(config, init);
-
       const result4 = result.map(async (res: any) => {
         return await readContracts(config, {
           contracts: [
@@ -206,7 +132,6 @@ export default function Dashboard({
           ],
         });
       })
-
       const result44: any = await Promise.all(result4);
       // const thbData = await readContracts(config, {
       //   contracts: [
@@ -257,93 +182,7 @@ export default function Dashboard({
       setResultfinal(_resultfinal)
       setAllvalue(_allvalue)
     }
-
-    const fetch1 = async () => {
-
-      if(chain === 'kubtestnet'){
-        const logCreateData = await publicClient.getContractEvents({
-        ...bkgafactoryContract,
-        eventName: 'Creation',
-        fromBlock: BigInt(_blockcreated),
-        toBlock: 'latest',
-      });
-
-      const addressList = logCreateData.map((res: any) => ({
-        address: res.tokenAddr as '0xstring',
-        tx: res.transactionHash,
-      }));
-
-      console.log("Creation History",addressList)
-
-
-      const result4 = addressList.map(async (res: any) => {
-        return await readContracts(config, {
-          contracts: [
-            {
-              address: res.result!,
-              abi: erc20Abi,
-              functionName: 'symbol',
-              chainId: _chainId,
-            },
-            {
-              ...bkgafactoryContract,
-              functionName: 'logo',
-              args: [res.result!],
-            },
-            {
-              ...univ2factoryContract,
-              functionName: 'getPool',
-              args: [res.result!, dataofcurr.addr as '0xstring', 10000],
-            },
-            {
-              address: res.result!,
-              abi: erc20Abi,
-              functionName: 'balanceOf',
-              args: [addr as '0xstring'],
-              chainId: _chainId,
-            },
-          ],
-        });
-      })
-
-      const result44: any = await Promise.all(result4);
-
-      const result5 = result44.map(async (res: any) => {
-        return await readContracts(config, {
-          contracts: [
-            {
-                address: res[2].result!,
-                abi: UniswapV2PairABI,
-                functionName: 'slot0',
-                chainId: _chainId,
-            },
-            {
-                address: res[2].result!,
-                abi: UniswapV2PairABI,
-                functionName: 'token0',
-                chainId: _chainId,
-            },
-          ],
-        });
-      });
-      const result55 = await Promise.all(result5);
-      const _resultfinal = result44.map((item: any, index: any) => {
-        const price = result55[index][1].result!.toUpperCase() !== dataofcurr.addr.toUpperCase() ? 
-          ((Number(result55[index][0].result![0]) / (2 ** 96)) ** 2) : 
-          (1 / ((Number(result55[index][0].result![0]) / (2 ** 96)) ** 2));
-        return [{result: item[0].result}, {result: item[1].result}, {result: Number(formatEther(item[3].result as bigint))}, {result: price}, {result: (item[0].result === '$THB' || item[0].result === 'ETH') ? dataofcurr.addr : addressList[index].address}]
-      })
-      const _allvalue = _resultfinal.map((res: any) => {return res[2].result * res[3].result}).reduce((a: any, b: any) => a + b, 0);
-      setResultfinal(_resultfinal)
-      setAllvalue(_allvalue)
-    }}
-      console.log(chain)
-    
-    if(chain === 'kubtestnet'){
-      fetch1()
-    }else{
-      fetch0()
-    }
+    fetch0()
   }, [])
 
   return (

@@ -24,7 +24,7 @@ export default function Page() {
 
   <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
 
-  <div className="w-full max-w-full mt-[60px] md:mt-[120px] flex flex-col items-center justify-start p-4">
+  <div className="w-full max-w-full  flex flex-col items-center justify-start p-4">
     {/* {chainId === 96 ? (<Ref96 />) : (<Ref25925/>)} */}
     {chainId === 25925 ? <Staking25925 setIsLoading={setIsLoading} setErrMsg={setErrMsg}/> : <StakingError chainID={Number(chainId)} />}
     {/* {chainId === 96 ? <Ref96 /> : <RefError chainID={Number(chainId)} />} */}
