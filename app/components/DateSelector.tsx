@@ -242,8 +242,8 @@ const getValidMinutes = (day: number, month: number, year: number, hour: number)
       {isOpen && (
         <div
           ref={popupRef}
-          className="absolute z-50 w-96 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg"
-          style={{ maxHeight: '80vh', overflowY: 'auto' }}
+          className="absolute z-[9999] w-96 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg"
+          style={{ maxHeight: '80vh' }}
         >
           <div className="p-4">
             <div className="flex items-center mb-4">

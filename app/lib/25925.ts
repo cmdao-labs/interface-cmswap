@@ -1,7 +1,7 @@
 import { createPublicClient, http, erc20Abi } from 'viem'
 import { bitkub } from 'viem/chains'
-import { kap20abi,CMswapP2PMarketplaceABI,cmSwapRefProgramABI,testnetTokenFaucetTradeABI, stakingV2FactoryABI } from '@/app/lib/abi'
-import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3staker, WrappedNative,CMswapUniSmartRouteABIV2,CMswapUniSmartRouteV3,UniswapPair,BitkubEvmKYCABI,bkcUnwappedKKUB } from '@/app/lib/abi'
+import { kap20abi,CMswapP2PMarketplaceABI,cmSwapRefProgramABI,testnetTokenFaucetTradeABI, stakingV2FactoryABI,stakingV3FactoryABI, stakingV2ABI,stakingV3ABI } from '@/app/lib/abi'
+import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3staker, WrappedNative,CMswapUniSmartRouteABIV2,UniswapPair,BitkubEvmKYCABI } from '@/app/lib/abi'
 
 // swap
 export const tokens: {name: string, value: '0xstring', logo: string}[] = [
@@ -52,7 +52,10 @@ export const BitkubEvmKYCContract = {chainId: 25925, abi: BitkubEvmKYCABI, addre
 
 export const StakingFactoryV2 = '0xB2335f770497Caaa9DE22f1296f172939AB786Ca' as '0xstring'
 export const StakingFactoryV2Contract = {chainId: 25925, abi: stakingV2FactoryABI, address: StakingFactoryV2} as const 
-
+export const StakingFactoryV3 = '0xa894aAa564F66e59783384995C9ddaaEC9E97291' as '0xstring'
+export const StakingFactoryV3Contract = {chainId: 25925, abi: stakingV3FactoryABI, address: StakingFactoryV3} as const 
+export const StakingV2ABI = {chainId: 25925, abi: stakingV2ABI}
+export const StakingV3ABI = {chainId: 25925, abi: stakingV3ABI}
 
 //** TestNet Contract */
 
