@@ -1,4 +1,4 @@
-import { createPublicClient, http, erc20Abi } from 'viem'
+import { createPublicClient, http, erc20Abi, erc721Abi } from 'viem'
 import { bitkub } from 'viem/chains'
 import { kap20abi,CMswapP2PMarketplaceABI,cmSwapRefProgramABI,testnetTokenFaucetTradeABI, stakingV2FactoryABI,stakingV3FactoryABI, stakingV2ABI,stakingV3ABI } from '@/app/lib/abi'
 import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3staker, WrappedNative,CMswapUniSmartRouteABIV2,UniswapPair,BitkubEvmKYCABI } from '@/app/lib/abi'
@@ -41,7 +41,7 @@ export const positionManagerContract = { chainId: 25925, address: POSITION_MANAG
 export const qouterV2Contract = { chainId: 25925, abi: qouterV2, address: QOUTER_V2 } as const
 export const router02Contract = { chainId: 25925, abi: router02, address: ROUTER02 } as const
 export const v3PoolABI = { chainId: 25925, abi: v3Pool } as const
-export const V3_STAKER = '0xC216ad61623617Aa01b757A06836AA8D6fb547fF' as '0xstring'
+export const V3_STAKER = '0x778709C09Df2FCa521c7465C0B8Eb0bFC13ed2F1' as '0xstring'
 export const v3StakerContract = { chainId: 25925, address: V3_STAKER, abi: v3staker } as const
 export const wrappedNative = { chainId: 25925, abi: WrappedNative, address: tokens[1].value } as const
 export const unwarppedNative = {chainId:25925, abi: WrappedNative, address: tokens[1].value } as const
@@ -72,3 +72,5 @@ export const CMswapP2PMarketplaceContract = {chainId: 25925, abi: CMswapP2PMarke
 export const cmSwapRefProgramContract = {chainId: 25925, abi: cmSwapRefProgramABI, address: cmSwapRefProgram} as const
 
 export const publicClient = createPublicClient({ chain: bitkub, transport: http() })
+
+export const erc721ABI = { chainId: 25925, abi: erc721Abi } as const
