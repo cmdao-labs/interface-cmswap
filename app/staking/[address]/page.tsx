@@ -1,17 +1,40 @@
 'use client'
 import React from 'react'
-import Image from "next/image"
 import { usePathname, useRouter } from 'next/navigation'
-import { formatEther } from 'viem'
 import { useAccount } from 'wagmi'
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { cn } from "@/lib/utils"
-import { v2routerAddr, v2routerCreatedAt, v2routerContract, FieldsHook001Contract, nftIndex1Addr, nftIndex1CreatedAt, nftIndex2Addr, nftIndex2CreatedAt, nftIndex3Addr, nftIndex3CreatedAt, nftIndex4Addr, nftIndex4CreatedAt, publicClient, erc721ABI } from '@/app/lib/8899'
 import { config } from '@/app/config'
 import ErrorModal from '@/app/components/error-modal'
-import Fishing from '@/app/components/Fishing'
+import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
+import { formatEther, parseEther } from "viem"
+import { v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, publicClient, erc721ABI, POSITION_MANAGER, positionManagerCreatedAt, V3_STAKER, v3StakerContract } from '@/app/lib/25925'
+import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
+
+type MyPosition = {
+    Id: number;
+    Name: string;
+    Image: string;
+    FeeTier: number;
+    Pair: string;
+    Token0Addr: string;
+    Token1Addr: string;
+    Token0: string;
+    Token1: string;
+    Amount0: number;
+    Amount1: number;
+    MinPrice: number;
+    MaxPrice: number;
+    CurrPrice: number;
+    LowerTick: number;
+    UpperTick: number;
+    Liquidity: string;
+    Fee0: number;
+    Fee1: number;
+    IsStaking: boolean;
+    Reward: number;
+}
 
 export default function Page() {
     const [isLoading, setIsLoading] = React.useState(false)
@@ -21,25 +44,113 @@ export default function Page() {
     const pathname = usePathname()
     let { address, chain } = useAccount()
     const [addr, setAddr] = React.useState(address)
-    const [hookSelect, setHookSelect] = React.useState(0)
-    const [nftIndexSelect, setNftIndexSelect] = React.useState(1)
-    const [globNftAddr, setGlobNftAddr] = React.useState<'0xstring'>()
-    const [nftIndexHashRate, setNftIndexHashRate] = React.useState(BigInt(0))
-    const [nft, setNft] = React.useState<{ 
-        Id: bigint | undefined;
-        Name: any; 
-        Description: any; 
-        Image: any; 
-        Attribute: any; 
-        isStaked: boolean; 
-        isPeripheryAllow: string; 
-        PointPerSec: number; 
-        Point: string; 
-    }[]>()
     const [totalPoint, setTotalPoint] = React.useState(0)
+    const [position, setPosition] = React.useState<MyPosition[]>([])
+    const [allPending, setAllPending] = React.useState('')
+
+    const calcAmount0 = (
+        liquidity: number,
+        currentPrice: number,
+        priceLower: number,
+        priceUpper: number,
+        token0Decimals: number,
+        token1Decimals: number
+    ) => {
+        const decimalAdjustment = 10 ** (token0Decimals - token1Decimals)
+        const mathCurrentPrice = Math.sqrt(currentPrice / decimalAdjustment)
+        const mathPriceUpper = Math.sqrt(priceUpper / decimalAdjustment)
+        const mathPriceLower = Math.sqrt(priceLower / decimalAdjustment)
+        
+        let math
+        if (mathCurrentPrice <= mathPriceLower) {
+            math = liquidity * ((mathPriceUpper - mathPriceLower) / (mathPriceLower * mathPriceUpper))
+        } else {
+            math = liquidity * ((mathPriceUpper - mathCurrentPrice) / (mathCurrentPrice * mathPriceUpper))
+        }
+        const adjustedMath = math > 0 ? math : 0
+        return adjustedMath
+    }
+      
+    const calcAmount1 = (
+        liquidity: number,
+        currentPrice: number,
+        priceLower: number,
+        priceUpper: number,
+        token0Decimals: number,
+        token1Decimals: number
+    ) => {
+        const decimalAdjustment = 10 ** (token0Decimals - token1Decimals)
+        const mathCurrentPrice = Math.sqrt(currentPrice / decimalAdjustment)
+        const mathPriceUpper = Math.sqrt(priceUpper / decimalAdjustment)
+        const mathPriceLower = Math.sqrt(priceLower / decimalAdjustment)
+        
+        let math
+        if (mathCurrentPrice >= mathPriceUpper) {
+            math = liquidity * (mathPriceUpper - mathPriceLower)
+        } else {
+            math = liquidity * (mathCurrentPrice - mathPriceLower)
+        }
+        const adjustedMath = math > 0 ? math : 0
+        return adjustedMath
+    }
+
+    const stakeNft = async (_nftId: bigint) => {
+        setIsLoading(true)
+        try {
+            const { request: request1 } = await simulateContract(config, { ...erc721ABI, address: POSITION_MANAGER, functionName: 'safeTransferFrom', args: [addr as '0xstring', V3_STAKER, _nftId] })
+            const h = await writeContract(config, request1)
+            await waitForTransactionReceipt(config, { hash: h })
+            const { request: request2 } = await simulateContract(config, { 
+                ...v3StakerContract, 
+                functionName: 'stakeToken',
+                args: [{
+                    rewardToken: '0xE7f64C5fEFC61F85A8b851d8B16C4E21F91e60c0' as '0xstring',
+                    pool: '0x77069e705dce52ed903fd577f46dcdb54d4db0ac' as '0xstring',
+                    startTime: BigInt(1755589200),
+                    endTime: BigInt(3270351988),
+                    refundee: '0x1fe5621152a33a877f2b40a4bb7bc824eebea1ea' as '0xstring'
+                }, _nftId] 
+            })
+            const h2 = await writeContract(config, request2)
+            await waitForTransactionReceipt(config, { hash: h2 })
+            setTxupdate(h2)
+        } catch (e) {
+            setErrMsg(e as WriteContractErrorType)
+        }
+        setIsLoading(false)
+    }
+
+    const unstakeNft = async (_nftId: bigint) => {
+        setIsLoading(true)
+        try {
+            const { request: request1 } = await simulateContract(config, { 
+                ...v3StakerContract, 
+                functionName: 'unstakeToken',
+                args: [{
+                    rewardToken: '0xE7f64C5fEFC61F85A8b851d8B16C4E21F91e60c0' as '0xstring',
+                    pool: '0x77069e705dce52ed903fd577f46dcdb54d4db0ac' as '0xstring',
+                    startTime: BigInt(1755589200),
+                    endTime: BigInt(3270351988),
+                    refundee: '0x1fe5621152a33a877f2b40a4bb7bc824eebea1ea' as '0xstring'
+                }, _nftId]
+            })
+            const h1 = await writeContract(config, request1)
+            await waitForTransactionReceipt(config, { hash: h1 })
+            const { request: request2 } = await simulateContract(config, { 
+                ...v3StakerContract, 
+                functionName: 'withdrawToken',
+                args: [_nftId, addr as '0xstring', '0x'] 
+            })
+            const h2 = await writeContract(config, request2)
+            await waitForTransactionReceipt(config, { hash: h2 })
+            setTxupdate(h2)
+        } catch (e) {
+            setErrMsg(e as WriteContractErrorType)
+        }
+        setIsLoading(false)
+    }
 
     React.useEffect(() => {
-        setNft(undefined)
         if (pathname === undefined) {
             router.push('/staking/' + address)
         } else if (pathname.length === 42) {
@@ -50,132 +161,310 @@ export default function Page() {
             router.push('/staking/' + address)
         }
 
-        let nftAddr = '0x0' as '0xstring'
-        let nftCreatedAt: bigint
-        if (nftIndexSelect === 1) {
-            nftAddr = nftIndex1Addr as '0xstring'
-            nftCreatedAt = nftIndex1CreatedAt
-        }
-        setGlobNftAddr(nftAddr)
-        
-        const thefetch = async () => {
-            const checkNftIndexHashRate = await readContract(config, { ...FieldsHook001Contract, functionName: 'hashRateForNftIndex', args: [BigInt(nftIndexSelect)] })
-            setNftIndexHashRate(BigInt(formatEther(checkNftIndexHashRate, 'gwei')))
-
+        const fetch2 = async () => {
             const _eventMyNftStaking = (await publicClient.getContractEvents({
-                ...v2routerContract,
-                eventName: 'NftStaked',
+                ...erc721ABI,
+                address: POSITION_MANAGER,
+                eventName: 'Transfer',
                 args: { 
-                    staker: addr as '0xstring',
-                    nftIndex: BigInt(nftIndexSelect),
+                    to: V3_STAKER,
                 },
-                fromBlock: v2routerCreatedAt,
+                fromBlock: positionManagerCreatedAt,
                 toBlock: 'latest'
             })).map(obj => {
-                return obj.args.nftId
-            })
-            const eventMyNftStaking = [...new Set(_eventMyNftStaking)]
-            const checkIsNftStaked = await readContracts(config, {
-                contracts: eventMyNftStaking.map(obj => ({ ...v2routerContract, functionName: 'stakedData', args: [BigInt(nftIndexSelect), obj] }))
-            })
-            const checkedMyNftStaking = eventMyNftStaking.filter((obj, index) => {
-                const res = checkIsNftStaked[index].result as unknown as [string, bigint][]
-                return Number(res[1]) !== 0
-            })
-            let myNftStaked = []
-            const checkPeripheryAllowNftStaked = await readContracts(config, {
-                contracts: checkedMyNftStaking.map(obj => ({ ...v2routerContract, functionName: 'stakedUseByPeriphery', args: [BigInt(1), BigInt(nftIndexSelect), obj] }))
-            })
-            const tokenUriNftStaked = await readContracts(config, {
-                contracts: checkedMyNftStaking.map(obj => ({ ...erc721ABI, address: nftAddr, functionName: 'tokenURI', args: [obj] }))
-            })
-            const pointNftStaked = await readContracts(config, {
-                contracts: checkedMyNftStaking.map(obj => ({ ...FieldsHook001Contract, functionName: 'calculatePoint', args: [BigInt(nftIndexSelect), obj] }))
-            })
-            let _totalPoint = 0
-            myNftStaked = await Promise.all(checkedMyNftStaking.map(async (obj, index) => {
-                let metadata = null
-                if (tokenUriNftStaked[index].status === 'success') {
-                    const tokenURIStr = tokenUriNftStaked[index].result as string
-                    const metadataFetch = await fetch(tokenURIStr.replace("ipfs://", "https://gateway.commudao.xyz/ipfs/"))
-                    metadata = await metadataFetch.json()
-                }
-                const _point = pointNftStaked[index].status === 'success' ? formatEther(pointNftStaked[index].result as bigint) : '0'
-                _totalPoint += Number(_point)
-                return {
-                    Id: obj,
-                    Name: metadata.name,
-                    Description: metadata.description,
-                    Image: metadata.image.replace("ipfs://", "https://gateway.commudao.xyz/ipfs/"),
-                    Attribute: metadata.attributes,
-                    isStaked: true,
-                    isPeripheryAllow: String(checkPeripheryAllowNftStaked[index].result),
-                    PointPerSec: 0, // better dynamic fetch
-                    Point: _point
-                }
-            }))
-
-            const _eventMyNftHolding = (await publicClient.getContractEvents({
-                ...erc721ABI,
-                address: nftAddr,
-                eventName: 'Transfer',
-                args: { to: addr as '0xstring' },
-                fromBlock: nftCreatedAt,
-                toBlock: 'latest'
-            })).map((obj) => {
                 return obj.args.tokenId
             })
-            const eventMyNftHolding = [...new Set(_eventMyNftHolding)]
-            const checkOwnerNftHolding = (await readContracts(config, {
-                contracts: eventMyNftHolding.map(obj => ({ ...erc721ABI, address: nftAddr, functionName: 'ownerOf', args: [obj] }))
-            }))
-            const filterNftHolding = eventMyNftHolding.filter((obj, index) => {
-                const ownerOf = checkOwnerNftHolding[index].result as string
-                return ownerOf.toUpperCase() === addr?.toUpperCase()
+            const eventMyNftStaking = [...new Set(_eventMyNftStaking)]
+            const checkMyNftOwner = await readContracts(config, {
+                contracts: eventMyNftStaking.map(obj => ({ ...v3StakerContract, functionName: 'deposits', args: [obj] }))
             })
-            let myNftHolding = []
-            const checkPeripheryAllowNftHolding = await readContracts(config, {
-                contracts: filterNftHolding.map(obj => ({ ...v2routerContract, functionName: 'stakedUseByPeriphery', args: [BigInt(1), BigInt(nftIndexSelect), obj] }))
+            const checkedMyNftStaking = eventMyNftStaking.filter((obj, index) => {
+                const res = checkMyNftOwner[index].result as unknown as [string, bigint, bigint, bigint][]
+                return res[0].toString().toUpperCase() === address?.toUpperCase()
             })
-            const tokenUriNftHolding = await readContracts(config, {
-                contracts: filterNftHolding.map(obj => ({ ...erc721ABI, address: nftAddr, functionName: 'tokenURI', args: [obj] }))
+            const tokenUriMyStaking = await readContracts(config, {
+                contracts: checkedMyNftStaking.map((obj) => (
+                    { ...positionManagerContract, functionName: 'tokenURI', args: [obj] }
+                ))
             })
-            const pointNftHolding = await readContracts(config, {
-                contracts: filterNftHolding.map(obj => ({ ...FieldsHook001Contract, functionName: 'calculatePoint', args: [BigInt(nftIndexSelect), obj] }))
+            const posMyStaking = await readContracts(config, {
+                contracts: checkedMyNftStaking.map((obj) => (
+                    { ...positionManagerContract, functionName: 'positions', args: [obj] }
+                ))
             })
-            myNftHolding = await Promise.all(filterNftHolding.map(async (obj, index) => {
-                let metadata = null
-                if (tokenUriNftHolding[index].status === 'success') {
-                    const tokenURIStr = tokenUriNftHolding[index].result as string
-                    const metadataFetch = await fetch(tokenURIStr.replace("ipfs://", "https://gateway.commudao.xyz/ipfs/"))
-                    metadata = await metadataFetch.json()
+            const myReward = await readContracts(config, { 
+                contracts: checkedMyNftStaking.map((obj) => ({ 
+                    ...v3StakerContract, 
+                    functionName: 'getRewardInfo', 
+                    args: [{
+                        rewardToken: '0xE7f64C5fEFC61F85A8b851d8B16C4E21F91e60c0' as '0xstring',
+                        pool: '0x77069e705dce52ed903fd577f46dcdb54d4db0ac' as '0xstring',
+                        startTime: BigInt(1755589200),
+                        endTime: BigInt(3270351988),
+                        refundee: '0x1fe5621152a33a877f2b40a4bb7bc824eebea1ea' as '0xstring'
+                    }, obj] 
+                }))
+            })
+
+            let _allPending = 0
+            for (let i = 0; i <= myReward.length - 1; i++) {
+                const result: any = myReward[i].result
+                _allPending += Number(formatEther(result[0]))
+            }
+            setAllPending(String(_allPending))
+
+            const myStaking : MyPosition[] = (await Promise.all(checkedMyNftStaking.map(async (obj, index) => {
+                const metadataFetch = await fetch(tokenUriMyStaking[index].result as string)
+                const metadata = await metadataFetch.json()
+                const pos = posMyStaking[index].result !== undefined ? posMyStaking[index].result as unknown as (bigint | string)[] : []
+                const reward = myReward[index].result !== undefined ? myReward[index].result as unknown as (bigint | bigint)[] : []
+
+                const pairAddr = await readContract(config, { ...v3FactoryContract, functionName: 'getPool', args: [pos[2] as '0xstring', pos[3] as '0xstring', Number(pos[4])] })
+                const slot0 = await readContract(config, { ...v3PoolABI, address: pairAddr, functionName: 'slot0' })
+                const tokenName = await readContracts(config, {
+                    contracts: [
+                        { ...erc20ABI, address: pos[2] as '0xstring', functionName: 'symbol' },
+                        { ...erc20ABI, address: pos[3] as '0xstring', functionName: 'symbol' }
+                    ]
+                })
+                const qouteFee = await simulateContract(config, {
+                    ...positionManagerContract,
+                    functionName: 'collect',
+                    args: [{
+                        tokenId: obj as bigint,
+                        recipient: addr as '0xstring',
+                        amount0Max: BigInt("340282366920938463463374607431768211455"),
+                        amount1Max: BigInt("340282366920938463463374607431768211455"),
+                    }],
+                    account: V3_STAKER,
+                })
+                const liquidity = pos[7] as string
+                const _currPrice = (Number(slot0[0]) / (2 ** 96)) ** 2
+                const lowerTick = Number(pos[5])
+                const upperTick = Number(pos[6])
+                const _lowerPrice = Math.pow(1.0001, lowerTick)
+                const _upperPrice = Math.pow(1.0001, upperTick)
+                const _amount0 = calcAmount0(Number(liquidity), _currPrice, _lowerPrice, _upperPrice, 18, 18)
+                const _amount1 = calcAmount1(Number(liquidity), _currPrice, _lowerPrice, _upperPrice, 18, 18)
+                const _token0name = tokenName[0].status === 'success' ? String(tokenName[0].result) : ''
+                const _token1name = tokenName[1].status === 'success' ? String(tokenName[1].result) : ''
+                const _fee0 = qouteFee.result[0]
+                const _fee1 = qouteFee.result[1]
+                let token0addr
+                let token1addr
+                let token0name
+                let token1name
+                let amount0
+                let amount1
+                let lowerPrice
+                let upperPrice
+                let currPrice
+                let fee0
+                let fee1
+
+                if (_token1name === 'WJBC') {
+                    token0addr = pos[3]
+                    token1addr = pos[2]
+                    token0name = _token0name
+                    token1name = _token1name
+                    amount0 = _amount0 / 1e18
+                    amount1 = _amount1 / 1e18
+                    lowerPrice = 1 / _upperPrice
+                    upperPrice = 1 / _lowerPrice
+                    currPrice = 1 / _currPrice
+                    fee0 = _fee0
+                    fee1 = _fee1
+                } else if (_token1name === 'CMJ' && _token0name !== 'WJBC') {
+                    token0addr = pos[3]
+                    token1addr = pos[2]
+                    token0name = _token0name
+                    token1name = _token1name
+                    amount0 = _amount0 / 1e18
+                    amount1 = _amount1 / 1e18
+                    lowerPrice = 1 / _upperPrice
+                    upperPrice = 1 / _lowerPrice
+                    currPrice = 1 / _currPrice
+                    fee0 = _fee0
+                    fee1 = _fee1
+                } else {
+                    token0addr = pos[2]
+                    token1addr = pos[3]
+                    token0name = _token1name
+                    token1name = _token0name
+                    amount0 = _amount1 / 1e18
+                    amount1 = _amount0 / 1e18
+                    lowerPrice = _lowerPrice
+                    upperPrice = _upperPrice
+                    currPrice = _currPrice
+                    fee0 = _fee1
+                    fee1 = _fee0
                 }
-                let _point = pointNftHolding[index].status === 'success' ? formatEther(pointNftHolding[index].result as bigint) : '0'
-                _totalPoint += Number(_point)
+
                 return {
-                    Id: obj,
-                    Name: metadata.name,
-                    Description: metadata.description,
-                    Image: metadata.image.replace("ipfs://", "https://gateway.commudao.xyz/ipfs/"),
-                    Attribute: metadata.attributes,
-                    isStaked: false,
-                    isPeripheryAllow: String(checkPeripheryAllowNftHolding[index].result),
-                    PointPerSec: 0, // better dynamic fetch
-                    Point: _point
+                    Id: Number(obj),
+                    Name: String(metadata.name),
+                    Image: String(metadata.image),
+                    FeeTier: Number(pos[4]),
+                    Pair: pairAddr as string,
+                    Token0Addr: token0addr as string,
+                    Token1Addr: token1addr as string,
+                    Token0: token0name,
+                    Token1: token1name,
+                    Amount0: amount0,
+                    Amount1: amount1,
+                    MinPrice: lowerPrice,
+                    MaxPrice: upperPrice,
+                    CurrPrice: currPrice,
+                    LowerTick: lowerTick,
+                    UpperTick: upperTick,
+                    Liquidity: liquidity,
+                    Fee0: Number(fee0) / 1e18,
+                    Fee1: Number(fee1) / 1e18,
+                    IsStaking: true,
+                    Reward: Number(formatEther(reward[0]))
                 }
-            }))
+            }))).filter((obj) => {
+                return Number(obj.Liquidity) !== 0
+            }).reverse()
 
-            setTotalPoint(_totalPoint)
-            setNft(myNftStaked.concat(myNftHolding))            
-        }
-        if (addr !== undefined) {
-            thefetch()
-        } else {
-            setNft([])
-        }
-    }, [config, address, addr, pathname, chain, txupdate, nftIndexSelect])
+            const balanceOfMyPosition = await readContract(config, { ...positionManagerContract, functionName: 'balanceOf', args: [addr as '0xstring'] })
+            const init: any = {contracts: []}
+            for (let i = 0; i <= Number(balanceOfMyPosition) - 1; i++) {
+                init.contracts.push(
+                    { ...positionManagerContract, functionName: 'tokenOfOwnerByIndex', args: [addr, i] }
+                )
+            }
+            const tokenIdMyPosition = await readContracts(config, init)
+            const tokenUriMyPosition = await readContracts(config, {
+                contracts: tokenIdMyPosition.map((obj) => (
+                    { ...positionManagerContract, functionName: 'tokenURI', args: [obj.result] }
+                ))
+            })
+            const posMyPosition = await readContracts(config, {
+                contracts: tokenIdMyPosition.map((obj) => (
+                    { ...positionManagerContract, functionName: 'positions', args: [obj.result] }
+                ))
+            })
 
-    const [nftIdVester, setNftIdVester] = React.useState<bigint>()
+            const myPosition : MyPosition[] = (await Promise.all(tokenIdMyPosition.map(async (obj, index) => {
+                const metadataFetch = await fetch(tokenUriMyPosition[index].result as string)
+                const metadata = await metadataFetch.json()
+                const pos = posMyPosition[index].result !== undefined ? posMyPosition[index].result as unknown as (bigint | string)[] : []
+
+                const pairAddr = await readContract(config, { ...v3FactoryContract, functionName: 'getPool', args: [pos[2] as '0xstring', pos[3] as '0xstring', Number(pos[4])] })
+                const slot0 = await readContract(config, { ...v3PoolABI, address: pairAddr, functionName: 'slot0' })
+                const tokenName = await readContracts(config, {
+                    contracts: [
+                        { ...erc20ABI, address: pos[2] as '0xstring', functionName: 'symbol' },
+                        { ...erc20ABI, address: pos[3] as '0xstring', functionName: 'symbol' }
+                    ]
+                })
+                const qouteFee = await simulateContract(config, {
+                    ...positionManagerContract,
+                    functionName: 'collect',
+                    args: [{
+                        tokenId: obj.result as bigint,
+                        recipient: addr as '0xstring',
+                        amount0Max: BigInt("340282366920938463463374607431768211455"),
+                        amount1Max: BigInt("340282366920938463463374607431768211455"),
+                    }]
+                })
+                const liquidity = pos[7] as string
+                const _currPrice = (Number(slot0[0]) / (2 ** 96)) ** 2
+                const lowerTick = Number(pos[5])
+                const upperTick = Number(pos[6])
+                const _lowerPrice = Math.pow(1.0001, lowerTick)
+                const _upperPrice = Math.pow(1.0001, upperTick)
+                const _amount0 = calcAmount0(Number(liquidity), _currPrice, _lowerPrice, _upperPrice, 18, 18)
+                const _amount1 = calcAmount1(Number(liquidity), _currPrice, _lowerPrice, _upperPrice, 18, 18)
+                const _token0name = tokenName[0].status === 'success' ? String(tokenName[0].result) : ''
+                const _token1name = tokenName[1].status === 'success' ? String(tokenName[1].result) : ''
+                const _fee0 = qouteFee.result[0]
+                const _fee1 = qouteFee.result[1]
+                let token0addr
+                let token1addr
+                let token0name
+                let token1name
+                let amount0
+                let amount1
+                let lowerPrice
+                let upperPrice
+                let currPrice
+                let fee0
+                let fee1
+
+                if (_token1name === 'WJBC') {
+                    token0addr = pos[3]
+                    token1addr = pos[2]
+                    token0name = _token0name
+                    token1name = _token1name
+                    amount0 = _amount0 / 1e18
+                    amount1 = _amount1 / 1e18
+                    lowerPrice = 1 / _upperPrice
+                    upperPrice = 1 / _lowerPrice
+                    currPrice = 1 / _currPrice
+                    fee0 = _fee0
+                    fee1 = _fee1
+                } else if (_token1name === 'CMJ' && _token0name !== 'WJBC') {
+                    token0addr = pos[3]
+                    token1addr = pos[2]
+                    token0name = _token0name
+                    token1name = _token1name
+                    amount0 = _amount0 / 1e18
+                    amount1 = _amount1 / 1e18
+                    lowerPrice = 1 / _upperPrice
+                    upperPrice = 1 / _lowerPrice
+                    currPrice = 1 / _currPrice
+                    fee0 = _fee0
+                    fee1 = _fee1
+                } else {
+                    token0addr = pos[2]
+                    token1addr = pos[3]
+                    token0name = _token1name
+                    token1name = _token0name
+                    amount0 = _amount1 / 1e18
+                    amount1 = _amount0 / 1e18
+                    lowerPrice = _lowerPrice
+                    upperPrice = _upperPrice
+                    currPrice = _currPrice
+                    fee0 = _fee1
+                    fee1 = _fee0
+                }
+
+                return {
+                    Id: Number(obj.result),
+                    Name: String(metadata.name),
+                    Image: String(metadata.image),
+                    FeeTier: Number(pos[4]),
+                    Pair: pairAddr as string,
+                    Token0Addr: token0addr as string,
+                    Token1Addr: token1addr as string,
+                    Token0: token0name,
+                    Token1: token1name,
+                    Amount0: amount0,
+                    Amount1: amount1,
+                    MinPrice: lowerPrice,
+                    MaxPrice: upperPrice,
+                    CurrPrice: currPrice,
+                    LowerTick: lowerTick,
+                    UpperTick: upperTick,
+                    Liquidity: liquidity,
+                    Fee0: Number(fee0) / 1e18,
+                    Fee1: Number(fee1) / 1e18,
+                    IsStaking: false,
+                    Reward: 0
+                }
+            })))
+            // .filter((obj) => {
+            //     return (Number(obj.Liquidity) !== 0 && (obj.Token0 === 'tKUB' && obj.Token1 === 'tK'))
+            // })
+            .reverse()
+
+            setPosition(myStaking.concat(myPosition))
+        }
+
+        address !== undefined && fetch2()
+    }, [config, address, addr, pathname, chain, txupdate])
 
     return (
         <div className="min-h-screen bg-black text-white font-mono">
@@ -197,23 +486,66 @@ export default function Page() {
             </header>
             <main className="container mx-auto p-4 md:p-6 mt-16 relative z-10">
                 <div className="mb-8">
-                    <Tabs defaultValue='0' onValueChange={index => setHookSelect(Number(index))}>
+                    <Tabs defaultValue='0'>
                         <TabsList className='bg-transparent flex flex-wrap gap-2'>
                             <TabsTrigger className='cursor-pointer px-4 py-2 text-sm whitespace-nowrap rounded-md border transition-colors data-[state=active]:!bg-green-900/20 data-[state=active]:!border-green-500 data-[state=active]:!text-green-400 data-[state=inactive]:bg-transparent data-[state=inactive]:border-gray-800 data-[state=inactive]:text-gray-400 data-[state=inactive]:hover:border-gray-700 data-[state=inactive]:hover:bg-gray-900/50' value='0'>KUB validator: liquidity mining</TabsTrigger>
                             <TabsTrigger className='cursor-pointer px-4 py-2 text-sm whitespace-nowrap rounded-md border transition-colors data-[state=active]:!bg-green-900/20 data-[state=active]:!border-green-500 data-[state=active]:!text-green-400 data-[state=inactive]:bg-transparent data-[state=inactive]:border-gray-800 data-[state=inactive]:text-gray-400 data-[state=inactive]:hover:border-gray-700 data-[state=inactive]:hover:bg-gray-900/50' value='1'>Point</TabsTrigger>
                         </TabsList>
                         <TabsContent value='0'>
-                            {nftIndexSelect === 1 ?
-                                <Fishing setTxupdate={setTxupdate} txupdate={txupdate} setErrMsg={setErrMsg} setIsLoading={setIsLoading} nftIdVester={nftIdVester} addr={addr} /> :
-                                <div className='my-8'>The hook does not support this NFT collection</div>
-                            }
+                            <>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-8">
+                                    <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-6">
+                                        <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">percentage reward pending</div>
+                                        <div className="flex items-center text-3xl font-light">
+                                            <span>{Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 }).format(Number(allPending))}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {position[0] !== undefined &&
+                                        <>
+                                            {position.map(obj => 
+                                                <div key={Number(obj.Id)} className="mb-4 bg-[#0a0b1e]/80 border border-[#00ff9d]/10 rounded-xl gap-2 flex flex-col items-start text-xs">
+                                                    <div className="w-full py-4 h-[242px] bg-white/5 rounded-t-xl relative inset-0 h-full w-full bg-white/5 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]">
+                                                        <img alt="" src={obj.Image} height={100} width={100} className="place-self-center" />
+                                                        <span className="absolute bottom-5 left-5">{obj.CurrPrice > obj.MinPrice && obj.CurrPrice < obj.MaxPrice ? 'In range' : 'Out of range'}</span>
+                                                        <span className="absolute bottom-5 right-5">{obj.FeeTier / 10000}%</span>
+                                                    </div>
+                                                    <div className="w-full py-1 px-6 flex flex-row justify-between">
+                                                        <span className="text-gray-500">Position #{obj.Id}</span>
+                                                        <span>{obj.Amount0.toFixed(4)} <span className="text-gray-500">{obj.Token0} /</span> {obj.Amount1.toFixed(4)} <span className="text-gray-500">{obj.Token1}</span></span>
+                                                    </div>
+                                                    <div className="w-full py-1 px-6 flex flex-row justify-between">
+                                                        <span className="text-gray-500">Fee</span>
+                                                        <span>{obj.Fee0.toFixed(4)} <span className="text-gray-500">{obj.Token0} /</span> {obj.Fee1.toFixed(4)} <span className="text-gray-500">{obj.Token1}</span></span>
+                                                    </div>
+                                                    <div className="w-full py-1 px-6 flex flex-row justify-between">
+                                                        <span className="text-gray-500">Current : Min : Max</span>
+                                                        <span>{obj.CurrPrice.toFixed(4)} : {obj.MinPrice.toFixed(4)} : {obj.MaxPrice > 1e18 ? '♾️' : obj.MaxPrice.toFixed(4)} <span className="text-gray-500">{obj.Token0}/{obj.Token1}</span></span>
+                                                    </div>
+                                                    <div className="w-full py-1 px-6 flex flex-row justify-between">
+                                                        <span className="text-gray-500">Percentage pending reward</span>
+                                                        <span>{obj.Reward.toFixed(8)}</span>
+                                                    </div>
+                                                    <div className="w-full my-4 px-6 flex space-x-2">
+                                                        {obj.IsStaking ?                                            
+                                                            <button className="flex-1 px-3 py-2 bg-red-900/30 border border-red-900/50 rounded-md text-xs text-red-400 hover:bg-red-900/40 transition-colors cursor-pointer" onClick={() => {unstakeNft(obj.Id as unknown as bigint)}}>Unstake</button> :
+                                                            <button className="flex-1 px-3 py-2 bg-green-900/30 border border-green-900/50 rounded-md text-xs text-green-400 hover:bg-green-900/40 transition-colors cursor-pointer" onClick={() => {stakeNft(obj.Id as unknown as bigint)}}>Stake</button>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    }
+                                </div>
+                            </>
                         </TabsContent>
                         <TabsContent value='1'>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-8">
                                 <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-6">
                                     <div className='text-xs text-gray-400 uppercase tracking-wider mb-2'>TOTAL POINT</div>
                                     <div className='text-3xl font-light'>
-                                        {nft !== undefined && nft.length > 0 && addr !== undefined ? Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(totalPoint) : 0}                                
+                                        {addr !== undefined ? Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(totalPoint) : 0}                                
                                     </div>
                                 </div>
                             </div>

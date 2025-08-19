@@ -1,5 +1,5 @@
 import { createPublicClient, http, erc20Abi, erc721Abi } from 'viem'
-import { bitkub } from 'viem/chains'
+import { bitkubTestnet } from 'viem/chains'
 import { kap20abi,CMswapP2PMarketplaceABI,cmSwapRefProgramABI,testnetTokenFaucetTradeABI, stakingV2FactoryABI,stakingV3FactoryABI, stakingV2ABI,stakingV3ABI } from '@/app/lib/abi'
 import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3staker, WrappedNative,CMswapUniSmartRouteABIV2,UniswapPair,BitkubEvmKYCABI } from '@/app/lib/abi'
 
@@ -67,10 +67,9 @@ export const faucetTestTokenContract = {chainId: 25925,abi : testnetTokenFaucetT
 
 export const erc20ABI = { chainId: 25925, abi: erc20Abi } as const
 export const kap20ABI = { chainId: 25925, abi: kap20abi } as const
+export const erc721ABI = { chainId: 25925, abi: erc721Abi } as const
 
 export const CMswapP2PMarketplaceContract = {chainId: 25925, abi: CMswapP2PMarketplaceABI, address: CMswapP2PMarketplace} as const
 export const cmSwapRefProgramContract = {chainId: 25925, abi: cmSwapRefProgramABI, address: cmSwapRefProgram} as const
 
-export const publicClient = createPublicClient({ chain: bitkub, transport: http() })
-
-export const erc721ABI = { chainId: 25925, abi: erc721Abi } as const
+export const publicClient = createPublicClient({ chain: bitkubTestnet, transport: http() })
