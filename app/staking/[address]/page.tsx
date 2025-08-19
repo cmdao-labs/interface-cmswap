@@ -47,6 +47,7 @@ export default function Page() {
     const [totalPoint, setTotalPoint] = React.useState(0)
     const [position, setPosition] = React.useState<MyPosition[]>([])
     const [allPending, setAllPending] = React.useState('')
+    const [allStaker, setAllStaker] = React.useState('')
 
     const calcAmount0 = (
         liquidity: number,
@@ -205,6 +206,9 @@ export default function Page() {
                     }, obj] 
                 }))
             })
+
+            const incentiveStat = await readContract(config, { ...v3StakerContract, functionName: 'incentives', args: ['0x54f969cc76b69f12f67a135d9a7f088edafa2e8ebb3e247859acd17d8e849993'] })
+            setAllStaker(String(incentiveStat[2]))
 
             let _allPending = 0
             for (let i = 0; i <= myReward.length - 1; i++) {
@@ -495,9 +499,15 @@ export default function Page() {
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-8">
                                     <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-6">
-                                        <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">percentage reward pending</div>
+                                        <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">my reward point pending</div>
                                         <div className="flex items-center text-3xl font-light">
                                             <span>{Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 }).format(Number(allPending))}</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-6">
+                                        <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">total stakers</div>
+                                        <div className="flex items-center text-3xl font-light">
+                                            <span>{Intl.NumberFormat('en-US').format(Number(allStaker))}</span>
                                         </div>
                                     </div>
                                 </div>
