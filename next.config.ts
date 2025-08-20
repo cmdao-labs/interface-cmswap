@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
       remotePatterns: [
         {
           protocol: 'https',
-          hostname: 'apricot-secure-ferret-190.mypinata.cloud',
+          hostname: 'cmswap.pinata.cloud',
           port: '',
           pathname: '/**',
           search: '',

@@ -261,7 +261,7 @@ export default async function Activity({
                             {res.action === 'sell' && <span className="text-red-500 font-bold">{res.action.toUpperCase()}</span>}
                             {res.action === 'launch' && <span className="text-emerald-300 font-bold">🚀 {res.action.toUpperCase()} & BUY</span>}
                             <div className="w-[15px] h-[15px] sm:w-[30px] sm:h-[30px] rounded-full overflow-hidden relative">
-                                <Image src={res.logo.slice(0, 7) === 'ipfs://' ? "https://apricot-secure-ferret-190.mypinata.cloud/ipfs/" + res.logo.slice(7) : "https://apricot-secure-ferret-190.mypinata.cloud/ipfs/" + res.logo} alt="token_waiting_for_approve" fill />
+                                <Image src={res.logo.slice(0, 7) === 'ipfs://' ? "https://cmswap.pinata.cloud/ipfs/" + res.logo.slice(7) : "https://cmswap.pinata.cloud/ipfs/" + res.logo} alt="token_waiting_for_approve" fill />
                             </div>
                             <span className="truncate">{res.ticker}</span>
                         </div>
