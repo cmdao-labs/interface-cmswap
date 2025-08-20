@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
       remotePatterns: [
         {
           protocol: 'https',
-          hostname: 'gateway.commudao.xyz',
+          hostname: 'apricot-secure-ferret-190.mypinata.cloud',
           port: '',
           pathname: '/**',
           search: '',

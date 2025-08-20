@@ -266,7 +266,7 @@ export default async function Event({
                             {res.action === 'sell' && <span className="text-red-500 font-bold">{res.action.toUpperCase()}</span>}
                             {res.action === 'launch' && <span>🚀</span>}
                             <div className="w-[30px] h-[30px] rounded-full overflow-hidden relative">
-                                <Image src={res.logo.slice(0, 7) === 'ipfs://' ? "https://gateway.commudao.xyz/ipfs/" + res.logo.slice(7) : "https://gateway.commudao.xyz/ipfs/" + res.logo} alt="token_waiting_for_approve" fill />
+                                <Image src={res.logo.slice(0, 7) === 'ipfs://' ? "https://apricot-secure-ferret-190.mypinata.cloud/ipfs/" + res.logo.slice(7) : "https://apricot-secure-ferret-190.mypinata.cloud/ipfs/" + res.logo} alt="token_waiting_for_approve" fill />
                             </div>
                             <span className="w-[30px] truncate">{res.ticker}</span>
                         </div>

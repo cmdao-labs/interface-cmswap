@@ -1642,9 +1642,9 @@ export default function Trade({
                       decimals: 18,
                       image:
                         logo !== null && String(logo).slice(0, 7) === "ipfs://"
-                          ? "https://gateway.commudao.xyz/ipfs/" +
+                          ? "https://apricot-secure-ferret-190.mypinata.cloud/ipfs/" +
                             String(logo).slice(7)
-                          : "https://gateway.commudao.xyz/ipfs/" + String(logo),
+                          : "https://apricot-secure-ferret-190.mypinata.cloud/ipfs/" + String(logo),
                     },
                   },
                 });
@@ -1825,9 +1825,9 @@ export default function Trade({
                           image:
                             logo !== null &&
                             String(logo).slice(0, 7) === "ipfs://"
-                              ? "https://gateway.commudao.xyz/ipfs/" +
+                              ? "https://apricot-secure-ferret-190.mypinata.cloud/ipfs/" +
                                 String(logo).slice(7)
-                              : "https://gateway.commudao.xyz/ipfs/" +
+                              : "https://apricot-secure-ferret-190.mypinata.cloud/ipfs/" +
                                 String(logo),
                         },
                       },
@@ -1861,11 +1861,11 @@ export default function Trade({
                       src={
                         logo !== null
                           ? String(logo).startsWith("ipfs://")
-                            ? "https://gateway.commudao.xyz/ipfs/" +
+                            ? "https://apricot-secure-ferret-190.mypinata.cloud/ipfs/" +
                               String(logo).slice(7)
-                            : "https://gateway.commudao.xyz/ipfs/" +
+                            : "https://apricot-secure-ferret-190.mypinata.cloud/ipfs/" +
                               String(logo)
-                          : "https://gateway.commudao.xyz/ipfs/"
+                          : "https://apricot-secure-ferret-190.mypinata.cloud/ipfs/"
                       }
                       alt="token_waiting_for_approve"
                       width={120}
@@ -2950,10 +2950,10 @@ export default function Trade({
                     src={
                       logo !== null
                         ? String(logo).startsWith("ipfs://")
-                          ? "https://gateway.commudao.xyz/ipfs/" +
+                          ? "https://apricot-secure-ferret-190.mypinata.cloud/ipfs/" +
                             String(logo).slice(7)
-                          : "https://gateway.commudao.xyz/ipfs/" + String(logo)
-                        : "https://gateway.commudao.xyz/ipfs/"
+                          : "https://apricot-secure-ferret-190.mypinata.cloud/ipfs/" + String(logo)
+                        : "https://apricot-secure-ferret-190.mypinata.cloud/ipfs/"
                     }
                     alt="token_waiting_for_approve"
                     width={120}
