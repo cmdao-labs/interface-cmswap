@@ -193,6 +193,7 @@ export default function Trade({
     v2routerAddr = "0x3C5514335dc4E2B0D9e1cc98ddE219c50173c5Be";
     v3qouterAddr = "0x3F64C4Dfd224a102A4d705193a7c40899Cf21fFe";
     socialAddr = "0x6F17157b4EcD3734A9EA8ED4bfE78694e3695b90";
+    lp = "0x46a4073C830031eA19D7b9825080c05F8454E530"
   }
 
   const reachData = [
@@ -502,9 +503,9 @@ export default function Trade({
           console.log("VA",va)
           console.log("Pump1",pump1)
           const price = (pump0 + va) / pump1;
-          const mcap = 1000000000 * price;
-          const denominator = chain === "kubtestnet" && mode === "pro" ? 47800 / 1000000000 : 1;
-          const progressValue = ((price * 100) / denominator).toFixed(2);
+          const mcap = chain === "kubtestnet" && mode === "pro" ? (1000000000 * price) - 3400 : 1000000000 * price;
+          const denominator = chain === "kubtestnet" && mode === "pro" ? 47800 : 1;
+          const progressValue = ((mcap * 100) / denominator).toFixed(2);
           console.log("Progressing ", progressValue);
           console.log("Price", price);
           console.log("Mcap", mcap);
