@@ -1642,9 +1642,9 @@ export default function Trade({
                       decimals: 18,
                       image:
                         logo !== null && String(logo).slice(0, 7) === "ipfs://"
-                          ? "https://cmswap.pinata.cloud/ipfs/" +
+                          ? "https://cmswap.mypinata.cloud/ipfs/" +
                             String(logo).slice(7)
-                          : "https://cmswap.pinata.cloud/ipfs/" + String(logo),
+                          : "https://cmswap.mypinata.cloud/ipfs/" + String(logo),
                     },
                   },
                 });
@@ -1825,9 +1825,9 @@ export default function Trade({
                           image:
                             logo !== null &&
                             String(logo).slice(0, 7) === "ipfs://"
-                              ? "https://cmswap.pinata.cloud/ipfs/" +
+                              ? "https://cmswap.mypinata.cloud/ipfs/" +
                                 String(logo).slice(7)
-                              : "https://cmswap.pinata.cloud/ipfs/" +
+                              : "https://cmswap.mypinata.cloud/ipfs/" +
                                 String(logo),
                         },
                       },
@@ -1861,11 +1861,11 @@ export default function Trade({
                       src={
                         logo !== null
                           ? String(logo).startsWith("ipfs://")
-                            ? "https://cmswap.pinata.cloud/ipfs/" +
+                            ? "https://cmswap.mypinata.cloud/ipfs/" +
                               String(logo).slice(7)
-                            : "https://cmswap.pinata.cloud/ipfs/" +
+                            : "https://cmswap.mypinata.cloud/ipfs/" +
                               String(logo)
-                          : "https://cmswap.pinata.cloud/ipfs/"
+                          : "https://cmswap.mypinata.cloud/ipfs/"
                       }
                       alt="token_waiting_for_approve"
                       width={120}
@@ -2950,10 +2950,10 @@ export default function Trade({
                     src={
                       logo !== null
                         ? String(logo).startsWith("ipfs://")
-                          ? "https://cmswap.pinata.cloud/ipfs/" +
+                          ? "https://cmswap.mypinata.cloud/ipfs/" +
                             String(logo).slice(7)
-                          : "https://cmswap.pinata.cloud/ipfs/" + String(logo)
-                        : "https://cmswap.pinata.cloud/ipfs/"
+                          : "https://cmswap.mypinata.cloud/ipfs/" + String(logo)
+                        : "https://cmswap.mypinata.cloud/ipfs/"
                     }
                     alt="token_waiting_for_approve"
                     width={120}

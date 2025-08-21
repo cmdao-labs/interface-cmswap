@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
       remotePatterns: [
         {
           protocol: 'https',
-          hostname: 'cmswap.pinata.cloud',
+          hostname: 'cmswap.mypinata.cloud',
           port: '',
           pathname: '/**',
           search: '',

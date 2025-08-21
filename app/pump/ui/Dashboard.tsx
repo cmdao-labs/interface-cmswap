@@ -211,7 +211,7 @@ export default function Dashboard({
             <div className="w-full h-[50px] flex flex-row items-center justify-around text-xs lg:text-lg py-10 border-t border-gray-800" key={index}>
                 <div className="w-1/2 flex flex-row items-center justify-start gap-6 overflow-hidden">
                     <div className="w-[25px] h-[25px] sm:w-[40px] sm:h-[40px] rounded-full overflow-hidden relative">
-                        <Image src={res[1].result!.slice(0, 7) === 'ipfs://' ? "https://cmswap.pinata.cloud/ipfs/" + res[1].result!.slice(7) : "https://cmswap.pinata.cloud/ipfs/" + res[1].result!} alt="token_waiting_for_approve" fill />
+                        <Image src={res[1].result!.slice(0, 7) === 'ipfs://' ? "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!.slice(7) : "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!} alt="token_waiting_for_approve" fill />
                     </div>
                     <span className="font-bold truncate">{res[0].result}</span>
                     <button 
@@ -225,7 +225,7 @@ export default function Dashboard({
                                         address: res[4].result,
                                         symbol: res[0].result,
                                         decimals: 18,
-                                        image: res[1].result!.slice(0, 7) === 'ipfs://' ? "https://cmswap.pinata.cloud/ipfs/" + res[1].result!.slice(7) : "https://cmswap.pinata.cloud/ipfs/" + res[1].result!
+                                        image: res[1].result!.slice(0, 7) === 'ipfs://' ? "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!.slice(7) : "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!
                                     },
                                 },
                             })

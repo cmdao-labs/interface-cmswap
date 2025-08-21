@@ -311,7 +311,7 @@ const poolDataPromises = logCreateData.map(async (res: any) => {
             >
                 <div className="h-[150px] w-[150px] sm:h-[180px] sm:w-[180px] self-center overflow-hidden flex flex-wrap content-center justify-center">
                   <div className="h-full w-full relative">
-                    <Image src={res[1].result!.slice(0, 7) === 'ipfs://' ? "https://cmswap.pinata.cloud/ipfs/" + res[1].result!.slice(7) : "https://cmswap.pinata.cloud/ipfs/" + res[1].result!} alt="token_waiting_for_approve" fill />
+                    <Image src={res[1].result!.slice(0, 7) === 'ipfs://' ? "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!.slice(7) : "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!} alt="token_waiting_for_approve" fill />
                   </div>
                 </div>
                 <div className="w-1/2 flex flex-col gap-4 item-center justify-center">
