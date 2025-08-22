@@ -658,10 +658,9 @@ export default function Swap96({
     }
 
     React.useEffect(() => {
-
         const fetch0 = async () => {
+            // fetch token/lp data
             (tokenA.value.toUpperCase() === tokenB.value.toUpperCase()) && setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
-
             let tokenAvalue
             let tokenBvalue
             if (tokenA.value === tokens[0].value) {
@@ -715,23 +714,67 @@ export default function Swap96({
             const pair3000 = stateB[3].result !== undefined ? stateB[3].result as '0xstring' : '' as '0xstring'
             const pair500 = stateB[4].result !== undefined ? stateB[4].result as '0xstring' : '' as '0xstring'
             const pair100 = stateB[5].result !== undefined ? stateB[5].result as '0xstring' : '' as '0xstring'
-
-            const updateCMswapTvlKey = (key: keyof typeof CMswapTVL, value: number,isReverted: boolean) => { setCMswapTVL(prevTvl => ({ ...prevTvl, [key]: value >= 1e-9 ? value.toString() : '0', isReverted })); };
-
-            const updateDMswapTvlKey = (value: number,isReverted: boolean) => { setDMswapTVL(prevTvl => ({ ...prevTvl, tvl10000: value >= 1e-9 ? value.toString() : '0', isReverted })); };
-            const updateUdonswapTvlKey = (value: number,isReverted: boolean) => { setUdonTVL(prevTvl => ({ ...prevTvl, tvl10000: value >= 1e-9 ? value.toString() : '0', isReverted })); };
+            // helper functions
+            const updateCMswapTvlKey = (key: keyof typeof CMswapTVL, value: number, isReverted: boolean) => { 
+                setCMswapTVL(prevTvl => ({ 
+                    ...prevTvl, 
+                    [key]: value >= 1e-9 ? value.toString() : '0', 
+                    isReverted 
+                }))
+            }
+            const updateDMswapTvlKey = (value: number, isReverted: boolean) => { 
+                setDMswapTVL(prevTvl => ({ 
+                    ...prevTvl, 
+                    tvl10000: value >= 1e-9 ? value.toString() : '0', 
+                    isReverted 
+                }))
+            }
+            const updateUdonswapTvlKey = (value: number, isReverted: boolean) => { 
+                setUdonTVL(prevTvl => ({ 
+                    ...prevTvl, 
+                    tvl10000: value >= 1e-9 ? value.toString() : '0', 
+                    isReverted 
+                }))
+            }
+            const updatePonderTvlKey = (value: number,isReverted: boolean) => { 
+                setPonderTVL(prevTvl => ({ 
+                    ...prevTvl, 
+                    tvl10000: value >= 1e-9 ? value.toString() : '0', 
+                    isReverted 
+                })) 
+            }
             const updateExchangeRateCMswapTVL = (feeAmount: number, exchangeRate: number) => {
-                setCMswapTVL(prevTvl => ({ ...prevTvl, exchangeRate: feeSelect === feeAmount ? exchangeRate.toString() : prevTvl.exchangeRate }));
-            };
+                setCMswapTVL(prevTvl => ({ 
+                    ...prevTvl, 
+                    exchangeRate: feeSelect === feeAmount ? exchangeRate.toString() : prevTvl.exchangeRate,
+                    FixedExchangeRate: feeSelect === feeAmount ? exchangeRate.toString() : prevTvl.exchangeRate
+                }))
+            }
             const updateExchangeRateDMswapTVL = (exchangeRate: number) => {
-                setDMswapTVL(prevTvl => ({ ...prevTvl, exchangeRate: exchangeRate.toString() }));
-            };
+                setDMswapTVL(prevTvl => ({ 
+                    ...prevTvl, 
+                    exchangeRate: exchangeRate.toString() 
+                }))
+            }
             const updateExchangeRateUdonswapTVL = (exchangeRate: number) => {
-                setUdonTVL(prevTvl => ({ ...prevTvl, exchangeRate: exchangeRate.toString() }));
-            };
-
+                setUdonTVL(prevTvl => ({ 
+                    ...prevTvl, 
+                    exchangeRate: exchangeRate.toString() 
+                }))
+            }
+            const updateExchangeRatePonderTVL = (exchangeRate: number) => {
+                setPonderTVL(prevTvl => ({ 
+                    ...prevTvl, 
+                    exchangeRate: exchangeRate.toString() 
+                }))
+            }
+            // pool state update implementation
             if (tokenA.name !== 'Choose Token' && tokenB.name !== 'Choose Token') {
-                if ((tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[1].value.toUpperCase()) || (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenA.value.toUpperCase() === tokens[1].value.toUpperCase())) {
+                if (
+                    (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[1].value.toUpperCase()) 
+                    || 
+                    (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenA.value.toUpperCase() === tokens[1].value.toUpperCase())
+                ) {
                     setExchangeRate("1")
                     setWrappedRoute(true)
                 } else {
@@ -759,18 +802,19 @@ export default function Swap96({
                                 { ...erc20ABI, address: tokenBvalue, functionName: 'balanceOf', args: [pair100] },
                             ]
                         })
+                        // fee tier == 10000
                         const token0_10000 = poolState[0].result !== undefined ? poolState[0].result : "" as '0xstring'
                         const sqrtPriceX96_10000 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
                         const tokenAamount_10000 = poolState[2].result !== undefined ? poolState[2].result : BigInt(0)
                         const tokenBamount_10000 = poolState[3].result !== undefined ? poolState[3].result : BigInt(0)
-
-                        let currPrice_10000; // temp handle issue for kkub/kusdt wrong quote price
+                        // temp handle issue for kkub/kusdt wrong quote price
+                        let currPrice_10000; 
                         let isReverted = false
-                        if(
+                        if (
                             tokenAvalue === '0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5' as '0xstring' && tokenBvalue === '0x7d984C24d2499D840eB3b7016077164e15E5faA6' as '0xstring'
                             ||
                             tokenAvalue === '0x7d984C24d2499D840eB3b7016077164e15E5faA6' as '0xstring' && tokenBvalue === '0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5' as '0xstring'
-                        ){
+                        ) {
                             currPrice_10000 = token0_10000.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2))
                             if (feeSelect === 10000) {
                                 isReverted = token0_10000.toUpperCase() !== tokenBvalue.toUpperCase() ? false : true
@@ -783,14 +827,11 @@ export default function Swap96({
                                 setExchangeRate(currPrice_10000.toString());
                             }   
                         }
-
-                        console.warn(`Token0 \n${token0_10000}\nTokenB \n${tokenBvalue}\n${token0_10000.toUpperCase() !== tokenBvalue.toUpperCase()}\nPrice : ${currPrice_10000}`)
+                        //
                         const tvl_10000 = currPrice_10000 !== 0 && currPrice_10000 !== Infinity ? (Number(formatEther(tokenAamount_10000)) * (1 / currPrice_10000)) + Number(formatEther(tokenBamount_10000)) : 0
                         feeSelect === 10000 && currPrice_10000 !== Infinity && updateExchangeRateCMswapTVL(10000, Number(currPrice_10000.toString()))
                         feeSelect === 10000 && currPrice_10000 !== Infinity && tvl_10000 < 1e-9 && updateExchangeRateCMswapTVL(10000, 0)
-                        updateCMswapTvlKey('tvl10000', tvl_10000,isReverted)
-                   
-                        //tvl_10000 >= 1e-9 ? setTvl10000(tvl_10000.toString()) : setTvl10000('0')
+                        updateCMswapTvlKey('tvl10000', tvl_10000, isReverted)
                         if (feeSelect === 10000 && tvl_10000 < 1e-9) {
                             const init: any = { contracts: [] }
                             for (let i = 0; i <= tokens.length - 1; i++) {
@@ -829,7 +870,7 @@ export default function Swap96({
                                 updateExchangeRateCMswapTVL(10000, Number((altPrice1 / altPrice0).toString()))
                             }
                         }
-
+                        // fee tier == 3000
                         const token0_3000 = poolState[4].result !== undefined ? poolState[4].result : "" as '0xstring'
                         const sqrtPriceX96_3000 = poolState[5].result !== undefined ? poolState[5].result[0] : BigInt(0)
                         const tokenAamount_3000 = poolState[6].result !== undefined ? poolState[6].result : BigInt(0)
@@ -838,14 +879,10 @@ export default function Swap96({
                         if(feeSelect === 3000){
                             isReverted = token0_3000.toUpperCase() === tokenBvalue.toUpperCase() ? false : true
                         }
-                        
                         const tvl_3000 = currPrice_3000 !== 0 && currPrice_3000 !== Infinity ? (Number(formatEther(tokenAamount_3000)) * (1 / currPrice_3000)) + Number(formatEther(tokenBamount_3000)) : 0
                         feeSelect === 3000 && currPrice_3000 !== Infinity && updateExchangeRateCMswapTVL(3000, Number(currPrice_3000.toString()))
                         feeSelect === 3000 && currPrice_3000 !== Infinity && tvl_3000 < 1e-9 && updateExchangeRateCMswapTVL(3000, 0)
-                        //tvl_3000 >= 1e-9 ? setTvl3000(tvl_3000.toString()) : setTvl3000('0')
-                        updateCMswapTvlKey('tvl3000', tvl_3000,isReverted);
-               
-
+                        updateCMswapTvlKey('tvl3000', tvl_3000,isReverted);              
                         if (feeSelect === 3000 && tvl_3000 < 1e-9) {
                             const init: any = { contracts: [] }
                             for (let i = 0; i <= tokens.length - 1; i++) {
@@ -883,7 +920,7 @@ export default function Swap96({
                                 feeSelect === 3000 && updateExchangeRateCMswapTVL(3000, Number((altPrice1 / altPrice0).toString()))
                             }
                         }
-
+                        // fee tier == 500
                         const token0_500 = poolState[8].result !== undefined ? poolState[8].result : "" as '0xstring'
                         const sqrtPriceX96_500 = poolState[9].result !== undefined ? poolState[9].result[0] : BigInt(0)
                         const tokenAamount_500 = poolState[10].result !== undefined ? poolState[10].result : BigInt(0)
@@ -896,8 +933,6 @@ export default function Swap96({
                             isReverted = token0_500.toUpperCase() === tokenBvalue.toUpperCase() ? false : true
                         }
                         updateCMswapTvlKey('tvl500', tvl_500,isReverted);
-                        
-
                         if (feeSelect === 500 && tvl_500 < 1e-9) {
                             const init: any = { contracts: [] }
                             for (let i = 0; i <= tokens.length - 1; i++) {
@@ -935,7 +970,7 @@ export default function Swap96({
                                 feeSelect === 500 && updateExchangeRateCMswapTVL(500, Number((altPrice1 / altPrice0).toString()))
                             }
                         }
-
+                        // fee tier == 100
                         const token0_100 = poolState[12].result !== undefined ? poolState[12].result : "" as '0xstring'
                         const sqrtPriceX96_100 = poolState[13].result !== undefined ? poolState[13].result[0] : BigInt(0)
                         const tokenAamount_100 = poolState[14].result !== undefined ? poolState[14].result : BigInt(0)
@@ -948,7 +983,6 @@ export default function Swap96({
                             isReverted = token0_100.toUpperCase() === tokenBvalue.toUpperCase() ? false : true
                         }
                         updateCMswapTvlKey('tvl100', tvl_100,isReverted);
-
                         if (feeSelect === 100 && tvl_100 < 1e-9) {
                             const init: any = { contracts: [] }
                             for (let i = 0; i <= tokens.length - 1; i++) {
@@ -990,10 +1024,8 @@ export default function Swap96({
                         updateExchangeRateCMswapTVL(feeSelect, 0)
                     }
                     //** DiamonFinance */
-
                     try {
                         setAltRoute(undefined)
-
                         const getPairAddr = await readContracts(config, { contracts: [{ ...CMswapUniSmartRouteContractV2, functionName: 'getPairAddress', args: [BigInt(0), tokenAvalue, tokenBvalue], }] })
                         const DiamonPair = getPairAddr[0].result !== undefined ? getPairAddr[0].result as '0xstring' : '' as '0xstring'
                         const getPoolState = await readContracts(config, {
@@ -1003,29 +1035,25 @@ export default function Swap96({
                                 { ...UniswapPairv2PoolABI, address: DiamonPair, functionName: 'token0' }
                             ]
                         })
-
                         let tvlDM = 0;
                         let exchangeRateDM = 0;
                         if (DiamonPair !== "0x0000000000000000000000000000000000000000" as '0xstring') {
                             const tokenAamount = BigInt(getPoolState[0].result || 0);
                             const tokenBamount = BigInt(getPoolState[1].result || 0);
                             const currPriceDM = getPoolState[2].result !== undefined   ? Number(tokenAamount) / Number(tokenBamount) : 0
-
                             tvlDM = currPriceDM !== 0 && currPriceDM !== Infinity ? (Number(formatEther(tokenAamount)) * (1 / currPriceDM)) + Number(formatEther(tokenBamount)) : 0
                             exchangeRateDM = tvlDM < 1e-9 ? 0 : currPriceDM
                             currPriceDM !== Infinity && setDMswapTVL({ ...DMswapTVL, FixedExchangeRate: (exchangeRateDM).toString() })
-                        }else{
+                        } else {
                             tvlDM = 0
                             exchangeRateDM = 0
                             setDMswapTVL({ ...DMswapTVL, FixedExchangeRate: (0).toString() })
                         }
-
-                        updateDMswapTvlKey(tvlDM,true)
+                        updateDMswapTvlKey(tvlDM, true)
                         updateExchangeRateDMswapTVL(exchangeRateDM)
                     } catch (error) {
                         updateExchangeRateDMswapTVL(0)
                     }
-
                     //** UdonSwap */
                     try {
                         setAltRoute(undefined)
@@ -1056,11 +1084,7 @@ export default function Swap96({
                     } catch (error) {
                         updateExchangeRateUdonswapTVL(0)
                     }
-
-                     //** ponder.finance */
-                        const updatePonderTvlKey = (value: number,isReverted: boolean) => { setPonderTVL(prevTvl => ({ ...prevTvl, tvl10000: value >= 1e-9 ? value.toString() : '0', isReverted })); };
-                        const updateExchangeRatePonderTVL = (exchangeRate: number) => {setPonderTVL(prevTvl => ({ ...prevTvl, exchangeRate: exchangeRate.toString() }));};
-
+                    //** ponder.finance */
                     try {
                         setAltRoute(undefined)
 
@@ -1073,7 +1097,6 @@ export default function Swap96({
                                 { ...UniswapPairv2PoolABI, address: DiamonPair, functionName: 'token0' }
                             ]
                         })
-
                         let tvlPD = 0;
                         let exchangeRatePD = 0;
                         if (DiamonPair !== "0x0000000000000000000000000000000000000000" as '0xstring') {
@@ -1086,7 +1109,6 @@ export default function Swap96({
                             currPriceDM !== Infinity && setPonderTVL({ ...ponderTVL, FixedExchangeRate: Number(exchangeRatePD).toString() })
 
                         }
-
                         updatePonderTvlKey(tvlPD,true)
                         updateExchangeRatePonderTVL(exchangeRatePD)
                     } catch (error) {
@@ -1106,11 +1128,11 @@ export default function Swap96({
     }, [config, address, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams])
 
 
-    React.useEffect(() => {
-        console.log("New price set:", newPrice);
-        console.log({udonOldPrice: fixedExchangeRate})
-        console.log({udonNewPrice: newPrice})
-    },[newPrice])
+    // React.useEffect(() => {
+    //     console.log("New price set:", newPrice);
+    //     console.log({udonOldPrice: fixedExchangeRate})
+    //     console.log({udonNewPrice: newPrice})
+    // },[newPrice])
 
     React.useEffect(() => {
         const updateRate = async () => {
@@ -1132,7 +1154,7 @@ export default function Swap96({
                 console.log(`Quote Price ${poolSelect}`, selectedPool.exchangeRate);
 
                 setFixedExchangeRate(selectedPool.FixedExchangeRate);
-                console.log(`Fix price set for ${poolSelect} :`, selectedPool.FixedExchangeRate);
+                // console.log(`Fix price set for ${poolSelect} :`, selectedPool.FixedExchangeRate);
             } else {
                 setExchangeRate("0");
                 console.log("No valid pool selected");
@@ -1204,6 +1226,8 @@ export default function Swap96({
         setPoolSelect("")
         setFeeSelect(10000)
     }, [tokenA, tokenB])
+
+    console.log({newPrice, fixedExchangeRate})
 
     return (
         <div className='space-y-2'>
@@ -1467,22 +1491,24 @@ export default function Swap96({
                                 : <span className="text-red-500 px-2">insufficient liquidity</span>
                             }
                             {!wrappedRoute && Number(amountB) > 0 &&
-                                <span>[PI: {
-                                    poolSelect === 'CMswap' ?
-                                        ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 <= 100 ?
-                                            ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 > 0 ?
-                                                ((100 - ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate)))) * -1).toFixed(4) :
-                                                (100 - ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate)))).toFixed(4)
+                                <span>
+                                    [PI: {
+                                        poolSelect === 'CMswap' ?
+                                            ((Number(newPrice) * 100) / Number(Number(fixedExchangeRate))) - 100 <= 100 ?
+                                                ((Number(newPrice) * 100) / Number(Number(fixedExchangeRate))) - 100 > 0 ?
+                                                    ((100 - ((Number(newPrice) * 100) / Number(Number(fixedExchangeRate)))) * -1).toFixed(4) :
+                                                    (100 - ((Number(newPrice) * 100) / Number(Number(fixedExchangeRate)))).toFixed(4)
+                                                :
+                                                ">100"
                                             :
-                                            ">100"
-                                        :
-                                        ((Number(newPrice) * 100) / Number(fixedExchangeRate)) - 100 <= 100 ?
-                                            ((Number(newPrice) * 100) / Number(fixedExchangeRate)) - 100 > 0 ?
-                                                ((((Number(fixedExchangeRate) - Number(newPrice)) * 100) / Number(fixedExchangeRate)) * -1).toFixed(4) :
-                                                (((Number(fixedExchangeRate) - Number(newPrice)) * 100) / Number(fixedExchangeRate)).toFixed(4)
-                                            :
-                                            ">100"
-                                }%]</span>
+                                            ((Number(newPrice) * 100) / Number(fixedExchangeRate)) - 100 <= 100 ?
+                                                ((Number(newPrice) * 100) / Number(fixedExchangeRate)) - 100 > 0 ?
+                                                    ((((Number(fixedExchangeRate) - Number(newPrice)) * 100) / Number(fixedExchangeRate)) * -1).toFixed(4) :
+                                                    (((Number(fixedExchangeRate) - Number(newPrice)) * 100) / Number(fixedExchangeRate)).toFixed(4)
+                                                :
+                                                ">100"
+                                    }%]
+                                </span>
                             }
                         </div>
                         {(tokenA.name === 'KUSDT' || tokenB.name === 'KUSDT') &&

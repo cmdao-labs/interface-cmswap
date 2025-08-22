@@ -1,5 +1,6 @@
 .DS_Store
 node_modules
+build/
 .next
 next-env.d.ts
 .env.local
