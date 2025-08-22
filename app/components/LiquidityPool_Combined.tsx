@@ -96,7 +96,7 @@ const themes: Record<ThemeId, Theme> = {
     accent: "green-400",
     glow: "",
     border: "border-green-400/30",
-    text: "text-green-300",
+    text: "text-green-500",
     bg: "bg-gradient-to-br from-slate-700 via-black to-emerald-900"
   },
 };
@@ -119,7 +119,7 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
   type SortField = 'liquidity' | 'volume24h' | 'fee24h' | 'apr' | 'name';
   const [sortBy, setSortBy] = useState<SortField>('liquidity');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [listFilter, setListFilter] = useState<'all' | 'listed' | 'unlisted'>('all');
+  const [listFilter, setListFilter] = useState<any>('all');
   const [validPools, setValidPools] = useState<
     {
       tokenA: string;
@@ -366,8 +366,8 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
 
   const sortedPools = [...validPools]
     .filter(pool => {
-      if (listFilter === 'listed') return pool.listed === true;
-      if (listFilter === 'unlisted') return pool.listed === false;
+      if (listFilter === 'listedLP') return pool.listed === true;
+      if (listFilter === 'unlistedLP') return pool.listed === false;
       return true;
     })
     .sort((a, b) => {
@@ -431,13 +431,15 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
           className={`flex items-center gap-1.5 my-4 p-1 rounded-full w-fit border ${theme.border} shadow-inner shadow-${theme.accent}/10 backdrop-blur-md bg-[#061f1c]`}
         >
           {[
-            { label: 'All', value: 'all' },
-            { label: 'Listed', value: 'listed' },
-            { label: 'Not Listed', value: 'unlisted' },
+            { label: 'All Reward Programs', value: 'allRP' },
+            { label: 'My Reward Programs', value: 'myRP' },
+            { label: 'All Liquidity', value: 'allLP' },
+            { label: 'Listed Liquidity', value: 'listedLP' },
+            { label: 'Not Listed', value: 'unlistedLP' },
           ].map(({ label, value }) => (
             <button
               key={value}
-              onClick={() => setListFilter(value as 'all' | 'listed' | 'unlisted')}
+              onClick={() => setListFilter(value)}
               className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200
                 ${listFilter === value ? `bg-gradient-to-r ${theme.primary} text-black shadow-lg shadow-${theme.accent}/30` : `${theme.text} hover:text-white hover:bg-${theme.accent}/10`}`}
             >
@@ -484,7 +486,7 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
                         <img src={pool.tokenBLogo || '/default2.png'} alt="token2" className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0" />
                       </div>
                       <div>
-                        <div className="font-semibold text-white group-hover:text-cyan-300 transition-colors">
+                        <div className={`font-semibold text-white group-hover:${theme.text} transition-colors`}>
                           {pool.tokenA} / {pool.tokenB}
                         </div>
                         <div className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-gradient-to-r ${theme.secondary} bg-opacity-30 ${theme.text} shadow-sm`}>
