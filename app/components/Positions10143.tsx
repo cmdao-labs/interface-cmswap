@@ -523,7 +523,7 @@ export default function Positions10143({
                     <>
                         {position.map(obj => 
                             <div key={Number(obj.Id)} className="mb-4 w-full bg-[#0a0b1e]/80 border border-[#00ff9d]/10 rounded-xl gap-2 flex flex-col items-start">
-                                <div className="w-full py-4 h-[242px] bg-white/5 rounded-t-xl relative inset-0 h-full w-full bg-white/5 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]">
+                                <div className="w-full grid py-4 h-[242px] bg-white/5 rounded-t-xl relative inset-0 h-full w-full bg-white/5 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]">
                                     <img alt="" src={obj.Image} height={100} width={100} className="place-self-center" style={{alignSelf: 'center', justifySelf: 'center'}} />
                                     <span className="absolute bottom-5 left-5">{obj.CurrPrice > obj.MinPrice && obj.CurrPrice < obj.MaxPrice ? 'In range' : 'Out of range'}</span>
                                     <span className="absolute bottom-5 right-5">{obj.FeeTier / 10000}%</span>
