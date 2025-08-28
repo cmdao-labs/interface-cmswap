@@ -486,21 +486,21 @@ export default function Positions8899({
                         {position.map(obj => 
                             <div key={Number(obj.Id)} className="mb-4 w-full bg-[#0a0b1e]/80 border border-[#00ff9d]/10 rounded-xl gap-2 flex flex-col items-start">
                                 <div className="w-full py-4 h-[242px] bg-white/5 rounded-t-xl relative inset-0 h-full w-full bg-white/5 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]">
-                                    <img alt="" src={obj.Image} height={100} width={100} className="place-self-center" />
+                                    <img alt="" src={obj.Image} height={100} width={100} className="place-self-center" style={{alignSelf: 'center', justifySelf: 'center'}} />
                                     <span className="absolute bottom-5 left-5">{obj.CurrPrice > obj.MinPrice && obj.CurrPrice < obj.MaxPrice ? 'In range' : 'Out of range'}</span>
                                     <span className="absolute bottom-5 right-5">{obj.FeeTier / 10000}%</span>
                                 </div>
                                 <div className="w-full py-1 px-6 flex flex-row justify-between">
-                                    <span className="text-gray-500">Position #{obj.Id}</span>
-                                    <span>{obj.Amount0.toFixed(4)} <span className="text-gray-500">{obj.Token0} /</span> {obj.Amount1.toFixed(4)} <span className="text-gray-500">{obj.Token1}</span></span>
+                                    <span className="text-gray-500 text-left">Position #{obj.Id}</span>
+                                    <span className="text-right">{obj.Amount0.toFixed(4)} <span className="text-gray-500">{obj.Token0} /</span> {obj.Amount1.toFixed(4)} <span className="text-gray-500">{obj.Token1}</span></span>
                                 </div>
                                 <div className="w-full py-1 px-6 flex flex-row justify-between">
-                                    <span className="text-gray-500">Fee</span>
-                                    <span>{obj.Fee0.toFixed(4)} <span className="text-gray-500">{obj.Token0} /</span> {obj.Fee1.toFixed(4)} <span className="text-gray-500">{obj.Token1}</span></span>
+                                    <span className="text-gray-500 text-left">Fee</span>
+                                    <span className="text-right">{obj.Fee0.toFixed(4)} <span className="text-gray-500">{obj.Token0} /</span> {obj.Fee1.toFixed(4)} <span className="text-gray-500">{obj.Token1}</span></span>
                                 </div>
                                 <div className="w-full py-1 px-6 flex flex-row justify-between">
-                                    <span className="text-gray-500">Current : Min : Max</span>
-                                    <span>{obj.CurrPrice.toFixed(4)} : {obj.MinPrice.toFixed(4)} : {obj.MaxPrice > 1e18 ? '♾️' : obj.MaxPrice.toFixed(4)} <span className="text-gray-500">{obj.Token0}/{obj.Token1}</span></span>
+                                    <span className="text-gray-500 text-left">Current : Min : Max</span>
+                                    <span className="text-right">{obj.CurrPrice.toFixed(4)} : {obj.MinPrice.toFixed(4)} : {obj.MaxPrice > 1e18 ? '♾️' : obj.MaxPrice.toFixed(4)} <span className="text-gray-500">{obj.Token0}/{obj.Token1}</span></span>
                                 </div>
                                 <div className="w-full mb-4 py-1 px-6 gap-2 flex flex-row items-start justify-start flex-wrap">
                                     <Drawer open={isAddPositionModal} onOpenChange={setIsAddPositionModal}>
@@ -521,7 +521,7 @@ export default function Positions8899({
                                                 setIsAddPositionModal(true)
                                             }}
                                         >
-                                            Add Liquidity
+                                            Add
                                         </Button>
                                         <DrawerContent className="z-100 border">
                                             <div className="mx-auto w-3/4 xl:w-full max-w-sm space-y-4 my-7">
@@ -548,7 +548,7 @@ export default function Positions8899({
                                         </DrawerContent>
                                     </Drawer>
                                     <Drawer open={isRemPositionModal} onOpenChange={setIsRemPositionModal}>
-                                        <Button variant="outline" className="bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md cursor-pointer" onClick={() => {setPositionSelected(obj); setIsRemPositionModal(true);}}>Remove Liquidity</Button>
+                                        <Button variant="outline" className="bg-[#00ff9d]/10 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md cursor-pointer" onClick={() => {setPositionSelected(obj); setIsRemPositionModal(true);}}>Remove</Button>
                                         <DrawerContent className="z-100 border">
                                             <div className="mx-auto w-full max-w-sm space-y-4 my-7">
                                                 <DrawerHeader>
