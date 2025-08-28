@@ -90,7 +90,7 @@ const themes: Record<ThemeId, Theme> = {
     text: 'text-purple-300',
     bg: 'bg-gradient-to-br from-slate-700 via-black to-emerald-900',
   },
-   25925: {
+  25925: {
     primary: "from-green-400 to-emerald-400",
     secondary: "from-green-600 to-emerald-600",
     accent: "green-400",
@@ -120,8 +120,7 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
   const [sortBy, setSortBy] = useState<SortField>('liquidity');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [listFilter, setListFilter] = useState<any>('all');
-  const [validPools, setValidPools] = useState<
-    {
+  const [validPools, setValidPools] = useState<{
       tokenA: string;
       tokenALogo: string;
       tokenAaddr: string;
@@ -138,6 +137,19 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
       listed: boolean;
     }[]
   >([]);
+
+    const [stakingList, setStakingList] = useState<{
+      name: string;
+      tokenALogo: string;
+      tokenBLogo: string;
+      totalStaked: number;
+      apr: number;
+      pending: number;
+      staked: number;
+      themeId: number;
+
+  }[]>([]);
+
   const feeOptions = [100, 500, 3000, 10000];
   const { chainId } = useAccount();
   const selectedChainId = chainId || chainConfig.chainId;
@@ -352,7 +364,28 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
       console.log('Valid pools:', results);
     };
 
+    const fetchPrograms = async () => {
+      
+      //** FOR KUB STAKING */
+      const initials = async () => {
+        setStakingList([{
+          name: "Staking tKKUB-tK earn Points",
+          tokenALogo: tokens[1].logo,
+          tokenBLogo: tokens[2].logo,
+          totalStaked: 22,
+          apr: 20.21,
+          pending: 1000,
+          staked: 10,
+          themeId: 96,
+        }]);
+      };
+        
+
+      initials();
+    };
+
     fetchPools();
+    fetchPrograms();
   }, [priceList, chainConfig]);
 
   const handleSort = (field: SortField) => {
@@ -391,10 +424,16 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
       }
     });
 
+    const sortedStaking = [...stakingList]
+    .filter(pool => {
+      if (listFilter === 'myRP') return pool.staked > 0;
+      return true;
+    });
+
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortBy !== field) return <ChevronDown className="w-4 h-4 opacity-50" />;
-    return sortOrder === 'desc' ? 
-      <TrendingDown className="w-4 h-4 text-cyan-400" /> : 
+    return sortOrder === 'desc' ?
+      <TrendingDown className="w-4 h-4 text-cyan-400" /> :
       <TrendingUp className="w-4 h-4 text-cyan-400" />;
   };
 
@@ -447,121 +486,250 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
             </button>
           ))}
         </div>
-        <div className="hidden lg:block">
-          <div className="backdrop-blur-xl rounded-2xl border border-slate-700/50 overflow-hidden">
-            <div className="grid [grid-template-columns:1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 p-6 border-b border-slate-700/50">
-              <button onClick={() => handleSort('name')} className="flex items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
-                Pool
-                <SortIcon field="name" />
-              </button>
-              <button onClick={() => handleSort('liquidity')} className="flex mx-[-16px] items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
-                Liquidity
-                <SortIcon field="liquidity" />
-              </button>
-              <button onClick={() => handleSort('volume24h')} className="flex mx-[-32px] items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
-                Vol 24H
-                <SortIcon field="volume24h" />
-              </button>
-              <button onClick={() => handleSort('fee24h')} className="flex mx-[-48px] items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
-                Fee 24H
-                <SortIcon field="fee24h" />
-              </button>
-              <button onClick={() => handleSort('apr')} className="flex mx-[-60px] items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
-                APR 24H
-                <SortIcon field="apr" />
-              </button>
-              <div className="font-medium text-slate-300">Action</div>
-            </div>
-            <div className="divide-y divide-slate-700/30">
-              {sortedPools.map((pool) => {
-                const theme = themes[pool.themeId as ThemeId];
-                return (
-                  <div
-                    key={`${pool.tokenA}-${pool.tokenB}-${pool.fee}-${pool.poolAddress}`}
-                    className="grid [grid-template-columns:1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 p-6 hover:bg-slate-800/30 transition-colors cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-10 h-10">
-                        <img src={pool.tokenALogo || '/default2.png'} alt="token1" className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0" />
-                        <img src={pool.tokenBLogo || '/default2.png'} alt="token2" className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0" />
-                      </div>
-                      <div>
-                        <div className={`font-semibold text-white group-hover:${theme.text} transition-colors`}>
-                          {pool.tokenA} / {pool.tokenB}
-                        </div>
-                        <div className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-gradient-to-r ${theme.secondary} bg-opacity-30 ${theme.text} shadow-sm`}>
-                          <span>{(pool.fee / 10000)}% Fee</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col justify-center">
-                      <span className="text-white font-medium">{formatNumber(pool.liquidity)}</span>
-                    </div>
-                    <div className="flex flex-col justify-center">
-                      <span className="text-white font-medium">{formatNumber(pool.volume24h)}</span>
-                    </div>
-                    <div className="flex flex-col justify-center">
-                      <span className="text-white font-medium">{formatNumber(pool.fee24h)}</span>
-                    </div>
-                    <div className="flex flex-col justify-center">
-                      <span className={`font-bold text-lg ${theme.text}`}>{formatPercentage(pool.apr)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 whitespace-nowrap">
-                      <Link href={`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=liquidity`}>
-                        <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs">Supply</Button>
-                      </Link>
-                      <Link href={`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=swap`}>
-                        <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs">Swap</Button>
-                      </Link>
-                    </div>
+        {
+          ['allRP', 'myRP'].includes(listFilter) ? (
+            <div>
+              <div className="hidden lg:block">
+                <div className="backdrop-blur-xl rounded-2xl border border-slate-700/50 overflow-hidden">
+                  <div className="grid [grid-template-columns:1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 p-6 border-b border-slate-700/50">
+                    <button onClick={() => handleSort('name')} className="flex items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
+                      Program Name
+                      <SortIcon field="name" />
+                    </button>
+                    <button onClick={() => handleSort('liquidity')} className="flex mx-[-16px] items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
+                      Total Stake
+                      <SortIcon field="liquidity" />
+                    </button>
+                    <button onClick={() => handleSort('volume24h')} className="flex mx-[-32px] items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
+                      APR
+                      <SortIcon field="volume24h" />
+                    </button>
+                    <button onClick={() => handleSort('fee24h')} className="flex mx-[-48px] items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
+                      Pending Reward
+                      <SortIcon field="fee24h" />
+                    </button>
+                    <button onClick={() => handleSort('apr')} className="flex mx-[-60px] items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
+                      Staked
+                      <SortIcon field="apr" />
+                    </button>
+                    <div className="font-medium text-slate-300">Action</div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-        <div className="lg:hidden space-y-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-white">Pool</h2>
-            <h2 className="text-lg font-semibold text-white">Vol/APR 24H</h2>
-          </div>
-          {sortedPools.map((pool) => {
-            const theme = themes[pool.themeId as ThemeId];
-            return (
-              <div
-                key={`${pool.tokenA}-${pool.tokenB}-${pool.fee}-${pool.poolAddress}`}
-                className={`bg-slate-800/50 backdrop-blur-xl rounded-xl border ${theme.border} p-4 hover:bg-slate-800/70 transition-all cursor-pointer`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="relative w-10 h-10">
-                      <img src={pool.tokenALogo || '/default2.png'} alt="token1" className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0" />
-                      <img src={pool.tokenBLogo || '/default2.png'} alt="token2" className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0" />
-                    </div>
-                    <div>
-                      <div className="font-semibold text-white">
-                        {pool.tokenA} / {pool.tokenB}
-                      </div>
-                      <div className={`text-sm ${theme.text}`}>
-                        {(pool.fee / 10000)}% Fee
-                      </div>
-                      <div className="text-xs text-slate-400 mt-1">
-                        TVL: {formatNumber(pool.liquidity)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-white font-medium">{formatNumber(pool.volume24h)}</div>
-                    <div className={`font-bold text-lg ${theme.text}`}>{formatPercentage(pool.apr)}</div>
-                    <div className="text-xs text-slate-400 mt-1">
-                      Fee: {formatNumber(pool.fee24h)}
-                    </div>
+                  <div className="divide-y divide-slate-700/30">
+                    {sortedStaking.map((pool,index) => {
+                      const theme = themes[pool.themeId as ThemeId];
+                      return (
+                        <div
+                          key={index}
+                          className="grid [grid-template-columns:1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 p-6 hover:bg-slate-800/30 transition-colors cursor-pointer group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-10 h-10">
+                              <img src={pool.tokenALogo || '/default2.png'} alt="token1" className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0" />
+                              <img src={pool.tokenBLogo || '/default2.png'} alt="token2" className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0" />
+                            </div>
+                            <div>
+                              <div className={`font-semibold text-white group-hover:${theme.text} transition-colors`}>
+                                {pool.name}
+                              </div>
+                      
+                            </div>
+                          </div>
+                          <div className="flex flex-col justify-center">
+                            <span className="text-white font-medium">{(pool.totalStaked)}</span>
+                          </div>
+                          <div className="flex flex-col justify-center">
+                            <span className={`font-bold text-lg ${theme.text}`}>{formatPercentage(pool.apr)}</span>
+
+                          </div>
+                          <div className="flex flex-col justify-center">
+                            <span className="text-white font-medium">{(pool.pending)}</span>
+                          </div>
+                          <div className="flex flex-col justify-center">
+                            <span className="text-white font-medium">{(pool.staked)}</span>
+                          </div>
+                          <div className="flex items-center gap-2 whitespace-nowrap">
+                            <Link href={`/staking?program=${pool.name}`}>
+                              <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs">Go Farm</Button>
+                            </Link>
+                       
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
+              <div className="lg:hidden space-y-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold text-white">Pool</h2>
+                  <h2 className="text-lg font-semibold text-white">Pending/APR 24H</h2>
+                </div>
+                {sortedStaking.map((pool,index) => {
+                  const theme = themes[pool.themeId as ThemeId];
+                  return (
+                    <div
+                      key={index}
+                      className={`bg-slate-800/50 backdrop-blur-xl rounded-xl border ${theme.border} p-4 hover:bg-slate-800/70 transition-all cursor-pointer`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-10 h-10">
+                            <img src={pool.tokenALogo || '/default2.png'} alt="token1" className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0" />
+                            <img src={pool.tokenBLogo || '/default2.png'} alt="token2" className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-white">
+                              {pool.name}
+                            </div>
+                        
+                            <div className="text-xs text-slate-400 mt-1">
+                              TVL: {formatNumber(pool.totalStaked)}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-white font-medium">{formatNumber(pool.pending)}</div>
+                          <div className={`font-bold text-lg ${theme.text}`}>{formatPercentage(pool.apr)}</div>
+                     
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+          )
+            :
+            (<div>
+              <div className="hidden lg:block">
+                <div className="backdrop-blur-xl rounded-2xl border border-slate-700/50 overflow-hidden">
+                  <div className="grid [grid-template-columns:1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 p-6 border-b border-slate-700/50">
+                    <button onClick={() => handleSort('name')} className="flex items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
+                      Pool
+                      <SortIcon field="name" />
+                    </button>
+                    <button onClick={() => handleSort('liquidity')} className="flex mx-[-16px] items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
+                      Liquidity
+                      <SortIcon field="liquidity" />
+                    </button>
+                    <button onClick={() => handleSort('volume24h')} className="flex mx-[-32px] items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
+                      Vol 24H
+                      <SortIcon field="volume24h" />
+                    </button>
+                    <button onClick={() => handleSort('fee24h')} className="flex mx-[-48px] items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
+                      Fee 24H
+                      <SortIcon field="fee24h" />
+                    </button>
+                    <button onClick={() => handleSort('apr')} className="flex mx-[-60px] items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
+                      APR 24H
+                      <SortIcon field="apr" />
+                    </button>
+                    <div className="font-medium text-slate-300">Action</div>
+                  </div>
+                  <div className="divide-y divide-slate-700/30">
+                    {sortedPools.map((pool) => {
+                      const theme = themes[pool.themeId as ThemeId];
+                      return (
+                        <div
+                          key={`${pool.tokenA}-${pool.tokenB}-${pool.fee}-${pool.poolAddress}`}
+                          className="grid [grid-template-columns:1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 p-6 hover:bg-slate-800/30 transition-colors cursor-pointer group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-10 h-10">
+                              <img src={pool.tokenALogo || '/default2.png'} alt="token1" className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0" />
+                              <img src={pool.tokenBLogo || '/default2.png'} alt="token2" className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0" />
+                            </div>
+                            <div>
+                              <div className={`font-semibold text-white group-hover:${theme.text} transition-colors`}>
+                                {pool.tokenA} / {pool.tokenB}
+                              </div>
+                              <div className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-gradient-to-r ${theme.secondary} bg-opacity-30 ${theme.text} shadow-sm`}>
+                                <span>{(pool.fee / 10000)}% Fee</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col justify-center">
+                            <span className="text-white font-medium">{formatNumber(pool.liquidity)}</span>
+                          </div>
+                          <div className="flex flex-col justify-center">
+                            <span className="text-white font-medium">{formatNumber(pool.volume24h)}</span>
+                          </div>
+                          <div className="flex flex-col justify-center">
+                            <span className="text-white font-medium">{formatNumber(pool.fee24h)}</span>
+                          </div>
+                          <div className="flex flex-col justify-center">
+                            <span className={`font-bold text-lg ${theme.text}`}>{formatPercentage(pool.apr)}</span>
+                          </div>
+
+                          <div className="flex items-center gap-2 whitespace-nowrap hidden lg:flex">
+                            <Link href={`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=liquidity`} target='_blank'>
+                              <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs">Supply</Button>
+                            </Link>
+                            <Link href={`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=swap`} target='_blank'>
+                              <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs">Swap</Button>
+                            </Link>
+                          </div>
+
+
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              <div className="lg:hidden space-y-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold text-white">Pool</h2>
+                  <h2 className="text-lg font-semibold text-white">Vol/APR 24H</h2>
+                </div>
+                {sortedPools.map((pool) => {
+                  const theme = themes[pool.themeId as ThemeId];
+                  return (
+                    <div
+                      key={`${pool.tokenA}-${pool.tokenB}-${pool.fee}-${pool.poolAddress}`}
+                      className={`bg-slate-800/50 backdrop-blur-xl rounded-xl border ${theme.border} p-4 hover:bg-slate-800/70 transition-all cursor-pointer`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-10 h-10">
+                            <img src={pool.tokenALogo || '/default2.png'} alt="token1" className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0" />
+                            <img src={pool.tokenBLogo || '/default2.png'} alt="token2" className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-white">
+                              {pool.tokenA} / {pool.tokenB}
+                            </div>
+                            <div className={`text-sm ${theme.text}`}>
+                              {(pool.fee / 10000)}% Fee
+                            </div>
+                            <div className="text-xs text-slate-400 mt-1">
+                              TVL: {formatNumber(pool.liquidity)}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-white font-medium">{formatNumber(pool.volume24h)}</div>
+                          <div className={`font-bold text-lg ${theme.text}`}>{formatPercentage(pool.apr)}</div>
+                          <div className="text-xs text-slate-400 mt-1">
+                            Fee: {formatNumber(pool.fee24h)}
+                          </div>
+                        </div>
+                      </div>
+                        <div className="flex items-center gap-2 whitespace-nowrap space-between w-full flex lg:hidden">
+                            <Link href={`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=liquidity`} >
+                              <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs">Supply</Button>
+                            </Link>
+                            <Link href={`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=swap`}>
+                              <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs">Swap</Button>
+                            </Link>
+                          </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>)
+        }
       </div>
     </div>
   );
