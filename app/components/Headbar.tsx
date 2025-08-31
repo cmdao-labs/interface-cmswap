@@ -16,6 +16,7 @@ export default function Headbar() {
         setIsMenuOpen(false)
     }
     const { chainId } = useAccount()
+    const [isEarnOpen, setIsEarnOpen] = useState(false)
 
     return (
         <QueryClientProvider client={queryClient}> 
@@ -41,16 +42,23 @@ export default function Headbar() {
                                     <Link href="/pump" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono">
                                     <Button variant="ghost" className="cursor-pointer">Pump</Button>
                                     </Link>
-                                    {typeof chainId === 'number' && [25925].includes(chainId) && (
-                                        <Link href="/earn" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono">
-                                        <Button variant="ghost" className="cursor-pointer">Earn</Button>
-                                        </Link>
+   
+                                                                {/* Earn Dropdown Desktop */}
+                            {typeof chainId === 'number' && [25925].includes(chainId) && (
+                                <div className="relative"
+                                     onMouseEnter={() => setIsEarnOpen(true)}
+                                     onMouseLeave={() => setIsEarnOpen(false)}>
+                                    <Button variant="ghost" className='text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono'>Earn</Button>
+                                    {isEarnOpen && (
+                                        <div className="absolute top-full mt-1 left-0 bg-gray-800 rounded-md shadow-lg min-w-[160px] z-50 flex flex-col">
+                                            <Link href="/staking/0x"><Button variant="ghost" className="w-full text-left">Staking</Button></Link>
+                                            {typeof chainId === 'number' && [25925, 96, 8899].includes(chainId) && (
+                                                <Link href="/liquidity-pool"><Button variant="ghost" className="w-full text-left">Liquidity Pool</Button></Link>
+                                            )}
+                                        </div>
                                     )}
-                                    {typeof chainId === 'number' && [25925, 96,8899].includes(chainId) && (
-                                        <Link href="/liquidity-pool" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm font-mono">
-                                        <Button variant="ghost" className="cursor-pointer">Liquidity</Button>
-                                        </Link>
-                                    )}
+                                </div>
+                            )}
                                     {chainId === 2 && (
                                     <>
                                         
