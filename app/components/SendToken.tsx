@@ -231,7 +231,7 @@ const [showScanner, setShowScanner] = useState(false);
     },[token])
 
   return (
-<div className="p-6 border rounded-2xl shadow-md max-w-md mx-auto ">
+<div className="p-6 border rounded-2xl shadow-md max-w-md mx-auto min-h-[300px] mb-8">
   <h2 className="text-xl font-bold mb-6 text-center text-gray-400">Send {token.name}</h2>
   
   {/* Token Selection Section */}
