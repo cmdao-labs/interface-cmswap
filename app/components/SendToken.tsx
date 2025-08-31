@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { createPublicClient, http, erc20Abi } from "viem";
 import { jbc, bitkub, monadTestnet, bitkubTestnet, mainnet } from "viem/chains";
-import { Copy, CopyCheck } from "lucide-react";
+import { Copy, CopyCheck,ScanQrCode,ChevronDown } from "lucide-react";
 import { config } from "../config";
 import { formatEther, parseEther } from 'viem'
 
@@ -21,7 +21,6 @@ import { tokens as tokens96 } from "@/app/lib/96";
 import { tokens as tokens8899 } from "@/app/lib/8899";
 import { tokens as tokens10143 } from "@/app/lib/10143";
 import { tokens as tokens25925 } from "@/app/lib/25925";
-import { ChevronDown, Search, Check } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -35,6 +34,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import QRScannerModal from "./QRScannerModal";
 
 type ChainConfig = {
   chain: any;
@@ -123,6 +123,8 @@ export default function SendTokenComponent({
     value: "0xstring";
     logo: string;
   }>(lib.tokens[0]);
+const [recipient, setRecipient] = useState("");
+const [showScanner, setShowScanner] = useState(false);
 
 
   async function resolveNameIfNeeded(input: string) {
@@ -180,7 +182,7 @@ export default function SendTokenComponent({
 
     if (token.value === "0xnative" as '0xstring') {
         const nativeBal = await getBalance(config, { address });
-        bal = nativeBal.value;
+        bal = nativeBal.value - BigInt(1e15); // reserve handle - 0.001 for gas 
     } else {
         const ercBal = await publicClient.readContract({
         address: token.value as `0x${string}`,
@@ -317,22 +319,37 @@ export default function SendTokenComponent({
     )}
   </div>
 
-  {/* Recipient Section */}
+    {/* Recipient Section */}
   <div className="mb-6">
     <label className="block text-sm font-medium text-gray-700 mb-2">Recipient Address</label>
-    <input
-      type="text"
-      className="w-full border border-gray-300 rounded-lg p-3 mt-1 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-      placeholder={`0x... or ${nameService ?? "address"}`}
-      value={to}
-      onChange={(e) => setTo(e.target.value)}
-    />
-    {resolvedTo && (
+      <div className="relative">
+        <input
+          type="text"
+          className="w-full border border-gray-300 rounded-lg p-3 pr-12 mt-1 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+          placeholder={`0x... or ${nameService ?? "address"}`}
+          value={to}
+          onChange={(e) => setTo(e.target.value)}
+        />
+
+        {/* ปุ่มสแกนอยู่ชิดขวาในช่อง */}
+        <div className="absolute inset-y-0 right-3 flex items-center">
+          <ScanQrCode onClick={() => setShowScanner(true)} />
+        </div>
+      </div>
+{/*     {resolvedTo && (
       <p className="text-xs text-emerald-600 mt-2 bg-emerald-50 p-2 rounded">
         ✓ Resolved: {resolvedTo}
       </p>
-    )}
+    )} */}
   </div>
+
+      {showScanner && (
+  <QRScannerModal
+    onClose={() => setShowScanner(false)}
+    onScan={(addr) => setTo(addr)}
+  />
+)}
+
 
   {/* Amount Section */}
   <div className="mb-8">
