@@ -19,6 +19,7 @@ import Positions10143 from '../components/Positions10143'
 import Positions25925 from '../components/Positions25925'
 import { useSearchParams } from 'next/navigation'
 import ReferralTracker from '../components/Refferal'
+import SendTokenComponent from '../components/SendToken'
 
 export default function Page() {
     const [isLoading, setIsLoading] = React.useState(false)
@@ -35,16 +36,22 @@ export default function Page() {
             <Card className="w-full max-w-xl mx-auto bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-lg overflow-hidden p-2 mb-8 mt-[100px]">
                 <div className="px-4">
                     <Tabs defaultValue={tabValue} className="w-full sticky">
-                        <TabsList className="w-full grid grid-cols-3 bg-[#0a0b1e] rounded-md p-1 mb-4">
-                            <TabsTrigger value="swap" className="font-mono text-sm data-[state=active]:bg-[#162638] data-[state=active]:text-[#00ff9d] rounded cursor-pointer">Instant swap</TabsTrigger>
+                        <TabsList className="w-full grid grid-cols-4 bg-[#0a0b1e] rounded-md p-1 mb-4">
+                            <TabsTrigger value="swap" className="font-mono text-sm data-[state=active]:bg-[#162638] data-[state=active]:text-[#00ff9d] rounded cursor-pointer">Swap</TabsTrigger>
                             <TabsTrigger value="liquidity" className="font-mono text-sm data-[state=active]:bg-[#162638] data-[state=active]:text-[#00ff9d] rounded cursor-pointer">Liquidity</TabsTrigger>
                             <TabsTrigger value="position" className="font-mono text-sm data-[state=active]:bg-[#162638] data-[state=active]:text-[#00ff9d] rounded cursor-pointer">Positions</TabsTrigger>
+                            <TabsTrigger value="send" className="font-mono text-sm data-[state=active]:bg-[#162638] data-[state=active]:text-[#00ff9d] rounded cursor-pointer">Send</TabsTrigger>
                         </TabsList>
                         <TabsContent value="swap">
                             {chainId === 8899 && <Swap8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
                             {(chainId === 96 || chainId === undefined) && <Swap96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
                             {chainId === 10143 && <Swap10143 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
                             {chainId === 25925 && <Swap25925 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                        </TabsContent>
+
+                          <TabsContent value="send">
+                            <SendTokenComponent chainConfig={Number(chainId)} setIsLoading={setIsLoading} setErrMsg={setErrMsg} />
+
                         </TabsContent>
                         <TabsContent value="liquidity">
                             {chainId === 8899 && <Liquidity8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
