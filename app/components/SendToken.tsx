@@ -279,6 +279,7 @@ const [showScanner, setShowScanner] = useState(false);
                   onSelect={() => {
                     renderToken(token.value);
                     setToken(token);
+                    setAmount('')
                     setOpen(false);
                   }}
                   className="cursor-pointer"
