@@ -1,6 +1,5 @@
-"use client";
-import React, { useState } from "react";
-import { QrReader } from "react-qr-reader";
+import React, { useState, useRef, useEffect } from "react";
+import Webcam from "react-webcam";
 import { Button } from "@/components/ui/button";
 import jsQR from "jsqr";
 
@@ -10,18 +9,13 @@ interface QRScannerModalProps {
 }
 
 export default function QRScannerModal({ onClose, onScan }: QRScannerModalProps) {
+  const webcamRef = useRef<Webcam>(null);
   const [error, setError] = useState<string | null>(null);
-  const [fileInputKey, setFileInputKey] = useState(0); // reset input after scan
+  const [fileInputKey, setFileInputKey] = useState(0);
 
   const handleScan = (raw: string) => {
     let scanned = raw.trim();
-
-    // รองรับ format เช่น ethereum:0x1234... หรือ bkc:0x1234...
-    if (scanned.includes(":")) {
-      scanned = scanned.split(":")[1];
-    }
-
-    // ตรวจสอบ valid address
+    if (scanned.includes(":")) scanned = scanned.split(":")[1];
     if (/^0x[a-fA-F0-9]{40}$/.test(scanned)) {
       onScan(scanned as `0x${string}`);
       setError(null);
@@ -31,11 +25,34 @@ export default function QRScannerModal({ onClose, onScan }: QRScannerModalProps)
     }
   };
 
-const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  if (!e.target.files?.length) return;
-  const file = e.target.files[0];
+  // Webcam scanning
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const imgSrc = webcamRef.current?.getScreenshot();
+      if (!imgSrc) return;
 
-  try {
+      const img = new Image();
+      img.src = imgSrc;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code?.data) handleScan(code.data);
+      };
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Upload file
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    const file = e.target.files[0];
     const img = new Image();
     img.src = URL.createObjectURL(file);
     img.onload = () => {
@@ -44,46 +61,28 @@ const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       canvas.height = img.height;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
-
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-      if (code?.data) {
-        handleScan(code.data);
-      } else {
-        setError("Cannot decode QR from image");
-      }
+      if (code?.data) handleScan(code.data);
+      else setError("Cannot decode QR from image");
     };
-  } catch (err) {
-    console.error(err);
-    setError("Failed to read QR from image");
-  } finally {
     setFileInputKey((k) => k + 1);
-  }
-};
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-[#162638] p-6 rounded-2xl w-[90%] max-w-md">
         <h3 className="text-white text-lg font-bold mb-4 text-center">Scan QR Code</h3>
 
-        {/* Camera QR */}
+        {/* Camera Preview */}
         <div className="w-full rounded-xl overflow-hidden mb-4">
-          <QrReader
-  constraints={{ facingMode: "environment" }}
-  onResult={(result, error) => {
-    try {
-      if (!!result) handleScan(result.getText());
-    } catch (e) {
-      console.warn("QR decode failed:", e);
-    }
-    if (error) console.log(error);
-  }}
-  containerStyle={{ width: "100%" }}
-  videoStyle={{ width: "100%" }}
-/>
-
+          <Webcam
+            ref={webcamRef}
+            screenshotFormat="image/png"
+            videoConstraints={{ facingMode: "environment" }}
+            className="w-full"
+          />
         </div>
 
         {/* Upload QR image */}
