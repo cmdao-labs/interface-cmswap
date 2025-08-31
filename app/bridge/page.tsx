@@ -12,13 +12,13 @@ import { config } from '@/app/config'
 import ErrorModal from '@/app/components/error-modal'
 import ReferralTracker from '../components/Refferal'
 
-const chains: {name: string, id: number, logo: string}[] = [
+const chains: { name: string, id: number, logo: string }[] = [
     { name: 'JB chain', id: 8899, logo: './8899.png' },
     { name: 'KUB chain', id: 96, logo: './96.png' },
     { name: 'BNB chain', id: 56, logo: './56.png' },
 ]
 
-const tokens: {name: string, value: '0xstring', logo: string}[][] = [
+const tokens: { name: string, value: '0xstring', logo: string }[][] = [
     [
         { name: 'JUSDT', value: '0x24599b658b57f91E7643f4F154B16bcd2884f9ac' as '0xstring', logo: 'https://gateway.pinata.cloud/ipfs/bafkreif3vllg6mwswlqypqgtsh7i7wwap7zgrkvtlhdjoc63zjm7uv6vvi' },
     ],
@@ -103,8 +103,8 @@ export default function BridgeInterface() {
             data[1].result !== undefined ? setSourceBalance(formatEther(data[1].result)) : setSourceBalance('0')
             data[2].result !== undefined ? setDestinationBalance(formatEther(data[2].result)) : setDestinationBalance('0')
         }
-        
-       
+
+
         fetch0()
     }, [config, address, txupdate, erc20Abi, sourceChain, destinationChain])
 
@@ -129,7 +129,7 @@ export default function BridgeInterface() {
 
     return (
         <div className="min-h-screen bg-[#0a0b1e] p-4 font-mono bg-gradient-to-br from-slate-700 via-black to-emerald-900">
-            <ReferralTracker/>
+            <ReferralTracker />
             {isLoading && <div className="w-full h-full fixed backdrop-blur-[12px] z-999" />}
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
             <div className="max-w-md mx-auto">
@@ -148,7 +148,7 @@ export default function BridgeInterface() {
                                             <div className='gap-2 flex flex-row items-center justify-center'>
                                                 <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                                     <span className="text-[#00ff9d] text-xs">
-                                                        {sourceChain.logo !== '../favicon.ico' ?<img alt="" src={sourceChain.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
+                                                        {sourceChain.logo !== '../favicon.ico' ? <img alt="" src={sourceChain.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
                                                     </span>
                                                 </div>
                                                 <span className='truncate'>{sourceChain.name}</span>
@@ -221,7 +221,7 @@ export default function BridgeInterface() {
                                             <div className='gap-2 flex flex-row items-center justify-center'>
                                                 <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                                     <span className="text-[#00ff9d] text-xs">
-                                                        {destinationChain.logo !== '../favicon.ico' ?<img alt="" src={destinationChain.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
+                                                        {destinationChain.logo !== '../favicon.ico' ? <img alt="" src={destinationChain.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
                                                     </span>
                                                 </div>
                                                 <span className='truncate'>{destinationChain.name}</span>
@@ -272,7 +272,7 @@ export default function BridgeInterface() {
                                     type="text"
                                     placeholder="0.0"
                                     className="w-[140px] sm:w-[200px] bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto"
-                                    style={{backgroundColor: "transparent"}}
+                                    style={{ backgroundColor: "transparent" }}
                                     value={depositValue}
                                     onChange={(e) => setDepositValue(e.target.value)}
                                 />
@@ -282,7 +282,7 @@ export default function BridgeInterface() {
                                             <div className='gap-2 flex flex-row items-center justify-center'>
                                                 <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                                     <span className="text-[#00ff9d] text-xs">
-                                                        {tokenA.logo !== '../favicon.ico' ?<img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
+                                                        {tokenA.logo !== '../favicon.ico' ? <img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
                                                     </span>
                                                 </div>
                                                 <span className='truncate'>{tokenA.name}</span>
@@ -318,10 +318,28 @@ export default function BridgeInterface() {
                                     </PopoverContent>
                                 </Popover>
                             </div>
-                            <div className="flex justify-between items-center mt-2">
+                            <div className="flex justify-between items-center mt-2 text-xs font-mono">
                                 <span />
-                                <span className="text-gray-400 font-mono text-xs">{tokenA.name !== 'Choose Token' ? Number(sourceBalance).toFixed(4) + ' ' + tokenA.name : '0.0000'}</span>
+
+                                <span className="text-gray-400">
+                                    {tokenA.name !== 'Choose Token'
+                                        ? `${Number(sourceBalance).toFixed(4)} ${tokenA.name}`
+                                        : '0.0000'}
+                                    <button
+                                        onClick={() => {
+                                            const truncated = Math.floor(Number(sourceBalance) * 10000) / 10000;
+                                            setDepositValue(String(truncated));
+                                        }}
+                                        className="text-green-400 ml-2 border px-2 py-[4px] font-semibold hover:text-blue-500 transition-colors duration-150 cursor-pointer"
+                                    >
+                                        MAX
+                                    </button>
+
+                                </span>
+
+
                             </div>
+
                         </div>
 
                         <div className="p-3 rounded bg-[#0a0b1e]/50 border border-[#00ff9d]/10">
@@ -331,7 +349,7 @@ export default function BridgeInterface() {
                                     type="text"
                                     placeholder="0.0"
                                     className="w-[140px] sm:w-[200px] bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto"
-                                    style={{backgroundColor: "transparent"}}
+                                    style={{ backgroundColor: "transparent" }}
                                     value={Number(depositValue) - Number(bridgeFee) > 0 ? Number(depositValue) - Number(bridgeFee) : ''}
                                     readOnly
                                 />
@@ -341,7 +359,7 @@ export default function BridgeInterface() {
                                             <div className='gap-2 flex flex-row items-center justify-center'>
                                                 <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                                     <span className="text-[#00ff9d] text-xs">
-                                                        {tokenB.logo !== '../favicon.ico' ?<img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
+                                                        {tokenB.logo !== '../favicon.ico' ? <img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
                                                     </span>
                                                 </div>
                                                 <span className='truncate'>{tokenB.name}</span>
@@ -383,16 +401,16 @@ export default function BridgeInterface() {
                             </div>
                         </div>
                     </div>
-            
+
                     {sourceChain.id === chainId ?
                         <>
                             {Number(depositValue) <= Number(reserve) ?
-                                <Button 
+                                <Button
                                     className="w-full py-6 px-8 font-mono mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
                                     bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
                                     hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect
                                     shadow-lg shadow-emerald-500/40
-                                    active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" 
+                                    active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer"
                                     onClick={bridge}
                                 >
                                     Confirm
