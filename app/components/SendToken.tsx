@@ -237,8 +237,8 @@ const [showScanner, setShowScanner] = useState(false);
   {/* Token Selection Section */}
   <div className="mb-6">
     <div className="flex justify-between items-center mb-3">
-      <span className="text-gray-500 font-mono text-sm">Select Token</span>
-      <span className="text-emerald-600 font-mono text-sm font-medium">Balance: {balance}</span>
+      <span className="text-gray-500 Token text-sm">Select Token</span>
+      <span className="text-emerald-600 Token text-sm font-medium">Balance: {balance}</span>
     </div>
 
     <Popover open={open} onOpenChange={setOpen}>
@@ -247,7 +247,7 @@ const [showScanner, setShowScanner] = useState(false);
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-12 cursor-pointer rounded-lg"
+          className="w-full bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 Token flex items-center justify-between h-12 cursor-pointer rounded-lg"
         >
           <div className="gap-3 flex flex-row items-center justify-start">
             <div className="w-6 h-6 rounded-full bg-[#00ff9d]/20 flex items-center justify-center">
@@ -303,7 +303,7 @@ const [showScanner, setShowScanner] = useState(false);
     {/* Token Address Section */}
     {token.value !== ("0xnative" as "0xstring") && (
       <div className="flex items-center justify-between mt-2 p-2 bg-[#162638] rounded-lg">
-        <span className="text-[11px] lg:text-[14px] text-white font-mono truncate pr-2">
+        <span className="text-[11px] lg:text-[14px] text-white Token truncate pr-2">
           {`${token.value}`}
         </span>
         <button
@@ -365,7 +365,7 @@ const [showScanner, setShowScanner] = useState(false);
         onChange={(e) => setAmount(e.target.value)}
       />
       <Button 
-        className="px-6 py-3 font-mono font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
+        className="px-6 py-3 Token font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
                   bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
                   hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect
                   shadow-lg shadow-emerald-500/40 rounded-lg
@@ -379,7 +379,7 @@ const [showScanner, setShowScanner] = useState(false);
 
   {/* Send Button */}
   <Button
-    className="w-full py-4 px-8 font-mono font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
+    className="w-full py-4 px-8 Token font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
               bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
               hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect
               shadow-lg shadow-emerald-500/40 rounded-lg
