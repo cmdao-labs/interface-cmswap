@@ -343,12 +343,13 @@ const [showScanner, setShowScanner] = useState(false);
     )} */}
   </div>
 
-      {showScanner && (
-  <QRScannerModal
-    onClose={() => setShowScanner(false)}
-    onScan={(addr) => setTo(addr)}
-  />
-)}
+
+    {showScanner && (
+        <QRScannerModal
+        onClose={() => setShowScanner(false)}
+        onScan={(addr: `0x${string}`) => setTo(addr)}
+        />
+    )}
 
 
   {/* Amount Section */}
@@ -384,7 +385,7 @@ const [showScanner, setShowScanner] = useState(false);
               active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer"
     onClick={handleSend}
   >
-    Send {amount} {token.name}
+    Send {Number(amount).toLocaleString()} {token.name}
   </Button>
 </div>
   );
