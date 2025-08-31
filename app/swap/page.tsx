@@ -33,7 +33,7 @@ export default function Page() {
             <ReferralTracker/>
             {isLoading && <div className="w-full h-full fixed backdrop-blur-[12px] z-999" />}
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
-            <Card className="w-full max-w-xl mx-auto bg-water-200 bg-opacity-[0.07] border border-[#00ff9d]/20 rounded-lg overflow-hidden p-2 mb-8 mt-[100px]">
+            <Card className="w-full max-w-xl mx-auto bg-water-950 border border-[#00ff9d]/20 rounded-lg overflow-hidden p-2 mb-8 mt-[100px]">
                 <div className="px-4">
                     <Tabs defaultValue={tabValue} className="w-full sticky">
                         <TabsList className="w-full grid grid-cols-4 bg-[#0a0b1e] rounded-md p-1 mb-4">

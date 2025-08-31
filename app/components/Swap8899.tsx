@@ -1107,9 +1107,9 @@ export default function Swap8899({
         <div className='space-y-2'>
             <div className="rounded-lg bg-[#0a0b1e]/80 border border-[#00ff9d]/10 p-4">
                 <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-400 font-mono text-sm">From</span>
+                    <span className="text-gray-400 text-sm">From</span>
                     <input
-                        className="py-2 w-[340px] focus:outline-none text-gray-400 font-mono text-xs text-right"
+                        className="py-2 w-[340px] focus:outline-none text-gray-400 text-xs text-right"
                         value={tokenA.value}
                         onChange={e => {
                             if (e.target.value !== '0x') {
@@ -1121,10 +1121,10 @@ export default function Swap8899({
                     />
                 </div>
                 <div className="flex items-center justify-between">
-                    <input placeholder="0.0" autoFocus className="w-[140px] sm:w-[200px] bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountA} onChange={e => { setAmountA(e.target.value); getQoute(e.target.value); }} />
+                    <input placeholder="0.0" autoFocus className="w-[140px] sm:w-[200px] bg-transparent border-none text-white text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountA} onChange={e => { setAmountA(e.target.value); getQoute(e.target.value); }} />
                     <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
+                            <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 flex items-center justify-between h-10 cursor-pointer">
                                 <div className='gap-2 flex flex-row items-center justify-center'>
                                     <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                         <span className="text-[#00ff9d] text-xs">
@@ -1168,8 +1168,8 @@ export default function Swap8899({
                 <div className="flex justify-between items-center mt-2">
                     <span />
                     <div>
-                        <span className="text-gray-400 font-mono text-xs">{tokenA.name !== 'Choose Token' ? Number(tokenABalance).toFixed(4) + ' ' + tokenA.name : '0.0000'}</span>
-                        <Button variant="ghost" size="sm" className="h-6 text-[#00ff9d] font-mono text-xs px-2 cursor-pointer" onClick={() => { setAmountA(tokenABalance); getQoute(tokenABalance); }}>MAX</Button>
+                        <span className="text-gray-400 text-xs">{tokenA.name !== 'Choose Token' ? Number(tokenABalance).toFixed(4) + ' ' + tokenA.name : '0.0000'}</span>
+                        <Button variant="ghost" size="sm" className="h-6 text-[#00ff9d] text-xs px-2 cursor-pointer" onClick={() => { setAmountA(tokenABalance); getQoute(tokenABalance); }}>MAX</Button>
                     </div>
                 </div>
             </div>
@@ -1180,9 +1180,9 @@ export default function Swap8899({
             </div>
             <div className="rounded-lg border border-[#00ff9d]/10 p-4">
                 <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-400 font-mono text-sm">To</span>
+                    <span className="text-gray-400 text-sm">To</span>
                     <input
-                        className="py-2 w-[340px] focus:outline-none text-gray-400 font-mono text-xs text-right"
+                        className="py-2 w-[340px] focus:outline-none text-gray-400 text-xs text-right"
                         value={tokenB.value}
                         onChange={e => {
                             if (e.target.value !== '0x') {
@@ -1194,10 +1194,10 @@ export default function Swap8899({
                     />
                 </div>
                 <div className="flex items-center justify-between">
-                    <input placeholder="0.0" className="w-[140px] sm:w-[200px] bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountB} readOnly />
+                    <input placeholder="0.0" className="w-[140px] sm:w-[200px] bg-transparent border-none text-white text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountB} readOnly />
                     <Popover open={open2} onOpenChange={setOpen2}>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" role="combobox" aria-expanded={open2} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
+                            <Button variant="outline" role="combobox" aria-expanded={open2} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 flex items-center justify-between h-10 cursor-pointer">
                                 <div className='gap-2 flex flex-row items-center justify-center'>
                                     <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                                         <span className="text-[#00ff9d] text-xs">
@@ -1240,14 +1240,14 @@ export default function Swap8899({
                 </div>
                 <div className="flex justify-between items-center mt-2">
                     <span />
-                    <span className="text-gray-400 font-mono text-xs">{tokenB.name !== 'Choose Token' ? Number(tokenBBalance).toFixed(4) + ' ' + tokenB.name : '0.0000'}</span>
+                    <span className="text-gray-400 text-xs">{tokenB.name !== 'Choose Token' ? Number(tokenBBalance).toFixed(4) + ' ' + tokenB.name : '0.0000'}</span>
                 </div>
             </div>
             {!wrappedRoute &&
                 <div className="mt-6">
                     {/** LIQUIDITY SELECTION  */}
                     <div className="flex justify-between items-center my-2">
-                        <span className="text-gray-400 font-mono text-xs">Liquidity Available</span>
+                        <span className="text-gray-400 text-xs">Liquidity Available</span>
                     </div>
                     <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 auto-rows-auto">
                         {(() => {
@@ -1260,7 +1260,7 @@ export default function Swap8899({
                             }
 
                             return (
-                                <Button variant="outline" className={"font-mono h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "CMswap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("CMswap")}>
+                                <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "CMswap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("CMswap")}>
                                     <span className="flex items-center gap-1">
                                         CMswap {bestPool === "CMswap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                     </span>
@@ -1270,7 +1270,7 @@ export default function Swap8899({
                         })()}
 
                         {Number(GameSwapTvl['tvl10000']) > 0 && (
-                            <Button variant="outline" className={"font-mono h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "GameSwap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("GameSwap")}>
+                            <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "GameSwap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("GameSwap")}>
                                 <span className='flex items-center gap-1'>
                                     GameSwap {bestPool === "GameSwap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                 </span>
@@ -1278,7 +1278,7 @@ export default function Swap8899({
                             </Button>
                         )}
                         {Number(JibSwapTvl['tvl10000']) > 0 && (
-                            <Button variant="outline" className={"font-mono h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "JibSwap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("JibSwap")}>
+                            <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "JibSwap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("JibSwap")}>
                                 <span className='flex items-center gap-1'>
                                     JibSwap {bestPool === "JibSwap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                 </span>
@@ -1290,22 +1290,22 @@ export default function Swap8899({
                     {/** FEE SELECTION  */}
                     {poolSelect === "CMswap" && (
                         <><div className="flex justify-between items-center my-2">
-                            <span className="text-gray-400 font-mono text-xs">Swap fee tier</span>
+                            <span className="text-gray-400 text-xs">Swap fee tier</span>
                         </div>
                             <div className="grid grid-cols-4 gap-2 h-[70px]">
-                                <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 100 ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(100)}>
+                                <Button variant="outline" className={"h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 100 ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(100)}>
                                     <span>0.01%</span>
                                     {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL["tvl100"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(Number(CMswapTVL["tvl100"]))} {(tokenB.name === 'JUSDT') ? '$' : tokenB.name}</span>}
                                 </Button>
-                                <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 500 ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(500)}>
+                                <Button variant="outline" className={"h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 500 ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(500)}>
                                     <span>0.05%</span>
                                     {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL["tvl500"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(Number(CMswapTVL["tvl500"]))} {(tokenB.name === 'JUSDT') ? '$' : tokenB.name}</span>}
                                 </Button>
-                                <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 3000 ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(3000)}>
+                                <Button variant="outline" className={"h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 3000 ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(3000)}>
                                     <span>0.3%</span>
                                     {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL["tvl3000"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(Number(CMswapTVL["tvl3000"]))} {(tokenB.name === 'JUSDT') ? '$' : tokenB.name}</span>}
                                 </Button>
-                                <Button variant="outline" className={"font-mono h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 10000 ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(10000)}>
+                                <Button variant="outline" className={"h-full px-3 py-2 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden " + (feeSelect === 10000 ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(10000)}>
                                     <span>1%</span>
                                     {tokenB.value !== '0x' as '0xstring' && <span className={'truncate' + (Number(CMswapTVL["tvl10000"]) > 0 ? ' text-emerald-300' : '')}>TVL: {Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(Number(CMswapTVL["tvl10000"]))} {(tokenB.name === 'JUSDT') ? '$' : tokenB.name}</span>}
                                 </Button>
@@ -1316,7 +1316,7 @@ export default function Swap8899({
             }
             {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) !== 0 ?
                 <Button 
-                    className="w-full py-6 px-8 font-mono mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
+                    className="w-full py-6 px-8 mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
                     bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
                     hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect
                     shadow-lg shadow-emerald-500/40
@@ -1325,22 +1325,22 @@ export default function Swap8899({
                 >
                     Swap
                 </Button> :
-                <Button disabled className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 font-mono mt-4">Swap</Button>
+                <Button disabled className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 mt-4">Swap</Button>
             }
             <div className="mt-4 border-t border-[#00ff9d]/10 pt-4">
                 {altRoute !== undefined &&
-                    <div className="flex items-center text-gray-500 font-mono text-xs my-2">
+                    <div className="flex items-center text-gray-500 text-xs my-2">
                         <span className="mr-1">route</span>
-                        <span className="text-white font-mono text-xs px-2 gap-1">{tokens.map(obj => obj.value).indexOf(altRoute.a) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.a)].name}  → {tokens.map(obj => obj.value).indexOf(altRoute.b) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.b)].name} → {tokens.map(obj => obj.value).indexOf(altRoute.c) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.c)].name}</span>
+                        <span className="text-white text-xs px-2 gap-1">{tokens.map(obj => obj.value).indexOf(altRoute.a) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.a)].name}  → {tokens.map(obj => obj.value).indexOf(altRoute.b) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.b)].name} → {tokens.map(obj => obj.value).indexOf(altRoute.c) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.c)].name}</span>
                     </div>
                 }
                 {tokenA.name !== 'Choose Token' && tokenB.name !== 'Choose Token' && tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' &&
                     <>
-                        <div className="flex items-center text-gray-500 font-mono text-xs my-2">
+                        <div className="flex items-center text-gray-500 text-xs my-2">
                             <span className="mr-1">price quote</span>
                             {exchangeRate !== '0' && !isNaN(Number(exchangeRate))
                                 ? (<span
-                                    className="text-[#00ff9d] font-mono text-xs px-2 gap-1 hover:cursor-pointer" onClick={() => setSwapDirection(!swapDirection)}>
+                                    className="text-[#00ff9d] text-xs px-2 gap-1 hover:cursor-pointer" onClick={() => setSwapDirection(!swapDirection)}>
                                     {swapDirection ? `1 ${tokenB.name} = ${Number(exchangeRate).toFixed(4)} ${tokenA.name}` : `1 ${tokenA.name} = ${isFinite(1 / Number(exchangeRate)) ? (1 / Number(exchangeRate)).toFixed(4) : (0).toFixed(4)} ${tokenB.name}`}
                                 </span>
                                 )
@@ -1358,9 +1358,9 @@ export default function Swap8899({
                             }
                         </div>
                         {(tokenA.name === 'JUSDT' || tokenB.name === 'JUSDT') &&
-                            <div className="flex items-center text-gray-500 font-mono text-xs my-2">
+                            <div className="flex items-center text-gray-500 text-xs my-2">
                                 <span className="mr-1">token price</span>
-                                {exchangeRate !== '0' && exchangeRate !== '' && <span className="text-white font-mono text-xs px-2 gap-1">
+                                {exchangeRate !== '0' && exchangeRate !== '' && <span className="text-white text-xs px-2 gap-1">
                                     {tokenA.name === 'JUSDT' && <span>{Number(exchangeRate).toFixed(4)} </span>}
                                     {tokenB.name === 'JUSDT' && <span>{Number(1 / Number(exchangeRate)).toFixed(4)} </span>}
                                     $
@@ -1369,9 +1369,9 @@ export default function Swap8899({
                         }
                     </>
                 }
-                <div className="flex items-center text-gray-500 font-mono text-xs my-2">
+                <div className="flex items-center text-gray-500 text-xs my-2">
                     <span className="mr-1">slippage tolerance</span>
-                    <span className="font-mono text-xs px-2 flex items-center gap-1">5%</span>
+                    <span className="text-xs px-2 flex items-center gap-1">5%</span>
                 </div>
             </div>
         </div>
