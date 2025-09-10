@@ -441,7 +441,7 @@ export default function Liquidity25925({
                 </div>
                 <div className="flex items-center justify-between">
                     {currPrice === "" || (lowerPrice !== '' && Number(lowerPrice) < Number(currPrice)) ?
-                        <input placeholder="0.0" className="bg-transparent border-none text-white text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountA} onChange={e => {setAmountA(e.target.value); Number(upperPrice) > Number(currPrice) && setAlignedAmountB(e.target.value);}} /> :
+                        <input placeholder="0.0" className="w-[140px] sm:w-[200px] bg-transparent border-none text-white text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountA} onChange={e => {setAmountA(e.target.value); Number(upperPrice) > Number(currPrice) && setAlignedAmountB(e.target.value);}} /> :
                         <div />
                     }
                     <Popover open={open} onOpenChange={setOpen}>
@@ -514,7 +514,7 @@ export default function Liquidity25925({
                 </div>
                 <div className="flex items-center justify-between">
                     {currPrice === "" || (upperPrice !== '' && Number(upperPrice) > Number(currPrice)) ?
-                        <input placeholder="0.0" className="bg-transparent border-none text-white text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountB} onChange={(e) => setAmountB(e.target.value)} /> :
+                        <input placeholder="0.0" className="w-[140px] sm:w-[200px] bg-transparent border-none text-white text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountB} onChange={(e) => setAmountB(e.target.value)} /> :
                         <div />
                     }
                     <Popover open={open2} onOpenChange={setOpen2}>
