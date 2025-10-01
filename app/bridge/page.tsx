@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi'
 import { useState, useEffect } from "react"
 import { ArrowDown, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Card } from "@/components/ui/card"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
@@ -128,316 +128,314 @@ export default function BridgeInterface() {
     }
 
     return (
-        <div className="min-h-screen bg-[#0a0b1e] p-4 font-mono bg-gradient-to-br from-slate-700 via-black to-emerald-900">
+        <div className="min-h-screen bg-[#0a0b1e] p-4 bg-gradient-to-br from-slate-700 via-black to-emerald-900">
             <ReferralTracker />
             {isLoading && <div className="w-full h-full fixed backdrop-blur-[12px] z-999" />}
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
-            <div className="max-w-md mx-auto">
-                <div className="rounded-lg border border-[#00ff9d]/10 bg-water-200 bg-opacity-[0.07] backdrop-blur-sm p-4 mt-[100px]">
-                    <div className="flex space-x-1 mb-6">
-                        <button className="w-full text-left flex-1 py-2 text-sm roundedbg-[#162638] text-[#00ff9d]">Bridge</button>
-                    </div>
-                    <div className="space-y-2 mb-4">
-                        <div className="p-3 rounded bg-[#0a0b1e]/50 border border-[#00ff9d]/10">
-                            <div className="text-xs text-gray-500 mb-1">From</div>
-                            <div className="flex items-center justify-between">
-                                <div className="text-white">Source Chain</div>
-                                <Popover open={open} onOpenChange={setOpen}>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
-                                            <div className='gap-2 flex flex-row items-center justify-center'>
-                                                <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
-                                                    <span className="text-[#00ff9d] text-xs">
-                                                        {sourceChain.logo !== '../favicon.ico' ? <img alt="" src={sourceChain.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
-                                                    </span>
-                                                </div>
-                                                <span className='truncate'>{sourceChain.name}</span>
+            <Card className="w-full max-w-xl mx-auto bg-water-950 border border-[#00ff9d]/20 rounded-lg overflow-hidden p-4 mb-8 mt-[100px]">
+                <div className="flex space-x-1">
+                    <button className="w-full text-left flex-1 py-2 text-sm roundedbg-[#162638] text-[#00ff9d]">Bridge</button>
+                </div>
+                <div className="space-y-2 mb-4">
+                    <div className="p-3 rounded bg-[#0a0b1e]/50 border border-[#00ff9d]/10">
+                        <div className="text-xs text-gray-500 mb-1">From</div>
+                        <div className="flex items-center justify-between">
+                            <div className="text-white">Source Chain</div>
+                            <Popover open={open} onOpenChange={setOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 flex items-center justify-between h-10 cursor-pointer">
+                                        <div className='gap-2 flex flex-row items-center justify-center'>
+                                            <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
+                                                <span className="text-[#00ff9d] text-xs">
+                                                    {sourceChain.logo !== '../favicon.ico' ? <img alt="" src={sourceChain.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
+                                                </span>
                                             </div>
-                                            <ChevronDown className="h-4 w-4 text-[#00ff9d]" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[200px] p-0 z-100">
-                                        <Command>
-                                            <CommandInput placeholder="Search chains..." />
-                                            <CommandList>
-                                                <CommandEmpty>No chains found.</CommandEmpty>
-                                                <CommandGroup>
-                                                    {chains.map((chain, index) => (
-                                                        <CommandItem
-                                                            key={chain.name}
-                                                            value={chain.name}
-                                                            onSelect={() => {
-                                                                if (chain.id !== destinationChain.id) {
-                                                                    setSourceChain(chain)
-                                                                    setSourceTokens(tokens[index])
-                                                                    setTokenA(tokens[index][0])
-                                                                }
-                                                                setOpen(false)
-                                                            }}
-                                                            className='cursor-pointer'
-                                                        >
-                                                            <div className="flex items-center">
-                                                                <img alt="" src={chain.logo} className="size-5 shrink-0 rounded-full" />
-                                                                <span className="ml-3 truncate">{chain.name}</span>
-                                                            </div>
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-center my-2">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="rounded-full bg-[#162638] border border-[#00ff9d]/20 h-8 w-8 cursor-pointer"
-                                onClick={() => {
-                                    const temp = sourceChain
-                                    setSourceChain(destinationChain)
-                                    setDestinationChain(temp)
-                                    const temp2 = sourceTokens
-                                    setSourceTokens(destinationTokens)
-                                    setDestinationTokens(temp2)
-                                    const temp3 = tokenA
-                                    setTokenA(tokenB)
-                                    setTokenB(temp3)
-                                }}
-                            >
-                                <ArrowDown className="h-4 w-4 text-[#00ff9d]" />
-                            </Button>
-                        </div>
-
-                        <div className="p-3 rounded bg-[#0a0b1e]/50 border border-[#00ff9d]/10">
-                            <div className="text-xs text-gray-500 mb-1">To</div>
-                            <div className="flex items-center justify-between">
-                                <div className="text-white">Destination Chain</div>
-                                <Popover open={open2} onOpenChange={setOpen2}>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" role="combobox" aria-expanded={open2} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
-                                            <div className='gap-2 flex flex-row items-center justify-center'>
-                                                <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
-                                                    <span className="text-[#00ff9d] text-xs">
-                                                        {destinationChain.logo !== '../favicon.ico' ? <img alt="" src={destinationChain.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
-                                                    </span>
-                                                </div>
-                                                <span className='truncate'>{destinationChain.name}</span>
-                                            </div>
-                                            <ChevronDown className="h-4 w-4 text-[#00ff9d]" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[200px] p-0 z-100">
-                                        <Command>
-                                            <CommandInput placeholder="Search chains..." />
-                                            <CommandList>
-                                                <CommandEmpty>No chains found.</CommandEmpty>
-                                                <CommandGroup>
-                                                    {chains.map((chain, index) => (
-                                                        <CommandItem
-                                                            key={chain.name}
-                                                            value={chain.name}
-                                                            onSelect={() => {
-                                                                if (chain.id !== sourceChain.id) {
-                                                                    setDestinationChain(chain)
-                                                                    setDestinationTokens(tokens[index])
-                                                                    setTokenB(tokens[index][0])
-                                                                }
-                                                                setOpen2(false)
-                                                            }}
-                                                            className='cursor-pointer'
-                                                        >
-                                                            <div className="flex items-center">
-                                                                <img alt="" src={chain.logo} className="size-5 shrink-0 rounded-full" />
-                                                                <span className="ml-3 truncate">{chain.name}</span>
-                                                            </div>
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
+                                            <span className='truncate'>{sourceChain.name}</span>
+                                        </div>
+                                        <ChevronDown className="h-4 w-4 text-[#00ff9d]" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[200px] p-0 z-100">
+                                    <Command>
+                                        <CommandInput placeholder="Search chains..." />
+                                        <CommandList>
+                                            <CommandEmpty>No chains found.</CommandEmpty>
+                                            <CommandGroup>
+                                                {chains.map((chain, index) => (
+                                                    <CommandItem
+                                                        key={chain.name}
+                                                        value={chain.name}
+                                                        onSelect={() => {
+                                                            if (chain.id !== destinationChain.id) {
+                                                                setSourceChain(chain)
+                                                                setSourceTokens(tokens[index])
+                                                                setTokenA(tokens[index][0])
+                                                            }
+                                                            setOpen(false)
+                                                        }}
+                                                        className='cursor-pointer'
+                                                    >
+                                                        <div className="flex items-center">
+                                                            <img alt="" src={chain.logo} className="size-5 shrink-0 rounded-full" />
+                                                            <span className="ml-3 truncate">{chain.name}</span>
+                                                        </div>
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
                         </div>
                     </div>
 
-                    <div className="space-y-2 mb-4">
-                        <div className="p-3 rounded bg-[#0a0b1e]/50 border border-[#00ff9d]/10">
-                            <div className="text-xs text-gray-500 mb-1">You send</div>
-                            <div className="flex items-center justify-between">
-                                <input
-                                    type="text"
-                                    placeholder="0.0"
-                                    className="w-[140px] sm:w-[200px] bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto"
-                                    style={{ backgroundColor: "transparent" }}
-                                    value={depositValue}
-                                    onChange={(e) => setDepositValue(e.target.value)}
-                                />
-                                <Popover open={open3} onOpenChange={setOpen3}>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
-                                            <div className='gap-2 flex flex-row items-center justify-center'>
-                                                <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
-                                                    <span className="text-[#00ff9d] text-xs">
-                                                        {tokenA.logo !== '../favicon.ico' ? <img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
-                                                    </span>
-                                                </div>
-                                                <span className='truncate'>{tokenA.name}</span>
-                                            </div>
-                                            <ChevronDown className="h-4 w-4 text-[#00ff9d]" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[200px] p-0 z-100">
-                                        <Command>
-                                            <CommandInput placeholder="Search tokens..." />
-                                            <CommandList>
-                                                <CommandEmpty>No tokens found.</CommandEmpty>
-                                                <CommandGroup>
-                                                    {sourceTokens.map(token => (
-                                                        <CommandItem
-                                                            key={token.name}
-                                                            value={token.name}
-                                                            onSelect={() => {
-                                                                setTokenA(token)
-                                                                setOpen3(false)
-                                                            }}
-                                                            className='cursor-pointer'
-                                                        >
-                                                            <div className="flex items-center">
-                                                                <img alt="" src={token.logo} className="size-5 shrink-0 rounded-full" />
-                                                                <span className="ml-3 truncate">{token.name}</span>
-                                                            </div>
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-                            <div className="flex justify-between items-center mt-2 text-xs font-mono">
-                                <span />
-
-                                <span className="text-gray-400">
-                                    {tokenA.name !== 'Choose Token'
-                                        ? `${Number(sourceBalance).toFixed(4)} ${tokenA.name}`
-                                        : '0.0000'}
-                                    <button
-                                        onClick={() => {
-                                            const truncated = Math.floor(Number(sourceBalance) * 10000) / 10000;
-                                            setDepositValue(String(truncated));
-                                        }}
-                                        className="text-green-400 ml-2 border px-2 py-[4px] font-semibold hover:text-blue-500 transition-colors duration-150 cursor-pointer"
-                                    >
-                                        MAX
-                                    </button>
-
-                                </span>
-
-
-                            </div>
-
-                        </div>
-
-                        <div className="p-3 rounded bg-[#0a0b1e]/50 border border-[#00ff9d]/10">
-                            <div className="text-xs text-gray-500 mb-1">You receive</div>
-                            <div className="flex items-center justify-between">
-                                <input
-                                    type="text"
-                                    placeholder="0.0"
-                                    className="w-[140px] sm:w-[200px] bg-transparent border-none text-white font-mono text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto"
-                                    style={{ backgroundColor: "transparent" }}
-                                    value={Number(depositValue) - Number(bridgeFee) > 0 ? Number(depositValue) - Number(bridgeFee) : ''}
-                                    readOnly
-                                />
-                                <Popover open={open4} onOpenChange={setOpen4}>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 font-mono flex items-center justify-between h-10 cursor-pointer">
-                                            <div className='gap-2 flex flex-row items-center justify-center'>
-                                                <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
-                                                    <span className="text-[#00ff9d] text-xs">
-                                                        {tokenB.logo !== '../favicon.ico' ? <img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
-                                                    </span>
-                                                </div>
-                                                <span className='truncate'>{tokenB.name}</span>
-                                            </div>
-                                            <ChevronDown className="h-4 w-4 text-[#00ff9d]" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[200px] p-0 z-100">
-                                        <Command>
-                                            <CommandInput placeholder="Search tokens..." />
-                                            <CommandList>
-                                                <CommandEmpty>No tokens found.</CommandEmpty>
-                                                <CommandGroup>
-                                                    {destinationTokens.map(token => (
-                                                        <CommandItem
-                                                            key={token.name}
-                                                            value={token.name}
-                                                            onSelect={() => {
-                                                                setTokenB(token)
-                                                                setOpen4(false)
-                                                            }}
-                                                            className='cursor-pointer'
-                                                        >
-                                                            <div className="flex items-center">
-                                                                <img alt="" src={token.logo} className="size-5 shrink-0 rounded-full" />
-                                                                <span className="ml-3 truncate">{token.name}</span>
-                                                            </div>
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-                            <div className="flex justify-between items-center mt-2">
-                                <span />
-                                <span className="text-gray-400 font-mono text-xs">{tokenB.name !== 'Choose Token' ? Number(destinationBalance).toFixed(4) + ' ' + tokenB.name : '0.0000'}</span>
-                            </div>
-                        </div>
+                    <div className="flex justify-center my-2">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full bg-[#162638] border border-[#00ff9d]/20 h-8 w-8 cursor-pointer"
+                            onClick={() => {
+                                const temp = sourceChain
+                                setSourceChain(destinationChain)
+                                setDestinationChain(temp)
+                                const temp2 = sourceTokens
+                                setSourceTokens(destinationTokens)
+                                setDestinationTokens(temp2)
+                                const temp3 = tokenA
+                                setTokenA(tokenB)
+                                setTokenB(temp3)
+                            }}
+                        >
+                            <ArrowDown className="h-4 w-4 text-[#00ff9d]" />
+                        </Button>
                     </div>
 
-                    {sourceChain.id === chainId ?
-                        <>
-                            {Number(depositValue) <= Number(reserve) ?
-                                <Button
-                                    className="w-full py-6 px-8 font-mono mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
-                                    bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
-                                    hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect
-                                    shadow-lg shadow-emerald-500/40
-                                    active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer"
-                                    onClick={bridge}
-                                >
-                                    Confirm
-                                </Button> :
-                                <Button disabled className="w-full py-6 px-8 mt-4 bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 cursor-pointer">Insufficient escrow</Button>
-                            }
-                        </> :
-                        <>
-                            {(sourceChain.id === 96 && destinationChain.id === 56) || (sourceChain.id === 56 && destinationChain.id === 96) ?
-                                <Button disabled className="w-full py-6 px-8 mt-4 bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 cursor-pointer">Not available</Button> :
-                                <Button disabled className="w-full py-6 px-8 mt-4 bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 cursor-pointer">Please switch chain</Button>
-                            }
-                        </>
-                    }
-
-                    <div className="mt-6 p-3 rounded border border-[#00ff9d]/10">
-                        <div className="flex justify-between items-center mb-2 text-xs">
-                            <div className="text-gray-400">Escrow Contract</div>
-                            <div className="font-bold">{Intl.NumberFormat("en-US").format(Number(reserve))} {tokenB.name}</div>
-                        </div>
-                        <div className="flex justify-between items-center text-xs">
-                            <div className="text-gray-400">Bridge Fee</div>
-                            <div className="text-white">{bridgeFee} USDT/TX</div>
+                    <div className="p-3 rounded bg-[#0a0b1e]/50 border border-[#00ff9d]/10">
+                        <div className="text-xs text-gray-500 mb-1">To</div>
+                        <div className="flex items-center justify-between">
+                            <div className="text-white">Destination Chain</div>
+                            <Popover open={open2} onOpenChange={setOpen2}>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" role="combobox" aria-expanded={open2} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 flex items-center justify-between h-10 cursor-pointer">
+                                        <div className='gap-2 flex flex-row items-center justify-center'>
+                                            <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
+                                                <span className="text-[#00ff9d] text-xs">
+                                                    {destinationChain.logo !== '../favicon.ico' ? <img alt="" src={destinationChain.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
+                                                </span>
+                                            </div>
+                                            <span className='truncate'>{destinationChain.name}</span>
+                                        </div>
+                                        <ChevronDown className="h-4 w-4 text-[#00ff9d]" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[200px] p-0 z-100">
+                                    <Command>
+                                        <CommandInput placeholder="Search chains..." />
+                                        <CommandList>
+                                            <CommandEmpty>No chains found.</CommandEmpty>
+                                            <CommandGroup>
+                                                {chains.map((chain, index) => (
+                                                    <CommandItem
+                                                        key={chain.name}
+                                                        value={chain.name}
+                                                        onSelect={() => {
+                                                            if (chain.id !== sourceChain.id) {
+                                                                setDestinationChain(chain)
+                                                                setDestinationTokens(tokens[index])
+                                                                setTokenB(tokens[index][0])
+                                                            }
+                                                            setOpen2(false)
+                                                        }}
+                                                        className='cursor-pointer'
+                                                    >
+                                                        <div className="flex items-center">
+                                                            <img alt="" src={chain.logo} className="size-5 shrink-0 rounded-full" />
+                                                            <span className="ml-3 truncate">{chain.name}</span>
+                                                        </div>
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
                         </div>
                     </div>
                 </div>
-            </div>
+
+                <div className="space-y-2 mb-4">
+                    <div className="p-3 rounded bg-[#0a0b1e]/50 border border-[#00ff9d]/10">
+                        <div className="text-xs text-gray-500 mb-1">You send</div>
+                        <div className="flex items-center justify-between">
+                            <input
+                                type="text"
+                                placeholder="0.0"
+                                className="w-[140px] sm:w-[200px] bg-transparent border-none text-white text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto"
+                                style={{ backgroundColor: "transparent" }}
+                                value={depositValue}
+                                onChange={(e) => setDepositValue(e.target.value)}
+                            />
+                            <Popover open={open3} onOpenChange={setOpen3}>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 flex items-center justify-between h-10 cursor-pointer">
+                                        <div className='gap-2 flex flex-row items-center justify-center'>
+                                            <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
+                                                <span className="text-[#00ff9d] text-xs">
+                                                    {tokenA.logo !== '../favicon.ico' ? <img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
+                                                </span>
+                                            </div>
+                                            <span className='truncate'>{tokenA.name}</span>
+                                        </div>
+                                        <ChevronDown className="h-4 w-4 text-[#00ff9d]" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[200px] p-0 z-100">
+                                    <Command>
+                                        <CommandInput placeholder="Search tokens..." />
+                                        <CommandList>
+                                            <CommandEmpty>No tokens found.</CommandEmpty>
+                                            <CommandGroup>
+                                                {sourceTokens.map(token => (
+                                                    <CommandItem
+                                                        key={token.name}
+                                                        value={token.name}
+                                                        onSelect={() => {
+                                                            setTokenA(token)
+                                                            setOpen3(false)
+                                                        }}
+                                                        className='cursor-pointer'
+                                                    >
+                                                        <div className="flex items-center">
+                                                            <img alt="" src={token.logo} className="size-5 shrink-0 rounded-full" />
+                                                            <span className="ml-3 truncate">{token.name}</span>
+                                                        </div>
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                        <div className="flex justify-between items-center mt-2 text-xs">
+                            <span />
+
+                            <span className="text-gray-400">
+                                {tokenA.name !== 'Choose Token'
+                                    ? `${Number(sourceBalance).toFixed(4)} ${tokenA.name}`
+                                    : '0.0000'}
+                                <button
+                                    onClick={() => {
+                                        const truncated = Math.floor(Number(sourceBalance) * 10000) / 10000;
+                                        setDepositValue(String(truncated));
+                                    }}
+                                    className="text-green-400 ml-2 border px-2 py-[4px] font-semibold hover:text-blue-500 transition-colors duration-150 cursor-pointer"
+                                >
+                                    MAX
+                                </button>
+
+                            </span>
+
+
+                        </div>
+
+                    </div>
+
+                    <div className="p-3 rounded bg-[#0a0b1e]/50 border border-[#00ff9d]/10">
+                        <div className="text-xs text-gray-500 mb-1">You receive</div>
+                        <div className="flex items-center justify-between">
+                            <input
+                                type="text"
+                                placeholder="0.0"
+                                className="w-[140px] sm:w-[200px] bg-transparent border-none text-white text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto"
+                                style={{ backgroundColor: "transparent" }}
+                                value={Number(depositValue) - Number(bridgeFee) > 0 ? Number(depositValue) - Number(bridgeFee) : ''}
+                                readOnly
+                            />
+                            <Popover open={open4} onOpenChange={setOpen4}>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 flex items-center justify-between h-10 cursor-pointer">
+                                        <div className='gap-2 flex flex-row items-center justify-center'>
+                                            <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
+                                                <span className="text-[#00ff9d] text-xs">
+                                                    {tokenB.logo !== '../favicon.ico' ? <img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
+                                                </span>
+                                            </div>
+                                            <span className='truncate'>{tokenB.name}</span>
+                                        </div>
+                                        <ChevronDown className="h-4 w-4 text-[#00ff9d]" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[200px] p-0 z-100">
+                                    <Command>
+                                        <CommandInput placeholder="Search tokens..." />
+                                        <CommandList>
+                                            <CommandEmpty>No tokens found.</CommandEmpty>
+                                            <CommandGroup>
+                                                {destinationTokens.map(token => (
+                                                    <CommandItem
+                                                        key={token.name}
+                                                        value={token.name}
+                                                        onSelect={() => {
+                                                            setTokenB(token)
+                                                            setOpen4(false)
+                                                        }}
+                                                        className='cursor-pointer'
+                                                    >
+                                                        <div className="flex items-center">
+                                                            <img alt="" src={token.logo} className="size-5 shrink-0 rounded-full" />
+                                                            <span className="ml-3 truncate">{token.name}</span>
+                                                        </div>
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                        <div className="flex justify-between items-center mt-2">
+                            <span />
+                            <span className="text-gray-400 text-xs">{tokenB.name !== 'Choose Token' ? Number(destinationBalance).toFixed(4) + ' ' + tokenB.name : '0.0000'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {sourceChain.id === chainId ?
+                    <>
+                        {Number(depositValue) <= Number(reserve) ?
+                            <Button
+                                className="w-full py-6 px-8 mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
+                                bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
+                                hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect
+                                shadow-lg shadow-emerald-500/40
+                                active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer"
+                                onClick={bridge}
+                            >
+                                Confirm
+                            </Button> :
+                            <Button disabled className="w-full py-6 px-8 mt-4 bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 cursor-pointer">Insufficient escrow</Button>
+                        }
+                    </> :
+                    <>
+                        {(sourceChain.id === 96 && destinationChain.id === 56) || (sourceChain.id === 56 && destinationChain.id === 96) ?
+                            <Button disabled className="w-full py-6 px-8 mt-4 bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 cursor-pointer">Not available</Button> :
+                            <Button disabled className="w-full py-6 px-8 mt-4 bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 cursor-pointer">Please switch chain</Button>
+                        }
+                    </>
+                }
+
+                <div className="mt-6 p-3 rounded border border-[#00ff9d]/10">
+                    <div className="flex justify-between items-center mb-2 text-xs">
+                        <div className="text-gray-400">Escrow Contract</div>
+                        <div className="font-bold">{Intl.NumberFormat("en-US").format(Number(reserve))} {tokenB.name}</div>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                        <div className="text-gray-400">Bridge Fee</div>
+                        <div className="text-white">{bridgeFee} USDT/TX</div>
+                    </div>
+                </div>
+            </Card>
         </div>
     )
 }

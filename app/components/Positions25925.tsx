@@ -490,7 +490,7 @@ export default function Positions25925({
 
     return (
         <>
-            <ScrollArea className="h-[650px] px-4 font-mono">
+            <ScrollArea className="h-[650px] px-4">
                 {position[0] !== undefined &&
                     <>
                         {position.map(obj => 
