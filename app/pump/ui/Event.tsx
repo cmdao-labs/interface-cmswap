@@ -21,20 +21,25 @@ export default async function Event({
     let _chainId = 0;
     let _explorer = '';
     let _rpc = '';
+    let _blockTime = 5;
+
     if (chain === 'kub' || chain === '') {
         _chain = bitkub;
         _chainId = 96;
         _explorer = 'https://www.kubscan.com/';
+        _blockTime = 5;
     } else if (chain === 'monad') {
         _chain = monadTestnet;
         _chainId = 10143;
         _explorer = 'https://monad-testnet.socialscan.io/';
         _rpc = process.env.NEXT_PUBLIC_MONAD_RPC as string;
+        _blockTime = 1;
     } else if (chain === 'kubtestnet'){
         _chain = bitkubTestnet;
         _chainId = 25925;
         _explorer = 'https://testnet.kubscan.com/';
         _rpc = 'https://rpc-testnet.bitkubchain.io' as string;
+        _blockTime = 5;
     }
         // add chain here
     const publicClient = createPublicClient({ 
@@ -128,6 +133,11 @@ export default async function Event({
     const tokenlist = result.map((res: any) => {return res.result.toUpperCase()});
     let fulldatabuy: any[]
     let fulldatasell: any[]
+    
+    const currentBlock = await publicClient.getBlockNumber();
+    const fromBlock = currentBlock - BigInt(Math.floor((86400 * 30 * 3) / _blockTime)); // last 3 months
+
+
     if (chain === 'monad') {
         const headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
         fulldatabuy = []
@@ -191,7 +201,7 @@ export default async function Event({
             args: { 
                 to: lparr,
             },
-            fromBlock: BigInt(dataofcurr.blockcreated),
+            fromBlock,
             toBlock: 'latest',
         });
         const result5 = await Promise.all(result4);
@@ -208,7 +218,7 @@ export default async function Event({
             args: { 
                 from: lparr,
             },
-            fromBlock: BigInt(dataofcurr.blockcreated),
+            fromBlock,
             toBlock: 'latest',
         });
         const result7 = await Promise.all(result6);

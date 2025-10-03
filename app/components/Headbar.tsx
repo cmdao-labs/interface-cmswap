@@ -16,6 +16,7 @@ export default function Headbar() {
         setIsMenuOpen(false)
     }
     const { chainId } = useAccount()
+    const [isEarnOpen, setIsEarnOpen] = useState(false)
 
     return (
         <QueryClientProvider client={queryClient}> 
