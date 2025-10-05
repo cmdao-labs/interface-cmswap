@@ -9,6 +9,18 @@ import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
 import { UniswapV2FactoryABI } from '@/app/pump/abi/UniswapV2Factory';
 import { PumpCoreNativeABI } from '@/app/pump/abi/PumpCoreNative';
 
+const RELATIVE_TIME_FORMAT = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+const FALLBACK_LOGO = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%230a111f'/><path d='M20 34c0-7.732 6.268-14 14-14s14 6.268 14 14-6.268 14-14 14-14-6.268-14-14Zm14-10a10 10 0 1 0 10 10 10.011 10.011 0 0 0-10-10Zm1 6v5.586l3.707 3.707-1.414 1.414L33 37.414V30h2Z' fill='%235965f7'/></svg>";
+
+type Activity = {
+    action: 'buy' | 'sell' | 'launch';
+    value: number;
+    hash: string;
+    timestamp: number;
+    ticker: string;
+    logo: string;
+};
+
 export default async function Event({
     mode, chain, token,
 }: {
@@ -67,7 +79,7 @@ export default async function Event({
         _blockcreated = 23935659;
         v3facAddr = '0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b';
     }  // add chain and mode here
-    let theresult;
+    let timeline: Activity[] = [];
     if (chain === 'kubtestnet' && mode === 'pro') {
         const r1 = await publicClient.getContractEvents({
             address: pumpCoreAddr as '0xstring',
@@ -77,8 +89,21 @@ export default async function Event({
             toBlock: 'latest',
         });
         const r2 = await Promise.all(r1);
-        const tokenslist = r2.map((r: any) => {return {ticker: r.args.tokenAddr, logo: r.args.logo}});
-        const tickers = tokenslist.map(t => {return t.ticker.toUpperCase()});
+        const _getticker = r2.map(async (r: any) => {
+            return await readContracts(config, {
+                contracts: [
+                    {
+                        address: r.args.tokenAddr,
+                        abi: erc20Abi,
+                        functionName: 'symbol',
+                        chainId: _chainId,
+                    }
+                ],
+            });
+        })
+        const getticker: any = await Promise.all(_getticker);
+        const tokenslist = r2.map((r: any, index) => {return {addr: r.args.tokenAddr, ticker: getticker[index][0].result, logo: r.args.logo}});
+        const addrs = tokenslist.map(t => {return t.addr.toUpperCase()});
 
         const launch = r2.map((r: any) => {
             return {
@@ -86,8 +111,11 @@ export default async function Event({
                 value: 0, 
                 hash: r.transactionHash, 
                 block: r.blockNumber, 
-                ticker: tokenslist[tickers.indexOf(r.args.tokenAddr.toUpperCase())].ticker, 
-                logo: tokenslist[tickers.indexOf(r.args.tokenAddr.toUpperCase())].logo
+                from: r.args.from,
+                to: r.args.to, 
+                addr: tokenslist[addrs.indexOf(r.args.tokenAddr.toUpperCase())].addr, 
+                ticker: tokenslist[addrs.indexOf(r.args.tokenAddr.toUpperCase())].ticker, 
+                logo: tokenslist[addrs.indexOf(r.args.tokenAddr.toUpperCase())].logo
             }
         });
 
@@ -100,16 +128,21 @@ export default async function Event({
         });
         const r4 = await Promise.all(r3);
         const sell = r4.filter((r) => {
-            return tickers.indexOf(r.address.toUpperCase()) !== -1;
+            return addrs.indexOf(r.address.toUpperCase()) !== -1;
         }).map((r: any) => {
             return {
                 action: 'sell', 
                 value: Number(formatEther(r.args.value)), 
                 hash: r.transactionHash, 
                 block: r.blockNumber, 
-                ticker: tokenslist[tickers.indexOf(r.address.toUpperCase())].ticker, 
-                logo: tokenslist[tickers.indexOf(r.address.toUpperCase())].logo
+                from: r.args.from,
+                to: r.args.to, 
+                addr: tokenslist[addrs.indexOf(r.address.toUpperCase())].addr, 
+                ticker: tokenslist[addrs.indexOf(r.address.toUpperCase())].ticker, 
+                logo: tokenslist[addrs.indexOf(r.address.toUpperCase())].logo
             }
+        }).filter((r) => {
+            return r.from.toUpperCase() !== '0x0000000000000000000000000000000000000000'.toUpperCase();
         });
 
         const r5 = await publicClient.getContractEvents({
@@ -121,16 +154,21 @@ export default async function Event({
         });
         const r6 = await Promise.all(r5);
         const buy = r6.filter((r) => {
-            return tickers.indexOf(r.address.toUpperCase()) !== -1;
+            return addrs.indexOf(r.address.toUpperCase()) !== -1;
         }).map((r: any) => {
             return {
                 action: 'buy', 
                 value: Number(formatEther(r.args.value)), 
                 hash: r.transactionHash, 
-                block: r.blockNumber, 
-                ticker: tokenslist[tickers.indexOf(r.address.toUpperCase())].ticker, 
-                logo: tokenslist[tickers.indexOf(r.address.toUpperCase())].logo
+                block: r.blockNumber,
+                from: r.args.from,
+                to: r.args.to, 
+                addr: tokenslist[addrs.indexOf(r.address.toUpperCase())].addr, 
+                ticker: tokenslist[addrs.indexOf(r.address.toUpperCase())].ticker, 
+                logo: tokenslist[addrs.indexOf(r.address.toUpperCase())].logo
             }
+        }).filter((r) => {
+            return r.to.toUpperCase() !== '0x1fE5621152A33a877f2b40a4bB7bc824eEbea1EA'.toUpperCase();
         });
 
         const merge = launch.concat(sell, buy);
@@ -141,9 +179,16 @@ export default async function Event({
         const restimestamp = timestamparr.map((res) => {
             return Number(res.timestamp) * 1000;
         })
-        theresult = merge.map((res: any, index: any) => {
-            return {action: res.action, value: res.value, hash: res.hash, timestamp: restimestamp[index], ticker: res.ticker, logo: res.logo}
-        }).sort((a: any, b: any) => {return b.timestamp - a.timestamp}).slice(0, 9);
+        timeline = merge.map((res: any, index: any) => {
+            return {
+                action: res.action,
+                value: res.value,
+                hash: res.hash,
+                timestamp: restimestamp[index],
+                ticker: res.ticker,
+                logo: res.logo,
+            } as Activity;
+        }).sort((a: Activity, b: Activity) => {return b.timestamp - a.timestamp}).slice(0, 5);
     } else {
         const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
         const dataofuniv2factory = {addr: v2facAddr};
@@ -311,49 +356,97 @@ export default async function Event({
         const restimestamp = timestamparr.map((res) => {
             return Number(res.timestamp) * 1000;
         })
-        theresult = mergedata.map((res: any, index: any) => {
-            return {action: res.action, value: res.value, hash: res.hash, timestamp: restimestamp[index], ticker: res.ticker, logo: res.logo}
-        }).sort((a: any, b: any) => {return b.timestamp - a.timestamp}).slice(0, 9);
+        timeline = mergedata.map((res: any, index: any) => {
+            return {
+                action: res.action,
+                value: res.value,
+                hash: res.hash,
+                timestamp: restimestamp[index],
+                ticker: res.ticker,
+                logo: res.logo,
+            } as Activity;
+        }).sort((a: Activity, b: Activity) => {return b.timestamp - a.timestamp}).slice(0, 5);
+    }
+
+    const activity = timeline.slice(0, 5);
+
+    if (activity.length === 0) {
+        return (
+            <div className="flex h-full min-h-[160px] w-full flex-col items-center justify-center rounded-3xl border border-white/5 bg-[#080c18]/70 text-center text-sm text-slate-400">
+                No recent launchpad activity detected.
+            </div>
+        );
     }
 
     return (
-        <div className="flex flex-row items-center sm:items-start gap-2 mt-1 w-full" style={{zIndex: 1}}>
-            {theresult.map((res: any, index: any) =>
-                <Link
-                    href={_explorer + "tx/" + res.hash}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                    prefetch={false}
-                    className={
-                        `
-                        w-[156px] flex flex-row items-center justify-around text-xs md:text-sm p-1 mb-4 rounded-lg overflow-hidden backdrop-blur-sm bg-white/10 transition-shadow duration-300 shadow-[2px] hover:shadow-[0_0_8px_2px_rgba(255,255,255,0.4)] border-1
-                        ${
-                            res.action === 'buy' ? 
-                                'border-green-400 shadow-green-400'
-                                : res.action === 'sell' ?
-                                    'border-red-400 shadow-red-400'
-                                    : 'border-slate-500'
-                        } 
-                        ${res.action === 'launch' ? 'border-double border-4 border-emerald-300' : ''} 
-                        ${index >= 2 ? 'hidden xl:block' : ''}
-                        `
-                    }
-                    key={index}
-                >
-                    <div className="flex flex-row items-center justify-end gap-2 text-xs min-w-[125px]">
-                        <div className="text-right flex flex-row gap-2 items-center justify-end overflow-hidden">
-                            {res.action === 'buy' && <span className="text-green-500 font-bold">{res.action.toUpperCase()}</span>}
-                            {res.action === 'sell' && <span className="text-red-500 font-bold">{res.action.toUpperCase()}</span>}
-                            {res.action === 'launch' && <span>🚀</span>}
-                            <div className="w-[30px] h-[30px] rounded-full overflow-hidden relative">
-                                <Image src={res.logo.slice(0, 7) === 'ipfs://' ? "https://cmswap.mypinata.cloud/ipfs/" + res.logo.slice(7) : "https://cmswap.mypinata.cloud/ipfs/" + res.logo} alt="token_waiting_for_approve" fill />
+        <div className="flex flex-col gap-4">
+            <div className="grid gap-2 sm:grid-cols-4 xl:grid-cols-5">
+                {activity.map((item) => {
+                    const { valueAccent, cardAccent } = getActionStyles(item.action);
+                    const primary = item.action === 'launch' ? 'Launch' : `${Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(item.value)} ${item.action === 'buy' ? 'bought' : 'sold'}`;
+
+                    return (
+                        <Link
+                            key={item.hash + '/' + item.value}
+                            href={_explorer + 'tx/' + item.hash}
+                            rel="noopener noreferrer"
+                            target="_blank"
+                            prefetch={false}
+                            className={`group flex flex-col gap-2 rounded-4xl border border-white/5 p-3 text-sm shadow-lg transition-all duration-300 hover:-translate-y-1 ${cardAccent}`}
+                        >
+                            <div className="flex justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="relative h-12 w-12 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+                                        <Image src={resolveLogoUrl(item.logo)} alt={`${item.ticker} logo`} fill sizes="48px" className="object-cover" />
+                                    </div>
+                                    <div className="flex flex-col text-xs">
+                                        <span className="font-semibold text-white">{item.ticker}</span>
+                                        <span className={`font-medium ${valueAccent}`}>{primary}</span>
+                                    </div>
+                                </div>
+                                <span className="text-xs mt-1 text-slate-500">{formatRelativeTime(item.timestamp)}</span>
                             </div>
-                            <span className="w-[30px] truncate">{res.ticker}</span>
-                        </div>
-                        <span className="text-right">{res.action !== 'launch' && Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res.value)}</span>
-                    </div>
-                </Link>
-            )}
+                        </Link>
+                    );
+                })}
+            </div>
         </div>
     );
+}
+
+function getActionStyles(action: Activity['action']) {
+    switch (action) {
+        case 'buy':
+            return {
+                valueAccent: 'text-emerald-300',
+                cardAccent: 'shadow-emerald-500/20 hover:border-emerald-400/40 hover:shadow-emerald-500/30',
+            } as const;
+        case 'sell':
+            return {
+                valueAccent: 'text-rose-400',
+                cardAccent: 'shadow-rose-500/20 hover:border-rose-400/40 hover:shadow-rose-500/30',
+            } as const;
+        default:
+            return {
+                valueAccent: 'font-semibold uppercase tracking-[0.2em] text-white',
+                cardAccent: 'shadow-white/20 hover:border-white/40 hover:shadow-white/30',
+            } as const;
+    }
+}
+
+function formatRelativeTime(timestamp: number) {
+    const now = Date.now();
+    const diff = Math.round((timestamp - now) / 1000);
+    const abs = Math.abs(diff);
+    if (abs < 60) return RELATIVE_TIME_FORMAT.format(diff, 'second');
+    if (abs < 3600) return RELATIVE_TIME_FORMAT.format(Math.round(diff / 60), 'minute');
+    if (abs < 86400) return RELATIVE_TIME_FORMAT.format(Math.round(diff / 3600), 'hour');
+    return RELATIVE_TIME_FORMAT.format(Math.round(diff / 86400), 'day');
+}
+
+function resolveLogoUrl(raw: string) {
+    if (!raw) return FALLBACK_LOGO;
+    if (raw.startsWith('ipfs://')) return `https://cmswap.mypinata.cloud/ipfs/${raw.slice(7)}`;
+    if (raw.startsWith('https://') || raw.startsWith('http://')) return raw;
+    return `https://cmswap.mypinata.cloud/ipfs/${raw}`;
 }

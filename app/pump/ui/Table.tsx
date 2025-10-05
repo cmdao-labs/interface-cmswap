@@ -1,364 +1,603 @@
-import Image from "next/image";
-import Link from "next/link";
-import { connection } from 'next/server';
-import { readContracts } from '@wagmi/core';
-import { erc20Abi, formatEther, parseEther } from 'viem'
-import { config } from '@/app/config';
-import { ERC20FactoryETHABI } from '@/app/pump/abi/ERC20FactoryETH';
-import { ERC20FactoryV2ABI } from '@/app/pump/abi/ERC20FactoryV2';
-import { UniswapV2FactoryABI } from '@/app/pump/abi/UniswapV2Factory';
-import { UniswapV2PairABI } from '@/app/pump/abi/UniswapV2Pair';
-import { createPublicClient, http, parseAbiItem } from 'viem';
+import { connection } from "next/server";
+import { readContracts } from "@wagmi/core";
+import { createPublicClient, http, erc20Abi, formatUnits, type Chain, type PublicClient, } from "viem";
 import { bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
-import { ERC20FactoryABI } from "../abi/ERC20Factory";
+import GridLayout, { CoinCardData } from "@/app/pump/launchpad/components/GridLayout";
+import { config } from "@/app/config";
+import { ERC20FactoryETHABI } from "@/app/pump/abi/ERC20FactoryETH";
+import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
+import { UniswapV2FactoryABI } from "@/app/pump/abi/UniswapV2Factory";
+import { UniswapV2PairABI } from "@/app/pump/abi/UniswapV2Pair";
 
-const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+const FALLBACK_LOGO = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%230a111f'/><path d='M20 34c0-7.732 6.268-14 14-14s14 6.268 14 14-6.268 14-14 14-14-6.268-14-14Zm14-10a10 10 0 1 0 10 10 10.011 10.011 0 0 0-10-10Zm1 6v5.586l3.707 3.707-1.414 1.414L33 37.414V30h2Z' fill='%235965f7'/></svg>";
+const RELATIVE_TIME_FORMAT = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
-export default async function Table({
-  mode, query, sort, order, chain, token,
+export default async function TokenGrid({
+    mode,
+    query,
+    sort,
+    order,
+    chain,
+    token,
 }: {
-  mode: string;
-  query: string;
-  sort: string;
-  order: string;
-  chain: string;
-  token: string;
+    mode: string;
+    query: string;
+    sort: string;
+    order: string;
+    chain: string;
+    token: string;
 }) {
-  await connection();
+    await connection();
 
-  let _chain: any = null;
-  let _chainId = 0;
-  let _explorer = "";
-  let _rpc = "";
-  let _blockcreated = BigInt(0);
-  if (chain === "kub" || chain === "") {
-    _chain = bitkub;
-    _chainId = 96;
-    _explorer = "https://www.kubscan.com/";
-      _blockcreated = BigInt(23935659)
-  } else if (chain === "monad") {
-    _chain = monadTestnet;
-    _chainId = 10143;
-    _explorer = "https://monad-testnet.socialscan.io/";
-    _rpc = process.env.NEXT_PUBLIC_MONAD_RPC as string;
-      _blockcreated = BigInt(23935659)
-  } else if (chain === 'kubtestnet'){
-      _chain = bitkubTestnet;
-      _chainId = 25925;
-      _explorer = 'https://testnet.kubscan.com/';
-      _rpc = 'https://rpc-testnet.bitkubchain.io' as string;
-      _blockcreated = BigInt(23935659)
-  } // add chain here
-  const publicClient = createPublicClient({
-    chain: _chain,
-    transport: http(_rpc),
-  });
+    const network = resolveNetworkConfig(chain, mode, token);
+    const transportUrl = network.rpcUrl || network.chain.rpcUrls?.public?.http?.[0] || network.chain.rpcUrls?.default?.http?.[0];
+    if (!transportUrl) throw new Error("Missing RPC URL for selected chain");
+    const publicClient = createPublicClient({ chain: network.chain, transport: http(transportUrl), });
 
-  let currencyAddr: string = '';
-  let bkgafactoryAddr: string = '';
-  let v2facAddr: string = '';
-  if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '') && (token === 'cmm' || token === '')) {
-    currencyAddr = '0x9b005000a10ac871947d99001345b01c1cef2790';
-    bkgafactoryAddr = '0x10d7c3bDc6652bc3Dd66A33b9DD8701944248c62';
-    v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
-  } else if ((chain === 'kub' || chain === '') && mode === 'pro') {
-    currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
-    bkgafactoryAddr = '0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56';
-    v2facAddr = '0x090c6e5ff29251b1ef9ec31605bdd13351ea316c';
-  } else if (chain === 'monad' && mode === 'pro') {
-    currencyAddr = '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701';
-    bkgafactoryAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
-    v2facAddr = '0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142';
-  } else if (chain === 'kubtestnet' && mode === 'pro') {
-        currencyAddr = '0x700D3ba307E1256e509eD3E45D6f9dff441d6907';
-        bkgafactoryAddr = '0x46a4073c830031ea19d7b9825080c05f8454e530';
-        v2facAddr = '0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b';
-    }// add chain and mode here
-  const dataofcurr = {addr: currencyAddr};
-  const dataofuniv2factory = {addr: v2facAddr};
-  const bkgafactoryContract = {
-    address: bkgafactoryAddr as '0xstring',
-    abi: chain === 'kubtestnet' ? ERC20FactoryV2ABI : ERC20FactoryETHABI  ,
-    chainId: _chainId,
-  } as const
-  const univ2factoryContract = {
-    address: dataofuniv2factory.addr as '0xstring',
-    abi: UniswapV2FactoryABI,
-    chainId: _chainId,
-  } as const
+    const currencyMeta = await readContracts(config, {
+        contracts: [
+            {
+                address: network.currencyAddress,
+                abi: erc20Abi,
+                functionName: "symbol",
+                chainId: network.chainId,
+            },
+            {
+                address: network.currencyAddress,
+                abi: erc20Abi,
+                functionName: "decimals",
+                chainId: network.chainId,
+            },
+        ],
+    });
 
-  const indexCount = await readContracts(config, {
-    contracts: [
-      {
+    const currencySymbol = extractResult<string>(currencyMeta, 0) || network.baseSymbol;
+    const currencyDecimals = Number(extractResult<number | bigint>(currencyMeta, 1) ?? 18,);
+
+    const listings = network.key === "kubtestnet" ?
+        await fetchKubTestnetListings({network, publicClient,}) :
+        await fetchFactoryListings({network, currencyDecimals,});
+    const filteredListings = filterListings(listings, query);
+    const sortedListings = sortListings(filteredListings, sort, order);
+    const coins = mapToCoinCards(sortedListings, {
+        baseSymbol: currencySymbol || network.baseSymbol,
+        chainParam: network.queryChain,
+        modeParam: network.queryMode,
+    });
+
+    return <GridLayout coins={coins} />;
+}
+
+type NetworkKey = "kub" | "monad" | "kubtestnet";
+
+type NetworkConfig = {
+    key: NetworkKey;
+    chainId: number;
+    chain: Chain;
+    currencyAddress: `0x${string}`;
+    factoryAddress: `0x${string}`;
+    poolFactoryAddress: `0x${string}`;
+    factoryAbi: typeof ERC20FactoryETHABI | typeof ERC20FactoryV2ABI;
+    blockCreated: bigint;
+    rpcUrl?: string;
+    baseSymbol: string;
+    chainTag: string;
+    queryChain: string;
+    queryMode: "lite" | "pro";
+};
+
+type ListingMetrics = {
+    id: string;
+    address: `0x${string}`;
+    symbol: string;
+    name: string;
+    description?: string;
+    logoUrl: string;
+    createdAt?: number;
+    creator?: string;
+    pool?: `0x${string}`;
+    price: number;
+    marketCap: number;
+    searchTerms: string;
+};
+
+type FetchContext = {
+    network: NetworkConfig;
+    currencyDecimals: number;
+};
+
+type KubTestnetContext = {
+    network: NetworkConfig;
+    publicClient: PublicClient;
+};
+
+type PoolSnapshot = {
+    slot0?: readonly [bigint, number, number, number, number, number, boolean];
+    token0?: `0x${string}`;
+    token1?: `0x${string}`;
+};
+
+function resolveNetworkConfig(chain: string, mode: string, token: string): NetworkConfig {
+    const normalizedChain = (chain || "kub").toLowerCase() as NetworkKey;
+    const normalizedMode = (mode || "lite").toLowerCase() as "lite" | "pro";
+
+    if (normalizedChain === "kubtestnet") {
+        return {
+            key: "kubtestnet",
+            chainId: 25925,
+            chain: bitkubTestnet,
+            currencyAddress: "0x700D3ba307E1256e509eD3E45D6f9dff441d6907",
+            factoryAddress: "0x46a4073c830031ea19d7b9825080c05f8454e530",
+            poolFactoryAddress: "0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b",
+            factoryAbi: ERC20FactoryV2ABI,
+            blockCreated: BigInt(23935659),
+            rpcUrl: "https://rpc-testnet.bitkubchain.io",
+            baseSymbol: "tKUB",
+            chainTag: "tKUB",
+            queryChain: "kubtestnet",
+            queryMode: "pro",
+        };
+    }
+
+    if (normalizedChain === "monad") {
+        return {
+            key: "monad",
+            chainId: 10143,
+            chain: monadTestnet,
+            currencyAddress: "0x760afe86e5de5fa0ee542fc7b7b713e1c5425701",
+            factoryAddress: "0x6dfc8eecca228c45cc55214edc759d39e5b39c93",
+            poolFactoryAddress: "0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142",
+            factoryAbi: ERC20FactoryETHABI,
+            blockCreated: BigInt(23935659),
+            rpcUrl: process.env.NEXT_PUBLIC_MONAD_RPC,
+            baseSymbol: "MON",
+            chainTag: "MON",
+            queryChain: "monad",
+            queryMode: "pro",
+        };
+    }
+
+    if (normalizedMode === "pro") {
+        return {
+            key: "kub",
+            chainId: 96,
+            chain: bitkub,
+            currencyAddress: "0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5",
+            factoryAddress: "0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56",
+            poolFactoryAddress: "0x090c6e5ff29251b1ef9ec31605bdd13351ea316c",
+            factoryAbi: ERC20FactoryETHABI,
+            blockCreated: BigInt(23935659),
+            baseSymbol: "KUB",
+            chainTag: "KUB",
+            queryChain: "kub",
+            queryMode: "pro",
+        };
+    }
+
+    const isCmm = token === "cmm" || token === "";
+
+    return {
+        key: "kub",
+        chainId: 96,
+        chain: bitkub,
+        currencyAddress: isCmm ? "0x9b005000a10ac871947d99001345b01c1cef2790" : "0x9b005000a10ac871947d99001345b01c1cef2790",
+        factoryAddress: "0x10d7c3bDc6652bc3Dd66A33b9DD8701944248c62",
+        poolFactoryAddress: "0x090c6e5ff29251b1ef9ec31605bdd13351ea316c",
+        factoryAbi: ERC20FactoryETHABI,
+        blockCreated: BigInt(23935659),
+        baseSymbol: isCmm ? "CMM" : "KUB",
+        chainTag: "KUB",
+        queryChain: "kub",
+        queryMode: "lite",
+    };
+}
+
+async function fetchFactoryListings({
+    network,
+    currencyDecimals,
+}: FetchContext): Promise<ListingMetrics[]> {
+    const bkgafactoryContract = {address: network.factoryAddress, abi: network.factoryAbi, chainId: network.chainId,} as const;
+    const univ2factoryContract = {address: network.poolFactoryAddress, abi: UniswapV2FactoryABI, chainId: network.chainId,} as const;
+
+    const indexResponse = await readContracts(config, {
+        contracts: [{ ...bkgafactoryContract, functionName: "totalIndex", },],
+    });
+    const totalIndex = Number(extractResult<number | bigint>(indexResponse, 0) ?? 0,);
+    if (!Number.isFinite(totalIndex) || totalIndex <= 0) return [];
+
+    const indexContracts = Array.from({ length: totalIndex }, (_, idx) => ({
         ...bkgafactoryContract,
-        functionName: 'totalIndex',
-      },
-    ],
-  });
-  const init: any = {contracts: []};
-  for (let i = 0; i <= Number(indexCount[0].result) - 1; i++) {
-    init.contracts.push(
-        {
-          ...bkgafactoryContract,
-          functionName: 'index',
-          args: [BigInt(i + 1)],
-        }
+        functionName: "index",
+        args: [BigInt(idx + 1)],
+    }));
+    const indexResults = await readContracts(config, {contracts: indexContracts,});
+
+    const tokenAddresses = indexResults
+        .map((res) => (res.status === "success" ? res.result : undefined))
+        .filter((addr): addr is `0x${string}` => Boolean(addr));
+
+    const tokenMetadata = await Promise.all(
+        tokenAddresses.map(async (tokenAddress) => {
+            const metadata = await readContracts(config, {
+                contracts: [
+                    {
+                        address: tokenAddress,
+                        abi: erc20Abi,
+                        functionName: "symbol",
+                        chainId: network.chainId,
+                    },
+                    {
+                        address: tokenAddress,
+                        abi: erc20Abi,
+                        functionName: "name",
+                        chainId: network.chainId,
+                    },
+                    {
+                        address: tokenAddress,
+                        abi: erc20Abi,
+                        functionName: "decimals",
+                        chainId: network.chainId,
+                    },
+                    {
+                        address: tokenAddress,
+                        abi: erc20Abi,
+                        functionName: "totalSupply",
+                        chainId: network.chainId,
+                    },
+                    {
+                        ...bkgafactoryContract,
+                        functionName: "logo",
+                        args: [tokenAddress],
+                    },
+                    {
+                        ...bkgafactoryContract,
+                        functionName: "creator",
+                        args: [tokenAddress],
+                    },
+                    {
+                        ...bkgafactoryContract,
+                        functionName: "createdTime",
+                        args: [tokenAddress],
+                    },
+                    {
+                        ...bkgafactoryContract,
+                        functionName: "desp",
+                        args: [tokenAddress],
+                    },
+                    {
+                        ...univ2factoryContract,
+                        functionName: "getPool",
+                        args: [tokenAddress, network.currencyAddress, 10000],
+                    },
+                ],
+            });
+
+            const symbol = extractResult<string>(metadata, 0) || "N/A";
+            const name = extractResult<string>(metadata, 1) || symbol;
+            const decimals = Number(extractResult<number | bigint>(metadata, 2) ?? 18,);
+            const totalSupply = extractResult<bigint>(metadata, 3) ?? BigInt(0);
+            const rawLogo = extractResult<string>(metadata, 4);
+            const creator = extractResult<string>(metadata, 5);
+            const createdAtRaw = extractResult<number | bigint>(metadata, 6);
+            const description = extractResult<string>(metadata, 7);
+            const pool = extractResult<string>(metadata, 8);
+
+            return {
+                address: tokenAddress,
+                symbol,
+                name,
+                decimals,
+                totalSupply,
+                rawLogo,
+                creator,
+                createdAt: createdAtRaw ? Number(createdAtRaw) : undefined,
+                description,
+                pool:
+                pool && pool !== ZERO_ADDRESS ? (pool as `0x${string}`) : undefined,
+            };
+        }),
     );
-  }
 
+    const poolAddresses = tokenMetadata
+        .map((token) => token.pool)
+        .filter((pool): pool is `0x${string}` => Boolean(pool));
 
-type ContractReadResult = { status: "success"; result: string } | { status: "failure"; error: Error };
+    const poolSnapshots = await Promise.all(
+        poolAddresses.map(async (pool) => {
+            const snapshot = await readContracts(config, {
+                contracts: [
+                    {
+                        address: pool,
+                        abi: UniswapV2PairABI,
+                        functionName: "slot0",
+                        chainId: network.chainId,
+                    },
+                    {
+                        address: pool,
+                        abi: UniswapV2PairABI,
+                        functionName: "token0",
+                        chainId: network.chainId,
+                    },
+                    {
+                        address: pool,
+                        abi: UniswapV2PairABI,
+                        functionName: "token1",
+                        chainId: network.chainId,
+                    },
+                ],
+            });
 
-const resultfinal = await (async () => {
-  let result: ContractReadResult[] = [];
-  let result44: any[] = [];
+            return {
+                pool,
+                slot0: extractResult<
+                readonly [bigint, number, number, number, number, number, boolean]
+                >(snapshot, 0),
+                token0: extractResult<string>(snapshot, 1) as `0x${string}` | undefined,
+                token1: extractResult<string>(snapshot, 2) as `0x${string}` | undefined,
+            };
+        }),
+    );
 
-  if (chain === 'kubtestnet') {
-    const logCreateData = await publicClient.getContractEvents({
-      address: bkgafactoryContract.address,
-      abi: bkgafactoryContract.abi,
-      eventName: 'Creation',
-      fromBlock: BigInt(_blockcreated),
-      toBlock: 'latest',
+    const poolSnapshotMap = new Map<string, PoolSnapshot>();
+    poolSnapshots.forEach((entry) => {
+        poolSnapshotMap.set(entry.pool.toLowerCase(), {slot0: entry.slot0, token0: entry.token0, token1: entry.token1,});
     });
 
-const poolDataPromises = logCreateData.map(async (res: any) => {
-  const tokenData = await readContracts(config, {
-    contracts: [
-      {
-        address: res.args.tokenAddr as `0x${string}`,
-        abi: erc20Abi,
-        functionName: 'symbol',
-        chainId: _chainId,
-      },
-      {
-        address: res.args.tokenAddr as `0x${string}`,
-        abi: erc20Abi,
-        functionName: 'totalSupply',
-        chainId: _chainId,
-      },
-      {
-        ...bkgafactoryContract,
-        functionName: 'pumpReserve',
-        args : [res.args.tokenAddr as '0xstring'],
-        chainId: _chainId,
-      },
-      {
-        ...bkgafactoryContract,
-        functionName: 'virtualAmount',
-        chainId: _chainId,
-      },
-    ],
-  });
+    return tokenMetadata.map((token) => {
+        const snapshot = token.pool ? poolSnapshotMap.get(token.pool.toLowerCase()) : undefined;
 
-  return {
-    tokenAddress: res.args.tokenAddr as `0x${string}`,
-    creator: res.args.creator as `0x${string}`,
-    logo:
-      res.args.logo &&
-      res.args.logo.startsWith("ipfs://") &&
-      !res.args.logo.startsWith("ipfs://undefined")
-        ? res.args.logo
-        : res.args.link1,
-    createdTime: Number(res.args.createdTime),
-    description: res.args.description,
-    tokenSymbol: tokenData[0].status === 'success' ? tokenData[0].result : undefined,
-    totalSupply: tokenData[1].status === 'success' ? tokenData[1].result : undefined,
-    pumpReserve: tokenData[2].status === 'success' ? tokenData[2].result : undefined,
-    virtualAmount: tokenData[3].status === 'success' ? tokenData[3].result : undefined
-  };
-});
-
-
-    result44 = await Promise.all(poolDataPromises);
-  } else {
-    result = await readContracts(config, init) as ContractReadResult[];;
-    
-    const result4Promises = result.map(async (res: ContractReadResult) => {
-      if (res.status === 'success') {
-        return await readContracts(config, {
-          contracts: [
-            {
-              address: res.result as '0xstring',
-              abi: erc20Abi,
-              functionName: 'symbol',
-              chainId: _chainId,
-            },
-            {
-              ...bkgafactoryContract,
-              functionName: 'logo',
-              args: [res.result as '0xstring'],
-            },
-            {
-              ...univ2factoryContract,
-              functionName: 'getPool',
-              args: [res.result as '0xstring', dataofcurr.addr as `0x${string}`, 10000],
-            },
-            {
-              ...bkgafactoryContract,
-              functionName: 'creator',
-              args: [res.result as '0xstring'],
-            },
-            {
-              ...bkgafactoryContract,
-              functionName: 'createdTime',
-              args: [res.result as '0xstring'],
-            },
-            {
-              ...bkgafactoryContract,
-              functionName: 'desp',
-              args: [res.result as '0xstring'],
-            },
-          ],
+        const price = computePriceFromPool({
+            snapshot,
+            tokenAddress: token.address,
+            tokenDecimals: token.decimals,
+            currencyAddress: network.currencyAddress,
+            currencyDecimals,
         });
-      }
-      return [];
+
+        const supply = Number(formatUnits(token.totalSupply, token.decimals));
+        const marketCap = Number.isFinite(price) ? price * supply : 0;
+
+        return {
+            id: token.address,
+            address: token.address,
+            symbol: token.symbol,
+            name: token.name,
+            description: token.description,
+            logoUrl: resolveLogoUrl(token.rawLogo),
+            createdAt: token.createdAt,
+            creator: token.creator,
+            pool: token.pool,
+            price: Number.isFinite(price) ? price : 0,
+            marketCap: Number.isFinite(marketCap) ? marketCap : 0,
+            searchTerms: `${token.symbol} ${token.name}`.toLowerCase(),
+        } satisfies ListingMetrics;
+    });
+}
+
+async function fetchKubTestnetListings({
+    network,
+    publicClient,
+}: KubTestnetContext): Promise<ListingMetrics[]> {
+    const creationEvents = await publicClient.getContractEvents({
+        address: network.factoryAddress,
+        abi: network.factoryAbi,
+        eventName: "Creation",
+        fromBlock: network.blockCreated,
+        toBlock: "latest",
     });
 
-    result44 = await Promise.all(result4Promises);
-  }
+    const listings = await Promise.all(
+        creationEvents.map(async (event: any) => {
+            const tokenAddress = event.args?.tokenAddr as '0xstring';
+            const metadata = await readContracts(config, {
+                contracts: [
+                    {
+                        address: tokenAddress,
+                        abi: erc20Abi,
+                        functionName: "symbol",
+                        chainId: network.chainId,
+                    },
+                    {
+                        address: tokenAddress,
+                        abi: erc20Abi,
+                        functionName: "name",
+                        chainId: network.chainId,
+                    },
+                    {
+                        address: tokenAddress,
+                        abi: erc20Abi,
+                        functionName: "decimals",
+                        chainId: network.chainId,
+                    },
+                    {
+                        address: tokenAddress,
+                        abi: erc20Abi,
+                        functionName: "totalSupply",
+                        chainId: network.chainId,
+                    },
+                    {
+                        ...{
+                            address: network.factoryAddress,
+                            abi: network.factoryAbi,
+                            chainId: network.chainId,
+                        },
+                        functionName: "pumpReserve",
+                        args: [tokenAddress],
+                    },
+                    {
+                        ...{
+                            address: network.factoryAddress,
+                            abi: network.factoryAbi,
+                            chainId: network.chainId,
+                        },
+                        functionName: "virtualAmount",
+                    },
+                ],
+            });
 
-  const result5Promises = result44.map(async (res: any[]) => {
-    if (!res[2]?.result) return [];
-    return await readContracts(config, {
-      contracts: [
-        {
-          address: res[2].result,
-          abi: UniswapV2PairABI,
-          functionName: 'slot0',
-          chainId: _chainId,
-        },
-        {
-          address: res[2].result,
-          abi: UniswapV2PairABI,
-          functionName: 'token0',
-          chainId: _chainId,
-        },
-      ],
+            const symbol = extractResult<string>(metadata, 0) || "N/A";
+            const name = extractResult<string>(metadata, 1) || symbol;
+            const decimals = Number(extractResult<number | bigint>(metadata, 2) ?? 18,);
+            const totalSupply = extractResult<bigint>(metadata, 3) ?? BigInt(0);
+            const pumpReserve = extractResult<readonly bigint[]>(metadata, 4);
+            const virtualAmount = extractResult<bigint>(metadata, 5) ?? BigInt(0);
+            const reserve0 = Number(pumpReserve?.[0] ?? BigInt(0));
+            const reserve1 = Number(pumpReserve?.[1] ?? BigInt(0));
+            const virtual = Number(virtualAmount);
+            const denominator = reserve1 === 0 ? 1 : reserve1;
+            const priceRaw = (reserve0 + virtual) / denominator;
+            const price = Number.isFinite(priceRaw) ? priceRaw : 0;
+            const supply = Number(formatUnits(totalSupply, decimals));
+            const marketCap = Number.isFinite(price) ? price * supply : 0;
+            const logoRaw = event.args?.logo as string | undefined;
+            const fallbackLogo = event.args?.link1 as string | undefined;
+
+            return {
+                id: tokenAddress,
+                address: tokenAddress,
+                symbol,
+                name,
+                description: event.args?.description as string | undefined,
+                logoUrl: resolveLogoUrl(logoRaw || fallbackLogo),
+                createdAt: event.args?.createdTime ? Number(event.args.createdTime) : undefined,
+                creator: event.args?.creator as `0x${string}` | undefined,
+                pool: undefined,
+                price,
+                marketCap,
+                searchTerms: `${symbol} ${name}`.toLowerCase(),
+            } satisfies ListingMetrics;
+        }),
+    );
+    return listings;
+}
+
+function filterListings(listings: ListingMetrics[], query: string) {
+    const trimmed = query.trim().toLowerCase();
+    if (!trimmed) return listings;
+    return listings.filter((listing) => listing.searchTerms.includes(trimmed),);
+}
+
+function sortListings(listings: ListingMetrics[], sort: string, order: string) {
+    const desired = sort.toLowerCase();
+    const desiredOrder = order.toLowerCase();
+    return [...listings].sort((a, b) => {
+        if (desired === "created") {
+            const createdA = a.createdAt ?? 0;
+            const createdB = b.createdAt ?? 0;
+            if (desiredOrder === "descending") return createdA - createdB;
+            return createdB - createdA;
+        }
+        const capA = a.marketCap ?? 0;
+        const capB = b.marketCap ?? 0;
+        if (desiredOrder === "descending") return capA - capB;
+        return capB - capA;
     });
-  });
+}
 
-  const result55 = await Promise.all(result5Promises);
-  
-  return result44.map((item, index) => {
+function mapToCoinCards(
+    listings: ListingMetrics[],
+    {
+        baseSymbol,
+        chainParam,
+        modeParam,
+    }: {
+        baseSymbol: string;
+        chainParam: string;
+        modeParam: "lite" | "pro";
+    },
+): CoinCardData[] {
+    return listings.map((listing) => {
+        const href = buildTokenHref(listing.address, listing.pool, chainParam, modeParam);
+        const marketCapDisplay = formatMarketCap(listing.marketCap, baseSymbol);
+        return {
+            id: listing.id,
+            href,
+            name: listing.name,
+            symbol: listing.symbol,
+            logoUrl: listing.logoUrl,
+            marketCapDisplay,
+            createdAgo: formatRelativeTime(listing.createdAt),
+        } satisfies CoinCardData;
+    });
+}
 
-    if(chain === 'kubtestnet'){
-      /// virtual No Liquidity Pool      
-      const pump0 = Number(item.pumpReserve[0]);
-      const pump1 = Number(item.pumpReserve[1]);
-      const virtualAmount = Number(item.virtualAmount);
+function computePriceFromPool({
+    snapshot,
+    tokenAddress,
+    tokenDecimals,
+    currencyAddress,
+    currencyDecimals,
+}: {
+    snapshot?: PoolSnapshot;
+    tokenAddress: `0x${string}`;
+    tokenDecimals: number;
+    currencyAddress: `0x${string}`;
+    currencyDecimals: number;
+}): number {
+    if (!snapshot?.slot0 || !snapshot.token0 || !snapshot.token1) return 0;
+    const sqrtPrice = Number(snapshot.slot0[0]);
+    if (!Number.isFinite(sqrtPrice) || sqrtPrice === 0) return 0;
+    const q = sqrtPrice / 2 ** 96;
+    const ratio = q * q;
+    const token0 = snapshot.token0.toLowerCase();
+    const token1 = snapshot.token1.toLowerCase();
+    const tokenLower = tokenAddress.toLowerCase();
+    const currencyLower = currencyAddress.toLowerCase();
+    const decimalsAdjustment = Math.pow(10, currencyDecimals - tokenDecimals);
+    if (tokenLower === token0 && currencyLower === token1) {
+        const price = ratio * decimalsAdjustment;
+        return Number.isFinite(price) ? price : 0;
+    }
+    if (tokenLower === token1 && currencyLower === token0) {
+        const inverse = ratio === 0 ? 0 : (1 / ratio) * decimalsAdjustment;
+        return Number.isFinite(inverse) ? inverse : 0;
+    }
+    return 0;
+}
 
-      const price = (pump0 + virtualAmount) / pump1;
-      const supplyReadable = formatEther(item.totalSupply.toString());
-      const mcap = parseFloat(supplyReadable) * price;
+function buildTokenHref(
+    address: string,
+    pool: string | undefined,
+    chain: string,
+    mode: "lite" | "pro",
+) {
+    const params = new URLSearchParams();
+    params.set("ticker", address);
+    if (pool) params.set("lp", pool);
+    params.set("chain", chain);
+    params.set("mode", mode);
+    return `launchpad/token?${params.toString()}`;
+}
 
-      console.log("supply", supplyReadable);
-      console.log("price", price);
-      console.log("mcap", mcap);
+function formatMarketCap(value: number, symbol: string) {
+    if (!Number.isFinite(value) || value <= 0) return `${symbol} --`;
+    return `${symbol} ${Intl.NumberFormat("en-US", {
+        notation: "compact",
+        maximumFractionDigits: 1,
+    }).format(value)}`;
+}
 
+function formatRelativeTime(timestamp?: number) {
+    if (!timestamp) return undefined;
+    const now = Math.floor(Date.now() / 1000);
+    const diff = timestamp - now;
+    const abs = Math.abs(diff);
+    if (abs < 60) return RELATIVE_TIME_FORMAT.format(Math.round(diff), "second");
+    if (abs < 3600) return RELATIVE_TIME_FORMAT.format(Math.round(diff / 60), "minute");
+    if (abs < 86400) return RELATIVE_TIME_FORMAT.format(Math.round(diff / 3600), "hour");
+    return RELATIVE_TIME_FORMAT.format(Math.round(diff / 86400), "day");
+}
 
-      return [
-        { result: item.tokenSymbol || '' }, // symbol
-        { result: item.logo || '' }, // logo
-        { result: '0x0000000000000000000000000000000000000000' }, // pool
-        { result: mcap }, // mcap
-        { result: '0x0000000000000000000000000000000000000000' }, // token0
-        { result: Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(mcap) }, // formatted mcap
-        { result: item.creator || '' }, // creator
-        { result: Number(item.createdTime) || 0 }, // createdTime
-        { result: item.tokenAddress || {} }, // original result
-        { result: item.description || '' } // description
-      ];
-    }else{
-      if (!item[2]?.result || !result55[index][0]?.result) return [];
-      console.log(result)
-    
-    const mcap = result55[index][1].result?.toUpperCase() !== dataofcurr.addr.toUpperCase()
-      ? ((Number(result55[index][0].result[0]) / (2 ** 96)) ** 2) * 1000000000
-      : (1 / ((Number(result55[index][0].result[0]) / (2 ** 96)) ** 2)) * 1000000000;
+function resolveLogoUrl(raw?: string) {
+    if (!raw) return FALLBACK_LOGO;
+    if (raw.startsWith("ipfs://")) return `https://cmswap.mypinata.cloud/ipfs/${raw.slice(7)}`;
+    if (raw.startsWith("https://") || raw.startsWith("http://")) return raw;
+    return `https://cmswap.mypinata.cloud/ipfs/${raw}`;
+}
 
-    return [
-      { result: item?.[0].result || '' }, // symbol
-      { result: item[1]?.result || '' }, // logo
-      { result: item[2]?.result || '' }, // pool
-      { result: mcap }, // mcap
-      { result: result55[index][1]?.result || '' }, // token0
-      { result: Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(mcap) }, // formatted mcap
-      { result: item[3]?.result || '' }, // creator
-      { result: Number(item[4]?.result) || 0 }, // createdTime
-      { result: result[index].status === 'success' ? result[index].result : '0x0000000000000000000000000000000000000000' }, // original result
-      { result: item[5]?.result || '' } // description
-    ];}}
-
-)}
-
-)();
-/*     console.log('resultfinal:', resultfinal); */
-
-
-  return (
-    <div className="w-full h-full flex flex-row flex-wrap items-start justify-start overflow-visible" style={{zIndex: 1}}>
-        {resultfinal.filter(
-          (res: any) => {if (query !== '') {return res[0].result!.toLowerCase().includes(query.toLowerCase())} else {return res}}
-        ).sort(
-          (a: any, b: any) => {if (sort === 'created' && order === 'ascending') {return Number(b[7].result) - Number(a[7].result)} else if (sort === 'created' && order === 'descending') {return Number(a[7].result) - Number(b[7].result)} else if (sort === 'mcap' && order === 'ascending') {return b[3].result - a[3].result} else if (sort === 'mcap' && order === 'descending') {return a[3].result - b[3].result} else {return b[3].result - a[3].result}}
-        ).map((res: any, index) => 
-          <div key={index} className="p-2 w-full 2xl:w-1/3 hover:scale-[1.02]">
-            <Link
-              href={`launchpad/token?ticker=${res[8].result}${res[2].result !== "0x0000000000000000000000000000000000000000" ? `&lp=${res[2].result}` : ''}&chain=${chain}${mode === 'pro' ? '&mode=pro' : '&mode=lite'}`}
-              prefetch={false}
-              className="w-full h-[220px] flex flex-row item-center justify-around bg-gray-800 shadow-xl rounded-lg"
-            >
-                <div className="h-[150px] w-[150px] sm:h-[180px] sm:w-[180px] self-center overflow-hidden flex flex-wrap content-center justify-center">
-                  <div className="h-full w-full relative">
-                    <Image src={res[1].result!.slice(0, 7) === 'ipfs://' ? "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!.slice(7) : "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!} alt="token_waiting_for_approve" fill />
-                  </div>
-                </div>
-                <div className="w-1/2 flex flex-col gap-4 item-center justify-center">
-                  <span className="font-mono font-bold text-2xl truncate">{res[0].result}</span>
-                  {(() => {
-                    let textColor = "";
-                    let tokenSymbol = "";
-
-                    if (chain === 'kub' ) {
-                      textColor = "text-emerald-300";
-                      if (mode === 'pro') tokenSymbol = 'KUB';
-                      else if (mode === 'lite' && (token === 'cmm' || token === '')) tokenSymbol = 'CMM';
-                    } else if (chain === 'monad') {
-                      textColor = "text-purple-300";
-                      if (mode === 'pro') tokenSymbol = 'MON';
-                   } else if(chain === 'kubtestnet') {
-                     textColor = "text-emerald-300";
-                      if (mode === 'pro') tokenSymbol = 'tKUB';
-                   }
-
-                    return (
-                      <span className={`font-bold text-xl ${textColor}`}>
-                        {res[5].result} {tokenSymbol}
-                      </span>
-                    );
-                  })()}
-
-                  <span className="text-xs text-gray-500 truncate">{res[9].result}</span>
-                  <span className="text-xs">[CA: {res[8].result!.slice(0, 5)}...{res[8].result!.slice(37)}]</span>
-                  <span className="text-xs">
-                    Creator: {res[6].result.slice(0, 5)}...{res[6].result.slice(37)} ····· {
-                      Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) < 60 && rtf.format(Number(res[7].result) - Number(Number(Date.now() / 1000).toFixed(0)), 'second')
-                    }
-                    {
-                      Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) >= 60 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) < 3600 && rtf.format(Number(Number((Number(res[7].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 60).toFixed(0)), 'minute')
-                    }
-                    {
-                      Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) >= 3600 && Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) < 86400 && rtf.format(Number(Number((Number(res[7].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 3600).toFixed(0)), 'hour')
-                    }
-                    {
-                      Number(Number(Date.now() / 1000).toFixed(0)) - Number(res[7].result) >= 86400 && rtf.format(Number(Number((Number(res[7].result) - Number(Number(Date.now() / 1000).toFixed(0))) / 86400).toFixed(0)), 'day')
-                    }
-                  </span>
-                </div>
-              </Link>
-          </div>
-        )}
-    </div>
-  );
+function extractResult<T>(responses: readonly any[], index: number): T | undefined {
+    const entry = responses[index];
+    if (!entry || entry.status !== "success") return undefined;
+    return entry.result as T;
 }

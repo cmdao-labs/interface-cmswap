@@ -2,36 +2,50 @@
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 
-const chainStyles: Record<string, {
-    borderColor: string;
-    gradients: { lite: string; pro: string };
-    supportedModes: ('lite' | 'pro')[];
-}> = {
-    monad: {
-        borderColor: 'border-purple-300',
-        gradients: {
-            lite: 'radial-gradient(circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3%)',
-            pro: 'linear-gradient(135deg, #D6BEF7, #A683EF)',
-        },
-        supportedModes: ['pro'],
-    },
+type ModeType = 'lite' | 'pro';
+
+type ChainStyle = {
+    gradient: string;
+    accentBorder: string;
+    accentText: string;
+    label: string;
+    supportedModes: ModeType[];
+};
+
+const baseCardClasses = 'flex w-full flex-col gap-3 rounded-full border border-white/20 px-8 py-4 text-sm shadow-inner shadow-black/30';
+const baseButtonClasses = 'flex-1 rounded-xl border border-white/10 px-4 py-2 text-center text-sm font-semibold transition-all duration-200';
+const inactiveButtonClasses = 'text-slate-400 hover:border-emerald-400/30 hover:text-white';
+
+const chainStyles: Record<string, ChainStyle> = {
     kub: {
-        borderColor: 'border-emerald-300',
-        gradients: {
-            lite: 'radial-gradient(circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3%)',
-            pro: 'radial-gradient(circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3%)',
-        },
+        gradient: 'from-emerald-500/40 via-emerald-400/20 to-emerald-500/30',
+        accentBorder: 'border-emerald-400/50 shadow-emerald-500/20',
+        accentText: 'text-emerald-300',
+        label: 'KUB Network',
         supportedModes: ['lite', 'pro'],
     },
-    kubtestnet: {
-        borderColor: 'border-emerald-300',
-        gradients: {
-            lite: 'radial-gradient(circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3%)',
-            pro: 'radial-gradient(circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3%)',
-        },
+    monad: {
+        gradient: 'from-purple-500/40 via-fuchsia-400/20 to-indigo-500/30',
+        accentBorder: 'border-purple-400/50 shadow-purple-500/20',
+        accentText: 'text-purple-300',
+        label: 'Monad Testnet',
         supportedModes: ['pro'],
     },
+    kubtestnet: {
+        gradient: 'from-emerald-400/35 via-emerald-300/15 to-emerald-500/25',
+        accentBorder: 'border-emerald-300/50 shadow-emerald-400/20',
+        accentText: 'text-emerald-200',
+        label: 'Bitkub Testnet',
+        supportedModes: ['pro'],
+    },
+};
 
+const defaultStyle: ChainStyle = {
+    gradient: 'from-emerald-500/40 via-emerald-400/20 to-emerald-500/30',
+    accentBorder: 'border-emerald-400/50 shadow-emerald-500/20',
+    accentText: 'text-emerald-300',
+    label: 'CMSwap',
+    supportedModes: ['lite', 'pro'],
 };
 
 export default function Sort4() {
@@ -39,44 +53,46 @@ export default function Sort4() {
     const pathname = usePathname();
     const { replace } = useRouter();
 
-    const mode = searchParams.get('mode') || 'lite';
+    const mode = (searchParams.get('mode') || 'lite') as ModeType;
     const chain = searchParams.get('chain') || 'kub';
 
-    const chainConfig = chainStyles[chain] || chainStyles.base;
+    const chainConfig = chainStyles[chain] ?? defaultStyle;
     const { supportedModes } = chainConfig;
 
-    const setMode = useCallback((newMode: 'lite' | 'pro') => {
-        if (!supportedModes.includes(newMode)) return; 
+    const setMode = useCallback((newMode: ModeType) => {
+        if (!supportedModes.includes(newMode)) return;
         const params = new URLSearchParams(searchParams);
         params.set('mode', newMode);
         replace(`${pathname}?${params.toString()}`);
-    }, [searchParams, pathname, replace, supportedModes]);
-
-    const getButtonStyle = (type: 'lite' | 'pro') => {
-        const isActive = mode === type || (type === 'lite' && !mode);
-        return {
-            backgroundImage: isActive ? chainConfig.gradients[type] : 'none',
-            cursor: supportedModes.includes(type) ? 'pointer' : 'not-allowed',
-            opacity: supportedModes.includes(type) ? 1 : 0.4,
-        };
-    };
+    }, [replace, pathname, searchParams, supportedModes]);
 
     return (
-        <div className={`w-full xl:w-1/3 self-center bg-neutral-900 p-2 rounded-2xl flex flex-row justify-around border-solid border-2 ${chainConfig.borderColor}`} style={{ zIndex: 1 }}>
-            <span
-                className={`${mode === 'lite' ? 'text-black font-bold' : 'text-gray-400 underline hover:font-bold'} p-2 w-1/2 text-center rounded-lg`}
-                style={getButtonStyle('lite')}
-                onClick={() => supportedModes.includes('lite') && setMode('lite')}
-            >
-                Lite mode
-            </span>
-            <span
-                className={`${mode === 'pro' ? 'text-black font-bold' : 'text-gray-400 underline hover:font-bold'} p-2 w-1/2 text-center rounded-lg`}
-                style={getButtonStyle('pro')}
-                onClick={() => supportedModes.includes('pro') && setMode('pro')}
-            >
-                Pro mode
-            </span>
+        <div className={baseCardClasses}>
+            <div className="flex items-center justify-between text-xs mb-2">
+                <span className={`font-semibold uppercase tracking-[0.2em] ${chainConfig.accentText}`}>{chainConfig.label}</span>
+            </div>
+            <div className="flex gap-2">
+                {(['lite', 'pro'] as ModeType[]).map((type) => {
+                    const isActive = mode === type;
+                    const isSupported = supportedModes.includes(type);
+                    const activeClasses = isActive
+                        ? `bg-gradient-to-r ${chainConfig.gradient} text-white ${chainConfig.accentBorder}`
+                        : inactiveButtonClasses;
+                    return (
+                        <button
+                            key={type}
+                            type="button"
+                            onClick={() => setMode(type)}
+                            className={`${baseButtonClasses} ${activeClasses} ${!isSupported ? 'cursor-not-allowed opacity-40' : ''}`}
+                            aria-pressed={isActive}
+                            aria-disabled={!isSupported}
+                            disabled={!isSupported}
+                        >
+                            {type === 'lite' ? 'Lite Mode' : 'Pro Mode'}
+                        </button>
+                    );
+                })}
+            </div>
         </div>
     );
 }

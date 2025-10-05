@@ -29,7 +29,6 @@ import { UniswapV2RouterABI } from "@/app/pump/abi/UniswapV2Router";
 import { UniswapV3QouterABI } from "@/app/pump/abi/UniswapV3Qouter";
 import { SocialsABI } from "@/app/pump/abi/Socials";
 import Chart from "@/app/components/Chart";
-import Menu from "@/app/pump/ui/Menu";
 
 const themes: any = {
   96: {
@@ -1395,7 +1394,6 @@ export default function Trade({
           >
             Back to launchpad
           </Link>
-          <Menu chainEnable={false} />
         </div>
         {headnoti && (
           <div className="w-full h-[40px] bg-sky-500 animate-pulse text-center p-2 flex flex-row gap-2 items-center justify-center">
