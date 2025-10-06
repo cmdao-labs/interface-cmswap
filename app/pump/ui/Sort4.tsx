@@ -12,7 +12,7 @@ type ChainStyle = {
     supportedModes: ModeType[];
 };
 
-const baseCardClasses = 'flex w-full flex-col gap-3 rounded-full border border-white/20 px-8 py-4 text-sm shadow-inner shadow-black/30';
+const baseCardClasses = 'flex w-full flex-col gap-3 rounded-lg border border-white/20 px-8 py-4 text-sm shadow-inner shadow-black/30';
 const baseButtonClasses = 'flex-1 rounded-xl border border-white/10 px-4 py-2 text-center text-sm font-semibold transition-all duration-200';
 const inactiveButtonClasses = 'text-slate-400 hover:border-emerald-400/30 hover:text-white';
 

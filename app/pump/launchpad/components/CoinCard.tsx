@@ -27,7 +27,7 @@ export default function CoinCard({
 		<Link
 			href={href}
 			prefetch={false}
-			className="group relative flex h-full flex-col gap-5 overflow-hidden rounded-xl bg-[#0a111f]/80 p-3 border border-white/5 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border hover:border-white"
+			className="group relative flex h-full flex-col gap-5 overflow-hidden rounded-lg bg-[#0a111f]/80 p-3 border border-white/5 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border hover:border-white"
 		>
 			<div className="flex items-start gap-4">
 				<div className="relative h-40 w-40 shrink-0 overflow-hidden rounded-2xl bg-white/10">

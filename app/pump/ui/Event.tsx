@@ -19,6 +19,8 @@ type Activity = {
     timestamp: number;
     ticker: string;
     logo: string;
+    address: string; // token address
+    lp?: string; // liquidity pool address (if available)
 };
 
 export default async function Event({
@@ -105,6 +107,27 @@ export default async function Event({
         const tokenslist = r2.map((r: any, index) => {return {addr: r.args.tokenAddr, ticker: getticker[index][0].result, logo: r.args.logo}});
         const addrs = tokenslist.map(t => {return t.addr.toUpperCase()});
 
+        // Resolve LP addresses for discovered tokens (if factory available)
+        const _getlp = tokenslist.map((t: any) =>
+            readContracts(config, {
+                contracts: [
+                    {
+                        address: v3facAddr as '0xstring',
+                        abi: UniswapV2FactoryABI,
+                        functionName: 'getPool',
+                        args: [t.addr as '0xstring', currencyAddr as '0xstring', 10000],
+                        chainId: _chainId,
+                    },
+                ],
+            })
+        );
+        const getlp: any = await Promise.all(_getlp);
+        const lpMap: Record<string, string> = {};
+        tokenslist.forEach((t: any, idx: number) => {
+            const res = getlp?.[idx]?.[0]?.result as string | undefined;
+            lpMap[t.addr.toUpperCase()] = typeof res === 'string' ? res : '';
+        });
+
         const launch = r2.map((r: any) => {
             return {
                 action: 'launch', 
@@ -115,7 +138,8 @@ export default async function Event({
                 to: r.args.to, 
                 addr: tokenslist[addrs.indexOf(r.args.tokenAddr.toUpperCase())].addr, 
                 ticker: tokenslist[addrs.indexOf(r.args.tokenAddr.toUpperCase())].ticker, 
-                logo: tokenslist[addrs.indexOf(r.args.tokenAddr.toUpperCase())].logo
+                logo: tokenslist[addrs.indexOf(r.args.tokenAddr.toUpperCase())].logo,
+                lp: lpMap[r.args.tokenAddr.toUpperCase()] || '',
             }
         });
 
@@ -139,7 +163,8 @@ export default async function Event({
                 to: r.args.to, 
                 addr: tokenslist[addrs.indexOf(r.address.toUpperCase())].addr, 
                 ticker: tokenslist[addrs.indexOf(r.address.toUpperCase())].ticker, 
-                logo: tokenslist[addrs.indexOf(r.address.toUpperCase())].logo
+                logo: tokenslist[addrs.indexOf(r.address.toUpperCase())].logo,
+                lp: lpMap[r.address.toUpperCase()] || '',
             }
         }).filter((r) => {
             return r.from.toUpperCase() !== '0x0000000000000000000000000000000000000000'.toUpperCase();
@@ -165,7 +190,8 @@ export default async function Event({
                 to: r.args.to, 
                 addr: tokenslist[addrs.indexOf(r.address.toUpperCase())].addr, 
                 ticker: tokenslist[addrs.indexOf(r.address.toUpperCase())].ticker, 
-                logo: tokenslist[addrs.indexOf(r.address.toUpperCase())].logo
+                logo: tokenslist[addrs.indexOf(r.address.toUpperCase())].logo,
+                lp: lpMap[r.address.toUpperCase()] || '',
             }
         }).filter((r) => {
             return r.to.toUpperCase() !== '0x1fE5621152A33a877f2b40a4bB7bc824eEbea1EA'.toUpperCase();
@@ -187,6 +213,8 @@ export default async function Event({
                 timestamp: restimestamp[index],
                 ticker: res.ticker,
                 logo: res.logo,
+                address: res.addr,
+                lp: res.lp,
             } as Activity;
         }).sort((a: Activity, b: Activity) => {return b.timestamp - a.timestamp}).slice(0, 5);
     } else {
@@ -284,7 +312,17 @@ export default async function Event({
                 individualData.result.transfers.filter((res: any) => {
                     return tokenlist.indexOf(res.rawContract.address.toUpperCase()) !== -1;
                 }).map((res: any) => {
-                    fulldatabuy.push({action: 'buy', value: Number(formatEther(BigInt(res.rawContract.value))), hash: res.hash, block: Number(res.blockNum), ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.from.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.from.toUpperCase())].logo})
+                    const lpItem = lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.from.toUpperCase())];
+                    fulldatabuy.push({
+                        action: 'buy',
+                        value: Number(formatEther(BigInt(res.rawContract.value))),
+                        hash: res.hash,
+                        block: Number(res.blockNum),
+                        ticker: lpItem.ticker,
+                        logo: lpItem.logo,
+                        address: res.rawContract.address,
+                        lp: lpItem.lp,
+                    })
                 })
                 const individualBody2 = JSON.stringify({
                     id: 2,
@@ -309,7 +347,17 @@ export default async function Event({
                 individualData2.result.transfers.filter((res: any) => {
                     return tokenlist.indexOf(res.rawContract.address.toUpperCase()) !== -1;
                 }).map((res: any) => {
-                    fulldatasell.push({action: formatEther(BigInt(res.rawContract.value)) === '999999999.999999999999968705' ? 'launch' : 'sell', value: Number(formatEther(BigInt(res.rawContract.value))), hash: res.hash, block: Number(res.blockNum), ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.to.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.to.toUpperCase())].logo})
+                    const lpItem = lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.to.toUpperCase())];
+                    fulldatasell.push({
+                        action: formatEther(BigInt(res.rawContract.value)) === '999999999.999999999999968705' ? 'launch' : 'sell',
+                        value: Number(formatEther(BigInt(res.rawContract.value))),
+                        hash: res.hash,
+                        block: Number(res.blockNum),
+                        ticker: lpItem.ticker,
+                        logo: lpItem.logo,
+                        address: res.rawContract.address,
+                        lp: lpItem.lp,
+                    })
                 })
             }
         } else {
@@ -326,7 +374,17 @@ export default async function Event({
             fulldatasell = result5.filter((res) => {
                 return tokenlist.indexOf(res.address.toUpperCase()) !== -1;
             }).map((res: any) => {
-                return {action: 'sell', value: Number(formatEther(res.args.value)), hash: res.transactionHash, block: res.blockNumber, ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.to.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.to.toUpperCase())].logo}
+                const lpItem = lplist[lplist.map((r: any) => {return r.lpSearch}).indexOf(res.args.to.toUpperCase())];
+                return {
+                    action: 'sell',
+                    value: Number(formatEther(res.args.value)),
+                    hash: res.transactionHash,
+                    block: res.blockNumber,
+                    ticker: lpItem.ticker,
+                    logo: lpItem.logo,
+                    address: res.address,
+                    lp: lpItem.lp,
+                }
             }).filter((res) => {
                 return res.value !== 1000000000;
             });
@@ -343,7 +401,17 @@ export default async function Event({
             fulldatabuy = result7.filter((res) => {
                 return tokenlist.indexOf(res.address.toUpperCase()) !== -1;
             }).map((res: any) => {
-                return {action: Number(formatEther(res.args.value)) === 90661089.38801491 ? 'launch' : 'buy', value: Number(formatEther(res.args.value)), hash: res.transactionHash, block: res.blockNumber, ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.from.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.from.toUpperCase())].logo}
+                const lpItem = lplist[lplist.map((r: any) => {return r.lpSearch}).indexOf(res.args.from.toUpperCase())];
+                return {
+                    action: Number(formatEther(res.args.value)) === 90661089.38801491 ? 'launch' : 'buy',
+                    value: Number(formatEther(res.args.value)),
+                    hash: res.transactionHash,
+                    block: res.blockNumber,
+                    ticker: lpItem.ticker,
+                    logo: lpItem.logo,
+                    address: res.address,
+                    lp: lpItem.lp,
+                }
             });
         }
         const mergedata = fulldatasell.concat(fulldatabuy);
@@ -364,6 +432,8 @@ export default async function Event({
                 timestamp: restimestamp[index],
                 ticker: res.ticker,
                 logo: res.logo,
+                address: res.address,
+                lp: res.lp,
             } as Activity;
         }).sort((a: Activity, b: Activity) => {return b.timestamp - a.timestamp}).slice(0, 5);
     }
@@ -380,7 +450,7 @@ export default async function Event({
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="grid gap-2 sm:grid-cols-4 xl:grid-cols-5">
+            <div className="gap-2 sm:grid sm:grid-cols-4 xl:grid-cols-5 sm:overflow-visible flex overflow-x-auto sm:flex-none sm:overflow-x-visible">
                 {activity.map((item) => {
                     const { valueAccent, cardAccent } = getActionStyles(item.action);
                     const primary = item.action === 'launch' ? 'Launch' : `${Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(item.value)} ${item.action === 'buy' ? 'bought' : 'sold'}`;
@@ -388,23 +458,31 @@ export default async function Event({
                     return (
                         <Link
                             key={item.hash + '/' + item.value}
-                            href={_explorer + 'tx/' + item.hash}
-                            rel="noopener noreferrer"
-                            target="_blank"
+                            href={{
+                                pathname: '/pump/launchpad/token',
+                                query: {
+                                    mode: mode || '',
+                                    chain: chain || '',
+                                    ticker: item.address,
+                                    lp: item.lp ?? '',
+                                    token: token || '',
+                                },
+                            }}
                             prefetch={false}
-                            className={`group flex flex-col gap-2 rounded-4xl border border-white/5 p-3 text-sm shadow-lg transition-all duration-300 hover:-translate-y-1 ${cardAccent}`}
+                            className={`group flex flex-col gap-2 rounded-lg border border-white/5 p-3 text-xs
+                                 shadow-lg transition-all duration-300 hover:-translate-y-1 ${cardAccent}`}
                         >
                             <div className="flex justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="relative h-12 w-12 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
                                         <Image src={resolveLogoUrl(item.logo)} alt={`${item.ticker} logo`} fill sizes="48px" className="object-cover" />
                                     </div>
-                                    <div className="flex flex-col text-xs">
+                                    <div className="flex flex-col">
                                         <span className="font-semibold text-white">{item.ticker}</span>
                                         <span className={`font-medium ${valueAccent}`}>{primary}</span>
                                     </div>
                                 </div>
-                                <span className="text-xs mt-1 text-slate-500">{formatRelativeTime(item.timestamp)}</span>
+                                <span className="mt-1 text-slate-500">{formatRelativeTime(item.timestamp)}</span>
                             </div>
                         </Link>
                     );

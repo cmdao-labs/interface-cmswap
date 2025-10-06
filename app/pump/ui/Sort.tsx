@@ -1,7 +1,7 @@
 'use client';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 
-const baseCardClasses = 'flex w-full flex-col gap-3 rounded-full border border-white/20 px-8 py-4 text-xs shadow-inner shadow-black/30';
+const baseCardClasses = 'flex w-full flex-col gap-3 rounded-lg border border-white/20 px-8 py-4 text-xs shadow-inner shadow-black/30';
 const baseButtonClasses = 'flex-1 rounded-xl border border-white/10 px-4 py-2 text-center text-xs font-semibold transition-all duration-200';
 const activeButtonClasses = 'bg-gradient-to-r from-emerald-500/30 via-emerald-400/20 to-emerald-500/30 text-white border-emerald-400/50 shadow-lg shadow-emerald-500/20';
 const inactiveButtonClasses = 'text-slate-400 hover:border-emerald-400/30 hover:text-white';
