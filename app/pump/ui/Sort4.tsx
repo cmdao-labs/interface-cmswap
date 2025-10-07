@@ -1,4 +1,5 @@
 'use client';
+import Image from "next/image";
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 
@@ -12,7 +13,7 @@ type ChainStyle = {
     supportedModes: ModeType[];
 };
 
-const baseCardClasses = 'flex w-full flex-col gap-3 rounded-lg border border-white/20 px-8 py-4 text-sm shadow-inner shadow-black/30';
+const baseCardClasses = 'flex flex-row gap-3 rounded-lg border border-white/20 p-4 text-sm shadow-inner shadow-black/30';
 const baseButtonClasses = 'flex-1 rounded-xl border border-white/10 px-4 py-2 text-center text-sm font-semibold transition-all duration-200';
 const inactiveButtonClasses = 'text-slate-400 hover:border-emerald-400/30 hover:text-white';
 
@@ -68,31 +69,35 @@ export default function Sort4() {
 
     return (
         <div className={baseCardClasses}>
-            <div className="flex items-center justify-between text-xs mb-2">
-                <span className={`font-semibold uppercase tracking-[0.2em] ${chainConfig.accentText}`}>{chainConfig.label}</span>
+            <div className="flex flex-col items-center gap-2">
+                {chainConfig.label === 'Bitkub Testnet' ?
+                    <>
+                        <Image src="/kub.png" alt="" width={64} height={64} />
+                        <span className='text-[8px] px-2 py-1 border border-white'>testnet</span>
+                    </> :
+                    <span className={`font-semibold uppercase tracking-[0.2em] ${chainConfig.accentText}`}>chainConfig.label</span>
+                }
             </div>
-            <div className="flex gap-2">
-                {(['lite', 'pro'] as ModeType[]).map((type) => {
-                    const isActive = mode === type;
-                    const isSupported = supportedModes.includes(type);
-                    const activeClasses = isActive
-                        ? `bg-gradient-to-r ${chainConfig.gradient} text-white ${chainConfig.accentBorder}`
-                        : inactiveButtonClasses;
-                    return (
-                        <button
-                            key={type}
-                            type="button"
-                            onClick={() => setMode(type)}
-                            className={`${baseButtonClasses} ${activeClasses} ${!isSupported ? 'cursor-not-allowed opacity-40' : ''}`}
-                            aria-pressed={isActive}
-                            aria-disabled={!isSupported}
-                            disabled={!isSupported}
-                        >
-                            {type === 'lite' ? 'Lite Mode' : 'Pro Mode'}
-                        </button>
-                    );
-                })}
-            </div>
+            {(['lite', 'pro'] as ModeType[]).map((type) => {
+                const isActive = mode === type;
+                const isSupported = supportedModes.includes(type);
+                const activeClasses = isActive
+                    ? `bg-gradient-to-r ${chainConfig.gradient} text-white ${chainConfig.accentBorder}`
+                    : inactiveButtonClasses;
+                return (
+                    <button
+                        key={type}
+                        type="button"
+                        onClick={() => setMode(type)}
+                        className={`${baseButtonClasses} ${activeClasses} ${!isSupported ? 'cursor-not-allowed opacity-40' : ''}`}
+                        aria-pressed={isActive}
+                        aria-disabled={!isSupported}
+                        disabled={!isSupported}
+                    >
+                        {type === 'lite' ? 'Lite Mode' : 'Pro Mode'}
+                    </button>
+                );
+            })}
         </div>
     );
 }
