@@ -1,24 +1,12 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useConnections, useAccount, useReadContracts } from "wagmi";
-import {
-  readContracts,
-  writeContract,
-  simulateContract,
-  waitForTransactionReceipt,
-  getBalance,
-} from "@wagmi/core";
+import { readContracts, writeContract, simulateContract, waitForTransactionReceipt, getBalance } from "@wagmi/core";
 import { useDebouncedCallback } from "use-debounce";
-import {
-  formatEther,
-  parseEther,
-  erc20Abi,
-  createPublicClient,
-  http,
-} from "viem";
-import { Copy, Check, Plus, Coins } from "lucide-react";
+import { formatEther, parseEther, erc20Abi, createPublicClient, http, decodeFunctionData} from "viem";
+import { Copy, Check, Plus } from "lucide-react";
 import { bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
 import { config } from "@/app/config";
 import { ERC20FactoryABI } from "@/app/pump/abi/ERC20Factory";
@@ -31,3240 +19,1614 @@ import { SocialsABI } from "@/app/pump/abi/Socials";
 import Chart from "@/app/components/Chart";
 
 const themes: any = {
-  96: {
-    primary: "from-green-400 to-emerald-400",
-    secondary: "from-green-600 to-emerald-600",
-    accent: "green-400",
-    glow: "",
-    border: "border-green-400/30",
-    text: "text-green-300",
-    btn: "radial-gradient(circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3%)",
-    tradebtn: "bg-emerald-300",
-  },
-  25925: {
-    primary: "from-green-400 to-emerald-400",
-    secondary: "from-green-600 to-emerald-600",
-    accent: "green-400",
-    glow: "",
-    border: "border-green-400/30",
-    text: "text-green-300",
-    btn: "radial-gradient(circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3%)",
-    tradebtn: "bg-emerald-300",
-  },
-  8899: {
-    primary: "from-blue-400 to-cyan-400",
-    secondary: "from-blue-600 to-cyan-600",
-    accent: "blue-400",
-    glow: "",
-    border: "border-blue-400/30",
-    text: "text-blue-300",
-    btn: "linear-gradient(135deg, #3B82F6, #06B6D4)",
-    tradebtn: "bg-emerald-300",
-  },
-  56: {
-    primary: "from-yellow-400 to-amber-400",
-    secondary: "from-yellow-600 to-amber-600",
-    accent: "yellow-400",
-    glow: "",
-    border: "border-yellow-400/30",
-    text: "text-yellow-300",
-    btn: "linear-gradient(135deg, #FBBF24, #F59E0B)",
-    tradebtn: "bg-emerald-300",
-  },
-  3501: {
-    primary: "from-red-400 to-rose-400",
-    secondary: "from-red-600 to-rose-600",
-    accent: "red-400",
-    glow: "",
-    border: "border-red-400/30",
-    text: "text-red-300",
-    btn: "linear-gradient(135deg, #F87171, #F43F5E)",
-    tradebtn: "bg-emerald-300",
-  },
-  10143: {
-    primary: "from-purple-400 to-violet-400",
-    secondary: "from-purple-600 to-violet-600",
-    accent: "purple-400",
-    glow: "",
-    border: "border-purple-400/30",
-    text: "text-purple-300",
-    btn: "linear-gradient(135deg, #D6BEF7, #A683EF)",
-    tradebtn: "bg-purple-300",
-  },
+    96: {
+        primary: "from-green-400 to-emerald-400",
+        secondary: "from-green-600 to-emerald-600",
+        accent: "green-400",
+        glow: "",
+        border: "border-green-400/30",
+        text: "text-green-300",
+        btn: "radial-gradient(circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3%)",
+        tradebtn: "bg-emerald-300",
+    },
+    25925: {
+        primary: "from-green-400 to-emerald-400",
+        secondary: "from-green-600 to-emerald-600",
+        accent: "green-400",
+        glow: "",
+        border: "border-green-400/30",
+        text: "text-green-300",
+        btn: "radial-gradient(circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3%)",
+        tradebtn: "bg-emerald-300",
+    },
+    8899: {
+        primary: "from-blue-400 to-cyan-400",
+        secondary: "from-blue-600 to-cyan-600",
+        accent: "blue-400",
+        glow: "",
+        border: "border-blue-400/30",
+        text: "text-blue-300",
+        btn: "linear-gradient(135deg, #3B82F6, #06B6D4)",
+        tradebtn: "bg-emerald-300",
+    },
+    56: {
+        primary: "from-yellow-400 to-amber-400",
+        secondary: "from-yellow-600 to-amber-600",
+        accent: "yellow-400",
+        glow: "",
+        border: "border-yellow-400/30",
+        text: "text-yellow-300",
+        btn: "linear-gradient(135deg, #FBBF24, #F59E0B)",
+        tradebtn: "bg-emerald-300",
+    },
+    3501: {
+        primary: "from-red-400 to-rose-400",
+        secondary: "from-red-600 to-rose-600",
+        accent: "red-400",
+        glow: "",
+        border: "border-red-400/30",
+        text: "text-red-300",
+        btn: "linear-gradient(135deg, #F87171, #F43F5E)",
+        tradebtn: "bg-emerald-300",
+    },
+    10143: {
+        primary: "from-purple-400 to-violet-400",
+        secondary: "from-purple-600 to-violet-600",
+        accent: "purple-400",
+        glow: "",
+        border: "border-purple-400/30",
+        text: "text-purple-300",
+        btn: "linear-gradient(135deg, #D6BEF7, #A683EF)",
+        tradebtn: "bg-purple-300",
+    },
 };
 
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 const { ethereum } = window as any;
-import {
-  FaFacebookF,
-  FaTwitter,
-  FaTelegramPlane,
-  FaGlobe,
-} from "react-icons/fa";
+import {FaFacebookF, FaTelegramPlane, FaGlobe} from "react-icons/fa";
 import { BsTwitterX } from "react-icons/bs";
-
 import { CMswapChartABI } from "@/app/lib/abi";
 
 export default function Trade({
-  mode,
-  chain,
-  ticker,
-  lp,
-  token,
+    mode,
+    chain,
+    ticker,
+    lp,
+    token,
 }: {
-  mode: string;
-  chain: string;
-  ticker: string;
-  lp: string;
-  token: string;
+    mode: string;
+    chain: string;
+    ticker: string;
+    lp: string;
+    token: string;
 }) {
-  let _chain: any = null;
-  let _chainId = 0;
-  let _explorer = "";
-  let _rpc = "";
-  if (chain === "kub" || chain === "") {
-    _chain = bitkub;
-    _chainId = 96;
-    _explorer = "https://www.kubscan.com/";
-  } else if (chain === "monad") {
-    _chain = monadTestnet;
-    _chainId = 10143;
-    _explorer = "https://monad-testnet.socialscan.io/";
-    _rpc = process.env.NEXT_PUBLIC_MONAD_RPC as string;
-  } else if (chain === "kubtestnet") {
-    _chain = bitkubTestnet;
-    _chainId = 25925;
-    _explorer = "https://testnet.kubscan.com/";
-    _rpc = "https://rpc-testnet.bitkubchain.io" as string;
-  } // add chain here
-  const publicClient = createPublicClient({
-    chain: _chain,
-    transport: http(_rpc),
-  });
-  const [theme, setTheme] = React.useState(
-    themes[Number(_chainId)] || themes[96]
-  );
-
-  let currencyAddr: string = "";
-  let bkgafactoryAddr: string = "";
-  let _blockcreated: number = 1;
-  let v2facAddr: string = "";
-  let v2routerAddr: string = "";
-  let v3qouterAddr: string = "";
-  let socialAddr: string = "";
-  let graduatedAddr: string = "";
-  if (
-    (chain === "kub" || chain === "") &&
-    (mode === "lite" || mode === "") &&
-    (token === "cmm" || token === "")
-  ) {
-    currencyAddr = "0x9b005000a10ac871947d99001345b01c1cef2790";
-    bkgafactoryAddr = "0x10d7c3bDc6652bc3Dd66A33b9DD8701944248c62";
-    _blockcreated = 25229488;
-    v2facAddr = "0x090c6e5ff29251b1ef9ec31605bdd13351ea316c";
-    v2routerAddr = "0x3F7582E36843FF79F173c7DC19f517832496f2D8";
-    v3qouterAddr = "0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f";
-    socialAddr = "0xf8dec288D2438771f65ed59509ab474edaf067Da";
-    graduatedAddr = "0x7479A1e11e9940CAb6ee6c44aa1a72F3F02EEd8b";
-  } else if ((chain === "kub" || chain === "") && mode === "pro") {
-    currencyAddr = "0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5";
-    bkgafactoryAddr = "0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56";
-    _blockcreated = 25232899;
-    v2facAddr = "0x090c6e5ff29251b1ef9ec31605bdd13351ea316c";
-    v2routerAddr = "0x3F7582E36843FF79F173c7DC19f517832496f2D8";
-    v3qouterAddr = "0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f";
-    socialAddr = "0xf8dec288D2438771f65ed59509ab474edaf067Da";
-    graduatedAddr = "0xd1D024be49c90f7bA83fb97c1857D45B98Ad294b";
-  } else if (chain === "monad" && mode === "pro") {
-    currencyAddr = "0x760afe86e5de5fa0ee542fc7b7b713e1c5425701";
-    bkgafactoryAddr = "0x6dfc8eecca228c45cc55214edc759d39e5b39c93";
-    _blockcreated = 16912084;
-    v2facAddr = "0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142";
-    v2routerAddr = "0x5a16536bb85a2fa821ec774008d6068eced79c96";
-    v3qouterAddr = "0x555756bd5b347853af6f713a2af6231414bedefc";
-    socialAddr = "0x01837156518e60362048e78d025a419C51346f55";
-    graduatedAddr = "0x6dfc8eecca228c45cc55214edc759d39e5b39c93";
-  } else if (chain === "kubtestnet" && mode === "pro") {
-    currencyAddr = "0x700D3ba307E1256e509eD3E45D6f9dff441d6907";
-    bkgafactoryAddr = "0x46a4073c830031ea19d7b9825080c05f8454e530";
-    _blockcreated = 23935659;
-    v2facAddr = "0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b";
-    v2routerAddr = "0x3C5514335dc4E2B0D9e1cc98ddE219c50173c5Be";
-    v3qouterAddr = "0x3F64C4Dfd224a102A4d705193a7c40899Cf21fFe";
-    socialAddr = "0x6F17157b4EcD3734A9EA8ED4bfE78694e3695b90";
-    lp = "0x46a4073C830031eA19D7b9825080c05F8454E530"
-  }
-
-  const reachData = [
-    {
-      chain: "kub",
-      proAmount: "2000",
-      proSymbol: "KUB",
-      lite: "100000",
-      liteSymbol: "CMM",
-    },
-    {
-      chain: "kubtestnet",
-      proAmount: "47800",
-      proSymbol: "tKUB",
-      lite: "",
-      liteSymbol: "",
-    },
-    {
-      chain: "monad",
-      proAmount: "1",
-      proSymbol: "MON",
-      lite: "",
-      liteSymbol: "",
-    },
-  ];
-
-  // add chain and mode here
-  const dataofcurr = { addr: currencyAddr, blockcreated: _blockcreated };
-  const dataofuniv2factory = { addr: v2facAddr };
-  const dataofuniv2router = { addr: v2routerAddr };
-  const dataofuniv3qouter = { addr: v3qouterAddr };
-  const bkgafactoryContract = {
-    address: bkgafactoryAddr as "0xstring",
-    abi: chain === "kubtestnet" ? ERC20FactoryV2ABI : ERC20FactoryABI,
-    chainId: _chainId,
-  } as const;
-  const graduatedContract = {
-    address: graduatedAddr as "0xstring",
-    abi: ERC20FactoryABI,
-    chainId: _chainId,
-  };
-  const univ2factoryContract = {
-    address: dataofuniv2factory.addr as "0xstring",
-    abi: UniswapV2FactoryABI,
-    chainId: _chainId,
-  } as const;
-  const univ2RouterContract = {
-    address: dataofuniv2router.addr as "0xstring",
-    abi: UniswapV2RouterABI,
-    chainId: _chainId,
-  } as const;
-  const univ3QouterContract = {
-    address: dataofuniv3qouter.addr as "0xstring",
-    abi: UniswapV3QouterABI,
-    chainId: _chainId,
-  } as const;
-
-  const socialContrct = {
-    address: socialAddr as "0xstring",
-    abi: SocialsABI,
-    chainId: _chainId,
-  } as const;
-
-  const [trademode, setTrademode] = useState(true);
-  const [tabmode, setTabmode] = useState(false);
-  const connections = useConnections();
-  const account = useAccount();
-  const tickerContract = {
-    address: ticker as "0xstring",
-    abi: erc20Abi,
-    chainId: _chainId,
-  } as const;
-  const [inputBalance, setInputBalance] = useState("");
-  const [outputBalance, setOutputBalance] = useState("0");
-  const [hash, setHash] = useState("");
-  const [headnoti, setHeadnoti] = useState(false);
-  const [gradHash, setGradHash] = useState("");
-  const [ethBal, setEthBal] = useState(BigInt(0));
-  const [state, setState] = useState<any>([
-    { result: BigInt(0) },
-    { result: BigInt(0) },
-    { result: false },
-    { result: [BigInt(0)] },
-  ]);
-  const [showSocials, setShowSocials] = useState(false);
-  const hasSetSocialsRef = React.useRef(false);
-  const [grapthType, setGrapthType] = useState("CMswap");
-  const [graphData, setGraphData] = useState<
-    { time: number; price: number; volume: number }[]
-  >([]);
-
-  const [socials, setSocials] = useState({
-    fb: "",
-    x: "",
-    telegram: "",
-    website: "",
-  });
-  const [errors, setErrors] = useState({
-    fb: false,
-    x: false,
-    telegram: false,
-    website: false,
-  });
-
-  const [price, setPrice] = useState(0);
-  const [mcap, setMcap] = useState(0);
-  const [symbol, setSymbol] = useState(null);
-  const [name, setName] = useState(null);
-  const [creator, setCreator] = useState<string | null>(null);
-  const [createTime, setCreateTime] = useState<number | null>(null);
-
-  const [logo, setLogo] = useState(null);
-  const [description, setDescription] = useState(null);
-  const [progress, setProgress] = useState(0);
-
-  React.useEffect(() => {
-    console.log("Ticker Addr", ticker);
-  }, [ticker]);
-  const isValidUrl = (url: string) => {
-    return (
-      url === "" || url.startsWith("http://") || url.startsWith("https://")
-    );
-  };
-
-  const calculateBondingCurveWidth = (progress: number) => {
-    return `${progress}%`;
-  };
-
-  const handleChange =
-    (field: keyof typeof socials) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      setSocials((prev) => ({ ...prev, [field]: value }));
-      setErrors((prev) => ({ ...prev, [field]: !isValidUrl(value) }));
-    };
-
-  const handleSave = () => {
-    const hasError = Object.values(errors).some((v) => v);
-    if (hasError) {
-      return;
+    let _chain: any = null;
+    let _chainId = 0;
+    let _explorer = "";
+    let _rpc = "";
+    if (chain === "kub" || chain === "") {
+        _chain = bitkub;
+        _chainId = 96;
+        _explorer = "https://www.kubscan.com/";
+    } else if (chain === "monad") {
+        _chain = monadTestnet;
+        _chainId = 10143;
+        _explorer = "https://monad-testnet.socialscan.io/";
+        _rpc = process.env.NEXT_PUBLIC_MONAD_RPC as string;
+    } else if (chain === "kubtestnet") {
+        _chain = bitkubTestnet;
+        _chainId = 25925;
+        _explorer = "https://testnet.kubscan.com/";
+        _rpc = "https://rpc-testnet.bitkubchain.io" as string;
+    } // add chain here
+    const publicClient = createPublicClient({chain: _chain, transport: http(_rpc)});
+    const [theme, setTheme] = React.useState(themes[Number(_chainId)] || themes[96]);
+    let currencyAddr: string = "";
+    let bkgafactoryAddr: string = "";
+    let _blockcreated: number = 1;
+    let v2facAddr: string = "";
+    let v2routerAddr: string = "";
+    let v3qouterAddr: string = "";
+    let socialAddr: string = "";
+    let graduatedAddr: string = "";
+    if (
+        (chain === "kub" || chain === "") &&
+        (mode === "lite" || mode === "") &&
+        (token === "cmm" || token === "")
+    ) {
+        currencyAddr = "0x9b005000a10ac871947d99001345b01c1cef2790";
+        bkgafactoryAddr = "0x10d7c3bDc6652bc3Dd66A33b9DD8701944248c62";
+        _blockcreated = 25229488;
+        v2facAddr = "0x090c6e5ff29251b1ef9ec31605bdd13351ea316c";
+        v2routerAddr = "0x3F7582E36843FF79F173c7DC19f517832496f2D8";
+        v3qouterAddr = "0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f";
+        socialAddr = "0xf8dec288D2438771f65ed59509ab474edaf067Da";
+        graduatedAddr = "0x7479A1e11e9940CAb6ee6c44aa1a72F3F02EEd8b";
+    } else if ((chain === "kub" || chain === "") && mode === "pro") {
+        currencyAddr = "0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5";
+        bkgafactoryAddr = "0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56";
+        _blockcreated = 25232899;
+        v2facAddr = "0x090c6e5ff29251b1ef9ec31605bdd13351ea316c";
+        v2routerAddr = "0x3F7582E36843FF79F173c7DC19f517832496f2D8";
+        v3qouterAddr = "0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f";
+        socialAddr = "0xf8dec288D2438771f65ed59509ab474edaf067Da";
+        graduatedAddr = "0xd1D024be49c90f7bA83fb97c1857D45B98Ad294b";
+    } else if (chain === "monad" && mode === "pro") {
+        currencyAddr = "0x760afe86e5de5fa0ee542fc7b7b713e1c5425701";
+        bkgafactoryAddr = "0x6dfc8eecca228c45cc55214edc759d39e5b39c93";
+        _blockcreated = 16912084;
+        v2facAddr = "0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142";
+        v2routerAddr = "0x5a16536bb85a2fa821ec774008d6068eced79c96";
+        v3qouterAddr = "0x555756bd5b347853af6f713a2af6231414bedefc";
+        socialAddr = "0x01837156518e60362048e78d025a419C51346f55";
+        graduatedAddr = "0x6dfc8eecca228c45cc55214edc759d39e5b39c93";
+    } else if (chain === "kubtestnet" && mode === "pro") {
+        currencyAddr = "0x700D3ba307E1256e509eD3E45D6f9dff441d6907";
+        bkgafactoryAddr = "0x46a4073c830031ea19d7b9825080c05f8454e530";
+        _blockcreated = 23935659;
+        v2facAddr = "0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b";
+        v2routerAddr = "0x3C5514335dc4E2B0D9e1cc98ddE219c50173c5Be";
+        v3qouterAddr = "0x3F64C4Dfd224a102A4d705193a7c40899Cf21fFe";
+        socialAddr = "0x6F17157b4EcD3734A9EA8ED4bfE78694e3695b90";
+        lp = "0x46a4073C830031eA19D7b9825080c05F8454E530"
     }
+    const reachData = [
+        {
+            chain: "kub",
+            proAmount: "2000",
+            proSymbol: "KUB",
+            lite: "100000",
+            liteSymbol: "CMM",
+        },
+        {
+            chain: "kubtestnet",
+            proAmount: "47800",
+            proSymbol: "tKUB",
+            lite: "",
+            liteSymbol: "",
+        },
+        {
+            chain: "monad",
+            proAmount: "1",
+            proSymbol: "MON",
+            lite: "",
+            liteSymbol: "",
+        },
+    ];
+    // add chain and mode here
 
-    const { fb, x, telegram, website } = socials;
-    setSocial();
-    console.log("Saving socials:", { fb, x, telegram, website });
-    setShowSocials(false);
-  };
+    const dataofcurr = { addr: currencyAddr, blockcreated: _blockcreated };
+    const dataofuniv2factory = { addr: v2facAddr };
+    const dataofuniv2router = { addr: v2routerAddr };
+    const dataofuniv3qouter = { addr: v3qouterAddr };
+    const bkgafactoryContract = { address: bkgafactoryAddr as "0xstring", abi: chain === "kubtestnet" ? ERC20FactoryV2ABI : ERC20FactoryABI, chainId: _chainId } as const;
+    const graduatedContract = { address: graduatedAddr as "0xstring", abi: ERC20FactoryABI, chainId: _chainId };
+    const univ2factoryContract = { address: dataofuniv2factory.addr as "0xstring", abi: UniswapV2FactoryABI, chainId: _chainId } as const;
+    const univ2RouterContract = { address: dataofuniv2router.addr as "0xstring", abi: UniswapV2RouterABI, chainId: _chainId } as const;
+    const univ3QouterContract = { address: dataofuniv3qouter.addr as "0xstring", abi: UniswapV3QouterABI, chainId: _chainId } as const;
+    const socialContrct = { address: socialAddr as "0xstring", abi: SocialsABI, chainId: _chainId } as const;
 
-  type JSXElement = React.ReactElement;
+    const [trademode, setTrademode] = useState(true);
+    const connections = useConnections();
+    const account = useAccount();
+    const tickerContract = {address: ticker as "0xstring", abi: erc20Abi, chainId: _chainId} as const;
+    const [inputBalance, setInputBalance] = useState("");
+    const [outputBalance, setOutputBalance] = useState("0");
+    const [hash, setHash] = useState("");
+    const [headnoti, setHeadnoti] = useState(false);
+    const [gradHash, setGradHash] = useState("");
+    const [ethBal, setEthBal] = useState(BigInt(0));
+    const [state, setState] = useState<any>([
+        { result: BigInt(0) },
+        { result: BigInt(0) },
+        { result: false },
+        { result: [BigInt(0)] },
+    ]);
+    const [showSocials, setShowSocials] = useState(false);
+    const hasSetSocialsRef = React.useRef(false);
+    const [grapthType, setGrapthType] = useState("CMswap");
+    const [graphData, setGraphData] = useState<{ time: number; price: number; volume: number }[]>([]);
+    const [socials, setSocials] = useState({fb: "", x: "", telegram: "", website: ""});
+    const [errors, setErrors] = useState({fb: false, x: false, telegram: false, website: false});
+    const [price, setPrice] = useState(0);
+    const [mcap, setMcap] = useState(0);
+    const [symbol, setSymbol] = useState(null);
+    const [name, setName] = useState(null);
+    const [creator, setCreator] = useState<string | null>(null);
+    const [createTime, setCreateTime] = useState<number | null>(null);
+    const [logo, setLogo] = useState<string | null>(null);
+    const [description, setDescription] = useState<string | null>(null);
+    const [progress, setProgress] = useState(0);
 
-  const socialItems: { icon: JSXElement; field: keyof typeof socials }[] = [
-    { icon: <FaFacebookF className="text-white" />, field: "fb" },
-    { icon: <BsTwitterX className="text-white" />, field: "x" },
-    { icon: <FaTelegramPlane className="text-white" />, field: "telegram" },
-    { icon: <FaGlobe className="text-white" />, field: "website" },
-  ];
+    const resolvedLogo = React.useMemo(() => {
+        if (!logo) return "https://cmswap.mypinata.cloud/ipfs/";
+        const logoString = String(logo);
+        if (logoString.startsWith("ipfs://")) return `https://cmswap.mypinata.cloud/ipfs/${logoString.slice(7)}`;
+        return `https://cmswap.mypinata.cloud/ipfs/${logoString}`;
+    }, [logo]);
 
-  const socialsResult = useReadContracts({
-    contracts: [
-      {
-        address: socialAddr as "0xstring",
-        abi: SocialsABI,
-        functionName: "socials",
-        chainId: _chainId,
-        args: [ticker as "0xstring"],
-      },
-    ],
-  });
+    const baseAssetSymbol = React.useMemo(() => {
+        const entry = reachData.find((item) => item.chain === chain);
+        if (!entry) return "";
+        if (mode === "pro" && entry.proSymbol) return entry.proSymbol;
+        if (mode === "lite" && entry.liteSymbol && (token === entry.liteSymbol || token === "")) return entry.liteSymbol;
+        return "";
+    }, [chain, mode, token]);
 
-  const [holder, setHolder] = useState([] as { addr: string; value: number }[]);
-  const [hx, setHx] = useState(
-    [] as {
-      action: string;
-      value: number;
-      from: any;
-      hash: any;
-      timestamp: number;
-    }[]
-  );
-  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
-  const copyToClipboard = async (address: string): Promise<void> => {
-    await navigator.clipboard.writeText(address);
-    setCopiedAddress(address);
-    setTimeout(() => {
-      setCopiedAddress(null);
-    }, 2000);
-  };
+    const bondingTarget = React.useMemo(() => {
+        const entry = reachData.find((item) => item.chain === chain);
+        if (!entry) return "";
+        if (mode === "pro" && entry.proAmount && entry.proSymbol) return `${entry.proAmount} ${entry.proSymbol}`;
+        if (mode === "lite" && entry.lite && entry.liteSymbol && (token === entry.liteSymbol || token === "")) return `${entry.lite} ${entry.liteSymbol}`;
+        return "";
+    }, [chain, mode, token]);
 
-  React.useEffect(() => {
-    const fetch0 = async () => {
-      try {
-        if (chain == "kubtestnet") {
-          const result2: any = await readContracts(config, {
-            contracts: [
-              {
-                ...tickerContract,
-                functionName: "name",
-              },
-              {
-                ...tickerContract,
-                functionName: "symbol",
-              },
-            ],
-          });
+    const formatRelativeTime = (timestamp: number | null) => {
+        if (!timestamp) return "";
+        const nowSeconds = Math.floor(Date.now() / 1000);
+        const diff = timestamp - nowSeconds;
+        const absDiff = Math.abs(diff);
+        if (absDiff < 60) return rtf.format(Math.round(diff), "second");
+        if (absDiff < 3600) return rtf.format(Math.round(diff / 60), "minute");
+        if (absDiff < 86400) return rtf.format(Math.round(diff / 3600), "hour");
+        if (absDiff < 604800) return rtf.format(Math.round(diff / 86400), "day");
+        if (absDiff < 2629800) return rtf.format(Math.round(diff / 604800), "week");
+        if (absDiff < 31557600) return rtf.format(Math.round(diff / 2629800), "month");
+        return rtf.format(Math.round(diff / 31557600), "year");
+    };
 
-          const logCreateData = await publicClient.getContractEvents({
-            ...bkgafactoryContract,
-            eventName: "Creation",
-            fromBlock: BigInt(_blockcreated),
-            toBlock: "latest",
-          });
+    const relativeCreatedTime = formatRelativeTime(createTime);
+    const createdAtAbsolute = React.useMemo(() => {
+        if (!createTime) return "";
+        return new Date(createTime * 1000).toLocaleString();
+    }, [createTime]);
 
-          const poolDataPromises = logCreateData.map(async (res: any) => {
-            const tokenData = await readContracts(config, {
-              contracts: [
-                {
-                  address: res.args.tokenAddr as `0x${string}`,
-                  abi: erc20Abi,
-                  functionName: "symbol",
-                  chainId: _chainId,
-                },
-                {
-                  address: res.args.tokenAddr as `0x${string}`,
-                  abi: erc20Abi,
-                  functionName: "totalSupply",
-                  chainId: _chainId,
-                },
-                {
-                  ...bkgafactoryContract,
-                  functionName: "pumpReserve",
-                  args: [res.args.tokenAddr as "0xstring"],
-                  chainId: _chainId,
-                },
-                {
-                  ...bkgafactoryContract,
-                  functionName: "virtualAmount",
-                  chainId: _chainId,
-                },
-              ],
-            });
+    const formattedPrice = React.useMemo(() => {
+        if (!price) return "0.00";
+        return Intl.NumberFormat("en-US", {
+            minimumFractionDigits: price < 1 ? 2 : 0,
+            maximumFractionDigits: price < 1 ? 6 : 2,
+        }).format(price);
+    }, [price]);
 
-            return {
-              tokenAddress: res.args.tokenAddr as `0x${string}`,
-              creator: res.args.creator as `0x${string}`,
-              logo:
-                res.args.logo &&
-                res.args.logo.startsWith("ipfs://") &&
-                !res.args.logo.startsWith("ipfs://undefined")
-                  ? res.args.logo
-                  : res.args.link1,
-              createdTime: Number(res.args.createdTime),
-              description: res.args.description,
-              tokenSymbol:
-                tokenData[0].status === "success"
-                  ? tokenData[0].result
-                  : undefined,
-              totalSupply:
-                tokenData[1].status === "success"
-                  ? tokenData[1].result
-                  : undefined,
-              pumpReserve:
-                tokenData[2].status === "success"
-                  ? tokenData[2].result
-                  : undefined,
-              virtualAmount:
-                tokenData[3].status === "success"
-                  ? tokenData[3].result
-                  : undefined,
-            };
-          });
+    const formattedMcap = React.useMemo(() => {
+        return Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short", maximumFractionDigits: 2}).format(mcap || 0);
+    }, [mcap]);
 
-          const result44 = await Promise.all(poolDataPromises);
-          const getToken = result44.find(
-            (item) => item.tokenAddress.toLowerCase() === ticker.toLowerCase()
-          );
+    const progressPercent = React.useMemo(() => {
+        if (!Number.isFinite(progress)) return 0;
+        return Math.max(0, Math.min(100, progress));
+    }, [progress]);
 
-          const symbol = result2[1].result;
-          const name = result2[0].result;
-          const creator = getToken?.creator;
-          const createTime = Number(getToken?.createdTime);
-          const logo = getToken?.logo;
-          const description = getToken?.description;
-          const va = getToken?.virtualAmount !== undefined ? Number(formatEther(getToken?.virtualAmount)) : 0;
+    const bondingTooltip = bondingTarget ? `When the market cap reaches ${bondingTarget}, 90% of the liquidity in the factory contract will be burned and the remaining 10% will fund the platform.` : "90% of liquidity burns at graduation, 10% funds the platform.";
 
-          setSymbol(symbol);
-          setName(name);
-          setCreator(creator as "0xstring");
-          setCreateTime(createTime);
-          setLogo(logo);
-          setDescription(description);
+    const isGraduated = Boolean(state?.[2]?.result);
 
-          const pump0 =
-            getToken?.pumpReserve &&
-            Array.isArray(getToken.pumpReserve) &&
-            getToken.pumpReserve[0] !== undefined
-              ? Number(formatEther(getToken.pumpReserve[0]))
-              : 0;
-          const pump1 =
-            getToken?.pumpReserve &&
-            Array.isArray(getToken.pumpReserve) &&
-            getToken.pumpReserve[1] !== undefined
-              ? Number(formatEther(getToken.pumpReserve[1]))
-              : 0;
-    
-          console.log("getToken",getToken);
-          console.log("Pump0",pump0)
-          console.log("VA",va)
-          console.log("Pump1",pump1)
-          const price = (pump0 + va) / pump1;
-          const mcap = chain === "kubtestnet" && mode === "pro" ? (1000000000 * price) - 3400 : 1000000000 * price;
-          const denominator = chain === "kubtestnet" && mode === "pro" ? 47800 : 1;
-          const progressValue = ((mcap * 100) / denominator).toFixed(2);
-          console.log("Progressing ", progressValue);
-          console.log("Price", price);
-          console.log("Mcap", mcap);
-          setProgress(Number(progressValue));
-          setMcap(mcap);
-          setPrice(price);
-      
-        } else {
-          const result2: any = await readContracts(config, {
-            contracts: [
-              {
-                ...tickerContract,
-                functionName: "name",
-              },
-              {
-                ...tickerContract,
-                functionName: "symbol",
-              },
-              {
-                ...bkgafactoryContract,
-                functionName: "desp",
-                args: [ticker as "0xstring"],
-              },
-              {
-                ...bkgafactoryContract,
-                functionName: "logo",
-                args: [ticker as "0xstring"],
-              },
-              {
-                ...univ2factoryContract,
-                functionName: "getPool",
-                args: [
-                  ticker as "0xstring",
-                  dataofcurr.addr as "0xstring",
-                  10000,
-                ],
-              },
-              {
-                ...bkgafactoryContract,
-                functionName: "creator",
-                args: [ticker as "0xstring"],
-              },
-              {
-                ...bkgafactoryContract,
-                functionName: "createdTime",
-                args: [ticker as "0xstring"],
-              },
-            ],
-          });
+    const isWalletReady = Boolean(connections) && account.address !== undefined && account.chainId === _chainId;
 
-          const symbol = result2[1].result;
-          const name = result2[0].result;
-          const creator = result2[5].result;
-          const createTime = result2[6].result;
-          const logo = result2[3].result;
-          const description = result2[2].result;
-
-          setSymbol(symbol);
-          setName(name);
-          setCreator(creator);
-          setCreateTime(createTime);
-          setLogo(logo);
-          setDescription(description);
-
-          console.log("Symbol :", symbol);
-          console.log("Name :", name);
-          console.log("Create By :", creator);
-          console.log("Create At :", createTime);
-          console.log("Logo URL :", logo);
-          console.log("Description :", description);
-
-          const result3 = await readContracts(config, {
-            contracts: [
-              {
-                address: lp as "0xstring",
-                abi: UniswapV2PairABI,
-                functionName: "slot0",
-                chainId: _chainId,
-              },
-              {
-                address: lp as "0xstring",
-                abi: UniswapV2PairABI,
-                functionName: "token0",
-                chainId: _chainId,
-              },
-            ],
-          });
-
-          const sqrtPriceX96 = result3[0] && result3[0].status === "success" && result3[0].result !== undefined 
-            ? Number(result3[0].result[0]) / (2 ** 96) 
-            : 0;          
-          const isToken0 = result3[1].result?.toUpperCase() !== currencyAddr.toUpperCase();
-          const price = isToken0 ? sqrtPriceX96 ** 2 : 1 / sqrtPriceX96 ** 2;
-          const getItems = reachData.find((item) => item.chain === chain)
-
-          const denominator = getItems ? mode === 'pro' ? Number(getItems?.proAmount) : Number(getItems?.lite) : 1;
-          
-          const progressValue = ((Number(price) * 100) / denominator).toFixed(2);
-          setProgress(Number(progressValue));
-          setPrice(Number(price));
-
-          const mcap = price !== 0 ? price * 1000000000 : 0;
-
-          setMcap(Number(mcap));
+    const chainLabel = React.useMemo(() => {
+        switch (chain) {
+        case "kub":
+            return "Bitkub Chain";
+        case "kubtestnet":
+            return "Bitkub Testnet";
+        case "monad":
+            return "Monad Testnet";
+        default:
+            return chain ? chain.toUpperCase() : "Bitkub Chain";
         }
-      } catch (error) {
-        console.error("error with reason", error);
-      }
-    };
+    }, [chain]);
 
-    const fetch1 = async () => {
-      const nativeBal =
-        account.address !== undefined
-          ? await getBalance(config, { address: account.address as "0xstring" })
-          : { value: BigInt(0) };
-      setEthBal(nativeBal.value);
-      const state0 =
-        account.address !== undefined
-          ? await readContracts(config, {
-              contracts: [
-                {
-                  address: dataofcurr.addr as "0xstring",
-                  abi: erc20Abi,
-                  functionName: "balanceOf",
-                  args:
-                    account.address !== undefined
-                      ? [account.address as "0xstring"]
-                      : ["0x0000000000000000000000000000000000000001"],
-                  chainId: _chainId,
-                },
-                {
-                  ...tickerContract,
-                  functionName: "balanceOf",
-                  args:
-                    account.address !== undefined
-                      ? [account.address as "0xstring"]
-                      : ["0x0000000000000000000000000000000000000001"],
-                },
-                {
-                  ...graduatedContract,
-                  functionName: "isGraduate",
-                  args: [lp as "0xstring"],
-                },
-                {
-                  address: lp as "0xstring",
-                  abi: UniswapV2PairABI,
-                  functionName: "slot0",
-                  chainId: _chainId,
-                },
-              ],
-            })
-          : [
-              { result: BigInt(0) },
-              { result: BigInt(0) },
-              { result: false },
-              { result: [BigInt(0)] },
-            ];
-      setState(state0);
-    };
-    const fetchLogs = async () => {
-      // if (chain === 'monad' && mode === 'pro') {
-      //     const blockNumber = await publicClient.getBlockNumber()
-      //     dataofcurr.blockcreated = Number(blockNumber - BigInt(400));
-      // }
-      let result5removedup;
-      if (chain === "monad") {
-        const headers = {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        };
-        const body = JSON.stringify({
-          id: 1,
-          jsonrpc: "2.0",
-          method: "alchemy_getAssetTransfers",
-          params: [
-            {
-              fromBlock: "0x0",
-              toBlock: "latest",
-              contractAddresses: [ticker as "0xstring"],
-              excludeZeroValue: true,
-              category: ["erc20"],
-            },
-          ],
-        });
-        const response = await fetch(_rpc, {
-          method: "POST",
-          headers: headers,
-          body: body,
-        });
-        const data = await response.json();
-        const _holder = data.result.transfers.map(async (res: any) => {
-          return res.to;
-        });
-        result5removedup = [...new Set(await Promise.all(_holder))];
-      } else {
-        const result4 = await publicClient.getContractEvents({
-          abi: erc20Abi,
-          address: ticker as "0xstring",
-          eventName: "Transfer",
-          fromBlock: BigInt(dataofcurr.blockcreated),
-          toBlock: "latest",
-        });
-        const result5 = (await Promise.all(result4)).map((res) => {
-          return res.args.to;
-        });
-        result5removedup = [...new Set(result5)];
-      }
-      const result6 = result5removedup.map(async (res) => {
-        return await readContracts(config, {
-          contracts: [
-            {
-              address: ticker as "0xstring",
-              abi: erc20Abi,
-              functionName: "balanceOf",
-              args: [res as "0xstring"],
-              chainId: _chainId,
-            },
-          ],
-        });
-      });
-      const result7 = await Promise.all(result6);
-      const result8 = result5removedup
-        .map((res, index) => {
-          return {
-            addr: res as string,
-            value:
-              Number(formatEther(result7[index][0].result as bigint)) /
-              10000000,
-          };
-        })
-        .filter((res) => {
-          return res.value !== 0;
-        });
-      setHolder(result8);
-      let fulldatabuy;
-      let fulldatasell;
-      if (chain === "monad") {
-        const headers = {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        };
-        const body = JSON.stringify({
-          id: 2,
-          jsonrpc: "2.0",
-          method: "alchemy_getAssetTransfers",
-          params: [
-            {
-              fromBlock: "0x0",
-              toBlock: "latest",
-              fromAddress: lp as "0xstring",
-              contractAddresses: [ticker as "0xstring"],
-              excludeZeroValue: true,
-              category: ["erc20"],
-            },
-          ],
-        });
-        const response = await fetch(_rpc, {
-          method: "POST",
-          headers: headers,
-          body: body,
-        });
-        const data = await response.json();
-        fulldatabuy = data.result.transfers.map((res: any) => {
-          return {
-            action: "buy",
-            value: Number(formatEther(BigInt(res.rawContract.value))),
-            from: res.to,
-            hash: res.hash,
-            block: Number(res.blockNum),
-          };
-        });
-        const body2 = JSON.stringify({
-          id: 3,
-          jsonrpc: "2.0",
-          method: "alchemy_getAssetTransfers",
-          params: [
-            {
-              fromBlock: "0x0",
-              toBlock: "latest",
-              toAddress: lp as "0xstring",
-              contractAddresses: [ticker as "0xstring"],
-              excludeZeroValue: true,
-              category: ["erc20"],
-            },
-          ],
-        });
-        const response2 = await fetch(_rpc, {
-          method: "POST",
-          headers: headers,
-          body: body2,
-        });
-        const data2 = await response2.json();
-        fulldatasell = data2.result.transfers.map((res: any) => {
-          return {
-            action: "sell",
-            value: Number(formatEther(BigInt(res.rawContract.value))),
-            from: res.from,
-            hash: res.hash,
-            block: Number(res.blockNum),
-          };
-        });
-      } else {
-        if (chain !== "kubtestnet") {
-          const result9 = await publicClient.getContractEvents({
-            address: ticker as "0xstring",
-            abi: erc20Abi,
-            eventName: "Transfer",
-            args: {
-              from: lp as "0xstring",
-            },
-            fromBlock: BigInt(dataofcurr.blockcreated),
-            toBlock: "latest",
-          });
-          fulldatabuy = result9.map((res: any) => {
-            return {
-              action:
-                Number(formatEther(res.args.value)) === 90661089.38801491
-                  ? "launch"
-                  : "buy",
-              value: Number(formatEther(res.args.value)),
-              from: res.args.to,
-              hash: res.transactionHash,
-              block: res.blockNumber,
-            };
-          });
-          const result10 = await publicClient.getContractEvents({
-            address: ticker as "0xstring",
-            abi: erc20Abi,
-            eventName: "Transfer",
-            args: {
-              to: lp as "0xstring",
-            },
-            fromBlock: BigInt(dataofcurr.blockcreated),
-            toBlock: "latest",
-          });
-          fulldatasell = result10.map((res: any) => {
-            return {
-              action: "sell",
-              value: Number(formatEther(res.args.value)),
-              from: res.args.from,
-              hash: res.transactionHash,
-              block: res.blockNumber,
-            };
-          });
-          const resGraduate = (
-            await publicClient.getContractEvents({
-              abi: erc20Abi,
-              address: lp as "0xstring",
-              eventName: "Transfer",
-              args: {
-                to: "0x0000000000000000000000000000000000000000",
-              },
-              fromBlock: BigInt(dataofcurr.blockcreated),
-              toBlock: "latest",
-            })
-          ).filter((res) => {
-            return res.args.value === BigInt("12405643876881199591159421");
-          });
-          if (resGraduate[0] !== undefined) {
-            setGradHash(resGraduate[0].transactionHash);
-          }
-        } else {
-          {
-            /** FETCHING V2 */
-          }
-          const result9 = await publicClient.getContractEvents({
-            address: ticker as "0xstring",
-            abi: erc20Abi,
-            eventName: "Transfer",
-            args: {
-              from: bkgafactoryAddr as "0xstring",
-            },
-            fromBlock: BigInt(dataofcurr.blockcreated),
-            toBlock: "latest",
-          });
-          fulldatabuy = result9
-            .map((res: any) => {
-              const value = Number(formatEther(res.args.value));
-              if (value === 0) {
-                return null;
-              }
-              return {
-                action: value === 90661089.38801491 ? "launch" : "buy",
-                value,
-                from: res.args.to,
-                hash: res.transactionHash,
-                block: res.blockNumber,
-              };
-            })
-            .filter((item: any) => item !== null);
-          console.log("FULL DATA", fulldatabuy);
-          const result10 = await publicClient.getContractEvents({
-            address: ticker as "0xstring",
-            abi: erc20Abi,
-            eventName: "Transfer",
-            args: {
-              to: bkgafactoryAddr as "0xstring",
-            },
-            fromBlock: BigInt(dataofcurr.blockcreated),
-            toBlock: "latest",
-          });
-          fulldatasell = result10.map((res: any) => {
-            return {
-              action: "sell",
-              value: Number(formatEther(res.args.value)),
-              from: res.args.from,
-              hash: res.transactionHash,
-              block: res.blockNumber,
-            };
-          });
-          const resGraduate = (
-            await publicClient.getContractEvents({
-              abi: erc20Abi,
-              address: bkgafactoryAddr as "0xstring",
-              eventName: "Transfer",
-              args: {
-                to: "0x0000000000000000000000000000000000000000",
-              },
-              fromBlock: BigInt(dataofcurr.blockcreated),
-              toBlock: "latest",
-            })
-          ).filter((res) => {
-            return res.args.value === BigInt("12405643876881199591159421");
-          });
-          if (resGraduate[0] !== undefined) {
-            setGradHash(resGraduate[0].transactionHash);
-          }
-        }
-      }
-      const mergedata = fulldatasell.slice(1).concat(fulldatabuy);
-      const _timestamparr = mergedata.map(async (res: any) => {
-        return await publicClient.getBlock({
-          blockNumber: res.block,
-        });
-      });
-      const timestamparr = await Promise.all(_timestamparr);
-      const restimestamp = timestamparr.map((res) => {
-        return Number(res.timestamp) * 1000;
-      });
-      const theresult = mergedata
-        .map((res: any, index: any) => {
-          return {
-            action: res.action,
-            value: res.value,
-            from: res.from,
-            hash: res.hash,
-            timestamp: restimestamp[index],
-          };
-        })
-        .sort((a: any, b: any) => {
-          return b.timestamp - a.timestamp;
-        });
-      console.log("Final Logs Result", theresult);
-      setHx(theresult);
-    };
+    const modeLabel = mode === "pro" ? "Pro Mode" : "Lite Mode";
 
-    const fetchGraph = async () => {
-      console.log(`fetch token pair ${ticker} with ${currencyAddr}}`);
-      const result = await readContracts(config, {
-        contracts: [
-          {
-            address: "0x7a90f3F76E88D4A2079E90197DD2661B8FEcA9B6" as "0xstring",
-            abi: CMswapChartABI,
-            functionName: "getCandleDataCount",
-            args: [ticker as "0xstring", currencyAddr as "0xstring"],
-            chainId: 88991001,
-          },
-        ],
-      });
+    const presetButtons = React.useMemo(() => mode === "pro" && trademode ? 
+        [
+            { label: "0.1", type: "amount" as const, value: 0.1 },
+            { label: "0.5", type: "amount" as const, value: 0.5 },
+            { label: "1", type: "amount" as const, value: 1 },
+        ] :
+        [25, 50, 75].map((percent) => ({label: `${percent}%`, type: "percent" as const, value: percent}))
+    , [mode, trademode]);
 
-      let dataSet: any[] = [];
-      if (result && result[0]?.status === "success") {
-        const count = result[0].result;
-        const totalCount = Number(count);
-        const pageSize = 100;
-        console.log(`Found : ${count} Data`);
+    const tokenSymbolDisplay = symbol ? String(symbol) : "";
+    const inputAssetSymbol = trademode ? baseAssetSymbol : tokenSymbolDisplay;
+    const outputAssetSymbol = trademode ? tokenSymbolDisplay : baseAssetSymbol;
 
-        for (
-          let startIndex = 0;
-          startIndex < totalCount;
-          startIndex += pageSize
-        ) {
-          const fetch = await readContracts(config, {
-            contracts: [
-              {
-                address:
-                  "0x7a90f3F76E88D4A2079E90197DD2661B8FEcA9B6" as "0xstring",
-                abi: CMswapChartABI,
-                functionName: "getCandleData",
-                args: [
-                  ticker as "0xstring",
-                  currencyAddr as "0xstring",
-                  BigInt(startIndex),
-                  BigInt(pageSize),
-                ],
-                chainId: 88991001,
-              },
-            ],
-          });
+    const formattedAvailableBalance = React.useMemo(() => Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short", maximumFractionDigits: 3}).format(
+        mode === "pro" ? 
+            trademode ? Number(formatEther(ethBal)) : Number(formatEther(state[1].result as bigint)) :
+            trademode ? Number(formatEther(state[0].result as bigint)) : Number(formatEther(state[1].result as bigint))
+    ), [mode, trademode, ethBal, state]);
 
-          if (fetch && fetch[0]?.status === "success") {
-            dataSet = dataSet.concat(fetch[0].result);
-          }
-        }
-      }
+    const formattedCounterBalance = React.useMemo(() => Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short", maximumFractionDigits: 3}).format(
+        mode === "pro" ? 
+            !trademode ? Number(formatEther(ethBal)) : Number(formatEther(state[1].result as bigint)) :
+            !trademode ? Number(formatEther(state[0].result as bigint)) : Number(formatEther(state[1].result as bigint))
+    ), [mode, trademode, ethBal, state]);
 
-      const timestamps = dataSet[0];
-      const prices = dataSet[1];
-      const volumes = dataSet[2];
+    const formattedOutput = React.useMemo(() => Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short", maximumFractionDigits: 6}).format(Number(outputBalance || 0)), [outputBalance]);
 
-      console.log("Un Data", dataSet);
-      const formattedData = timestamps.map((time: any, index: number) => ({
-        time: Number(timestamps[index]) * 1000,
-        price: Number(formatEther(prices[index].toString())),
-        volume: Number(formatEther(volumes[index].toString())),
-      }));
+    const truncatedTicker = React.useMemo(() => {
+        if (!ticker) return "";
+        if (ticker.length <= 12) return ticker;
+        return `${ticker.slice(0, 6)}...${ticker.slice(-4)}`;
+    }, [ticker]);
 
-      console.log("Formatted Data", formattedData);
-      setGraphData(formattedData);
-    };
+    const gradientButtonStyle = (active: boolean) => active && theme?.btn ? ({backgroundImage: theme.btn} as React.CSSProperties) : undefined;
 
-    if (hash === "") {
-      fetchGraph();
-      fetchLogs();
-      fetch0();
-      fetch1();
-    } else {
-      setInterval(fetch0, 5000);
-      setInterval(fetchGraph, 5000);
-      setInterval(fetchLogs, 5000);
-      setInterval(fetch1, 5000);
-    }
-  }, [hash]);
-
-  const qoute = useDebouncedCallback(async (value: string) => {
-    try {
-      if (Number(value) !== 0) {
-        if (chain !== "kubtestnet") {
-          const qouteOutput = await simulateContract(config, {
-            ...univ3QouterContract,
-            functionName: "quoteExactInputSingle",
-            args: [
-              {
-                tokenIn: trademode
-                  ? (dataofcurr.addr as "0xstring")
-                  : (ticker as "0xstring"),
-                tokenOut: trademode
-                  ? (ticker as "0xstring")
-                  : (dataofcurr.addr as "0xstring"),
-                amountIn: parseEther(value),
-                fee: 10000,
-                sqrtPriceLimitX96: BigInt(0),
-              },
-            ],
-          });
-          setOutputBalance(formatEther(qouteOutput.result[0]));
-        } else {
-          // kubtestnet branch
-          const result = await readContracts(config, {
-            contracts: [
-              {
-                ...bkgafactoryContract,
-                functionName: "pumpReserve",
-                args: [ticker as "0xstring"],
-                chainId: _chainId,
-              },
-              {
-                ...bkgafactoryContract,
-                functionName: "virtualAmount",
-                chainId: _chainId,
-              },
-              {
-                ...bkgafactoryContract,
-                functionName: "pumpFee",
-                chainId: _chainId,
-              },
-            ],
-          });
-
-          // Define getAmountOut function
-          const getAmountOut = (
-            _inputAmount: number,
-            _inputReserve: bigint,
-            _outputReserve: bigint
-          ): number => {
-            const inputAmountWithFee = _inputAmount * 99; // Apply 99/100 multiplier for fee
-            const numerator =
-              BigInt(Math.floor(inputAmountWithFee)) * _outputReserve;
-            const denominator =
-              _inputReserve * BigInt(100) +
-              BigInt(Math.floor(inputAmountWithFee));
-            return Number(numerator / denominator);
-          };
-
-          // Check if result is valid
-          if (!result || !Array.isArray(result) || result.length < 3) {
-            console.error("Invalid contract result:", result);
-            setOutputBalance("");
+    const handlePresetClick = (preset: {
+        label: string;
+        type: "amount" | "percent";
+        value: number;
+    }) => {
+        if (preset.type === "amount") {
+            const formatted = preset.value.toFixed(6);
+            setInputBalance(formatted);
+            qoute(formatted);
             return;
-          }
-
-          // Extract results with safety checks
-          const pumpReserve =
-            result[0].result &&
-            Array.isArray(result[0].result) &&
-            result[0].result.length === 2
-              ? [
-                  BigInt(result[0].result[0] || 0),
-                  BigInt(result[0].result[1] || 0),
-                ]
-              : [BigInt(0), BigInt(10000)];
-
-          const virtualAmount = result[1].result
-            ? BigInt(result[1].result)
-            : BigInt(0);
-
-          const fee = result[2].result
-            ? Number(formatEther(result[2].result))
-            : 0;
-
-          // Calculate amount after fee
-          const inputAmount = Number(value);
-          const feeAmount = (inputAmount * fee) / 10000;
-          const amountInAfterFee = inputAmount - feeAmount;
-
-          // Calculate output based on trade mode
-          const amountOut = trademode
-            ? getAmountOut(
-                amountInAfterFee,
-                virtualAmount + pumpReserve[0],
-                pumpReserve[1]
-              )
-            : getAmountOut(
-                amountInAfterFee,
-                pumpReserve[1],
-                pumpReserve[0] + virtualAmount
-              );
-          console.log(amountOut);
-          // Format output to string for consistency
-          setOutputBalance(amountOut.toFixed(18)); // Match formatEther precision
         }
-      } else {
-        setOutputBalance("");
-      }
-    } catch (error) {
-      console.error("Error in quote calculation:", error);
-      setOutputBalance("");
-    }
-  }, 300);
-
-  const trade = async () => {
-    try {
-      let result: any = "";
-      if (chain !== "kubtestnet") {
-        // Existing logic for non-kubtestnet chains
-        if (mode === "pro") {
-          if (!trademode) {
-            const allowance = await readContracts(config, {
-              contracts: [
-                {
-                  address: ticker as "0xstring",
-                  abi: erc20Abi,
-                  functionName: "allowance",
-                  args: [
-                    account.address as "0xstring",
-                    dataofuniv2router.addr as "0xstring",
-                  ],
-                  chainId: _chainId,
-                },
-              ],
-            });
-            if (
-              Number(formatEther(allowance[0].result!)) < Number(inputBalance)
-            ) {
-              const { request } = await simulateContract(config, {
-                address: ticker as "0xstring",
-                abi: erc20Abi,
-                functionName: "approve",
-                args: [
-                  dataofuniv2router.addr as "0xstring",
-                  parseEther(String(Number(inputBalance) + 1)),
-                ],
-                chainId: _chainId,
-              });
-              const h = await writeContract(config, request);
-              await waitForTransactionReceipt(config, { hash: h });
+        try {
+            let balance: bigint = BigInt(0);
+            if (mode === "pro") {
+                balance = BigInt(state[1].result as bigint);
+            } else {
+                balance = BigInt(trademode ? (state[0].result as bigint) : (state[1].result as bigint));
             }
-          }
-          result = await writeContract(config, {
-            ...univ2RouterContract,
-            functionName: "exactInputSingle",
-            args: [
-              {
-                tokenIn: trademode
-                  ? (dataofcurr.addr as "0xstring")
-                  : (ticker as "0xstring"),
-                tokenOut: trademode
-                  ? (ticker as "0xstring")
-                  : (dataofcurr.addr as "0xstring"),
-                fee: 10000,
-                recipient: account.address as "0xstring",
-                amountIn: parseEther(inputBalance),
-                amountOutMinimum:
-                  (parseEther(outputBalance) * BigInt(95)) / BigInt(100),
-                sqrtPriceLimitX96: BigInt(0),
-              },
-            ],
-            value: trademode ? parseEther(inputBalance) : BigInt(0),
-          });
-        } else {
-          const allowance = await readContracts(config, {
-            contracts: [
-              {
-                address: trademode
-                  ? (dataofcurr.addr as "0xstring")
-                  : (ticker as "0xstring"),
-                abi: erc20Abi,
-                functionName: "allowance",
-                args: [
-                  account.address as "0xstring",
-                  dataofuniv2router.addr as "0xstring",
-                ],
-                chainId: _chainId,
-              },
-            ],
-          });
-          if (
-            Number(formatEther(allowance[0].result!)) < Number(inputBalance)
-          ) {
-            const { request } = await simulateContract(config, {
-              address: trademode
-                ? (dataofcurr.addr as "0xstring")
-                : (ticker as "0xstring"),
-              abi: erc20Abi,
-              functionName: "approve",
-              args: [
-                dataofuniv2router.addr as "0xstring",
-                parseEther(String(Number(inputBalance) + 1)),
-              ],
-              chainId: _chainId,
-            });
-            const h = await writeContract(config, request);
-            await waitForTransactionReceipt(config, { hash: h });
-          }
-          result = await writeContract(config, {
-            ...univ2RouterContract,
-            functionName: "exactInputSingle",
-            args: [
-              {
-                tokenIn: trademode
-                  ? (dataofcurr.addr as "0xstring")
-                  : (ticker as "0xstring"),
-                tokenOut: trademode
-                  ? (ticker as "0xstring")
-                  : (dataofcurr.addr as "0xstring"),
-                fee: 10000,
-                recipient: account.address as "0xstring",
-                amountIn: parseEther(inputBalance),
-                amountOutMinimum:
-                  (parseEther(outputBalance) * BigInt(95)) / BigInt(100),
-                sqrtPriceLimitX96: BigInt(0),
-              },
-            ],
-          });
+            const amount = (balance * BigInt(Math.round(preset.value))) / BigInt(100);
+            const formatted = Number(formatEther(amount)).toFixed(6);
+            setInputBalance(formatted);
+            qoute(formatted);
+        } catch (error) {
+            console.error("Failed to apply preset", error);
         }
-      } else {
-        // kubtestnet branch
-        if (trademode) {
-          // Buy: Native currency -> Token
-          result = await writeContract(config, {
-            ...bkgafactoryContract,
-            functionName: "buy",
-            args: [
-              ticker as "0xstring", // _tokenAddr
-              (parseEther(outputBalance) * BigInt(95)) / BigInt(100), // _minToken
-            ],
-            value: parseEther(inputBalance), // msg.value
-            chainId: _chainId,
-          });
-        } else {
-          // Sell: Token -> Native currency
-          const allowance = await readContracts(config, {
-            contracts: [
-              {
-                address: ticker as "0xstring",
-                abi: erc20Abi,
-                functionName: "allowance",
-                args: [
-                  account.address as "0xstring",
-                  bkgafactoryContract.address as "0xstring",
-                ],
-                chainId: _chainId,
-              },
-            ],
-          });
-          console.log("allowance",allowance)
-          if (
-            Number(formatEther(allowance[0].result!)) < Number(inputBalance)
-          ) {
-            const { request } = await simulateContract(config, {
-              address: ticker as "0xstring",
-              abi: erc20Abi,
-              functionName: "approve",
-              args: [
-                bkgafactoryContract.address as "0xstring",
-                parseEther(String(Number(inputBalance) + 1)),
-              ],
-              chainId: _chainId,
-            });
-            const h = await writeContract(config, request);
-            await waitForTransactionReceipt(config, { hash: h });
-          }
-          result = await writeContract(config, {
-            ...bkgafactoryContract,
-            functionName: "sell",
-            args: [
-              ticker as "0xstring", // _tokenAddr
-              parseEther(inputBalance), // _tokenSold
-              (parseEther(outputBalance) * BigInt(90)) / BigInt(100), // _minToken
-            ],
-            chainId: _chainId,
-          });
+    };
+
+    const handleReset = () => {
+        setInputBalance("");
+        setOutputBalance("0");
+    };
+
+    const handleMaxClick = () => {
+        try {
+            let value = 0;
+            if (mode === "pro") {
+                if (trademode) {
+                    value = Number(formatEther(ethBal)) - 0.00001;
+                } else {
+                    value = Number(formatEther(state[1].result as bigint));
+                }
+            } else {
+                value = Number(formatEther(trademode ? (state[0].result as bigint) : (state[1].result as bigint)));
+            }
+            if (!Number.isFinite(value)) value = 0;
+            if (value < 0) value = 0;
+            const formatted = value.toFixed(6);
+            setInputBalance(formatted);
+            qoute(formatted);
+        } catch (error) {
+            console.error("Failed to apply max", error);
         }
-      }
-      setHeadnoti(true);
-      setHash(result);
-      setInputBalance("");
-      setOutputBalance("0");
-    } catch (error) {
-      console.error("Error in trade execution:", error);
-      setHeadnoti(false);
-      setHash("");
-    }
-  };
+    };
 
-  const setSocial = async () => {
-    let result = await writeContract(config, {
-      ...socialContrct,
-      functionName: "setSocialMedia",
-      args: [
-        ticker as "0xstring",
-        socials.fb,
-        socials.x,
-        socials.telegram,
-        socials.website,
-      ],
-    });
-  };
+    const tradeButtonLabel = isWalletReady ? 
+        trademode ? `Buy ${tokenSymbolDisplay || "token"}` : `Sell ${tokenSymbolDisplay || "token"}` :
+        "Connect wallet";
+    const graduationLink = gradHash ? `${_explorer}tx/${gradHash}` : "";
 
-  React.useEffect(() => {
-    if (socialsResult.status === "success" && !hasSetSocialsRef.current) {
-      const rawResult = socialsResult.data?.[0]?.result;
+    const getExplorerAddressUrl = (address?: string | null) => {
+        if (!address) return "";
+        const suffixKub = ["kub", "kubtestnet"].includes(chain) ? "/?tab=tokens" : "";
+        const suffixMonad = chain === "monad" ? "#tokens" : "";
+        return `${_explorer}address/${address}${suffixKub}${suffixMonad}`;
+    };
 
-      if (Array.isArray(rawResult)) {
-        const [fb, x, telegram, website] = rawResult as string[];
+    const tradeTimeFormatter = React.useMemo(() => new Intl.DateTimeFormat("en-GB", {
+        dateStyle: "short",
+        timeStyle: "short",
+        timeZone: "Asia/Bangkok",
+    }), []);
 
-        setSocials({
-          fb: fb || "",
-          x: x || "",
-          telegram: telegram || "",
-          website: website || "",
+    const isValidUrl = (url: string) => {return (url === "" || url.startsWith("http://") || url.startsWith("https://"))};
+
+    const handleChange = (field: keyof typeof socials) =>
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const value = e.target.value;
+            setSocials((prev) => ({ ...prev, [field]: value }));
+            setErrors((prev) => ({ ...prev, [field]: !isValidUrl(value) }));
+        };
+
+    const handleSave = async () => {
+        const hasError = Object.values(errors).some((v) => v);
+        if (hasError) return;
+        const { fb, x, telegram, website } = socials;
+        await writeContract(config, {
+            ...socialContrct,
+            functionName: "setSocialMedia",
+            args: [
+                ticker as "0xstring",
+                socials.fb,
+                socials.x,
+                socials.telegram,
+                socials.website,
+            ],
         });
+        setShowSocials(false);
+    };
 
-        hasSetSocialsRef.current = true;
-      } else {
-        console.warn("Unexpected result format", rawResult);
-      }
-    }
-  }, [socialsResult]);
+    type JSXElement = React.ReactElement;
 
-  return (
-    <main className="row-start-2 w-full flex flex-col gap-4 justify-center items-center mt-[60px] md:mt-1">
-      {/* HEADER TOPBAR */}
-      <div className="mt-[20px] md:mt-[50px] w-full max-w-[1920px] flex flex-col gap-4 mb-2">
-        <div
-          className="w-full flex flex-row justify-between flex-wrap gap-4 mt-4"
-          style={{ zIndex: 1 }}
-        >
-          <Link
-            href={
-              "/pump/launchpad?chain=" +
-              chain +
-              (mode === "pro" ? "&mode=pro" : "&mode=lite")
-            }
-            prefetch={false}
-            className="underline hover:font-bold p-4 xl:ml-4"
-          >
-            Back to launchpad
-          </Link>
-        </div>
-        {headnoti && (
-          <div className="w-full h-[40px] bg-sky-500 animate-pulse text-center p-2 flex flex-row gap-2 items-center justify-center">
-            <span>Trade Successful!, </span>
-            <Link
-              href={_explorer + "tx/" + hash}
-              rel="noopener noreferrer"
-              target="_blank"
-              prefetch={false}
-              className="underline"
-            >
-              your txn hash
-            </Link>
-            <button
-              className="bg-red-600 px-2 rounded-lg"
-              onClick={() => setHeadnoti(false)}
-            >
-              Close
-            </button>
-          </div>
-        )}
-        <div
-          className={
-            "xl:hidden w-full xl:w-1/3 self-center bg-neutral-900 p-2 rounded-2xl flex flex-row justify-around border-solid border-2 " +
-            (chain === "kub" ? "border-emerald-300" : "") +
-            (chain === "monad" ? "border-purple-300" : "")
-          }
-          style={{ zIndex: 1 }}
-        >
-          <span
-            className={
-              !tabmode
-                ? "text-black font-bold p-2 w-1/2 bg-black text-center rounded-lg"
-                : "text-gray-400 underline hover:font-bold p-2 w-1/2 text-center"
-            }
-            style={{ backgroundImage: !tabmode ? theme.btn : "none" }}
-            onClick={() => {
-              setTabmode(false);
-            }}
-          >
-            Info
-          </span>
-          <span
-            className={
-              tabmode
-                ? "text-black font-bold p-2 w-1/2 bg-black text-center rounded-lg"
-                : "text-gray-400 underline hover:font-bold p-2 w-1/2 text-center"
-            }
-            style={{ backgroundImage: tabmode ? theme.btn : "none" }}
-            onClick={() => {
-              setTabmode(true);
-            }}
-          >
-            Trade
-          </span>
-        </div>
-        <div className="ml-[14px] lg:ml-[28px] hidden xl:block w-full flex flex-col items-center md:flex-row flex-wrap justify-between text-xs xl:text-md">
-          <span
-            className={
-              "text-2xl mr-6 " +
-              (chain === "kub" ? "text-emerald-300" : "") +
-              (chain === "monad" ? "text-purple-300" : "")
-            }
-          >
-            {name}
-          </span>
-          <span className="mr-6">{"[" + symbol + "]"}</span>
-          <span className="mr-6">
-            Price:{" "}
-            <span
-              className={
-                theme.text
-              }
-            >
-              {price}
-            </span>{" "}
-          {
-              reachData && Array.isArray(reachData)
-                ? (() => {
-                    const item = reachData.find(
-                      (item) => item?.chain === chain
-                    );
-                    if (!item) return "";
-                    if (
-                      mode === "pro" &&
-                      item.proAmount &&
-                      item.proSymbol
-                    ) {
-                      return `${item.proSymbol}`;
-                    }
-                    if (
-                      mode === "lite" &&
-                      item.lite &&
-                      item.liteSymbol &&
-                      (token === item.liteSymbol || token === "")
-                    ) {
-                      return `${item.liteSymbol}`;
-                    }
-                    return "";
-                  })()
-                : ""
-            }
-          </span>
-          <span className="mr-6">
-            Market Cap:{" "}
-            <span
-              className={
-                theme.text
-              }
-            >
-              {Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(mcap)}
-            </span>{" "}
+    const socialItems: {
+        icon: JSXElement;
+        field: keyof typeof socials;
+        label: string;
+        placeholder: string;
+    }[] = [
+        {
+            icon: <FaFacebookF className="text-white" />,
+            field: "fb",
+            label: "Facebook",
+            placeholder: "Facebook URL",
+        },
+        {
+            icon: <BsTwitterX className="text-white" />,
+            field: "x",
+            label: "X (Twitter)",
+            placeholder: "X (Twitter) URL",
+        },
+        {
+            icon: <FaTelegramPlane className="text-white" />,
+            field: "telegram",
+            label: "Telegram",
+            placeholder: "Telegram URL",
+        },
+        {
+            icon: <FaGlobe className="text-white" />,
+            field: "website",
+            label: "Website",
+            placeholder: "Website URL",
+        },
+    ];
+
+    const socialsResult = useReadContracts({
+        contracts: [
             {
-              reachData && Array.isArray(reachData)
-                ? (() => {
-                    const item = reachData.find(
-                      (item) => item?.chain === chain
-                    );
-                    if (!item) return "";
-                    if (
-                      mode === "pro" &&
-                      item.proAmount &&
-                      item.proSymbol
-                    ) {
-                      return `${item.proSymbol}`;
-                    }
-                    if (
-                      mode === "lite" &&
-                      item.lite &&
-                      item.liteSymbol &&
-                      (token === item.liteSymbol || token === "")
-                    ) {
-                      return `${item.liteSymbol}`;
-                    }
-                    return "";
-                  })()
-                : ""
-            }
-  
-          </span>
-          {creator !== null && (
-            <span className="mr-6">
-              Creator:{" "}
-              <Link
-                href={
-                  _explorer +
-                  "address/" +
-                  creator +
-                  (["kub","kubtestnet"].includes(chain) ? "/?tab=tokens" : "") +
-                  (chain === "monad" ? "#tokens" : "")
-                }
-                rel="noopener noreferrer"
-                target="_blank"
-                prefetch={false}
-                className="text-right w-[30px] xl:w-[200px]"
-              >
-                {String(creator).slice(0, 5)}...
-                {String(creator).slice(37)}
-              </Link>{" "}
-              ·····{" "}
-              {Number(Number(Date.now() / 1000).toFixed(0)) -
-                Number(createTime) <
-                60 &&
-                rtf.format(
-                  Number(createTime) -
-                    Number(Number(Date.now() / 1000).toFixed(0)),
-                  "second"
-                )}
-              {Number(Number(Date.now() / 1000).toFixed(0)) -
-                Number(createTime) >=
-                60 &&
-                Number(Number(Date.now() / 1000).toFixed(0)) -
-                  Number(createTime) <
-                  3600 &&
-                rtf.format(
-                  Number(
-                    Number(
-                      (Number(createTime) -
-                        Number(Number(Date.now() / 1000).toFixed(0))) /
-                        60
-                    ).toFixed(0)
-                  ),
-                  "minute"
-                )}
-              {Number(Number(Date.now() / 1000).toFixed(0)) -
-                Number(createTime) >=
-                3600 &&
-                Number(Number(Date.now() / 1000).toFixed(0)) -
-                  Number(createTime) <
-                  86400 &&
-                rtf.format(
-                  Number(
-                    Number(
-                      (Number(createTime) -
-                        Number(Number(Date.now() / 1000).toFixed(0))) /
-                        3600
-                    ).toFixed(0)
-                  ),
-                  "hour"
-                )}
-              {Number(Number(Date.now() / 1000).toFixed(0)) -
-                Number(createTime) >=
-                86400 &&
-                rtf.format(
-                  Number(
-                    Number(
-                      (Number(createTime) -
-                        Number(Number(Date.now() / 1000).toFixed(0))) /
-                        86400
-                    ).toFixed(0)
-                  ),
-                  "day"
-                )}
-            </span>
-          )}
-          <span className="flex items-center gap-1 mr-6">
-            <span>
-              CA: {ticker.slice(0, 5)}...{ticker.slice(37)}
-            </span>
-            <button
-              onClick={() => copyToClipboard(ticker)}
-              className="flex items-center gap-2 bg-water-300 hover:bg-neutral-700 px-3 py-2 rounded-md transition-colors text-xs cursor-pointer"
-              title="Copy contract address"
-            >
-              {copiedAddress === ticker ? (
-                <>
-                  <Check size={16} />
-                  Copied!
-                </>
-              ) : (
-                <Copy size={16} />
-              )}
-            </button>
-            <button
-              className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm cursor-pointer"
-              onClick={async () => {
-                await ethereum.request({
-                  method: "wallet_watchAsset",
-                  params: {
-                    type: "ERC20",
-                    options: {
-                      address: ticker,
-                      symbol: symbol,
-                      decimals: 18,
-                      image:
-                        logo !== null && String(logo).slice(0, 7) === "ipfs://"
-                          ? "https://cmswap.mypinata.cloud/ipfs/" +
-                            String(logo).slice(7)
-                          : "https://cmswap.mypinata.cloud/ipfs/" + String(logo),
-                    },
-                  },
-                });
-              }}
-            >
-              <Plus size={16} />
-            </button>
-            <Link
-              href={_explorer + "address/" + ticker}
-              rel="noopener noreferrer"
-              target="_blank"
-              prefetch={false}
-              className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm"
-              title="View on Etherscan"
-            >
-              <Image src="/bs.png" alt="blockscout" height={16} width={16} />
-            </Link>
-          </span>
-        </div>
-      </div>
+                address: socialAddr as "0xstring",
+                abi: SocialsABI,
+                functionName: "socials",
+                chainId: _chainId,
+                args: [ticker as "0xstring"],
+            },
+        ],
+    });
 
-      {/** PC */}
-      <div className="w-full text-center max-w-[1920px] flex flex-row flex-wrap gap-12 items-center xl:items-start justify-around">
-        {!tabmode ? (
-          <div
-            className="block xl:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start"
-            style={{ zIndex: 1 }}
-          >
-            <div className="w-full flex flex-col items-start xl:flex-row flex-wrap justify-between text-xs xl:text-md">
-              <span
-                className={
-                  "text-2xl mr-6 " +
-                  (chain === "kub" ? "text-emerald-300" : "") +
-                  (chain === "monad" ? "text-purple-300" : "")
-                }
-              >
-                {name}
-              </span>
-              <span className="mr-6">{"[" + symbol + "]"}</span>
-              <span className="mr-6">
-                Price:{" "}
-                <span
-                  className={
-                    (chain === "kub" ? "text-emerald-300" : "") +
-                    (chain === "monad" ? "text-purple-300" : "")
-                  }
-                >
-                  {price}
-                </span>{" "}
-                {chain === "kub" && mode === "pro" && "KUB"}
-                {chain === "kub" &&
-                  mode === "lite" &&
-                  (token === "cmm" || token === "") &&
-                  "CMM"}
-                {chain === "monad" && mode === "pro" && "MON"}
-              </span>
-              <span className="mr-6">
-                Market Cap:{" "}
-                <span
-                  className={
-                    (chain === "kub" ? "text-emerald-300" : "") +
-                    (chain === "monad" ? "text-purple-300" : "")
-                  }
-                >
-              {Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(mcap)}
-                </span>{" "}
-                {chain === "kub" && mode === "pro" && "KUB"}
-                {chain === "kub" &&
-                  mode === "lite" &&
-                  (token === "cmm" || token === "") &&
-                  "CMM"}
-                {chain === "monad" && mode === "pro" && "MON"}
-              </span>
-              {creator !== null && (
-                <span className="mr-6">
-                  Creator:{" "}
-                  <Link
-                    href={
-                      _explorer +
-                      "address/" +
-                      creator +
-                      (chain === "kub" ? "/?tab=tokens" : "") +
-                      (chain === "monad" ? "#tokens" : "")
-                    }
-                    rel="noopener noreferrer"
-                    target="_blank"
-                    prefetch={false}
-                    className="text-right w-[30px] xl:w-[200px]"
-                  >
-                    {String(creator).slice(0, 5)}...
-                    {String(creator).slice(37)}
-                  </Link>{" "}
-                  ·····{" "}
-                  {Number(Number(Date.now() / 1000).toFixed(0)) -
-                    Number(createTime) <
-                    60 &&
-                    rtf.format(
-                      Number(createTime) -
-                        Number(Number(Date.now() / 1000).toFixed(0)),
-                      "second"
-                    )}
-                  {Number(Number(Date.now() / 1000).toFixed(0)) -
-                    Number(createTime) >=
-                    60 &&
-                    Number(Number(Date.now() / 1000).toFixed(0)) -
-                      Number(createTime) <
-                      3600 &&
-                    rtf.format(
-                      Number(
-                        Number(
-                          (Number(createTime) -
-                            Number(Number(Date.now() / 1000).toFixed(0))) /
-                            60
-                        ).toFixed(0)
-                      ),
-                      "minute"
-                    )}
-                  {Number(Number(Date.now() / 1000).toFixed(0)) -
-                    Number(createTime) >=
-                    3600 &&
-                    Number(Number(Date.now() / 1000).toFixed(0)) -
-                      Number(createTime) <
-                      86400 &&
-                    rtf.format(
-                      Number(
-                        Number(
-                          (Number(createTime) -
-                            Number(Number(Date.now() / 1000).toFixed(0))) /
-                            3600
-                        ).toFixed(0)
-                      ),
-                      "hour"
-                    )}
-                  {Number(Number(Date.now() / 1000).toFixed(0)) -
-                    Number(createTime) >=
-                    86400 &&
-                    rtf.format(
-                      Number(
-                        Number(
-                          (Number(createTime) -
-                            Number(Number(Date.now() / 1000).toFixed(0))) /
-                            86400
-                        ).toFixed(0)
-                      ),
-                      "day"
-                    )}
-                </span>
-              )}
-              <span className="flex items-center gap-1 mr-6">
-                <span>
-                  CA: {ticker.slice(0, 5)}...{ticker.slice(37)}
-                </span>
-                <button
-                  onClick={() => copyToClipboard(ticker)}
-                  className="flex items-center gap-2 bg-water-300 hover:bg-neutral-700 px-3 py-2 rounded-md transition-colors text-xs cursor-pointer"
-                  title="Copy contract address"
-                >
-                  {copiedAddress === ticker ? (
-                    <>
-                      <Check size={16} />
-                      Copied!
-                    </>
-                  ) : (
-                    <Copy size={16} />
-                  )}
-                </button>
-                <button
-                  className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm cursor-pointer"
-                  onClick={async () => {
-                    await ethereum.request({
-                      method: "wallet_watchAsset",
-                      params: {
-                        type: "ERC20",
-                        options: {
-                          address: ticker,
-                          symbol: symbol,
-                          decimals: 18,
-                          image:
-                            logo !== null &&
-                            String(logo).slice(0, 7) === "ipfs://"
-                              ? "https://cmswap.mypinata.cloud/ipfs/" +
-                                String(logo).slice(7)
-                              : "https://cmswap.mypinata.cloud/ipfs/" +
-                                String(logo),
-                        },
-                      },
+    const [holder, setHolder] = useState([] as { addr: string; value: number }[]);
+    const sortedHolders = React.useMemo(() => holder.slice().sort((a, b) => b.value - a.value), [holder]);
+    const [hx, setHx] = useState(
+        [] as {
+            action: string;
+            nativeValue: number;
+            value: number;
+            from: any;
+            hash: any;
+            timestamp: number;
+        }[]
+    );
+    const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+    const copyToClipboard = async (address: string): Promise<void> => {
+        await navigator.clipboard.writeText(address);
+        setCopiedAddress(address);
+        setTimeout(() => { setCopiedAddress(null) }, 2000);
+    };
+
+    React.useEffect(() => {
+        const fetchHeader = async () => {
+            try {
+                if (chain == "kubtestnet") {
+                    const t: any = await readContracts(config, {
+                        contracts: [
+                            { ...tickerContract, functionName: "name" },
+                            { ...tickerContract, functionName: "symbol" },
+                            { ...tickerContract, functionName: "totalSupply" },
+                        ],
                     });
-                  }}
-                >
-                  <Plus size={16} />
-                </button>
-                <Link
-                  href={_explorer + "address/" + ticker}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  prefetch={false}
-                  className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm"
-                  title="View on Etherscan"
-                >
-                  <Image
-                    src="/bs.png"
-                    alt="blockscout"
-                    height={16}
-                    width={16}
-                  />
-                </Link>
-              </span>
-            </div>
-            <div className="w-full h-fit xl:h-[300px] flex flex-col gap-6 item-center justify-start text-left">
-              <div className="flex flex-row justify-start mt-5">
-                <div className="flex flex-row items-start gap-2 px-5">
-                  <div className="mr-2">
-                    <Image
-                      src={
-                        logo !== null
-                          ? String(logo).startsWith("ipfs://")
-                            ? "https://cmswap.mypinata.cloud/ipfs/" +
-                              String(logo).slice(7)
-                            : "https://cmswap.mypinata.cloud/ipfs/" +
-                              String(logo)
-                          : "https://cmswap.mypinata.cloud/ipfs/"
-                      }
-                      alt="token_waiting_for_approve"
-                      width={120}
-                      height={120}
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0 h-[125px] overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
-                    <span className="text-xs break-words">
-                      Description: {description}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Socials Section */}
-            {
-              <div className="w-full">
-                <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-4">
-                  {socialItems.map(({ icon, field }) => {
-                    const url = socials[field];
-                    if (!url || url.trim() === "") return null;
-
-                    const platformNames: Record<string, string> = {
-                      fb: "Facebook",
-                      x: "X (Twitter)",
-                      telegram: "Telegram",
-                      website: "Website",
-                    };
-
-                    return (
-                      <a
-                        key={field}
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-3 p-2 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 text-center w-full h-full"
-                      >
-                        <div className="text-green-400">{icon}</div>
-                        <span className="text-green-300 text-sm font-medium">
-                          {platformNames[field] ?? field}
-                        </span>
-                      </a>
-                    );
-                  })}
-                </div>
-
-                {/* ปุ่มเพิ่ม Socials */}
-              </div>
+                    const f: any = await readContracts(config, {
+                        contracts: [
+                            { ...bkgafactoryContract, functionName: "pumpReserve", args: [ticker as '0xstring'], chainId: _chainId },
+                            { ...bkgafactoryContract, functionName: "virtualAmount", chainId: _chainId },
+                        ],
+                    });
+                    const logCreateData = await publicClient.getContractEvents({
+                        ...bkgafactoryContract,
+                        eventName: "Creation",
+                        fromBlock: BigInt(_blockcreated),
+                        toBlock: "latest",
+                    });
+                    const data: {creator: '0xstring', createdTime: Number, logo: string, description: string }[] = logCreateData.filter((r: any) => {return r.args.tokenAddr.toUpperCase() === ticker.toUpperCase()})
+                        .map((r: any) => {return {creator: r.args.creator, createdTime: r.args.createdTime, logo: r.args.logo, description: r.args.description }});
+                    setSymbol(t[1].result);
+                    setName(t[0].result);
+                    setCreator(data[0].creator);
+                    setCreateTime(Number(data[0].createdTime));
+                    setLogo(data[0].logo);
+                    setDescription(data[0].description);
+                    const pump0 = f[0].result && Array.isArray(f[0].result) && f[0].result[0] !== undefined ? Number(formatEther(f[0].result[0])) : 0;
+                    const pump1 = f[0].result && Array.isArray(f[0].result) && f[0].result[1] !== undefined ? Number(formatEther(f[0].result[1])) : 0;
+                    const va = f[1].result !== undefined ? Number(formatEther(f[1].result)) : 0;
+                    const price = (pump0 + va) / pump1;
+                    setPrice(price);
+                    const mcap = (1000000000 * price) - 3400;
+                    setMcap(mcap);
+                    const denominator = 47800;
+                    setProgress(Number(((mcap * 100) / denominator).toFixed(2)));
+                } else {
+                    const result2: any = await readContracts(config, {
+                        contracts: [
+                            { ...tickerContract, functionName: "name" },
+                            { ...tickerContract, functionName: "symbol" },
+                            { ...bkgafactoryContract, functionName: "desp", args: [ticker as "0xstring"] },
+                            { ...bkgafactoryContract, functionName: "logo", args: [ticker as "0xstring"] },
+                            { ...univ2factoryContract, functionName: "getPool", args: [ticker as "0xstring", dataofcurr.addr as "0xstring", 10000] },
+                            { ...bkgafactoryContract, functionName: "creator", args: [ticker as "0xstring"] },
+                            { ...bkgafactoryContract, functionName: "createdTime", args: [ticker as "0xstring"] },
+                        ],
+                    });
+                    setSymbol(result2[1].result);
+                    setName(result2[0].result);
+                    setCreator(result2[5].result);
+                    setCreateTime(result2[6].result);
+                    setLogo(result2[3].result);
+                    setDescription(result2[2].result);
+                    const result3 = await readContracts(config, {
+                        contracts: [
+                            { address: lp as "0xstring", abi: UniswapV2PairABI, functionName: "slot0", chainId: _chainId },
+                            { address: lp as "0xstring", abi: UniswapV2PairABI, functionName: "token0", chainId: _chainId },
+                        ],
+                    });
+                    const sqrtPriceX96 = result3[0] && result3[0].status === "success" && result3[0].result !== undefined ? Number(result3[0].result[0]) / (2 ** 96) : 0;          
+                    const isToken0 = result3[1].result?.toUpperCase() !== currencyAddr.toUpperCase();
+                    const price = isToken0 ? sqrtPriceX96 ** 2 : 1 / sqrtPriceX96 ** 2;
+                    const getItems = reachData.find((item) => item.chain === chain)
+                    const denominator = getItems ? mode === 'pro' ? Number(getItems?.proAmount) : Number(getItems?.lite) : 1;                    
+                    setProgress(Number(((Number(price) * 100) / denominator).toFixed(2)));
+                    setPrice(Number(price));
+                    setMcap(Number(price !== 0 ? price * 1000000000 : 0));
+                }
+            } catch (error) {
+                console.error("error with reason", error);
             }
+        };
 
-            {creator !== null && creator === account.address && (
-              <div>
-                <button
-                  className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                  onClick={() => setShowSocials(!showSocials)}
-                >
-                  <span className="self-center">Link your social profiles</span>
-                </button>
-              </div>
-            )}
+        const fetchBody = async () => {
+            const nativeBal = account.address !== undefined ? await getBalance(config, { address: account.address as "0xstring" }) : { value: BigInt(0) };
+            setEthBal(nativeBal.value);
+            const state0 = account.address !== undefined ? 
+                await readContracts(config, {
+                    contracts: [
+                        { address: dataofcurr.addr as "0xstring", abi: erc20Abi, functionName: "balanceOf", args: account.address !== undefined ? [account.address as "0xstring"] : ["0x0000000000000000000000000000000000000001"], chainId: _chainId },
+                        { ...tickerContract, functionName: "balanceOf", args: account.address !== undefined ? [account.address as "0xstring"] : ["0x0000000000000000000000000000000000000001"] },
+                        { ...graduatedContract, functionName: "isGraduate", args: [lp as "0xstring"] },
+                        { address: lp as "0xstring", abi: UniswapV2PairABI, functionName: "slot0", chainId: _chainId },
+                    ],
+                }) :
+                [ { result: BigInt(0) }, { result: BigInt(0) }, { result: false }, { result: [BigInt(0)] } ];
+            setState(state0);
+        };
 
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3 py-1.5 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 w-full"
-            >
-              {/* Address Display */}
-              <div className="flex items-center gap-1 w-full overflow-hidden">
-                <span className="text-green-300 text-xs font-medium whitespace-nowrap">
-                  Contract Address:
-                </span>
-                <span className="text-green-300 text-xs font-mono truncate block">
-                  {ticker}
-                </span>
-              </div>
+        const fetchLogs = async () => {
+            let result5removedup;
+            if (chain === "monad") {
+                const headers = {Accept: "application/json", "Content-Type": "application/json"};
+                const body = JSON.stringify({
+                    id: 1, jsonrpc: "2.0", method: "alchemy_getAssetTransfers",
+                    params: [{
+                        fromBlock: "0x0",
+                        toBlock: "latest",
+                        contractAddresses: [ticker as "0xstring"],
+                        excludeZeroValue: true,
+                        category: ["erc20"],
+                    }],
+                });
+                const response = await fetch(_rpc, {method: "POST", headers: headers, body: body});
+                const data = await response.json();
+                const _holder = data.result.transfers.map(async (res: any) => {return res.to});
+                result5removedup = [...new Set(await Promise.all(_holder))];
+            } else {
+                const result4 = await publicClient.getContractEvents({
+                    abi: erc20Abi,
+                    address: ticker as "0xstring",
+                    eventName: "Transfer",
+                    fromBlock: BigInt(dataofcurr.blockcreated),
+                    toBlock: "latest",
+                });
+                const result5 = (await Promise.all(result4)).map((res) => {
+                return res.args.to;
+                });
+                result5removedup = [...new Set(result5)];
+            }
+            const result6 = result5removedup.map(async (res) => {
+                return await readContracts(config, {
+                    contracts: [
+                        {
+                            address: ticker as "0xstring",
+                            abi: erc20Abi,
+                            functionName: "balanceOf",
+                            args: [res as "0xstring"],
+                            chainId: _chainId,
+                        },
+                    ],
+                });
+            });
+            const result7 = await Promise.all(result6);
+            const result8 = result5removedup.map((res, index) => {
+                return {
+                    addr: res as string,
+                    value: Number(formatEther(result7[index][0].result as bigint)) / 10000000,
+                };
+            }).filter((res) => {
+                return res.value !== 0;
+            });
+            setHolder(result8);
+            let fulldatabuy;
+            let fulldatasell;
+            if (chain === "monad") {
+                const headers = {Accept: "application/json", "Content-Type": "application/json"};
+                const body = JSON.stringify({
+                    id: 2, jsonrpc: "2.0", method: "alchemy_getAssetTransfers",
+                    params: [
+                        {
+                            fromBlock: "0x0",
+                            toBlock: "latest",
+                            fromAddress: lp as "0xstring",
+                            contractAddresses: [ticker as "0xstring"],
+                            excludeZeroValue: true,
+                            category: ["erc20"],
+                        },
+                    ],
+                });
+                const response = await fetch(_rpc, {method: "POST", headers: headers, body: body});
+                const data = await response.json();
+                fulldatabuy = data.result.transfers.map((res: any) => {
+                    return {
+                        action: "buy",
+                        value: Number(formatEther(BigInt(res.rawContract.value))),
+                        from: res.to,
+                        hash: res.hash,
+                        block: Number(res.blockNum),
+                    };
+                });
+                const body2 = JSON.stringify({
+                    id: 3, jsonrpc: "2.0", method: "alchemy_getAssetTransfers",
+                    params: [
+                        {
+                            fromBlock: "0x0",
+                            toBlock: "latest",
+                            toAddress: lp as "0xstring",
+                            contractAddresses: [ticker as "0xstring"],
+                            excludeZeroValue: true,
+                            category: ["erc20"],
+                        },
+                    ],
+                });
+                const response2 = await fetch(_rpc, {method: "POST", headers: headers, body: body2});
+                const data2 = await response2.json();
+                fulldatasell = data2.result.transfers.map((res: any) => {
+                    return {
+                        action: "sell",
+                        value: Number(formatEther(BigInt(res.rawContract.value))),
+                        from: res.from,
+                        hash: res.hash,
+                        block: Number(res.blockNum),
+                    };
+                });
+            } else {
+                if (chain === "kubtestnet") {
+                    const swapLogs = await publicClient.getContractEvents({
+                        ...bkgafactoryContract,
+                        eventName: "Swap",
+                        fromBlock: BigInt(_blockcreated),
+                        toBlock: "latest",
+                    });
+                    const decoded = await Promise.all(swapLogs.map(async (log: any) => {
+                        try {
+                            const tx = await publicClient.getTransaction({hash: log.transactionHash});
+                            const decodedInput = decodeFunctionData({abi: ERC20FactoryV2ABI, data: tx.input as `0x${string}`});
+                            const fn = decodedInput.functionName;
+                            const args = decodedInput.args as any;
+                            const tokenArg = (args && args.length > 0) ? String(args[0]) : "";
+                            const isTargetToken = tokenArg.toLowerCase() === ticker.toLowerCase();
+                            if (!isTargetToken) return null;
+                            return { log, fn };
+                        } catch (e) {
+                            return null;
+                        }
+                    }));
+                    const filtered = decoded.filter((x) => x !== null) as { log: any; fn: string }[];
+                    const _timestamparr = filtered.map(async (r: any) => {return await publicClient.getBlock({blockNumber: r.log.blockNumber})});
+                    const timestamparr = await Promise.all(_timestamparr);
+                    const restimestamp = timestamparr.map((res) => {return Number(res.timestamp) * 1000});
+                    const theresult = filtered.map((r: any, index: any) => {
+                        return {
+                            action: r.fn === 'buy' ? 'buy' : 'sell',
+                            nativeValue: r.fn === 'buy' ? Number(formatEther(r.log.args.amountIn)) : Number(formatEther(r.log.args.amountOut)), 
+                            value: r.fn === 'buy' ? Number(formatEther(r.log.args.amountOut)) : Number(formatEther(r.log.args.amountIn)),
+                            from: r.log.args.sender,
+                            hash: r.log.transactionHash,
+                            timestamp: restimestamp[index],
+                        };
+                    }).sort((a: any, b: any) => {
+                        return b.timestamp - a.timestamp;
+                    });
+                    setHx(theresult);
+                    return;
+                } else {
+                    const result9 = await publicClient.getContractEvents({
+                        address: ticker as "0xstring",
+                        abi: erc20Abi,
+                        eventName: "Transfer",
+                        args: {from: lp as "0xstring"},
+                        fromBlock: BigInt(dataofcurr.blockcreated),
+                        toBlock: "latest",
+                    });
+                    fulldatabuy = result9.map((res: any) => {
+                        return {
+                            action: "buy",
+                            value: Number(formatEther(res.args.value)),
+                            from: res.args.to,
+                            hash: res.transactionHash,
+                            block: res.blockNumber,
+                        };
+                    });
+                    const result10 = await publicClient.getContractEvents({
+                        address: ticker as "0xstring",
+                        abi: erc20Abi,
+                        eventName: "Transfer",
+                        args: {to: lp as "0xstring"},
+                        fromBlock: BigInt(dataofcurr.blockcreated),
+                        toBlock: "latest",
+                    });
+                    fulldatasell = result10.map((res: any) => {
+                        return {
+                            action: "sell",
+                            value: Number(formatEther(res.args.value)),
+                            from: res.args.from,
+                            hash: res.transactionHash,
+                            block: res.blockNumber,
+                        };
+                    });
+                }
+            }
+            const mergedata = fulldatasell.slice(1).concat(fulldatabuy);
+            const _timestamparr = mergedata.map(async (res: any) => {return await publicClient.getBlock({blockNumber: res.block})});
+            const timestamparr = await Promise.all(_timestamparr);
+            const restimestamp = timestamparr.map((res) => {return Number(res.timestamp) * 1000});
+            const theresult = mergedata.map((res: any, index: any) => {
+                return {
+                    action: res.action,
+                    value: res.value,
+                    from: res.from,
+                    hash: res.hash,
+                    timestamp: restimestamp[index],
+                };
+            }).sort((a: any, b: any) => {
+                return b.timestamp - a.timestamp;
+            });
+            setHx(theresult);
+        };
 
-              {/* Copy Button */}
-              <button
-                onClick={() => copyToClipboard(ticker)}
-                className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-1 rounded-md transition-colors text-xs cursor-pointer"
-                title="Copy contract address"
-              >
-                {copiedAddress === ticker ? (
-                  <>
-                    <Check size={14} />
-                    Copied!
-                  </>
-                ) : (
-                  <Copy size={14} />
-                )}
-              </button>
-            </a>
+        const fetchGraph = async () => {
+            try {
+                if (chain === "kubtestnet") {
+                    const swapLogs = await publicClient.getContractEvents({
+                        ...bkgafactoryContract,
+                        eventName: "Swap",
+                        fromBlock: BigInt(_blockcreated),
+                        toBlock: "latest",
+                    });
+                    const decoded = await Promise.all(swapLogs.map(async (log: any) => {
+                        try {
+                            const tx = await publicClient.getTransaction({hash: log.transactionHash});
+                            const decodedInput = decodeFunctionData({abi: ERC20FactoryV2ABI, data: tx.input as `0x${string}`});
+                            const fn = decodedInput.functionName;
+                            const args = decodedInput.args as any;
+                            const tokenArg = (args && args.length > 0) ? String(args[0]) : "";
+                            const isTargetToken = tokenArg.toLowerCase() === ticker.toLowerCase();
+                            if (!isTargetToken) return null;
+                            return { log, fn };
+                        } catch (e) {
+                            return null;
+                        }
+                    }));
+                    const filtered = decoded.filter((x) => x !== null) as { log: any; fn: string }[];
+                    if (filtered.length === 0) {
+                        setGraphData([]);
+                        return;
+                    }
 
-            {name !== null && state[2].result ? (
-              <>
-                <span className="ml-[20px] text-sm font-bold  text-left">
-                  🔥 This token has graduated!:{" "}
-                  {gradHash !== "" && (
-                    <Link
-                      href={_explorer + "tx/" + gradHash}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                      prefetch={false}
-                      className={
-                        "underline " +
-                        (chain === "kub" ? "text-emerald-300" : "") +
-                        (chain === "monad" ? "text-purple-300" : "")
-                      }
-                    >
-                      Txn hash
-                    </Link>
-                  )}
-                </span>
-                <div className="ml-[20px] mr-[20px] h-6 bg-gray-400 rounded-lg overflow-hidden">
-                  <div
-                    className="h-6 bg-yellow-500 rounded-lg"
-                    style={{ width: "100%" }}
-                  />
+                    const blocks = await Promise.all(filtered.map((x) => publicClient.getBlock({ blockNumber: x.log.blockNumber })));
+                    const points = filtered.map((x, idx) => {
+                        const { log } = x;
+                        const isBuy = Boolean(log.args.isBuy);
+                        const amountIn = BigInt(log.args.amountIn || BigInt(0));
+                        const amountOut = BigInt(log.args.amountOut || BigInt(0));
+                        const price = isBuy ? Number(formatEther(amountIn)) / Math.max(1e-18, Number(formatEther(amountOut))) : Number(formatEther(amountOut)) / Math.max(1e-18, Number(formatEther(amountIn)));            
+                        const volume = isBuy ? Number(formatEther(amountIn)) : Number(formatEther(amountOut));
+                        const block = blocks[idx];
+                        const timeMs = Number(block.timestamp) * 1000;
+                        return {
+                            time: timeMs,
+                            price: Number.isFinite(price) ? price : 0,
+                            volume: Number.isFinite(volume) ? volume : 0,
+                        };
+                    });
+
+                    const sorted = points.filter((p) => p && p.time && p.price > 0 && p.volume > 0).sort((a, b) => a.time - b.time);
+                    console.log(sorted)
+                    setGraphData(sorted);
+                    return;
+                }
+
+                const result = await readContracts(config, {
+                    contracts: [
+                        {
+                            address: "0x7a90f3F76E88D4A2079E90197DD2661B8FEcA9B6" as "0xstring",
+                            abi: CMswapChartABI,
+                            functionName: "getCandleDataCount",
+                            args: [ticker as "0xstring", currencyAddr as "0xstring"],
+                            chainId: 88991001,
+                        },
+                    ],
+                }); // Fallback to CMswap aggregator (for non-kubtestnet)
+                let dataSet: any[] = [];
+                if (result && result[0]?.status === "success") {
+                    const count = result[0].result;
+                    const totalCount = Number(count);
+                    const pageSize = 100;
+                    for (let startIndex = 0; startIndex < totalCount; startIndex += pageSize) {
+                        const fetch = await readContracts(config, {
+                            contracts: [
+                                {
+                                    address: "0x7a90f3F76E88D4A2079E90197DD2661B8FEcA9B6" as "0xstring",
+                                    abi: CMswapChartABI,
+                                    functionName: "getCandleData",
+                                    args: [
+                                        ticker as "0xstring",
+                                        currencyAddr as "0xstring",
+                                        BigInt(startIndex),
+                                        BigInt(pageSize),
+                                    ],
+                                    chainId: 88991001,
+                                },
+                            ],
+                        });
+                        if (fetch && fetch[0]?.status === "success") {
+                        dataSet = dataSet.concat(fetch[0].result);
+                        }
+                    }
+                }
+                const timestamps = dataSet[0];
+                const prices = dataSet[1];
+                const volumes = dataSet[2];
+                const formattedData = (timestamps || []).map((time: any, index: number) => ({
+                    time: Number(timestamps[index]) * 1000,
+                    price: Number(formatEther(prices[index]?.toString() || "0")),
+                    volume: Number(formatEther(volumes[index]?.toString() || "0")),
+                }));
+                setGraphData(formattedData);
+            } catch (err) {
+                console.error("fetchGraph error", err);
+            }
+        };
+
+        if (hash === "") {
+            fetchGraph();
+            fetchLogs();
+            fetchHeader();
+            fetchBody();
+        } else {
+            setInterval(fetchHeader, 5000);
+            setInterval(fetchGraph, 5000);
+            setInterval(fetchLogs, 5000);
+            setInterval(fetchBody, 5000);
+        }
+    }, [hash]);
+
+    const qoute = useDebouncedCallback(async (value: string) => {
+        try {
+            if (Number(value) !== 0) {
+                if (chain === "kubtestnet") {
+                    const result = await readContracts(config, {
+                        contracts: [
+                            { ...bkgafactoryContract, functionName: "pumpReserve", args: [ticker as "0xstring"], chainId: _chainId },
+                            { ...bkgafactoryContract, functionName: "virtualAmount", chainId: _chainId },
+                            { ...bkgafactoryContract, functionName: "pumpFee", chainId: _chainId },
+                        ],
+                    });
+                    const getAmountOut = (
+                        _inputAmount: number,
+                        _inputReserve: bigint,
+                        _outputReserve: bigint
+                    ): number => {
+                        const inputAmountWithFee = _inputAmount * 99; // Apply 99/100 multiplier for fee
+                        const numerator = BigInt(Math.floor(inputAmountWithFee)) * _outputReserve;
+                        const denominator = _inputReserve * BigInt(100) + BigInt(Math.floor(inputAmountWithFee));
+                        return Number(numerator / denominator);
+                    };
+                    if (!result || !Array.isArray(result) || result.length < 3) {
+                        console.error("Invalid contract result:", result);
+                        setOutputBalance("");
+                        return;
+                    }
+                    const pumpReserve = result[0].result && Array.isArray(result[0].result) && result[0].result.length === 2 ? [BigInt(result[0].result[0] || 0), BigInt(result[0].result[1] || 0)] : [BigInt(0), BigInt(10000)];
+                    const virtualAmount = result[1].result ? BigInt(result[1].result) : BigInt(0);
+                    const fee = result[2].result ? Number(formatEther(result[2].result)) : 0;
+                    const inputAmount = Number(value);
+                    const feeAmount = (inputAmount * fee) / 10000;
+                    const amountInAfterFee = inputAmount - feeAmount;
+                    const amountOut = trademode ? getAmountOut(amountInAfterFee, virtualAmount + pumpReserve[0], pumpReserve[1]) : getAmountOut(amountInAfterFee, pumpReserve[1], pumpReserve[0] + virtualAmount);
+                    setOutputBalance(amountOut.toFixed(18));
+                } else {
+                    const qouteOutput = await simulateContract(config, {
+                        ...univ3QouterContract,
+                        functionName: "quoteExactInputSingle",
+                        args: [
+                            {
+                                tokenIn: trademode ? (dataofcurr.addr as "0xstring") : (ticker as "0xstring"),
+                                tokenOut: trademode ? (ticker as "0xstring") : (dataofcurr.addr as "0xstring"),
+                                amountIn: parseEther(value),
+                                fee: 10000,
+                                sqrtPriceLimitX96: BigInt(0),
+                            },
+                        ],
+                    });
+                    setOutputBalance(formatEther(qouteOutput.result[0]));
+                }
+            } else {
+                setOutputBalance("");
+            }
+        } catch (error) {
+            console.error("Error in quote calculation:", error);
+            setOutputBalance("");
+        }
+    }, 300);
+
+    const trade = async () => {
+        try {
+            let result: any = "";
+            if (chain === "kubtestnet") {
+                if (trademode) {
+                    result = await writeContract(config, {
+                        ...bkgafactoryContract,
+                        functionName: "buy",
+                        args: [ticker as "0xstring", (parseEther(outputBalance) * BigInt(95)) / BigInt(100)],
+                        value: parseEther(inputBalance),
+                        chainId: _chainId,
+                    });
+                } else {
+                    const allowance = await readContracts(config, {
+                        contracts: [
+                            {
+                                address: ticker as "0xstring",
+                                abi: erc20Abi,
+                                functionName: "allowance",
+                                args: [account.address as "0xstring", bkgafactoryContract.address as "0xstring"],
+                                chainId: _chainId,
+                            },
+                        ],
+                    });
+                    if (Number(formatEther(allowance[0].result!)) < Number(inputBalance)) {
+                        const { request } = await simulateContract(config, {
+                            address: ticker as "0xstring",
+                            abi: erc20Abi,
+                            functionName: "approve",
+                            args: [bkgafactoryContract.address as "0xstring", parseEther(String(Number(inputBalance) + 1))],
+                            chainId: _chainId,
+                        });
+                        const h = await writeContract(config, request);
+                        await waitForTransactionReceipt(config, { hash: h });
+                    }
+                    result = await writeContract(config, {
+                        ...bkgafactoryContract,
+                        functionName: "sell",
+                        args: [ticker as "0xstring", parseEther(inputBalance), (parseEther(outputBalance) * BigInt(90)) / BigInt(100)],
+                        chainId: _chainId,
+                    });
+                }
+            } else {
+                if (mode === "pro") {
+                    if (!trademode) {
+                        const allowance = await readContracts(config, {
+                            contracts: [
+                                {
+                                    address: ticker as "0xstring",
+                                    abi: erc20Abi,
+                                    functionName: "allowance",
+                                    args: [account.address as "0xstring", dataofuniv2router.addr as "0xstring"],
+                                    chainId: _chainId,
+                                },
+                            ],
+                        });
+                        if (Number(formatEther(allowance[0].result!)) < Number(inputBalance)) {
+                            const { request } = await simulateContract(config, {
+                                address: ticker as "0xstring",
+                                abi: erc20Abi,
+                                functionName: "approve",
+                                args: [dataofuniv2router.addr as "0xstring", parseEther(String(Number(inputBalance) + 1))],
+                                chainId: _chainId,
+                            });
+                            const h = await writeContract(config, request);
+                            await waitForTransactionReceipt(config, { hash: h });
+                        }
+                    }
+                    result = await writeContract(config, {
+                        ...univ2RouterContract,
+                        functionName: "exactInputSingle",
+                        args: [
+                            {
+                                tokenIn: trademode ? (dataofcurr.addr as "0xstring") : (ticker as "0xstring"),
+                                tokenOut: trademode ? (ticker as "0xstring") : (dataofcurr.addr as "0xstring"),
+                                fee: 10000,
+                                recipient: account.address as "0xstring",
+                                amountIn: parseEther(inputBalance),
+                                amountOutMinimum: (parseEther(outputBalance) * BigInt(95)) / BigInt(100),
+                                sqrtPriceLimitX96: BigInt(0),
+                            },
+                        ],
+                        value: trademode ? parseEther(inputBalance) : BigInt(0),
+                    });
+                } else {
+                    const allowance = await readContracts(config, {
+                        contracts: [
+                            {
+                                address: trademode ? (dataofcurr.addr as "0xstring") : (ticker as "0xstring"),
+                                abi: erc20Abi,
+                                functionName: "allowance",
+                                args: [account.address as "0xstring", dataofuniv2router.addr as "0xstring"],
+                                chainId: _chainId,
+                            },
+                        ],
+                    });
+                    if (
+                        Number(formatEther(allowance[0].result!)) < Number(inputBalance)
+                    ) {
+                        const { request } = await simulateContract(config, {
+                            address: trademode ? (dataofcurr.addr as "0xstring") : (ticker as "0xstring"),
+                            abi: erc20Abi,
+                            functionName: "approve",
+                            args: [dataofuniv2router.addr as "0xstring", parseEther(String(Number(inputBalance) + 1))],
+                            chainId: _chainId,
+                        });
+                        const h = await writeContract(config, request);
+                        await waitForTransactionReceipt(config, { hash: h });
+                    }
+                    result = await writeContract(config, {
+                        ...univ2RouterContract,
+                        functionName: "exactInputSingle",
+                        args: [
+                            {
+                                tokenIn: trademode ? (dataofcurr.addr as "0xstring") : (ticker as "0xstring"),
+                                tokenOut: trademode ? (ticker as "0xstring") : (dataofcurr.addr as "0xstring"),
+                                fee: 10000,
+                                recipient: account.address as "0xstring",
+                                amountIn: parseEther(inputBalance),
+                                amountOutMinimum: (parseEther(outputBalance) * BigInt(95)) / BigInt(100),
+                                sqrtPriceLimitX96: BigInt(0),
+                            },
+                        ],
+                    });
+                }
+            }
+            setHeadnoti(true);
+            setHash(result);
+            setInputBalance("");
+            setOutputBalance("0");
+        } catch (error) {
+            console.error("Error in trade execution:", error);
+            setHeadnoti(false);
+            setHash("");
+        }
+    };
+
+    React.useEffect(() => {
+        if (socialsResult.status === "success" && !hasSetSocialsRef.current) {
+            const rawResult = socialsResult.data?.[0]?.result;
+            if (Array.isArray(rawResult)) {
+                const [fb, x, telegram, website] = rawResult as string[];
+                setSocials({fb: fb || "", x: x || "", telegram: telegram || "", website: website || ""});
+                hasSetSocialsRef.current = true;
+            } else {
+                console.warn("Unexpected result format", rawResult);
+            }
+        }
+    }, [socialsResult]);
+
+    return (
+        <main className="relative min-h-screen w-full md:w-6/7 overflow-hidden pt-20 pb-24 text-white">
+            <div className="w-full my-4 px-4 flex items-center gap-6">
+                <Link href={`/pump/launchpad?chain=${chain}${mode === "pro" ? "&mode=pro" : "&mode=lite"}`} prefetch={false} className="text-sm underline hover:font-bold">Back to launchpad</Link>
+                <div className="flex gap-2 text-[11px] uppercase tracking-[0.2em] text-white/60">
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">{chainLabel}</span>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">{modeLabel}</span>
                 </div>
-              </>
-            ) : (
-              <>
-                <div className="w-full text-sm flex flex-col gap-2 justify-start  text-left">
-                  <span>Bonding curve progress: {progress + "%"}</span>
-                  <div className="has-tooltip">
-                    <span className="tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs">
-                      {`When the market cap reaches ${
-                        reachData && Array.isArray(reachData)
-                          ? (() => {
-                              const item = reachData.find(
-                                (item) => item?.chain === chain
-                              );
-                              if (!item) return "";
-                              if (
-                                mode === "pro" &&
-                                item.proAmount &&
-                                item.proSymbol
-                              ) {
-                                return `${item.proAmount} ${item.proSymbol}`;
-                              }
-                              if (
-                                mode === "lite" &&
-                                item.lite &&
-                                item.liteSymbol &&
-                                (token === item.liteSymbol || token === "")
-                              ) {
-                                return `${item.lite} ${item.liteSymbol}`;
-                              }
-                              return "";
-                            })()
-                          : ""
-                      }, 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.`}
-                    </span>
-                  </div>
-                </div>
-                <div className="w-full mx-14 h-4 bg-gray-400 rounded-lg overflow-hidden mb-2">
-                  <div
-                    className="h-4 bg-emerald-300 rounded-lg"
-                    style={{ width: calculateBondingCurveWidth(progress) }}
-                  />
-                </div>
-              </>
-            )}
-            <div className="w-full h-[800px] mt-8 p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center">
-              <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">
-                {holder.length} Holders
-              </span>
-              <div className="w-full overflow-x-hidden overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
-                {holder
-                  .sort((a, b) => {
-                    return b.value - a.value;
-                  })
-                  .map((res, index) => (
-                    <div
-                      className="w-full h-[50px] flex flex-row items-center justify-between text-xs lg:text-md py-2 border-b border-gray-800"
-                      key={index}
-                    >
-                      <div className="flex flex-row items-center justify-start gap-6 overflow-hidden">
-                        <span>{index + 1}.</span>
+            </div>
+
+            {headnoti && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm shadow-[0_0_25px_rgba(16,185,129,0.25)]">
+                    <div className="flex items-center gap-2 text-emerald-200">
+                        <Check size={16} />
+                        <span>Trade successful</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs">
                         <Link
-                          href={
-                            _explorer +
-                            "address/" +
-                            res.addr +
-                            (chain === "kub" ? "/?tab=tokens" : "") +
-                            (chain === "monad" ? "#tokens" : "")
-                          }
-                          rel="noopener noreferrer"
-                          target="_blank"
-                          prefetch={false}
-                          className={
-                            "font-bold " +
-                            (res.addr.toUpperCase() ===
-                              String(creator).toUpperCase() ||
-                            res.addr.toUpperCase() === lp.toUpperCase()
-                              ? chain === "kub"
-                                ? "text-emerald-300"
-                                : chain === "monad"
-                                ? "text-purple-300"
-                                : ""
-                              : "")
-                          }
+                            href={`${_explorer}tx/${hash}`}
+                            prefetch={false}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-full border border-emerald-300/30 px-3 py-1 text-emerald-200 transition hover:border-emerald-200 hover:text-emerald-100"
                         >
-                          {res.addr.slice(0, 5) + "..." + res.addr.slice(37)}{" "}
-                          {res.addr.toUpperCase() ===
-                            String(creator).toUpperCase() && "[Creator 🧑‍💻]"}
-                          {res.addr.toUpperCase() === lp.toUpperCase() &&
-                            "[Bonding curve]"}
+                            View transaction
                         </Link>
-                      </div>
-                      <span className="mr-6 text-right w-[50px] sm:w-[200px]">
-                        {res.value.toFixed(4)}%
-                      </span>
+                        <button
+                            onClick={() => setHeadnoti(false)}
+                            className="rounded-full border border-transparent bg-emerald-400/20 px-3 py-1 text-emerald-100 transition hover:bg-emerald-400/30"
+                        >
+                            Close
+                        </button>
                     </div>
-                  ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="block xl:hidden w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start">
-            <div
-              className={
-                "px-4 py-4 w-full h-[380px] border-2 border-l-8 border-solid flex flex-col item-center justify-around bg-gray-900 " +
-                (chain === "kub" ? "border-emerald-300" : "") +
-                (chain === "monad" ? "border-purple-300" : "")
-              }
-              style={{ zIndex: 1 }}
-            >
-              <div className="w-3/4 flex items-baseline space-x-2 mx-2 my-2">
-                <div className="text-2xl font-bold max-w-[240px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
-                  {symbol !== null && symbol}
                 </div>
-              </div>
-              <div className="w-full bg-gray-800 self-center p-2 mb-3 rounded-2xl flex flex-row justify-around">
-                <span
-                  className={
-                    trademode
-                      ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
-                      : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
-                  }
-                  style={{
-                    backgroundImage: trademode
-                      ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(34, 197, 94) 0%, rgb(20, 83, 45) 60%, rgba(34, 197, 94, 0.2) 100%)"
-                      : "none",
-                  }}
-                  onClick={() => {
-                    setTrademode(true);
-                    setInputBalance("");
-                    setOutputBalance("0");
-                  }}
-                >
-                  Buy
-                </span>
-                <span
-                  className={
-                    !trademode
-                      ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
-                      : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
-                  }
-                  style={{
-                    backgroundImage: !trademode
-                      ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(239, 68, 68) 0%, rgb(139, 15, 15) 60%, rgba(239, 68, 68, 0.2) 100%)"
-                      : "none",
-                  }}
-                  onClick={() => {
-                    setTrademode(false);
-                    setInputBalance("");
-                    setOutputBalance("0");
-                  }}
-                >
-                  Sell
-                </span>
-              </div>
-              <div className="w-full flex flex-row justify-between text-2xl">
-                <input
-                  className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-2/5 font-bold bg-transparent"
-                  placeholder="0"
-                  value={inputBalance}
-                  onChange={(event) => {
-                    setInputBalance(event.target.value);
-                    qoute(event.target.value);
-                  }}
-                  type="number"
-                />
-                <span className="mr-[20px] w-3/5 text-right truncate">
-                  {trademode
-                    ? chain === "kub" && mode === "pro"
-                      ? "KUB"
-                      : chain === "kub" &&
-                        mode === "lite" &&
-                        (token === "cmm" || token === "")
-                      ? "CMM"
-                      : chain === "monad" && mode === "pro"
-                      ? "MON"
-                      : ""
-                    : symbol}
-                </span>
-              </div>
-              <div className="mr-[20px] self-end text-sm">
-                {mode === "pro" ? (
-                  <>
-                    <div className="flex flex-col gap-2 w-full">
-                      <div className="text-right text-gray font-mono text-sm">
-                        {Intl.NumberFormat("en-US", {
-                          notation: "compact",
-                          compactDisplay: "short",
-                        }).format(
-                          Number(
-                            formatEther(
-                              trademode ? ethBal : (state[1].result as bigint)
-                            )
-                          )
+            )}
+
+            <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-6 sm:p-8 shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur">
+                <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center">
+                    <div className="flex flex-1 flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
+                        <div className="relative mx-auto h-24 w-24 shrink-0 overflow-hidden rounded-3xl border border-white/10 shadow-[0_0_35px_rgba(34,197,94,0.35)] sm:mx-0 sm:h-28 sm:w-28">
+                            <Image
+                                src={resolvedLogo}
+                                alt={tokenSymbolDisplay ? `${tokenSymbolDisplay} logo` : "Token logo"}
+                                width={112}
+                                height={112}
+                                className="h-full w-full object-cover"
+                            />
+                        </div>
+                        <div className="flex flex-1 flex-col gap-4">
+                            <div className="flex flex-wrap items-center gap-3">
+                                <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{name ?? "Loading token..."}</h1>
+                                {tokenSymbolDisplay && (<span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-white/70">{tokenSymbolDisplay}</span>)}
+                            </div>
+                            <div className="grid gap-4 text-sm text-white/70 sm:grid-cols-2 md:grid-cols-3">
+                                <div>
+                                    <p className="text-xs uppercase tracking-wide text-white/40">Price</p>
+                                    <p className="text-lg font-medium text-white">{formattedPrice}{" "}{baseAssetSymbol && <span className="text-sm text-white/60">{baseAssetSymbol}</span>}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs uppercase tracking-wide text-white/40">Market Cap</p>
+                                    <p className="text-lg font-medium text-white">{formattedMcap}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs uppercase tracking-wide text-white/40">Holders</p>
+                                    <p className="text-lg font-medium text-white">{holder.length}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs uppercase tracking-wide text-white/40">Bonding Progress</p>
+                                    <p className="text-lg font-medium text-white">{progressPercent.toFixed(2)}%</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex w-full flex-col items-start gap-3 text-xs text-white/60 lg:w-auto lg:items-end">
+                        {creator && (
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-white/40 uppercase tracking-wide">Creator</span>
+                                <Link
+                                    href={getExplorerAddressUrl(creator)}
+                                    prefetch={false}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-mono text-sm text-white transition hover:text-emerald-200"
+                                >
+                                    {`${String(creator).slice(0, 6)}...${String(creator).slice(-4)}`}
+                                </Link>
+                                {relativeCreatedTime && (<span className="text-white/40" title={createdAtAbsolute}>{relativeCreatedTime}</span>)}
+                            </div>
                         )}
-                      </div>
-                      <div className="flex flex-wrap gap-2 justify-end mb-4">
-                        <button
-                          className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
-                          onClick={() => {
-                            setInputBalance("");
-                            setOutputBalance("");
-                          }}
-                        >
-                          Reset
-                        </button>
-                        {(trademode && mode === "pro"
-                          ? [0.1, 0.5, 1]
-                          : [25, 50, 75]
-                        ).map((value) => (
-                          <button
-                            key={value}
-                            className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
-                            onClick={() => {
-                              if (trademode) {
-                                // fix amount (0.1, 0.5, 1)
-                                const adjusted = value;
-                                setInputBalance(adjusted.toFixed(6));
-                                qoute(adjusted.toFixed(6));
-                              } else {
-                                // percent (25%, 50%, 75%)
-                                const balance = BigInt(
-                                  state[1].result as bigint
-                                );
-                                const amount =
-                                  (balance * BigInt(value)) / BigInt(100);
-                                const adjusted = Number(formatEther(amount));
-                                setInputBalance(adjusted.toFixed(6));
-                                qoute(adjusted.toFixed(6));
-                              }
-                            }}
-                          >
-                            {trademode ? value : `${value}%`}
-                          </button>
-                        ))}
-                        <button
-                          className="px-3 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
-                          onClick={() => {
-                            const value = trademode
-                              ? Number(formatEther(ethBal)) +
-                                (trademode && mode === "pro" ? -0.00001 : 0)
-                              : Number(formatEther(state[1].result as bigint)) +
-                                (trademode && mode === "pro" ? -0.00001 : 0);
-
-                            setInputBalance(value.toFixed(6));
-                            qoute(value.toFixed(6));
-                          }}
-                        >
-                          Max
-                        </button>
-                      </div>
+                        <div className="flex flex-wrap items-center gap-3 font-mono text-sm text-white/80">
+                            <span className="text-white/40 uppercase tracking-wide">Contract</span>
+                            <span className="rounded-full border border-white/10 bg-black/60 px-3 py-1">{truncatedTicker}</span>
+                            <button
+                                onClick={() => copyToClipboard(ticker)}
+                                className="rounded-full border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/40 hover:bg-white/20"
+                                title="Copy contract address"
+                            >
+                                {copiedAddress === ticker ? <Check size={16} /> : <Copy size={16} />}
+                            </button>
+                            <button
+                                className="rounded-full border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/40 hover:bg-white/20"
+                                onClick={async () => {
+                                    if (!ethereum) return;
+                                    await ethereum.request({
+                                        method: "wallet_watchAsset",
+                                        params: {
+                                        type: "ERC20",
+                                        options: {
+                                            address: ticker,
+                                            symbol: tokenSymbolDisplay || "TOKEN",
+                                            decimals: 18,
+                                            image: resolvedLogo,
+                                        },
+                                        },
+                                    });
+                                }}
+                                title="Add token to wallet"
+                            >
+                                <Plus size={16} />
+                            </button>
+                            <Link
+                                href={`${_explorer}address/${ticker}`}
+                                prefetch={false}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded-full border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/40 hover:bg-white/20"
+                                title="View on explorer"
+                            >
+                                <Image src="/bs.png" alt="block explorer" width={16} height={16} />
+                            </Link>
+                        </div>
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex flex-col gap-2 w-full">
-                      <div className="text-right text-gray-300 font-mono text-sm">
-                        {Intl.NumberFormat("en-US", {
-                          notation: "compact",
-                          compactDisplay: "short",
-                        }).format(
-                          Number(
-                            formatEther(
-                              trademode
-                                ? (state[0].result as bigint)
-                                : (state[1].result as bigint)
-                            )
-                          )
-                        )}
-                      </div>
+                </div>
+            </section>
 
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        <button
-                          className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
-                          onClick={() => {
-                            setInputBalance("");
-                            setOutputBalance("");
-                          }}
-                        >
-                          Reset
-                        </button>
-
-                        {(trademode && mode === "pro"
-                          ? [0.1, 0.5, 1]
-                          : [25, 50, 75]
-                        ).map((value) => (
-                          <button
-                            key={value}
-                            className="px-3 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
-                            onClick={() => {
-                              if (trademode && mode === "pro") {
-                                // fixed amount 0.1, 0.5, 1
-                                const adjusted = value;
-                                setInputBalance(adjusted.toFixed(6));
-                                qoute(adjusted.toFixed(6));
-                              } else {
-                                // percent 25%, 50%, 75%
-                                const balance = BigInt(
-                                  state[1].result as bigint
-                                );
-                                const amount =
-                                  (balance * BigInt(value)) / BigInt(100);
-                                const adjusted = Number(formatEther(amount));
-                                setInputBalance(adjusted.toFixed(6));
-                                qoute(adjusted.toFixed(6));
-                              }
-                            }}
-                          >
-                            {trademode && mode === "pro" ? value : `${value}%`}
-                          </button>
-                        ))}
-
-                        <button
-                          className="px-3 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
-                          onClick={() => {
-                            const maxValue = trademode
-                              ? String(formatEther(state[0].result as bigint))
-                              : String(formatEther(state[1].result as bigint));
-                            setInputBalance(maxValue);
-                            qoute(maxValue);
-                          }}
-                        >
-                          Max
-                        </button>
-                      </div>
+            <div className="grid gap-6 xl:grid-cols-[2fr_1fr] 2xl:grid-cols-[2fr_1fr] mt-6">
+                <div className="space-y-6">
+                    <div className="rounded-3xl border border-white/10 bg-black/30 p-4 sm:p-6 shadow-xl backdrop-blur h-[620px]">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <h2 className="text-lg font-semibold text-white"></h2>
+                            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1 text-xs font-semibold">
+                                {["CMswap", "GeckoTerminal"].map((type) => (
+                                    <button
+                                        key={type}
+                                        onClick={() => setGrapthType(type)}
+                                        className={`rounded-full px-3 py-1 transition ${
+                                            grapthType === type ? "bg-white/20 text-white" : "text-white/60 hover:text-white"
+                                        }`}
+                                    >
+                                        {type}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="mt-4 h-[520px] w-full overflow-hidden rounded-2xl border border-white/5 bg-black/40">
+                            {grapthType === "GeckoTerminal" ? (
+                                <iframe
+                                    className="h-full w-full"
+                                    allow="clipboard-write"
+                                    title="GeckoTerminal Embed"
+                                    src={`https://www.geckoterminal.com/${
+                                    chain === "kub" ? 
+                                        "bitkub_chain" : 
+                                        chain === "monad" ? "monad-testnet" : ""
+                                    }/pools/${lp}?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m`}
+                                />
+                            ) : (
+                                <Chart data={graphData} />
+                            )}
+                        </div>
                     </div>
-                  </>
-                )}
-              </div>
-              <div className="w-full flex flex-row justify-between text-2xl font-bold">
-                <span className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-2/5 font-bold bg-transparent text-left">
-                  {Intl.NumberFormat("en-US", {
-                    notation: "compact",
-                    compactDisplay: "short",
-                  }).format(Number(outputBalance))}
-                </span>
-                <span
-                  className={
-                    "mr-[20px] w-3/5 text-right truncate " +
-                    (chain === "kub" ? "text-emerald-300" : "") +
-                    (chain === "monad" ? "text-purple-300" : "")
-                  }
-                >
-                  {!trademode
-                    ? chain === "kub" && mode === "pro"
-                      ? "KUB"
-                      : chain === "kub" &&
-                        mode === "lite" &&
-                        (token === "cmm" || token === "")
-                      ? "CMM"
-                      : chain === "monad" && mode === "pro"
-                      ? "MON"
-                      : ""
-                    : symbol}
-                </span>
-              </div>
-              <div className="mr-[20px] self-end text-sm">
-                {mode === "pro" ? (
-                  <span className="text-gray-300">
-                    {!trademode
-                      ? Intl.NumberFormat("en-US", {
-                          notation: "compact",
-                          compactDisplay: "short",
-                        }).format(Number(formatEther(ethBal))) + " "
-                      : Intl.NumberFormat("en-US", {
-                          notation: "compact",
-                          compactDisplay: "short",
-                        }).format(
-                          Number(formatEther(state[1].result as bigint))
-                        ) + " "}
-                  </span>
-                ) : (
-                  <span className="text-gray-300">
-                    {!trademode
-                      ? Intl.NumberFormat("en-US", {
-                          notation: "compact",
-                          compactDisplay: "short",
-                        }).format(
-                          Number(formatEther(state[0].result as bigint))
-                        ) + " "
-                      : Intl.NumberFormat("en-US", {
-                          notation: "compact",
-                          compactDisplay: "short",
-                        }).format(
-                          Number(formatEther(state[1].result as bigint))
-                        ) + " "}
-                  </span>
-                )}
-              </div>
-              {connections &&
-              account.address !== undefined &&
-              account.chainId === _chainId ? (
-                <button
-                  className={
-                    "w-3/4 self-center p-2 my-3 rounded-2xl font-bold text-slate-900 underline hover-effect hover:text-white cursor-pointer " +
-                    theme.tradebtn
-                  }
-                  onClick={trade}
-                >
-                  <span className="self-center">Trade</span>
-                </button>
-              ) : (
-                <button
-                  className="w-3/4 self-center p-2 my-3 rounded-2xl font-bold bg-gray-500 cursor-not-allowed"
-                  disabled
-                >
-                  <span className="self-center text-slate-900">Trade</span>
-                </button>
-              )}
-            </div>
-            <div className="w-full flex justify-end items-end gap-2 mt-3 text-xs">
-              {["CMswap", "GeckoTerminal"].map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setGrapthType(type)}
-                  className={`
-                              px-3 py-1.5 text-sm  
-                              transition-all duration-200 ease-in-out
-                              ${
-                                grapthType === type
-                                  ? "text-teal-600"
-                                  : " text-white"
-                              }
-                              cursor-pointer
-                          `}
-                >
-                  {type}
-                </button>
-              ))}
+
+                    <div className="rounded-3xl border border-white/10 bg-black/30 p-4 sm:p-6 shadow-xl backdrop-blur">
+                        <h2 className="text-lg font-semibold text-white">Activity</h2>
+                        <div className="mt-4 max-h-[460px] space-y-3 overflow-y-auto pr-1">
+                            {hx.length === 0 ? (<div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">No trades yet. Be the first to make a move.</div>) : 
+                            (hx.map((res) => (
+                                <div key={res.hash} className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-white/5 p-4 text-sm text-white/80 md:flex-row md:items-center md:justify-between">
+                                    <span className="text-xs text-white/50">{formatRelativeTime(res.timestamp / 1000)}</span>
+                                    <div className="flex flex-wrap items-center gap-10 text-sm">
+                                        <Link
+                                            href={getExplorerAddressUrl(res.from)}
+                                            prefetch={false}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="font-mono text-xs text-white/70 underline-offset-2 transition hover:text-white hover:underline"
+                                        >
+                                            {res.from.slice(0, 6)}...{res.from.slice(-4)}
+                                        </Link>
+                                        <span
+                                            className={`hidden rounded-full bg-white/10 px-2 py-0.5 capitalize md:inline-block text-xs font-semibold uppercase ${
+                                                res.action === "buy" ? "text-emerald-300" :
+                                                res.action === "sell" ? "text-rose-300" : "text-cyan-300"
+                                            }`}
+                                        >
+                                            {res.action === "launch" ? "Launch" : res.action}
+                                        </span>
+                                        <span className="font-mono text-sm text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.nativeValue)} {baseAssetSymbol}</span>
+                                        <span className="font-mono text-sm text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.value)} {tokenSymbolDisplay}</span>
+                                        <Link
+                                            href={`${_explorer}tx/${res.hash}`}
+                                            prefetch={false}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="font-mono text-xs text-emerald-200 underline-offset-2 transition hover:text-emerald-100 hover:underline"
+                                        >
+                                            {res.hash.slice(0, 6)}...{res.hash.slice(-4)}
+                                        </Link>
+                                    </div>
+                                </div>
+                            )))}
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="space-y-6">
+                    <div className="space-y-6">
+                        <div className="rounded-3xl border border-white/10 bg-black/40 p-6 shadow-2xl backdrop-blur">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <h2 className="text-lg font-semibold text-white">Trade {tokenSymbolDisplay || "Token"}</h2>
+                                <div className="flex gap-2 rounded-full border border-white/10 bg-black/60 p-1 text-xs font-semibold">
+                                    <button
+                                        className={`rounded-full px-4 py-1 transition ${
+                                            trademode ? "text-black" : "text-white/50 hover:text-white"
+                                        }`}
+                                        style={gradientButtonStyle(trademode)}
+                                        onClick={() => {
+                                            setTrademode(true);
+                                            setInputBalance("");
+                                            setOutputBalance("0");
+                                        }}
+                                    >
+                                        Buy
+                                    </button>
+                                    <button
+                                        className={`rounded-full px-4 py-1 transition ${
+                                            !trademode ? "text-black" : "text-white/50 hover:text-white"
+                                        }`}
+                                        style={gradientButtonStyle(!trademode)}
+                                        onClick={() => {
+                                            setTrademode(false);
+                                            setInputBalance("");
+                                            setOutputBalance("0");
+                                        }}
+                                    >
+                                        Sell
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 space-y-6">
+                            <div>
+                                <div className="flex items-center justify-between text-xs text-white/50">
+                                    <span>You pay</span>
+                                    <span>Balance: {formattedAvailableBalance} {inputAssetSymbol}</span>
+                                </div>
+                                <div className="mt-2 flex items-center justify-between rounded-2xl border border-white/10 bg-black/60 px-4 py-3">
+                                    <input
+                                        type="number"
+                                        placeholder="0.0"
+                                        value={inputBalance}
+                                        onChange={(event) => {
+                                            setInputBalance(event.target.value);
+                                            qoute(event.target.value);
+                                        }}
+                                        className="flex-1 bg-transparent text-2xl font-semibold text-white outline-none placeholder:text-white/30"
+                                    />
+                                    <span className="ml-3 text-sm uppercase tracking-wide text-white/60">{inputAssetSymbol}</span>
+                                </div>
+                                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-white/50">
+                                    <div className="flex items-center gap-2 text-white/40">
+                                        <span>You get</span>
+                                        <span className="font-semibold text-white">{formattedOutput} {outputAssetSymbol}</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        <button
+                                            onClick={handleReset}
+                                            className="rounded-full border border-white/10 px-3 py-1 transition hover:border-white/30 hover:text-white"
+                                        >
+                                            Reset
+                                        </button>
+                                        {presetButtons.map((preset) => (
+                                            <button
+                                                key={preset.label}
+                                                onClick={() => handlePresetClick(preset)}
+                                                className="rounded-full border border-white/10 px-3 py-1 transition hover:border-white/30 hover:text-white"
+                                            >
+                                                {preset.label}
+                                            </button>
+                                        ))}
+                                        <button
+                                            onClick={handleMaxClick}
+                                            className="rounded-full border border-emerald-400/40 px-3 py-1 text-emerald-200 transition hover:border-emerald-200 hover:text-emerald-100"
+                                        >
+                                            Max
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="rounded-2xl border border-white/10 bg-black/50 p-4 text-xs text-white/60">
+                                <div className="flex items-center justify-between">
+                                    <span>Status</span>
+                                    <span className={`font-semibold ${isGraduated ? "text-emerald-300" : "text-white"}`}>{isGraduated ? "Graduated" : "Bonding curve"}</span>
+                                </div>
+                                <div className="mt-3 flex items-center justify-between">
+                                    <span>Max payout balance</span>
+                                    <span className="font-semibold text-white">{formattedCounterBalance} {outputAssetSymbol}</span>
+                                </div>
+                                <div className="mt-4">
+                                    <div className="flex items-center justify-between text-xs text-white/50">
+                                    <span>Bonding Progress</span>
+                                    <span>{progressPercent.toFixed(2)}%</span>
+                                    </div>
+                                        <div className="mt-2 h-2 w-full rounded-full bg-white/10">
+                                        <div
+                                            className="h-2 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500"
+                                            style={{ width: `${progressPercent}%` }}
+                                        />
+                                    </div>
+                                    <p className="mt-2 text-[11px] leading-relaxed text-white/45">
+                                        {bondingTooltip}
+                                        {isGraduated && graduationLink && (
+                                            <>
+                                                {" "}
+                                                <Link
+                                                    href={graduationLink}
+                                                    prefetch={false}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-emerald-200 underline-offset-2 transition hover:text-emerald-100 hover:underline"
+                                                >
+                                                    View graduation txn
+                                                </Link>
+                                            </>
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={trade}
+                                disabled={!isWalletReady}
+                                className={`w-full rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                                    isWalletReady ? "bg-gradient-to-r from-emerald-400 to-sky-500 text-black shadow-[0_20px_60px_rgba(16,185,129,0.35)] hover:brightness-110" : "cursor-not-allowed border border-white/10 bg-white/5 text-white/40"
+                                }`}
+                            >
+                                {tradeButtonLabel}
+                            </button>
+                            {!isWalletReady && (<p className="text-center text-xs text-white/40">Connect your wallet on {chainLabel} to trade.</p>)}
+                        </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-white/10 bg-black/30 p-6 shadow-xl backdrop-blur">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <h2 className="text-lg font-semibold text-white">Project Info</h2>
+                            {creator === account.address && (
+                                <button
+                                    onClick={() => setShowSocials(true)}
+                                    className="text-xs text-emerald-300 underline-offset-2 transition hover:text-emerald-100 hover:underline"
+                                >
+                                    Edit socials
+                                </button>
+                            )}
+                        </div>
+                        <p className="mt-4 text-sm leading-relaxed text-white/70">{description ? description : "No description has been shared yet."}</p>
+                        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                            {socialItems.filter((item) => socials[item.field]).length === 0 ? (
+                                <div className="rounded-2xl border border-dashed border-white/10 p-4 text-sm text-white/50">No socials linked yet.</div>
+                            ) : (
+                                socialItems
+                                    .filter((item) => socials[item.field])
+                                    .map((item) => (
+                                        <Link
+                                            key={item.field}
+                                            href={socials[item.field]}
+                                            prefetch={false}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80 transition hover:border-white/30 hover:text-white"
+                                        >
+                                            <span className="rounded-full bg-emerald-400/10 p-2 text-emerald-300">{item.icon}</span>
+                                            <span>{item.label}</span>
+                                        </Link>
+                                    ))
+                            )}
+                        </div>
+                        <div className="mt-6 rounded-2xl border border-white/10 bg-black/50 p-4 text-xs text-white/60">
+                            <div className="font-mono text-sm text-white/80 break-all">{ticker}</div>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                                <button
+                                    onClick={() => copyToClipboard(ticker)}
+                                    className="rounded-full border border-white/10 px-3 py-1 transition hover:border-white/30 hover:text-white"
+                                >
+                                    {copiedAddress === ticker ? "Copied" : "Copy"}
+                                </button>
+                                <Link
+                                    href={`${_explorer}address/${ticker}`}
+                                    prefetch={false}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="rounded-full border border-white/10 px-3 py-1 text-emerald-200 transition hover:border-emerald-200 hover:text-emerald-100"
+                                >
+                                    View on explorer
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        <div className="rounded-3xl border border-white/10 bg-black/30 p-4 sm:p-6 shadow-xl backdrop-blur">
+                            <h2 className="text-lg font-semibold text-white">Holder</h2>
+                            <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-1">
+                                {sortedHolders.length === 0 ? (
+                                    <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">Holder data is loading...</div>
+                                ) : (
+                                    sortedHolders.map((res, index) => (
+                                        <div
+                                            key={`${res.addr}-${index}`}
+                                            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/5 bg-white/5 p-4 text-sm text-white/80"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-white/40">#{index + 1}</span>
+                                                <Link
+                                                    href={getExplorerAddressUrl(res.addr)}
+                                                    prefetch={false}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={`font-mono text-xs transition hover:text-white ${
+                                                        res.addr.toUpperCase() === String(creator).toUpperCase() ? 
+                                                            "text-emerald-300" :
+                                                            res.addr.toUpperCase() === lp.toUpperCase() ? "text-purple-300" : "text-white/70"
+                                                    }`}
+                                                >
+                                                    {res.addr.slice(0, 6)}...{res.addr.slice(-4)}
+                                                </Link>
+                                            </div>
+                                            <span className="text-sm font-semibold text-white">{res.value.toFixed(4)}%</span>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {grapthType === "GeckoTerminal" ? (
-              <iframe
-                height="28%"
-                width="100%"
-                id="geckoterminal-embed"
-                title="GeckoTerminal Embed"
-                src={
-                  "https://www.geckoterminal.com/" +
-                  (chain === "kub"
-                    ? "bitkub_chain"
-                    : chain === "monad"
-                    ? "monad-testnet"
-                    : "") +
-                  "/pools/" +
-                  lp +
-                  "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"
-                }
-                allow="clipboard-write"
-              ></iframe>
-            ) : (
-              <Chart data={graphData} />
+            {showSocials && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur">
+                    <div className="relative w-full max-w-lg rounded-3xl border border-white/10 bg-[#050910] p-6 shadow-[0_0_80px_rgba(16,185,129,0.35)]">
+                        <button onClick={() => setShowSocials(false)} className="absolute right-4 top-4 text-white/60 transition hover:text-white">✕</button>
+                        <h2 className="text-center text-xl font-semibold text-white">Link your social profiles</h2>
+                        <p className="mt-1 text-center text-xs text-white/50">Add official channels so traders can follow updates in real time.</p>
+                        <div className="mt-6 space-y-4">
+                            {socialItems.map((item) => (
+                                <div key={item.field} className="space-y-2">
+                                    <div className="flex items-center gap-3 text-sm text-white/70">
+                                        <span className="rounded-full bg-emerald-400/10 p-2 text-emerald-300">{item.icon}</span>
+                                        <span>{item.label}</span>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder={item.placeholder}
+                                        value={socials[item.field]}
+                                        onChange={handleChange(item.field)}
+                                        maxLength={200}
+                                        className={`w-full rounded-2xl border px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 ${
+                                            errors[item.field] ? "border-rose-400 focus:ring-rose-400" : "border-white/10 bg-white/5 focus:ring-emerald-400"
+                                        }`}
+                                    />
+                                    <div className="flex items-center justify-between text-[11px] text-white/40">
+                                        {errors[item.field] ? <span>Must start with http:// or https://</span> : <span>Optional</span>}
+                                        <span>{socials[item.field].length}/200</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <p className="mt-6 text-center text-[11px] text-white/40">🚫 Links must be safe and official. The team may remove inaccurate information.</p>
+                        <button
+                            onClick={handleSave}
+                            className="mt-6 w-full rounded-2xl bg-gradient-to-r from-emerald-400 to-sky-500 py-3 text-sm font-semibold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+                            disabled={Object.values(errors).some(Boolean)}
+                        >
+                            Save socials
+                        </button>
+                    </div>
+                </div>
             )}
-
-            <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500 pr-4">
-              <div className="w-1/5 sm:w-1/3 text-left">Timestamp</div>
-              <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-end gap-10">
-                <span className="text-right w-[30px] md:w-[200px]">From</span>
-                <span className="text-right w-[70px] md:w-[200px]">Asset</span>
-                <span className="text-right w-[30px] md:w-[200px]">Amount</span>
-                <span className="text-right w-[30px] md:w-[200px]">Txn</span>
-              </div>
-            </div>
-            <div
-              className="w-full h-[950px] pr-4 flex flex-col items-center sm:items-start overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500"
-              style={{ zIndex: 1 }}
-            >
-              {hx.map((res: any, index: any) => (
-                <div
-                  className="w-full h-[10px] flex flex-row items-center justify-around text-xs md:text-sm py-6 border-b border-gray-800"
-                  key={index}
-                >
-                  <span className="w-1/5 sm:w-1/3 text-gray-500 text-xs text-left">
-                    {new Intl.DateTimeFormat("en-GB", {
-                      dateStyle: "short",
-                      timeStyle: "short",
-                      timeZone: "Asia/Bangkok",
-                    }).format(new Date(res.timestamp))}
-                  </span>
-                  <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-end gap-10 text-xs sm:text-sm">
-                    <Link
-                      href={
-                        _explorer +
-                        "address/" +
-                        res.from +
-                        (chain === "kub" ? "/?tab=tokens" : "") +
-                        (chain === "monad" ? "#tokens" : "")
-                      }
-                      rel="noopener noreferrer"
-                      target="_blank"
-                      prefetch={false}
-                      className="text-right w-[30px] md:w-[200px]"
-                    >
-                      {res.from.slice(0, 5) + "..." + res.from.slice(37)}
-                    </Link>
-                    <div className="text-right w-[70px] md:w-[200px] flex flex-row gap-2 items-center justify-end overflow-hidden">
-                      {res.action === "buy" && (
-                        <span className="text-green-500 font-bold">
-                          {res.action.toUpperCase()}
-                        </span>
-                      )}
-                      {res.action === "sell" && (
-                        <span className="text-red-500 font-bold">
-                          {res.action.toUpperCase()}
-                        </span>
-                      )}
-                      {res.action === "launch" && (
-                        <span className="text-emerald-300 font-bold">
-                          🚀 {res.action.toUpperCase()} & BUY
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-right w-[30px] md:w-[200px]">
-                      {Intl.NumberFormat("en-US", {
-                        notation: "compact",
-                        compactDisplay: "short",
-                      }).format(res.value)}
-                    </span>
-                    <Link
-                      href={_explorer + "tx/" + res.hash}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                      prefetch={false}
-                      className="font-bold text-right w-[30px] md:w-[200px] underline truncate"
-                    >
-                      {res.hash.slice(0, 5) + "..." + res.hash.slice(61)}
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div
-          className="hidden xl:block w-full xl:w-2/3 h-[1500px] flex flex-col gap-4 items-center xl:items-start"
-          style={{ zIndex: 1 }}
-        >
-          <div className="flex justify-end gap-2 mt-[-28px] ">
-            {["CMswap", "GeckoTerminal"].map((type) => (
-              <button
-                key={type}
-                onClick={() => setGrapthType(type)}
-                className={`
-                            px-3 py-1.5 text-xs  
-                            transition-all duration-200 ease-in-out
-                            ${
-                              grapthType === type
-                                ? "text-teal-600"
-                                : " text-white"
-                            }
-                            cursor-pointer
-                        `}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-
-          {grapthType === "GeckoTerminal" ? (
-            <iframe
-              height="28%"
-              width="100%"
-              id="geckoterminal-embed"
-              title="GeckoTerminal Embed"
-              src={
-                "https://www.geckoterminal.com/" +
-                (chain === "kub"
-                  ? "bitkub_chain"
-                  : chain === "monad"
-                  ? "monad-testnet"
-                  : "") +
-                "/pools/" +
-                lp +
-                "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m"
-              }
-              allow="clipboard-write"
-            ></iframe>
-          ) : (
-            <Chart data={graphData} />
-          )}
-
-          <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500 pr-4">
-            <div className="w-1/5 sm:w-1/3 text-left">Timestamp</div>
-            <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-end gap-10">
-              <span className="text-right w-[30px] md:w-[200px]">From</span>
-              <span className="text-right w-[70px] md:w-[200px]">Asset</span>
-              <span className="text-right w-[30px] md:w-[200px]">Amount</span>
-              <span className="text-right w-[30px] md:w-[200px]">Txn</span>
-            </div>
-          </div>
-          <div
-            className="w-full h-[950px] pr-4 flex flex-col items-center sm:items-start overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500"
-            style={{ zIndex: 1 }}
-          >
-            {hx.map((res: any, index: any) => (
-              <div
-                className="w-full h-[10px] flex flex-row items-center justify-around text-xs md:text-sm py-6 border-b border-gray-800"
-                key={index}
-              >
-                <span className="w-1/5 sm:w-1/3 text-gray-500 text-xs text-left">
-                  {new Intl.DateTimeFormat("en-GB", {
-                    dateStyle: "short",
-                    timeStyle: "short",
-                    timeZone: "Asia/Bangkok",
-                  }).format(new Date(res.timestamp))}
-                </span>
-                <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-end gap-10 text-xs sm:text-sm">
-                  <Link
-                    href={
-                      _explorer +
-                      "address/" +
-                      res.from +
-                      (chain === "kub" ? "/?tab=tokens" : "") +
-                      (chain === "monad" ? "#tokens" : "")
-                    }
-                    rel="noopener noreferrer"
-                    target="_blank"
-                    prefetch={false}
-                    className="text-right w-[30px] md:w-[200px]"
-                  >
-                    {res.from.slice(0, 5) + "..." + res.from.slice(37)}
-                  </Link>
-                  <div className="text-right w-[70px] md:w-[200px] flex flex-row gap-2 items-center justify-end overflow-hidden">
-                    {res.action === "buy" && (
-                      <span className="text-green-500 font-bold">
-                        {res.action.toUpperCase()}
-                      </span>
-                    )}
-                    {res.action === "sell" && (
-                      <span className="text-red-500 font-bold">
-                        {res.action.toUpperCase()}
-                      </span>
-                    )}
-                    {res.action === "launch" && (
-                      <span className="text-emerald-300 font-bold">
-                        🚀 {res.action.toUpperCase()} & BUY
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-right w-[30px] md:w-[200px]">
-                    {Intl.NumberFormat("en-US", {
-                      notation: "compact",
-                      compactDisplay: "short",
-                    }).format(res.value)}
-                  </span>
-                  <Link
-                    href={_explorer + "tx/" + res.hash}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                    prefetch={false}
-                    className="font-bold text-right w-[30px] md:w-[200px] underline truncate"
-                  >
-                    {res.hash.slice(0, 5) + "..." + res.hash.slice(61)}
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="hidden xl:block w-full xl:w-1/4 h-fit xl:h-[1500px] flex flex-col gap-8 z-1">
-          <div
-            className={
-              "p-6 w-full h-[380px] border-2 border-l-8 border-solid flex flex-col item-center justify-around bg-gray-900 " +
-              (chain === "kub" ? "border-emerald-300" : "") +
-              (chain === "monad" ? "border-purple-300" : "")
-            }
-          >
-            <div className="w-3/4 flex items-baseline space-x-2 mx-2 my-2">
-              <div className="text-2xl font-bold max-w-[240px] overflow-x-scroll whitespace-nowrap scrollbar-hide">
-                {symbol}
-              </div>
-            </div>
-            <div className="w-full bg-gray-800 self-center p-2  mb-3 rounded-2xl flex flex-row justify-around">
-              <span
-                className={
-                  trademode
-                    ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
-                    : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
-                }
-                style={{
-                  backgroundImage: trademode
-                    ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(34, 197, 94) 0%, rgb(20, 83, 45) 60%, rgba(34, 197, 94, 0.2) 100%)"
-                    : "none",
-                }}
-                onClick={() => {
-                  setTrademode(true);
-                  setInputBalance("");
-                  setOutputBalance("0");
-                }}
-              >
-                Buy
-              </span>
-              <span
-                className={
-                  !trademode
-                    ? "font-bold p-2 w-1/2 bg-black text-center rounded-lg"
-                    : "text-gray-400 underline cursor-pointer hover:font-bold p-2 w-1/2 text-center"
-                }
-                style={{
-                  backgroundImage: !trademode
-                    ? "radial-gradient(circle 919px at 1.7% 6.1%, rgb(239, 68, 68) 0%, rgb(139, 15, 15) 60%, rgba(239, 68, 68, 0.2) 100%)"
-                    : "none",
-                }}
-                onClick={() => {
-                  setTrademode(false);
-                  setInputBalance("");
-                  setOutputBalance("0");
-                }}
-              >
-                Sell
-              </span>
-            </div>
-            <div className="w-full flex flex-row justify-between text-2xl">
-              <input
-                className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-2/5 font-bold bg-transparent"
-                placeholder="0"
-                value={inputBalance}
-                onChange={(event) => {
-                  setInputBalance(event.target.value);
-                  qoute(event.target.value);
-                }}
-                type="number"
-              />
-              <span className="mr-[20px] w-3/5 text-right truncate">
-                {trademode
-                  ? chain === "kub" && mode === "pro"
-                    ? "KUB"
-                    : chain === "kub" &&
-                      mode === "lite" &&
-                      (token === "cmm" || token === "")
-                    ? "CMM"
-                    : chain === "monad" && mode === "pro"
-                    ? "MON"
-                    : ""
-                  : symbol}
-              </span>
-            </div>
-            <div className="mr-[20px] self-end text-sm">
-              {mode === "pro" ? (
-                <>
-                  <div className="flex flex-col gap-2 w-full">
-                    <div className="text-right text-gray font-mono text-sm">
-                      {Intl.NumberFormat("en-US", {
-                        notation: "compact",
-                        compactDisplay: "short",
-                      }).format(
-                        Number(
-                          formatEther(
-                            trademode ? ethBal : (state[1].result as bigint)
-                          )
-                        )
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 justify-end mb-4">
-                      <button
-                        className="px-2 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
-                        onClick={() => {
-                          setInputBalance("");
-                          setOutputBalance("");
-                        }}
-                      >
-                        Reset
-                      </button>
-                      {(trademode && mode === "pro"
-                        ? [0.1, 0.5, 1]
-                        : [25, 50, 75]
-                      ).map((value) => (
-                        <button
-                          key={value}
-                          className="px-2 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
-                          onClick={() => {
-                            if (trademode) {
-                              // fix amount (0.1, 0.5, 1)
-                              const adjusted = value;
-                              setInputBalance(adjusted.toFixed(6));
-                              qoute(adjusted.toFixed(6));
-                            } else {
-                              // percent (25%, 50%, 75%)
-                              const balance = BigInt(state[1].result as bigint);
-                              const amount =
-                                (balance * BigInt(value)) / BigInt(100);
-                              const adjusted = Number(formatEther(amount));
-                              setInputBalance(adjusted.toFixed(6));
-                              qoute(adjusted.toFixed(6));
-                            }
-                          }}
-                        >
-                          {trademode ? value : `${value}%`}
-                        </button>
-                      ))}
-
-                      <button
-                        className="px-2 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
-                        onClick={() => {
-                          const value = trademode
-                            ? Number(formatEther(ethBal)) +
-                              (trademode && mode === "pro" ? -0.00001 : 0)
-                            : Number(formatEther(state[1].result as bigint)) +
-                              (trademode && mode === "pro" ? -0.00001 : 0);
-
-                          setInputBalance(value.toFixed(6));
-                          qoute(value.toFixed(6));
-                        }}
-                      >
-                        Max
-                      </button>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex flex-col gap-2 w-full">
-                    <div className="text-right text-gray-300 font-mono text-sm">
-                      {Intl.NumberFormat("en-US", {
-                        notation: "compact",
-                        compactDisplay: "short",
-                      }).format(
-                        Number(
-                          formatEther(
-                            trademode
-                              ? (state[0].result as bigint)
-                              : (state[1].result as bigint)
-                          )
-                        )
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <button
-                        className="px-2 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
-                        onClick={() => {
-                          setInputBalance("");
-                          setOutputBalance("");
-                        }}
-                      >
-                        Reset
-                      </button>
-
-                      {[25, 50, 75].map((percent) => (
-                        <button
-                          key={percent}
-                          className="px-2 py-1 text-xs rounded-md border border-white/20 text-white hover:bg-white/10 transition shadow-sm"
-                          onClick={() => {
-                            const balance = trademode
-                              ? BigInt(state[0].result as bigint)
-                              : BigInt(state[1].result as bigint);
-                            const amount =
-                              (balance * BigInt(percent)) / BigInt(100);
-                            setInputBalance(String(formatEther(amount)));
-                            qoute(String(formatEther(amount)));
-                          }}
-                        >
-                          {percent}%
-                        </button>
-                      ))}
-
-                      <button
-                        className="px-2 py-1 text-xs rounded-md border border-[#00ff9d]/40 text-[#00ff9d] hover:bg-[#00ff9d]/10 transition shadow-sm"
-                        onClick={() => {
-                          const maxValue = trademode
-                            ? String(formatEther(state[0].result as bigint))
-                            : String(formatEther(state[1].result as bigint));
-                          setInputBalance(maxValue);
-                          qoute(maxValue);
-                        }}
-                      >
-                        Max
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-            <div
-              className={
-                "w-full flex flex-row justify-between text-2xl font-bold " +
-                (chain === "kub" ? "text-emerald-300" : "") +
-                (chain === "monad" ? "text-purple-300" : "")
-              }
-            >
-              <span className="appearance-none leading-tight focus:outline-none focus:shadow-outline ml-[20px] w-2/5 font-bold bg-transparent text-left">
-                {Intl.NumberFormat("en-US", {
-                  notation: "compact",
-                  compactDisplay: "short",
-                }).format(Number(outputBalance))}
-              </span>
-              <span className="mr-[20px] w-3/5 text-right truncate">
-                {!trademode
-                  ? chain === "kub" && mode === "pro"
-                    ? "KUB"
-                    : chain === "kub" &&
-                      mode === "lite" &&
-                      (token === "cmm" || token === "")
-                    ? "CMM"
-                    : chain === "monad" && mode === "pro"
-                    ? "MON"
-                    : ""
-                  : symbol}
-              </span>
-            </div>
-            <div className="mr-[20px] self-end text-sm">
-              {mode === "pro" ? (
-                <span className="text-gray-300">
-                  {!trademode
-                    ? Intl.NumberFormat("en-US", {
-                        notation: "compact",
-                        compactDisplay: "short",
-                      }).format(Number(formatEther(ethBal))) + " "
-                    : Intl.NumberFormat("en-US", {
-                        notation: "compact",
-                        compactDisplay: "short",
-                      }).format(
-                        Number(formatEther(state[1].result as bigint))
-                      ) + " "}
-                </span>
-              ) : (
-                <span className="text-gray-300">
-                  {!trademode
-                    ? Intl.NumberFormat("en-US", {
-                        notation: "compact",
-                        compactDisplay: "short",
-                      }).format(
-                        Number(formatEther(state[0].result as bigint))
-                      ) + " "
-                    : Intl.NumberFormat("en-US", {
-                        notation: "compact",
-                        compactDisplay: "short",
-                      }).format(
-                        Number(formatEther(state[1].result as bigint))
-                      ) + " "}
-                </span>
-              )}
-            </div>
-            {connections &&
-            account.address !== undefined &&
-            account.chainId === _chainId ? (
-              <button
-                className={
-                  "w-3/4 self-center p-2 my-3 rounded-2xl font-bold text-slate-900 underline hover-effect hover:text-white cursor-pointer " +
-                  theme.tradebtn
-                }
-                onClick={trade}
-              >
-                <span className="self-center">Trade</span>
-              </button>
-            ) : (
-              <button
-                className="w-3/4  self-center p-2 my-3 rounded-2xl font-bold bg-gray-500 cursor-not-allowed"
-                disabled
-              >
-                <span className="self-center text-slate-900">Trade</span>
-              </button>
-            )}
-          </div>
-          <div className="w-full h-fit flex flex-col gap-6 item-center justify-start text-left">
-            <div className="flex flex-row justify-start mt-5">
-              <div className="flex flex-row items-start gap-2 px-5">
-                <div className="mr-2">
-                  <Image
-                    src={
-                      logo !== null
-                        ? String(logo).startsWith("ipfs://")
-                          ? "https://cmswap.mypinata.cloud/ipfs/" +
-                            String(logo).slice(7)
-                          : "https://cmswap.mypinata.cloud/ipfs/" + String(logo)
-                        : "https://cmswap.mypinata.cloud/ipfs/"
-                    }
-                    alt="token_waiting_for_approve"
-                    width={120}
-                    height={120}
-                  />
-                </div>
-                <div className="flex-1 min-w-0 h-[125px] overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
-                  <span className="text-xs break-words">
-                    Description: {description !== null && description}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Socials Section */}
-            {
-              <div className="w-full">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  {socialItems.map(({ icon, field }) => {
-                    const url = socials[field];
-                    if (!url || url.trim() === "") return null;
-
-                    const platformNames: Record<string, string> = {
-                      fb: "Facebook",
-                      x: "X (Twitter)",
-                      telegram: "Telegram",
-                      website: "Website",
-                    };
-
-                    return (
-                      <a
-                        key={field}
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-3 p-2 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 text-center w-full h-full"
-                      >
-                        <div className="text-green-400">{icon}</div>
-                        <span className="text-green-300 text-sm font-medium">
-                          {platformNames[field] ?? field}
-                        </span>
-                      </a>
-                    );
-                  })}
-                </div>
-              </div>
-            }
-
-            {/* ปุ่มเพิ่ม Socials */}
-            {creator === account.address && (
-              <div>
-                <button
-                  className="w-full p-2 rounded-2xl font-bold bg-gray-800 text-slate-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                  onClick={() => setShowSocials(!showSocials)}
-                >
-                  <span className="self-center">Link your social profiles</span>
-                </button>
-              </div>
-            )}
-
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3 py-1.5 bg-transparent border border-green-700 rounded-lg shadow-md hover:bg-green-900 hover:bg-opacity-50 transition-colors duration-200 w-full"
-            >
-              {/* Address Display */}
-              <div className="flex items-center gap-1 w-full overflow-hidden">
-                <span className="text-green-300 text-xs font-medium whitespace-nowrap">
-                  Contract Address:
-                </span>
-                <span className="text-green-300 text-xs font-mono truncate block">
-                  {ticker}
-                </span>
-              </div>
-
-              {/* Copy Button */}
-              <button
-                onClick={() => copyToClipboard(ticker)}
-                className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-1 rounded-md transition-colors text-xs cursor-pointer"
-                title="Copy contract address"
-              >
-                {copiedAddress === ticker ? (
-                  <>
-                    <Check size={14} />
-                    Copied!
-                  </>
-                ) : (
-                  <Copy size={14} />
-                )}
-              </button>
-            </a>
-
-            {state[2].result ? (
-              <>
-                <span className="ml-[20px] text-sm font-bold">
-                  🔥 This token has graduated!:{" "}
-                  {gradHash !== "" && (
-                    <Link
-                      href={_explorer + "tx/" + gradHash}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                      prefetch={false}
-                      className={
-                        "underline " +
-                        (chain === "kub" ? "text-emerald-300" : "") +
-                        (chain === "monad" ? "text-purple-300" : "")
-                      }
-                    >
-                      Txn hash
-                    </Link>
-                  )}
-                </span>
-                <div className="ml-[20px] mr-[20px] h-6 bg-gray-400 rounded-lg overflow-hidden">
-                  <div
-                    className="h-6 bg-yellow-500 rounded-lg"
-                    style={{ width: "100%" }}
-                  />
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="ml-[20px] text-sm flex flex-col gap-2 justify-start">
-                  <span>Bonding curve progress: {progress + "%"}</span>
-                  <div className="has-tooltip">
-                    <span className="tooltip rounded shadow-lg p-1 bg-neutral-800 -mt-20 text-xs">
-                      {`When the market cap reaches ${
-                        reachData && Array.isArray(reachData)
-                          ? (() => {
-                              const item = reachData.find(
-                                (item) => item?.chain === chain
-                              );
-                              if (!item) return "";
-                              if (
-                                mode === "pro" &&
-                                item.proAmount &&
-                                item.proSymbol
-                              ) {
-                                return `${item.proAmount} ${item.proSymbol}`;
-                              }
-                              if (
-                                mode === "lite" &&
-                                item.lite &&
-                                item.liteSymbol &&
-                                (token === item.liteSymbol || token === "")
-                              ) {
-                                return `${item.lite} ${item.liteSymbol}`;
-                              }
-                              return "";
-                            })()
-                          : ""
-                      }, 90% of the liquidity in the factory contract will be burned, while the remaining 10% will be allocated as a platform fee.`}
-                    </span>
-                  </div>
-                </div>
-                <div className="ml-[20px] mr-[20px] h-4 bg-gray-400 rounded-lg overflow-hidden mb-2">
-                  <div
-                    className={
-                      "h-4 rounded-lg " +
-                      (chain === "kub" ? "bg-emerald-300" : "") +
-                      (chain === "monad" ? "bg-purple-300" : "")
-                    }
-                    style={{ width: calculateBondingCurveWidth(progress) }}
-                  />
-                </div>
-              </>
-            )}
-          </div>
-          <div className="w-full h-[800px] mt-8 p-8 rounded-2xl shadow-2xl bg-slate-950 bg-opacity-25 flex flex-col items-center align-center">
-            <span className="w-full h-[50px] pb-10 text-center text-sm lg:text-lg font-bold">
-              {holder.length} Holders
-            </span>
-            <div className="w-full overflow-x-hidden overflow-y-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-xl [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-xl [&::-webkit-scrollbar-thumb]:bg-slate-500">
-              {holder
-                .sort((a, b) => {
-                  return b.value - a.value;
-                })
-                .map((res, index) => (
-                  <div
-                    className="w-full h-[50px] flex flex-row items-center justify-between text-xs lg:text-md py-2 border-b border-gray-800"
-                    key={index}
-                  >
-                    <div className="flex flex-row items-center justify-start gap-6 overflow-hidden">
-                      <span>{index + 1}.</span>
-                      <Link
-                        href={
-                          _explorer +
-                          "address/" +
-                          res.addr +
-                          (chain === "kub" ? "/?tab=tokens" : "") +
-                          (chain === "monad" ? "#tokens" : "")
-                        }
-                        rel="noopener noreferrer"
-                        target="_blank"
-                        prefetch={false}
-                        className={
-                          "font-bold text-left " +
-                          (res.addr.toUpperCase() ===
-                            String(creator).toUpperCase() ||
-                          res.addr.toUpperCase() === lp.toUpperCase()
-                            ? chain === "kub"
-                              ? "text-emerald-300"
-                              : chain === "monad"
-                              ? "text-purple-300"
-                              : ""
-                            : "")
-                        }
-                      >
-                        {res.addr.slice(0, 5) + "..." + res.addr.slice(37)}{" "}
-                        {res.addr.toUpperCase() ===
-                          String(creator).toUpperCase() && "[Creator 🧑‍💻]"}
-                        {res.addr.toUpperCase() === lp.toUpperCase() &&
-                          "[Bonding curve]"}
-                      </Link>
-                      <span className="mr-6 text-right  w-[50px] sm:w-[200px]">
-                        {res.value.toFixed(4)}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Social Modal */}
-      {showSocials && (
-        <div className="fixed inset-0 bg-[#0a0b1e]/90 backdrop-blur-md p-4 flex  items-center justify-center z-50">
-          <div className="bg-[#0a0b1e] border border-[#00ff9d]/20 p-6 w-full max-w-md rounded-xl shadow-[0_0_15px_#00ff9d55] relative">
-            <button
-              className="absolute top-2 right-2 text-[#00ff9d] hover:text-white transition"
-              onClick={() => setShowSocials(false)}
-            >
-              ✕
-            </button>
-            <h2 className="text-2xl font-semibold mb-6 text-center text-[#00ff9d] drop-shadow-[0_0_4px_#00ff9d]">
-              Link your social profiles
-            </h2>
-
-            <div className="space-y-5 text-white grid ">
-              {[
-                {
-                  icon: <FaFacebookF className="text-white" />,
-                  field: "fb",
-                  placeholder: "Facebook",
-                },
-                {
-                  icon: <BsTwitterX className="text-white" />,
-                  field: "x",
-                  placeholder: "X (Twitter) URL",
-                },
-                {
-                  icon: <FaTelegramPlane className="text-white" />,
-                  field: "telegram",
-                  placeholder: "Telegram URL",
-                },
-                {
-                  icon: <FaGlobe className="text-white" />,
-                  field: "website",
-                  placeholder: "Website URL",
-                },
-              ].map(({ icon, field, placeholder }) => (
-                <div key={field}>
-                  <div className="flex items-center gap-3 ">
-                    {icon}
-                    <input
-                      type="text"
-                      placeholder={placeholder}
-                      value={socials[field as keyof typeof socials]}
-                      onChange={handleChange(field as keyof typeof socials)}
-                      maxLength={200}
-                      className={`flex-1 bg-transparent pl-4 border ${
-                        errors[field as keyof typeof errors]
-                          ? "border-red-500"
-                          : "border-[#00ff9d]/40"
-                      } rounded-lg p-2 text-white placeholder-[#00ff9d99] focus:outline-none focus:ring-2 ${
-                        errors[field as keyof typeof errors]
-                          ? "focus:ring-red-500"
-                          : "focus:ring-[#00ff9d]"
-                      }`}
-                    />
-                  </div>
-
-                  {/* Error Message */}
-                  {errors[field as keyof typeof errors] && (
-                    <p className="text-sm text-red-400 mt-1 ml-7">
-                      Must start with http:// or https://
-                    </p>
-                  )}
-
-                  {/* Character Count */}
-                  <p className="text-xs text-right text-[#00ff9d99] mt-1 ml-7">
-                    {socials[field as keyof typeof socials].length}/200
-                    characters
-                  </p>
-                </div>
-              ))}
-
-              <p className="text-xs text-red-500 text-center">
-                🚫 No inappropriate or unethical links.
-                <br />
-                Violations may lead to a ban. Team may edit links if needed.
-              </p>
-
-              <button
-                onClick={handleSave}
-                className="w-full mt-4 bg-[#00ff9d] text-[#0a0b1e] font-bold p-2 rounded-xl hover:bg-[#00ff9d]/90 transition shadow-[0_0_10px_#00ff9d80]"
-              >
-                Save Socials
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </main>
-  );
+        </main>
+    );
 }
