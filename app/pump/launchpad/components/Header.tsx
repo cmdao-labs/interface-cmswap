@@ -24,7 +24,7 @@ export default function LaunchpadHeader({ activeRoute = "Home" }: LaunchpadHeade
         <header className="sticky top-0 z-50 backdrop-blur-xl">
             <div className="pt-21 mx-auto flex w-full flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-10">
                 <Link href="/pump/launchpad" prefetch={false} className="flex items-center gap-3 text-white">
-                    <span className="text-lg font-semibold tracking-wider">Pump</span>
+                    <span className="text-lg font-semibold tracking-wider text-[#00FF41]">Pump</span>
                 </Link>
                 <div className="">
                     <Search />

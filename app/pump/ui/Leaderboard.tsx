@@ -630,7 +630,7 @@ async function attachBlockTimestamps(publicClient: any, swapEvents: any[], netwo
 function buildFallbackTabs(): LeaderboardTab[] {
     const emptyTab: LeaderboardTab = {
         id: "volume-token",
-        label: "TOp Volume Cult",
+        label: "Top Volume Cult",
         entries: [],
     };
     return [

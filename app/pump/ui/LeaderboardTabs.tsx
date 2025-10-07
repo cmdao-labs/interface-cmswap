@@ -154,10 +154,8 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
 
     return (
         <section className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-[#080b17]/85 shadow-[0_0_28px_rgba(15,118,110,0.15)] backdrop-blur-xl">
-            <div className="sticky top-[24px] z-20 border-b border-white/10 bg-[#080b17]/95 px-6 py-6 backdrop-blur-xl md:px-10">
-                <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                    <h1 className="text-2xl font-semibold text-slate-100 md:text-3xl">Leaderboard</h1>
-                </div>
+            <div className="sticky top-[24px] z-20 border-b border-white/10 bg-[#080b17]/95 pb-6 px-6 md:px-10 backdrop-blur-xl">
+                <h1 className="mb-6 text-2xl font-semibold text-slate-100 md:text-3xl">Leaderboard</h1>
                 <nav className="flex flex-wrap gap-3">
                     {tabs.map((tab) => {
                         const isActive = tab.id === activeTab?.id;

@@ -450,7 +450,7 @@ export default async function Event({
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="gap-2 sm:grid sm:grid-cols-4 xl:grid-cols-5 sm:overflow-visible flex overflow-x-auto sm:flex-none sm:overflow-x-visible">
+            <div className="gap-2 sm:grid sm:grid-cols-4 xl:grid-cols-5 flex w-full min-w-0 flex-nowrap overflow-x-auto sm:overflow-x-visible sm:flex-none">
                 {activity.map((item) => {
                     const { valueAccent, cardAccent } = getActionStyles(item.action);
                     const primary = item.action === 'launch' ? 'Launch' : `${Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(item.value)} ${item.action === 'buy' ? 'bought' : 'sold'}`;
@@ -469,12 +469,12 @@ export default async function Event({
                                 },
                             }}
                             prefetch={false}
-                            className={`group flex flex-col gap-2 rounded-lg border border-white/5 p-3 text-xs
+                            className={`group flex w-[240px] shrink-0 flex-col gap-2 rounded-lg border border-white/5 p-3 text-xs sm:w-auto sm:shrink
                                  shadow-lg transition-all duration-300 hover:-translate-y-1 ${cardAccent}`}
                         >
                             <div className="flex justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="relative h-12 w-12 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+                                    <div className="relative h-12 w-12 overflow-hidden sm:rounded-2xl border border-white/10 bg-white/5">
                                         <Image src={resolveLogoUrl(item.logo)} alt={`${item.ticker} logo`} fill sizes="48px" className="object-cover" />
                                     </div>
                                     <div className="flex flex-col">
