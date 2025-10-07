@@ -6,7 +6,7 @@ import { useConnections, useAccount, useReadContracts } from "wagmi";
 import { readContracts, writeContract, simulateContract, waitForTransactionReceipt, getBalance } from "@wagmi/core";
 import { useDebouncedCallback } from "use-debounce";
 import { formatEther, parseEther, erc20Abi, createPublicClient, http, decodeFunctionData} from "viem";
-import { Copy, Check, Plus } from "lucide-react";
+import { Copy, Check, Plus, Filter as FilterIcon, X } from "lucide-react";
 import { bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
 import { config } from "@/app/config";
 import { ERC20FactoryABI } from "@/app/pump/abi/ERC20Factory";
@@ -511,6 +511,124 @@ export default function Trade({
             timestamp: number;
         }[]
     );
+    // Filters for Activity list
+    const [filters, setFilters] = useState({
+        time: "all" as "all" | "5m" | "1h" | "24h" | "7d",
+        from: "",
+        actions: { buy: true, sell: true },
+        nativeMin: "",
+        nativeMax: "",
+        tokenMin: "",
+        tokenMax: "",
+        hash: "",
+    });
+    const [appliedFilters, setAppliedFilters] = useState(filters);
+    const debouncedApplyFilters = useDebouncedCallback((next: typeof filters) => {
+        setAppliedFilters(next);
+    }, 200);
+    const handleTimeChange = (value: "all" | "5m" | "1h" | "24h" | "7d") => {
+        setFilters((prev) => ({ ...prev, time: value }));
+        setAppliedFilters((prev) => ({ ...prev, time: value }));
+    };
+    const handleActionToggle = (key: "buy" | "sell") => {
+        setFilters((prev) => {
+            const a = prev.actions;
+            const other: "buy" | "sell" = key === "buy" ? "sell" : "buy";
+            const allOn = a.buy && a.sell;
+            const onlyThisOn = a[key] && !a[other];
+
+            let nextActions: typeof prev.actions;
+            if (allOn || !onlyThisOn) {
+                // Select only the clicked action
+                nextActions = { buy: false, sell: false } as typeof prev.actions;
+                nextActions[key] = true;
+            } else {
+                // If clicked again on the only-active one, reset to All
+                nextActions = { buy: true, sell: true } as typeof prev.actions;
+            }
+
+            const next = { ...prev, actions: nextActions };
+            setAppliedFilters(next);
+            return next;
+        });
+    };
+    const handleTextChange = (field: "from" | "hash") => (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setFilters((prev) => {
+            const next = { ...prev, [field]: value } as typeof filters;
+            debouncedApplyFilters(next);
+            return next;
+        });
+    };
+    const handleNumberChange = (field: "nativeMin" | "nativeMax" | "tokenMin" | "tokenMax") => (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setFilters((prev) => {
+            const next = { ...prev, [field]: value } as typeof filters;
+            debouncedApplyFilters(next);
+            return next;
+        });
+    };
+    const clearFilters = () => {
+        const base = {
+            time: "all" as const,
+            from: "",
+            actions: { buy: true, sell: true },
+            nativeMin: "",
+            nativeMax: "",
+            tokenMin: "",
+            tokenMax: "",
+            hash: "",
+        };
+        setFilters(base);
+        setAppliedFilters(base);
+    };
+    const filteredHx = React.useMemo(() => {
+        const f = appliedFilters;
+        const now = Date.now();
+        const minNative = f.nativeMin.trim() === "" ? undefined : Number.parseFloat(f.nativeMin);
+        const maxNative = f.nativeMax.trim() === "" ? undefined : Number.parseFloat(f.nativeMax);
+        const minToken = f.tokenMin.trim() === "" ? undefined : Number.parseFloat(f.tokenMin);
+        const maxToken = f.tokenMax.trim() === "" ? undefined : Number.parseFloat(f.tokenMax);
+        const fromQ = f.from.trim().toLowerCase();
+        const hashQ = f.hash.trim().toLowerCase();
+        // Merge immediate action/time from filters to ensure instant toggles
+        const effective = {
+            ...f,
+            time: filters.time,
+            actions: filters.actions,
+        };
+        const windowMs = effective.time === "5m" ? 5 * 60 * 1000 :
+            effective.time === "1h" ? 60 * 60 * 1000 :
+            effective.time === "24h" ? 24 * 60 * 60 * 1000 :
+            effective.time === "7d" ? 7 * 24 * 60 * 60 * 1000 : 0;
+        return hx.filter((res: any) => {
+            // time
+            if (windowMs > 0 && !(res.timestamp >= (now - windowMs))) return false;
+            // action
+            const action = String(res.action || "").trim().toLowerCase();
+            const actionKey = action as keyof typeof effective.actions;
+            if (actionKey in effective.actions) {
+                if (!effective.actions[actionKey]) return false;
+            }
+            // from match
+            if (fromQ && !String(res.from || "").toLowerCase().includes(fromQ)) return false;
+            // hash match
+            if (hashQ && !String(res.hash || "").toLowerCase().includes(hashQ)) return false;
+            // native amount range (optional field)
+            const nVal = typeof res.nativeValue === "number" ? res.nativeValue : undefined;
+            if (minNative !== undefined && !Number.isNaN(minNative)) {
+                if (nVal === undefined || nVal < minNative) return false;
+            }
+            if (maxNative !== undefined && !Number.isNaN(maxNative)) {
+                if (nVal === undefined || nVal > maxNative) return false;
+            }
+            // token amount range
+            const tVal = typeof res.value === "number" ? res.value : Number.NaN;
+            if (minToken !== undefined && !Number.isNaN(minToken) && !(tVal >= minToken)) return false;
+            if (maxToken !== undefined && !Number.isNaN(maxToken) && !(tVal <= maxToken)) return false;
+            return true;
+        });
+    }, [hx, appliedFilters, filters.time, filters.actions]);
     const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
     const copyToClipboard = async (address: string): Promise<void> => {
         await navigator.clipboard.writeText(address);
@@ -1313,9 +1431,116 @@ export default function Trade({
 
                     <div className="rounded-3xl border border-white/10 bg-black/30 p-4 sm:p-6 shadow-xl backdrop-blur">
                         <h2 className="text-lg font-semibold text-white">Activity</h2>
+                        {/* Filters toolbar */}
+                        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-white/80">
+                            <div className="flex items-center gap-1 mr-2">
+                                <FilterIcon size={14} className="text-white/60" />
+                                <span className="text-white/70">Filters</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <span className="text-white/50">Time</span>
+                                <select
+                                    className="rounded-md border border-white/10 bg-black/60 px-2 py-1 outline-none hover:border-white/20"
+                                    value={filters.time}
+                                    onChange={(e) => handleTimeChange(e.target.value as any)}
+                                >
+                                    <option value="all">All</option>
+                                    <option value="5m">5m</option>
+                                    <option value="1h">1h</option>
+                                    <option value="24h">24h</option>
+                                    <option value="7d">7d</option>
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <span className="text-white/50">From</span>
+                                <input
+                                    value={filters.from}
+                                    onChange={handleTextChange("from")}
+                                    placeholder="address"
+                                    className="w-28 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                />
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <span className="text-white/50">Action</span>
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={() => handleActionToggle("buy")}
+                                        className={`rounded-full border px-2 py-1 transition ${filters.actions.buy ? "bg-white/20 border-white/20 text-emerald-300" : "border-white/10 bg-white/10 text-emerald-300 hover:border-white/20"}`}
+                                        title="Buy"
+                                    >
+                                        Buy
+                                    </button>
+                                    <button
+                                        onClick={() => handleActionToggle("sell")}
+                                        className={`rounded-full border px-2 py-1 transition ${filters.actions.sell ? "bg-white/20 border-white/20 text-rose-300" : "border-white/10 bg-white/10 text-rose-300 hover:border-white/20"}`}
+                                        title="Sell"
+                                    >
+                                        Sell
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <span className="text-white/50">Native</span>
+                                <input
+                                    type="number"
+                                    inputMode="decimal"
+                                    value={filters.nativeMin}
+                                    onChange={handleNumberChange("nativeMin")}
+                                    placeholder="min"
+                                    className="w-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                />
+                                <input
+                                    type="number"
+                                    inputMode="decimal"
+                                    value={filters.nativeMax}
+                                    onChange={handleNumberChange("nativeMax")}
+                                    placeholder="max"
+                                    className="w-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                />
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <span className="text-white/50">Token</span>
+                                <input
+                                    type="number"
+                                    inputMode="decimal"
+                                    value={filters.tokenMin}
+                                    onChange={handleNumberChange("tokenMin")}
+                                    placeholder="min"
+                                    className="w-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                />
+                                <input
+                                    type="number"
+                                    inputMode="decimal"
+                                    value={filters.tokenMax}
+                                    onChange={handleNumberChange("tokenMax")}
+                                    placeholder="max"
+                                    className="w-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                />
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <span className="text-white/50">Tx</span>
+                                <input
+                                    value={filters.hash}
+                                    onChange={handleTextChange("hash")}
+                                    placeholder="hash"
+                                    className="w-28 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                />
+                            </div>
+                            <div className="ml-auto flex items-center gap-2">
+                                <div className="text-white/50">Showing {filteredHx.length} of {hx.length}</div>
+                                <button
+                                    onClick={clearFilters}
+                                    className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20"
+                                    title="Clear filters"
+                                >
+                                    <X size={14} />
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
                         <div className="mt-4 max-h-[460px] space-y-3 overflow-y-auto pr-1">
-                            {hx.length === 0 ? (<div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">No trades yet. Be the first to make a move.</div>) : 
-                            (hx.map((res) => (
+                            {filteredHx.length === 0 ? (<div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">No trades yet. Be the first to make a move.</div>) : 
+                            (filteredHx.map((res) => (
                                 <div key={res.hash} className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-white/5 p-4 text-sm text-white/80 md:flex-row md:items-center md:justify-between">
                                     <span className="text-xs text-white/50">{formatRelativeTime(res.timestamp / 1000)}</span>
                                     <div className="flex flex-wrap items-center gap-10 text-sm">
