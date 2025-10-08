@@ -1273,8 +1273,8 @@ export default function Trade({
                 </div>
             </div>
 
-            {headnoti && (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm shadow-[0_0_25px_rgba(16,185,129,0.25)]">
+            {!headnoti && (
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm shadow-[0_0_25px_rgba(16,185,129,0.25)]">
                     <div className="flex items-center gap-2 text-emerald-200">
                         <Check size={16} />
                         <span>Trade successful</span>
@@ -1749,7 +1749,7 @@ export default function Trade({
                             )}
                         </div>
                         <p className="mt-4 text-sm leading-relaxed text-white/70">{description ? description : "No description has been shared yet."}</p>
-                        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                        <div className="mt-6 flex gap-3">
                             {socialItems.filter((item) => socials[item.field]).length === 0 ? (
                                 <div className="rounded-2xl border border-dashed border-white/10 p-4 text-sm text-white/50">No socials linked yet.</div>
                             ) : (
@@ -1762,10 +1762,9 @@ export default function Trade({
                                             prefetch={false}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80 transition hover:border-white/30 hover:text-white"
+                                            className="rounded-full border border-white/10 bg-white/5 p-3 text-sm text-white/80 transition hover:border-white/30 hover:text-white"
                                         >
-                                            <span className="rounded-full bg-emerald-400/10 p-2 text-emerald-300">{item.icon}</span>
-                                            <span>{item.label}</span>
+                                            {item.icon}
                                         </Link>
                                     ))
                             )}

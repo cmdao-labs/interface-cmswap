@@ -6,11 +6,11 @@ import { useAccount } from 'wagmi';
 import Search from "@/app/pump/ui/Search";
 
 type LaunchpadHeaderProps = {
-    activeRoute?: "Home" | "Markets" | "Portfolio";
+    activeRoute?: "Markets" | "Portfolio" | "Leaderboard";
     ctaHref: string;
 };
 
-export default function LaunchpadHeader({ activeRoute = "Home" }: LaunchpadHeaderProps) {
+export default function LaunchpadHeader({ activeRoute = "Markets" }: LaunchpadHeaderProps) {
     const searchParams = useSearchParams();
     const mode = searchParams.get('mode') || '';
     const chain = searchParams.get('chain') || '';
@@ -23,14 +23,9 @@ export default function LaunchpadHeader({ activeRoute = "Home" }: LaunchpadHeade
 
     return (
         <header className="sticky top-0 z-50 backdrop-blur-xl">
-            <div className="pt-21 mx-auto flex w-full flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-10">
-                <Link href="/pump/launchpad" prefetch={false} className="flex items-center gap-3 text-white">
-                    <span className="text-lg font-semibold tracking-wider text-[#00FF41]">Pump</span>
-                </Link>
-                <div className="">
-                    <Search />
-                </div>
-                <nav className="flex flex-1 items-center justify-end gap-2 text-xs md:text-sm">
+            <div className="pt-24 md:pt-22 mx-auto flex flex-col-reverse md:flex-row w-full flex-wrap items-center justify-between gap-4 px-2 py-4 sm:px-6 lg:px-10">
+                <nav className="flex flex-1 gap-3 items-center text-xs md:text-sm">
+                    <Link href="/pump/launchpad" prefetch={false} className="p-2 font-semibold tracking-wider text-[#00FF41]">Pump</Link>
                     {NAV_ITEMS.map((item) => {
                         const isActive = item.label === activeRoute;
                         return (
@@ -38,7 +33,7 @@ export default function LaunchpadHeader({ activeRoute = "Home" }: LaunchpadHeade
                                 key={item.label}
                                 href={item.href}
                                 prefetch={false}
-                                className={`rounded-full px-4 py-2 font-medium transition-colors duration-300 ${
+                                className={`rounded-full p-2 font-medium transition-colors duration-300 ${
                                 isActive
                                     ? "bg-white/10 text-white"
                                     : "text-slate-400 hover:bg-white/5 hover:text-white"
@@ -48,15 +43,18 @@ export default function LaunchpadHeader({ activeRoute = "Home" }: LaunchpadHeade
                             </Link>
                         );
                     })}
+                </nav>
+                <div className="flex flex-col-reverse sm:flex-row gap-5 sm:gap-3">
+                    <Search />
                     <Link
                         href={"launchpad/launch?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")}
                         prefetch={false}
-                        className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-700 px-4 py-2 font-semibold text-white shadow-lg shadow-emerald-500/40 transition-transform duration-300 hover:scale-[1.03] focus:outline-none"
+                        className="w-full inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-700 px-6 py-2 font-semibold text-white shadow-lg shadow-emerald-500/40 transition-transform duration-300 hover:scale-[1.03] focus:outline-none"
                     >
-                        Launch Token
+                        <span>Launch Token</span>
                         <Rocket className="ml-2 h-6 w-6 rounded-xs border border-white/10 bg-white/10" aria-hidden="true" />
                     </Link>
-                </nav>
+                </div>
             </div>
         </header>
     );

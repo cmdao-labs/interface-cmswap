@@ -14,7 +14,7 @@ type ChainStyle = {
 };
 
 const baseCardClasses = 'flex flex-row gap-3 rounded-lg border border-white/20 p-4 text-sm shadow-inner shadow-black/30';
-const baseButtonClasses = 'flex-1 rounded-xl border border-white/10 px-4 py-2 text-center text-sm font-semibold transition-all duration-200';
+const baseButtonClasses = 'flex-1 rounded-xl border border-white/10 px-8 py-2 text-center text-sm font-semibold transition-all duration-200';
 const inactiveButtonClasses = 'text-slate-400 hover:border-emerald-400/30 hover:text-white';
 
 const chainStyles: Record<string, ChainStyle> = {
@@ -69,7 +69,7 @@ export default function Sort4() {
 
     return (
         <div className={baseCardClasses}>
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-row items-center gap-2">
                 {chainConfig.label === 'Bitkub Testnet' ?
                     <>
                         <Image src="/kub.png" alt="" width={64} height={64} />
@@ -94,7 +94,7 @@ export default function Sort4() {
                         aria-disabled={!isSupported}
                         disabled={!isSupported}
                     >
-                        {type === 'lite' ? 'Lite Mode' : 'Pro Mode'}
+                        {type === 'lite' ? 'Lite' : 'Pro'}
                     </button>
                 );
             })}

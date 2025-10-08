@@ -18,7 +18,7 @@ export default function Search() {
     }, 500);
 
     return (
-        <div className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm shadow-inner shadow-black/20">
+        <div className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm shadow-inner shadow-black/20">
             <span role="img" aria-label="search" className="text-lg">🔍</span>
             <input
                 className="flex-1 bg-transparent font-medium text-white placeholder-slate-500 outline-none"

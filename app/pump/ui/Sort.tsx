@@ -1,7 +1,7 @@
 'use client';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 
-const baseCardClasses = 'flex flex-row items-center justify-between gap-3 rounded-lg border border-white/20 px-10 py-4 text-xs shadow-inner shadow-black/30';
+const baseCardClasses = 'flex flex-row items-center justify-between gap-4 px-6 py-2 text-xs';
 const baseButtonClasses = 'flex-1 rounded-xl border border-white/10 px-4 py-2 text-center text-xs font-semibold transition-all duration-200';
 const activeButtonClasses = 'bg-gradient-to-r from-emerald-500/30 via-emerald-400/20 to-emerald-500/30 text-white border-emerald-400/50 shadow-lg shadow-emerald-500/20';
 const inactiveButtonClasses = 'text-slate-400 hover:border-emerald-400/30 hover:text-white';
@@ -43,7 +43,7 @@ export default function Sort() {
         ];
 
     return (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-2 sm:grid-cols-2">
             <div className={baseCardClasses}>
                 <span className="text-slate-500">Sort by</span>
                 <div className="flex gap-2">

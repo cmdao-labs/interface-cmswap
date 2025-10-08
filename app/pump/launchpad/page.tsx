@@ -47,11 +47,9 @@ export default async function Launchpad(props: {
 					</Suspense>
 				</section>
 				<section className="space-y-3">
-					<div className="flex flex-col gap-4 p-3 shadow-inner">
-						<div className="grid gap-4 lg:grid-cols-3 xl:grid-cols-[2fr_3fr_2fr]">
-							<Sort4 />
-							<Sort />
-						</div>
+					<div className="flex flex-row flex-wrap gap-4 py-3 shadow-inner">
+						<Sort4 />
+						<Sort />
 						{mode === "lite" && chain === "kub" && (<div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4"><Sort5 /></div>)}
 					</div>
 					<Suspense
