@@ -216,7 +216,7 @@ export default async function Event({
                 address: res.addr,
                 lp: res.lp,
             } as Activity;
-        }).sort((a: Activity, b: Activity) => {return b.timestamp - a.timestamp}).slice(0, 5);
+        }).sort((a: Activity, b: Activity) => {return b.timestamp - a.timestamp}).slice(0, 10);
     } else {
         const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
         const dataofuniv2factory = {addr: v2facAddr};
@@ -435,59 +435,50 @@ export default async function Event({
                 address: res.address,
                 lp: res.lp,
             } as Activity;
-        }).sort((a: Activity, b: Activity) => {return b.timestamp - a.timestamp}).slice(0, 5);
+        }).sort((a: Activity, b: Activity) => {return b.timestamp - a.timestamp}).slice(0, 10);
     }
 
-    const activity = timeline.slice(0, 5);
-
-    if (activity.length === 0) {
-        return (
-            <div className="flex h-full min-h-[160px] w-full flex-col items-center justify-center rounded-3xl border border-white/5 bg-[#080c18]/70 text-center text-sm text-slate-400">
-                No recent launchpad activity detected.
-            </div>
-        );
-    }
+    const activity = timeline.slice(0, 10);
+    if (activity.length === 0) return (<div className="flex h-full min-h-[160px] w-full flex-col items-center justify-center rounded-3xl border border-white/5 bg-[#080c18]/70 text-center text-sm text-slate-400">No recent launchpad activity detected.</div>);
 
     return (
-        <div className="flex flex-col gap-4">
-            <div className="gap-2 sm:grid sm:grid-cols-4 xl:grid-cols-5 flex w-full min-w-0 flex-nowrap overflow-x-auto sm:overflow-x-visible sm:flex-none">
-                {activity.map((item) => {
-                    const { valueAccent, cardAccent } = getActionStyles(item.action);
-                    const primary = item.action === 'launch' ? 'Launch' : `${Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(item.value)} ${item.action === 'buy' ? 'bought' : 'sold'}`;
+        <div className="gap-2 flex w-full min-w-0 flex-nowrap overflow-x-auto sm:grid sm:grid-cols-5 sm:overflow-x-visible sm:flex-none eventbar">
+            {activity.map((item) => {
+                const { valueAccent, cardAccent } = getActionStyles(item.action);
+                const primary = item.action === 'launch' ? 'Launch' : `${Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(item.value)} ${item.action === 'buy' ? 'bought' : 'sold'}`;
 
-                    return (
-                        <Link
-                            key={item.hash + '/' + item.value}
-                            href={{
-                                pathname: '/pump/launchpad/token',
-                                query: {
-                                    mode: mode || '',
-                                    chain: chain || '',
-                                    ticker: item.address,
-                                    lp: item.lp ?? '',
-                                    token: token || '',
-                                },
-                            }}
-                            prefetch={false}
-                            className={`group flex w-[240px] shrink-0 flex-col gap-2 rounded-lg border border-white/5 p-3 text-xs sm:w-auto sm:shrink
-                                 shadow-lg transition-all duration-300 hover:-translate-y-1 ${cardAccent}`}
-                        >
-                            <div className="flex justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="relative h-12 w-12 overflow-hidden sm:rounded-2xl border border-white/10 bg-white/5">
-                                        <Image src={resolveLogoUrl(item.logo)} alt={`${item.ticker} logo`} fill sizes="48px" className="object-cover" />
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="font-semibold text-white">{item.ticker}</span>
-                                        <span className={`font-medium ${valueAccent}`}>{primary}</span>
-                                    </div>
+                return (
+                    <Link
+                        key={item.hash + '/' + item.value}
+                        href={{
+                            pathname: '/pump/launchpad/token',
+                            query: {
+                                mode: mode || '',
+                                chain: chain || '',
+                                ticker: item.address,
+                                lp: item.lp ?? '',
+                                token: token || '',
+                            },
+                        }}
+                        prefetch={false}
+                        className={`group flex w-[240px] shrink-0 flex-col gap-2 rounded-lg border border-white/5 p-3 text-xs sm:w-auto sm:shrink
+                                shadow-lg transition-all duration-300 hover:-translate-y-1 ${cardAccent}`}
+                    >
+                        <div className="flex justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="relative h-12 w-12 overflow-hidden sm:rounded-2xl border border-white/10 bg-white/5">
+                                    <Image src={resolveLogoUrl(item.logo)} alt={`${item.ticker} logo`} fill sizes="48px" className="object-cover" />
                                 </div>
-                                <span className="mt-1 text-slate-500">{formatRelativeTime(item.timestamp)}</span>
+                                <div className="flex flex-col">
+                                    <span className="font-semibold text-white">{item.ticker}</span>
+                                    <span className={`font-medium ${valueAccent}`}>{primary}</span>
+                                </div>
                             </div>
-                        </Link>
-                    );
-                })}
-            </div>
+                            <span className="mt-1 text-slate-500">{formatRelativeTime(item.timestamp)}</span>
+                        </div>
+                    </Link>
+                );
+            })}
         </div>
     );
 }

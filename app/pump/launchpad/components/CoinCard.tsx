@@ -40,9 +40,9 @@ export default function CoinCard({
 						sizes="64px"
 					/>
 				</div>
-				<div className="flex flex-col gap-1">
+				<div className="flex flex-col gap-1 overflow-hidden">
 					<div className="flex items-center gap-3">
-						<span className="text-base font-semibold text-white">{name}</span>
+						<span className="text-base font-semibold text-white truncate">{name}</span>
 					</div>
 					<span className="text-sm text-slate-400">{symbol}</span>
 					{createdAgo && (<span className="text-xs text-slate-500">{createdAgo}</span>)}

@@ -264,7 +264,7 @@ export default function Trade({
     const formatRelativeTime = (timestamp: number | null) => {
         if (!timestamp) return "";
         const nowSeconds = Math.floor(Date.now() / 1000);
-        const diff = timestamp - nowSeconds;
+        const diff = Number(timestamp) - nowSeconds;
         const absDiff = Math.abs(diff);
         if (absDiff < 60) return rtf.format(Math.round(diff), "second");
         if (absDiff < 3600) return rtf.format(Math.round(diff / 60), "minute");
@@ -278,7 +278,7 @@ export default function Trade({
     const relativeCreatedTime = formatRelativeTime(createTime);
     const createdAtAbsolute = React.useMemo(() => {
         if (!createTime) return "";
-        return new Date(createTime * 1000).toLocaleString();
+        return new Date(Number(createTime) * 1000).toLocaleString();
     }, [createTime]);
 
     const formattedPrice = React.useMemo(() => {

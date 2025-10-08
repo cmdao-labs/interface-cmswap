@@ -43,9 +43,7 @@ export default async function Launchpad(props: {
 						key={`mode-${mode}-chain-${chain}`}
 						fallback={<div className="h-28 w-full animate-pulse rounded-3xl bg-white/5" />}
 					>
-						<div className="">
-							<Event mode={mode} chain={chain} token={token} />
-						</div>
+						<Event mode={mode} chain={chain} token={token} />
 					</Suspense>
 				</section>
 				<section className="space-y-3">

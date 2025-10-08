@@ -75,7 +75,7 @@ export default function Sort4() {
                         <Image src="/kub.png" alt="" width={64} height={64} />
                         <span className='text-[8px] px-2 py-1 border border-white'>testnet</span>
                     </> :
-                    <span className={`font-semibold uppercase tracking-[0.2em] ${chainConfig.accentText}`}>chainConfig.label</span>
+                    <span className={`font-semibold uppercase tracking-[0.2em] ${chainConfig.accentText}`}>{chainConfig.label}</span>
                 }
             </div>
             {(['lite', 'pro'] as ModeType[]).map((type) => {

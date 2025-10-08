@@ -16,7 +16,6 @@ export default function Headbar() {
         setIsMenuOpen(false)
     }
     const { chainId } = useAccount()
-    const [isEarnOpen, setIsEarnOpen] = useState(false)
 
     return (
         <QueryClientProvider client={queryClient}> 
@@ -26,44 +25,34 @@ export default function Headbar() {
                         <div className="flex items-center justify-between h-8">
                             <Link href="/"><Button variant="ghost" className='cursor-pointer' size="icon"><img alt="" src="/favicon.ico" height="25" width="25" /></Button></Link>
                             <div className="hidden md:block">
-
-                            <div className="ml-8 flex justify-between items-center w-full max-w-screen-xl mx-auto">
-                                    <Link href="/swap" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                    <Button variant="ghost" className="cursor-pointer">Swap</Button>
-                                    </Link>
-                                    {chainId === 2 && (
-                                        <Link href="/trade" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                            <Button variant="ghost" className="cursor-pointer">Trade</Button>
+                                <div className="ml-8 flex justify-between items-center w-full max-w-screen-xl mx-auto">
+                                        <Link href="/swap" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
+                                            <Button variant="ghost" className="cursor-pointer">Swap</Button>
                                         </Link>
-                                    )}
-                                    <Link href="/bridge" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                    <Button variant="ghost" className="cursor-pointer">Bridge</Button>
-                                    </Link>
-                                    <Link href="/pump" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                    <Button variant="ghost" className="cursor-pointer">Pump</Button>
-                                    </Link>
-                                    {typeof chainId === 'number' && [25925].includes(chainId) && (
-                                        <Link href="/earn" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                        <Button variant="ghost" className="cursor-pointer">Earn</Button>
+                                        <Link href="/bridge" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
+                                            <Button variant="ghost" className="cursor-pointer">Bridge</Button>
                                         </Link>
-                                    )}
-                                    {typeof chainId === 'number' && [25925, 96,8899].includes(chainId) && (
-                                        <Link href="/liquidity-pool" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                        <Button variant="ghost" className="cursor-pointer">Liquidity</Button>
+                                        <Link href="/pump" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
+                                            <Button variant="ghost" className="cursor-pointer">Pump</Button>
                                         </Link>
-                                    )}
-                                    {chainId === 2 && (
-                                    <>
-                                        
-                                        <Link href="/referral" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                        <Button variant="ghost" className="cursor-pointer">Referral Program</Button>
-                                        </Link>
-                                    </>
-                                    )}
-                                
-                            </div>
-
-
+                                        {typeof chainId === 'number' && [25925].includes(chainId) && (
+                                            <Link href="/earn" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
+                                                <Button variant="ghost" className="cursor-pointer">Earn</Button>
+                                            </Link>
+                                        )}
+                                        {typeof chainId === 'number' && [25925, 96, 8899].includes(chainId) && (
+                                            <Link href="/liquidity-pool" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
+                                                <Button variant="ghost" className="cursor-pointer">Liquidity</Button>
+                                            </Link>
+                                        )}
+                                        {chainId === 2 && (
+                                            <>
+                                                <Link href="/referral" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
+                                                <Button variant="ghost" className="cursor-pointer">Referral Program</Button>
+                                                </Link>
+                                            </>
+                                        )}
+                                </div>
                             </div>
                             <div className="md:hidden ml-4 flex items-center">
                                 <button 
