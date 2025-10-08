@@ -352,7 +352,13 @@ export default function Trade({
         return `${ticker.slice(0, 6)}...${ticker.slice(-4)}`;
     }, [ticker]);
 
-    const gradientButtonStyle = (active: boolean) => active && theme?.btn ? ({backgroundImage: theme.btn} as React.CSSProperties) : undefined;
+    const gradientButtonStyle = (active: boolean, variant: "buy" | "sell") => {
+        if (!active) return undefined;
+        const backgroundImage = variant === "buy"
+            ? "radial-gradient(circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3%)" // green theme
+            : "linear-gradient(135deg, #F87171, #F43F5E)"; // red theme
+        return { backgroundImage } as React.CSSProperties;
+    };
 
     const handlePresetClick = (preset: {
         label: string;
@@ -1259,9 +1265,9 @@ export default function Trade({
 
     return (
         <main className="relative min-h-screen w-full md:w-6/7 overflow-hidden pt-20 pb-24 text-white">
-            <div className="w-full my-4 px-4 flex items-center gap-6">
-                <Link href={`/pump/launchpad?chain=${chain}${mode === "pro" ? "&mode=pro" : "&mode=lite"}`} prefetch={false} className="text-sm underline hover:font-bold">Back to launchpad</Link>
-                <div className="flex gap-2 text-[11px] uppercase tracking-[0.2em] text-white/60">
+            <div className="w-full my-4 px-4 flex items-center gap-6 text-[8px] sm:text-sm">
+                <Link href={`/pump/launchpad?chain=${chain}${mode === "pro" ? "&mode=pro" : "&mode=lite"}`} prefetch={false} className="underline hover:font-bold">Back to launchpad</Link>
+                <div className="flex gap-2 uppercase tracking-[0.2em] text-white/60">
                     <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">{chainLabel}</span>
                     <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">{modeLabel}</span>
                 </div>
@@ -1293,71 +1299,50 @@ export default function Trade({
                 </div>
             )}
 
-            <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-6 sm:p-8 shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur">
-                <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center">
-                    <div className="flex flex-1 flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
-                        <div className="relative mx-auto h-24 w-24 shrink-0 overflow-hidden rounded-3xl border border-white/10 shadow-[0_0_35px_rgba(34,197,94,0.35)] sm:mx-0 sm:h-28 sm:w-28">
-                            <Image
-                                src={resolvedLogo}
-                                alt={tokenSymbolDisplay ? `${tokenSymbolDisplay} logo` : "Token logo"}
-                                width={112}
-                                height={112}
-                                className="h-full w-full object-cover"
-                            />
-                        </div>
-                        <div className="flex flex-1 flex-col gap-4">
-                            <div className="flex flex-wrap items-center gap-3">
-                                <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{name ?? "Loading token..."}</h1>
-                                {tokenSymbolDisplay && (<span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-white/70">{tokenSymbolDisplay}</span>)}
-                            </div>
-                            <div className="grid gap-4 text-sm text-white/70 sm:grid-cols-2 md:grid-cols-3">
-                                <div>
-                                    <p className="text-xs uppercase tracking-wide text-white/40">Price</p>
-                                    <p className="text-lg font-medium text-white">{formattedPrice}{" "}{baseAssetSymbol && <span className="text-sm text-white/60">{baseAssetSymbol}</span>}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs uppercase tracking-wide text-white/40">Market Cap</p>
-                                    <p className="text-lg font-medium text-white">{formattedMcap}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs uppercase tracking-wide text-white/40">Holders</p>
-                                    <p className="text-lg font-medium text-white">{holder.length}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs uppercase tracking-wide text-white/40">Bonding Progress</p>
-                                    <p className="text-lg font-medium text-white">{progressPercent.toFixed(2)}%</p>
-                                </div>
-                            </div>
-                        </div>
+            <section className="flex flex-row gap-4 sm:gap-10 relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-6 sm:p-8 shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur">
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-3xl border border-white/10 shadow-[0_0_35px_rgba(34,197,94,0.35)] sm:mx-0 sm:h-28 sm:w-28">
+                    <Image
+                        src={resolvedLogo}
+                        alt={tokenSymbolDisplay ? `${tokenSymbolDisplay} logo` : "Token logo"}
+                        width={112}
+                        height={112}
+                        className="h-full w-full object-cover"
+                    />
+                </div>
+                <div className="flex flex-1 flex-col gap-2 sm:gap-4">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <h1 className="text-sm sm:text-lg font-semibold tracking-tight text-white">{name ?? "Loading token..."}</h1>
+                        {tokenSymbolDisplay && (<span className="rounded-full border border-white/10 bg-white/10 px-1 sm:px-3 sm:py-1 text-[8px] sm:text-xs font-semibold uppercase text-white/70">{tokenSymbolDisplay}</span>)}
                     </div>
-                    <div className="flex w-full flex-col items-start gap-3 text-xs text-white/60 lg:w-auto lg:items-end">
-                        {creator && (
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-white/40 uppercase tracking-wide">Creator</span>
-                                <Link
-                                    href={getExplorerAddressUrl(creator)}
-                                    prefetch={false}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="font-mono text-sm text-white transition hover:text-emerald-200"
-                                >
-                                    {`${String(creator).slice(0, 6)}...${String(creator).slice(-4)}`}
-                                </Link>
-                                {relativeCreatedTime && (<span className="text-white/40" title={createdAtAbsolute}>{relativeCreatedTime}</span>)}
-                            </div>
-                        )}
-                        <div className="flex flex-wrap items-center gap-3 font-mono text-sm text-white/80">
-                            <span className="text-white/40 uppercase tracking-wide">Contract</span>
-                            <span className="rounded-full border border-white/10 bg-black/60 px-3 py-1">{truncatedTicker}</span>
+                    {creator && (
+                        <div className="flex flex-wrap items-center gap-2 text-[8px] sm:text-xs">
+                            <span className="text-white/40 uppercase tracking-wide">Creator</span>
+                            <Link
+                                href={getExplorerAddressUrl(creator)}
+                                prefetch={false}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-mono text-white transition hover:text-emerald-200"
+                            >
+                                {`${String(creator).slice(0, 6)}...${String(creator).slice(-4)}`}
+                            </Link>
+                        </div>
+                    )}
+                    <div className="flex flex-wrap flex-row gap-1 sm:gap-2 text-[8px] sm:text-xs text-white/70">
+                        <p className="rounded-full border border-white/10 bg-black/60 px-3 py-2">Created At: {relativeCreatedTime && relativeCreatedTime}</p>
+                        <p className="rounded-full border border-white/10 bg-black/60 px-3 py-2">Price: {formattedPrice}{" "}{baseAssetSymbol && baseAssetSymbol}</p>
+                        <p className="rounded-full border border-white/10 bg-black/60 px-3 py-2">Holders: {holder.length}</p>
+                        <div className="rounded-full border border-white/10 bg-black/60 px-3 py-1 sm:py-0 flex flow-col items-center gap-2">
+                            <p>Contract: {truncatedTicker}</p>
                             <button
                                 onClick={() => copyToClipboard(ticker)}
-                                className="rounded-full border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/40 hover:bg-white/20"
+                                className="rounded-full border border-white/10 bg-white/10 p-1 transition hover:border-white/40 hover:bg-white/20"
                                 title="Copy contract address"
                             >
-                                {copiedAddress === ticker ? <Check size={16} /> : <Copy size={16} />}
+                                {copiedAddress === ticker ? <Check size={12} /> : <Copy size={12} />}
                             </button>
                             <button
-                                className="rounded-full border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/40 hover:bg-white/20"
+                                className="rounded-full border border-white/10 bg-white/10 p-1 transition hover:border-white/40 hover:bg-white/20"
                                 onClick={async () => {
                                     if (!ethereum) return;
                                     await ethereum.request({
@@ -1375,26 +1360,38 @@ export default function Trade({
                                 }}
                                 title="Add token to wallet"
                             >
-                                <Plus size={16} />
+                                <Plus size={12} />
                             </button>
                             <Link
                                 href={`${_explorer}address/${ticker}`}
                                 prefetch={false}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="rounded-full border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/40 hover:bg-white/20"
+                                className="rounded-full border border-white/10 bg-white/10 p-1 transition hover:border-white/40 hover:bg-white/20"
                                 title="View on explorer"
                             >
-                                <Image src="/bs.png" alt="block explorer" width={16} height={16} />
+                                <Image src="/bs.png" alt="block explorer" width={12} height={12} />
                             </Link>
                         </div>
                     </div>
                 </div>
             </section>
+            <div className="mt-4 px-6 grid grid-cols-[1fr_2fr] sm:grid-cols-[2fr_1fr] rounded-3xl border border-white/10 bg-black/30 p-4 sm:p-6 shadow-xl backdrop-blur">
+                <div className="flex flex-col gap-2">
+                    <span className="text-xs text-slate-300">Market Cap</span>
+                    <span className="text-sm sm:text-2xl font-bold tracking-wider text-emerald-300">{formattedMcap} {baseAssetSymbol}</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                    <div className="mt-2 h-2 rounded-full bg-white/10">
+                        <div className="h-2 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500" style={{ width: `${progressPercent}%` }} />
+                    </div>
+                    <span className="w-full text-right">{progressPercent.toFixed(2)}%</span>
+                </div> 
+            </div>
 
-            <div className="grid gap-6 xl:grid-cols-[2fr_1fr] 2xl:grid-cols-[2fr_1fr] mt-6">
+            <div className="xl:grid gap-6 xl:grid-cols-[2fr_1fr] 2xl:grid-cols-[2fr_1fr] mt-4">
                 <div className="space-y-6">
-                    <div className="rounded-3xl border border-white/10 bg-black/30 p-4 sm:p-6 shadow-xl backdrop-blur h-[620px]">
+                    <div className="rounded-3xl border border-white/10 bg-black/30 p-4 sm:p-6 shadow-xl backdrop-blur">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <h2 className="text-lg font-semibold text-white"></h2>
                             <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1 text-xs font-semibold">
@@ -1589,7 +1586,7 @@ export default function Trade({
                                         className={`rounded-full px-4 py-1 transition ${
                                             trademode ? "text-black" : "text-white/50 hover:text-white"
                                         }`}
-                                        style={gradientButtonStyle(trademode)}
+                                        style={gradientButtonStyle(trademode, "buy")}
                                         onClick={() => {
                                             setTrademode(true);
                                             setInputBalance("");
@@ -1602,7 +1599,7 @@ export default function Trade({
                                         className={`rounded-full px-4 py-1 transition ${
                                             !trademode ? "text-black" : "text-white/50 hover:text-white"
                                         }`}
-                                        style={gradientButtonStyle(!trademode)}
+                                        style={gradientButtonStyle(!trademode, "sell")}
                                         onClick={() => {
                                             setTrademode(false);
                                             setInputBalance("");
@@ -1675,10 +1672,10 @@ export default function Trade({
                                 </div>
                                 <div className="mt-4">
                                     <div className="flex items-center justify-between text-xs text-white/50">
-                                    <span>Bonding Progress</span>
-                                    <span>{progressPercent.toFixed(2)}%</span>
+                                        <span>Bonding Progress</span>
+                                        <span>{progressPercent.toFixed(2)}%</span>
                                     </div>
-                                        <div className="mt-2 h-2 w-full rounded-full bg-white/10">
+                                    <div className="mt-2 h-2 w-full rounded-full bg-white/10">
                                         <div
                                             className="h-2 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500"
                                             style={{ width: `${progressPercent}%` }}
@@ -1710,6 +1707,7 @@ export default function Trade({
                                 className={`w-full rounded-2xl px-4 py-3 text-sm font-semibold transition ${
                                     isWalletReady ? "bg-gradient-to-r from-emerald-400 to-sky-500 text-black shadow-[0_20px_60px_rgba(16,185,129,0.35)] hover:brightness-110" : "cursor-not-allowed border border-white/10 bg-white/5 text-white/40"
                                 }`}
+                                style={gradientButtonStyle(!trademode, "sell")}
                             >
                                 {tradeButtonLabel}
                             </button>

@@ -1,5 +1,6 @@
 'use client';
 import Link from "next/link";
+import { Rocket } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useAccount } from 'wagmi';
 import Search from "@/app/pump/ui/Search";
@@ -53,6 +54,7 @@ export default function LaunchpadHeader({ activeRoute = "Home" }: LaunchpadHeade
                         className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-700 px-4 py-2 font-semibold text-white shadow-lg shadow-emerald-500/40 transition-transform duration-300 hover:scale-[1.03] focus:outline-none"
                     >
                         Launch Token
+                        <Rocket className="ml-2 h-6 w-6 rounded-xs border border-white/10 bg-white/10" aria-hidden="true" />
                     </Link>
                 </nav>
             </div>

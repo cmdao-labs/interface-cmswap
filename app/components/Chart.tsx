@@ -689,7 +689,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
                 />
             </div>
 
-            <div className="flex h-16 items-center justify-center gap-2 border-t border-white/5 bg-[#050509]/80 px-4">
+            <div className="flex h-16 items-center justify-center sm:gap-2 border-t border-white/5 bg-[#050509]/80 sm:px-4">
                 {TIMEFRAMES.map((option) => {
                     const isActive = timeframe === option.value;
                     return (
