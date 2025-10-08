@@ -1273,7 +1273,7 @@ export default function Trade({
                 </div>
             </div>
 
-            {!headnoti && (
+            {headnoti && (
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm shadow-[0_0_25px_rgba(16,185,129,0.25)]">
                     <div className="flex items-center gap-2 text-emerald-200">
                         <Check size={16} />
