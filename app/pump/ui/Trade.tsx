@@ -1264,7 +1264,7 @@ export default function Trade({
     }, [socialsResult]);
 
     return (
-        <main className="relative min-h-screen w-full md:w-6/7 overflow-hidden pt-20 pb-24 text-white">
+        <main className="relative min-h-screen w-full lg:w-7/8 overflow-hidden pt-20 pb-24 text-white">
             <div className="w-full my-4 px-4 flex items-center gap-6 text-[8px] sm:text-sm">
                 <Link href={`/pump/launchpad?chain=${chain}${mode === "pro" ? "&mode=pro" : "&mode=lite"}`} prefetch={false} className="underline hover:font-bold">Back to launchpad</Link>
                 <div className="flex gap-2 uppercase tracking-[0.2em] text-white/60">
@@ -1377,7 +1377,7 @@ export default function Trade({
                 </div>
             </section>
 
-            <div className="mt-4 px-6 grid grid-cols-[1fr_2fr] sm:grid-cols-[2fr_1fr] rounded-3xl border border-white/10 bg-black/30 p-4 sm:p-6 shadow-xl backdrop-blur">
+            <div className="mt-4 px-6 grid grid-cols-[1fr_2fr] lg:grid-cols-[2fr_1fr] rounded-3xl border border-white/10 bg-black/30 p-4 sm:p-6 shadow-xl backdrop-blur">
                 <div className="flex flex-col gap-2">
                     <span className="text-xs text-slate-300">Market Cap</span>
                     <span className="text-sm sm:text-2xl font-bold tracking-wider text-emerald-300">{formattedMcap} {baseAssetSymbol}</span>
@@ -1390,7 +1390,7 @@ export default function Trade({
                 </div> 
             </div>
 
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-6">
+            <div className="mt-4 grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6">
                 <div className="space-y-6">
                     <div className="rounded-3xl border border-white/10 bg-black/30 p-4 sm:p-6 shadow-xl backdrop-blur">
                         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1452,7 +1452,7 @@ export default function Trade({
                                                 <div className="flex flex-row items-center gap-1">
                                                     <FilterIcon size={14} className="text-white/60" />
                                                     <select
-                                                        className="rounded-md border border-white/10 bg-black/60 px-2 py-1 outline-none hover:border-white/20"
+                                                        className="rounded-md border border-white/10 bg-black/60 p-1 text-[8px] outline-none hover:border-white/20"
                                                         value={filters.time}
                                                         onChange={(e) => handleTimeChange(e.target.value as any)}
                                                     >
@@ -1474,7 +1474,7 @@ export default function Trade({
                                                         value={filters.from}
                                                         onChange={handleTextChange("from")}
                                                         placeholder="address"
-                                                        className="w-28 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                                        className="w-24 text-[8px] rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
                                                     />
                                                 </div>
                                             </div>
@@ -1484,8 +1484,8 @@ export default function Trade({
                                                 <span className="text-white/50">Action</span>
                                                 <div className="flex flex-row  items-center gap-1">
                                                     <FilterIcon size={14} className="text-white/60" />
-                                                    <button onClick={() => handleActionToggle("buy")} className={`rounded-full border px-2 py-1`} title="Buy">Buy</button>
-                                                    <button onClick={() => handleActionToggle("sell")} className={`rounded-full border px-2 py-1`} title="Sell">Sell</button>
+                                                    <button onClick={() => handleActionToggle("buy")} className={`rounded-full border p-1 text-[8px]`} title="Buy">Buy</button>
+                                                    <button onClick={() => handleActionToggle("sell")} className={`rounded-full border p-1 text-[8px]`} title="Sell">Sell</button>
                                                 </div>
                                             </div>
                                         </th>
@@ -1500,7 +1500,7 @@ export default function Trade({
                                                         value={filters.nativeMin}
                                                         onChange={handleNumberChange("nativeMin")}
                                                         placeholder="min"
-                                                        className="w-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                                        className="w-16 text-[8px] rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
                                                     />
                                                     <input
                                                         type="number"
@@ -1508,7 +1508,7 @@ export default function Trade({
                                                         value={filters.nativeMax}
                                                         onChange={handleNumberChange("nativeMax")}
                                                         placeholder="max"
-                                                        className="w-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                                        className="w-16 text-[8px] rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
                                                     />
                                                 </div>
                                             </div>
@@ -1524,7 +1524,7 @@ export default function Trade({
                                                         value={filters.tokenMin}
                                                         onChange={handleNumberChange("tokenMin")}
                                                         placeholder="min"
-                                                        className="w-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                                        className="w-16 text-[8px] rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
                                                     />
                                                     <input
                                                         type="number"
@@ -1532,7 +1532,7 @@ export default function Trade({
                                                         value={filters.tokenMax}
                                                         onChange={handleNumberChange("tokenMax")}
                                                         placeholder="max"
-                                                        className="w-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                                        className="w-16 text-[8px] rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
                                                     />
                                                 </div>
                                             </div>
@@ -1546,7 +1546,7 @@ export default function Trade({
                                                         value={filters.hash}
                                                         onChange={handleTextChange("hash")}
                                                         placeholder="hash"
-                                                        className="w-28 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                                        className="w-24 text-[8px] rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
                                                     />
                                                 </div>
                                             </div>
@@ -1688,7 +1688,7 @@ export default function Trade({
                                 className={`w-full rounded-lg px-4 py-3 text-md font-semibold transition ${
                                     isWalletReady ? "bg-gradient-to-r from-emerald-400 to-sky-500 text-black shadow-[0_20px_60px_rgba(16,185,129,0.35)] hover:brightness-110" : "cursor-not-allowed border border-white/10 bg-white/5 text-white/40"
                                 }`}
-                                style={gradientButtonStyle(!trademode, "sell")}
+                                style={trademode ? gradientButtonStyle(!trademode, "sell") : undefined}
                             >
                                 {tradeButtonLabel}
                             </button>
