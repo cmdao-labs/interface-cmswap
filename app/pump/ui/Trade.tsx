@@ -1376,6 +1376,7 @@ export default function Trade({
                     </div>
                 </div>
             </section>
+
             <div className="mt-4 px-6 grid grid-cols-[1fr_2fr] sm:grid-cols-[2fr_1fr] rounded-3xl border border-white/10 bg-black/30 p-4 sm:p-6 shadow-xl backdrop-blur">
                 <div className="flex flex-col gap-2">
                     <span className="text-xs text-slate-300">Market Cap</span>
@@ -1389,7 +1390,7 @@ export default function Trade({
                 </div> 
             </div>
 
-            <div className="xl:grid gap-6 xl:grid-cols-[2fr_1fr] 2xl:grid-cols-[2fr_1fr] mt-4">
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-6">
                 <div className="space-y-6">
                     <div className="rounded-3xl border border-white/10 bg-black/30 p-4 sm:p-6 shadow-xl backdrop-blur">
                         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1427,189 +1428,208 @@ export default function Trade({
                     </div>
 
                     <div className="rounded-3xl border border-white/10 bg-black/30 p-4 sm:p-6 shadow-xl backdrop-blur">
-                        <h2 className="text-lg font-semibold text-white">Activity</h2>
-                        {/* Filters toolbar */}
-                        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-white/80">
-                            <div className="flex items-center gap-1 mr-2">
-                                <FilterIcon size={14} className="text-white/60" />
-                                <span className="text-white/70">Filters</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span className="text-white/50">Time</span>
-                                <select
-                                    className="rounded-md border border-white/10 bg-black/60 px-2 py-1 outline-none hover:border-white/20"
-                                    value={filters.time}
-                                    onChange={(e) => handleTimeChange(e.target.value as any)}
-                                >
-                                    <option value="all">All</option>
-                                    <option value="5m">5m</option>
-                                    <option value="1h">1h</option>
-                                    <option value="24h">24h</option>
-                                    <option value="7d">7d</option>
-                                </select>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span className="text-white/50">From</span>
-                                <input
-                                    value={filters.from}
-                                    onChange={handleTextChange("from")}
-                                    placeholder="address"
-                                    className="w-28 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
-                                />
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span className="text-white/50">Action</span>
-                                <div className="flex items-center gap-1">
-                                    <button
-                                        onClick={() => handleActionToggle("buy")}
-                                        className={`rounded-full border px-2 py-1 transition ${filters.actions.buy ? "bg-white/20 border-white/20 text-emerald-300" : "border-white/10 bg-white/10 text-emerald-300 hover:border-white/20"}`}
-                                        title="Buy"
-                                    >
-                                        Buy
-                                    </button>
-                                    <button
-                                        onClick={() => handleActionToggle("sell")}
-                                        className={`rounded-full border px-2 py-1 transition ${filters.actions.sell ? "bg-white/20 border-white/20 text-rose-300" : "border-white/10 bg-white/10 text-rose-300 hover:border-white/20"}`}
-                                        title="Sell"
-                                    >
-                                        Sell
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span className="text-white/50">Native</span>
-                                <input
-                                    type="number"
-                                    inputMode="decimal"
-                                    value={filters.nativeMin}
-                                    onChange={handleNumberChange("nativeMin")}
-                                    placeholder="min"
-                                    className="w-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
-                                />
-                                <input
-                                    type="number"
-                                    inputMode="decimal"
-                                    value={filters.nativeMax}
-                                    onChange={handleNumberChange("nativeMax")}
-                                    placeholder="max"
-                                    className="w-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
-                                />
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span className="text-white/50">Token</span>
-                                <input
-                                    type="number"
-                                    inputMode="decimal"
-                                    value={filters.tokenMin}
-                                    onChange={handleNumberChange("tokenMin")}
-                                    placeholder="min"
-                                    className="w-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
-                                />
-                                <input
-                                    type="number"
-                                    inputMode="decimal"
-                                    value={filters.tokenMax}
-                                    onChange={handleNumberChange("tokenMax")}
-                                    placeholder="max"
-                                    className="w-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
-                                />
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span className="text-white/50">Tx</span>
-                                <input
-                                    value={filters.hash}
-                                    onChange={handleTextChange("hash")}
-                                    placeholder="hash"
-                                    className="w-28 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
-                                />
-                            </div>
-                            <div className="ml-auto flex items-center gap-2">
-                                <div className="text-white/50">Showing {filteredHx.length} of {hx.length}</div>
-                                <button
-                                    onClick={clearFilters}
-                                    className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20"
-                                    title="Clear filters"
-                                >
-                                    <X size={14} />
-                                    Clear
-                                </button>
-                            </div>
+                        <h2 className="mb-3 text-lg font-semibold text-white">Activity</h2>
+                        <div className="ml-auto flex items-center gap-2 text-xs">
+                            <FilterIcon size={14} className="text-white/60" />
+                            <div className="text-white/50">Showing {filteredHx.length} of {hx.length}</div>
+                            <button
+                                onClick={clearFilters}
+                                className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20"
+                                title="Clear filters"
+                            >
+                                <X size={14} />
+                                Clear
+                            </button>
                         </div>
-                        <div className="mt-4 max-h-[460px] space-y-3 overflow-y-auto pr-1">
-                            {filteredHx.length === 0 ? (<div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">No trades yet. Be the first to make a move.</div>) : 
-                            (filteredHx.map((res) => (
-                                <div key={res.hash} className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-white/5 p-4 text-sm text-white/80 md:flex-row md:items-center md:justify-between">
-                                    <span className="text-xs text-white/50">{formatRelativeTime(res.timestamp / 1000)}</span>
-                                    <div className="flex flex-wrap items-center gap-10 text-sm">
-                                        <Link
-                                            href={getExplorerAddressUrl(res.from)}
-                                            prefetch={false}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="font-mono text-xs text-white/70 underline-offset-2 transition hover:text-white hover:underline"
-                                        >
-                                            {res.from.slice(0, 6)}...{res.from.slice(-4)}
-                                        </Link>
-                                        <span
-                                            className={`hidden rounded-full bg-white/10 px-2 py-0.5 capitalize md:inline-block text-xs font-semibold uppercase ${
-                                                res.action === "buy" ? "text-emerald-300" :
-                                                res.action === "sell" ? "text-rose-300" : "text-cyan-300"
-                                            }`}
-                                        >
-                                            {res.action === "launch" ? "Launch" : res.action}
-                                        </span>
-                                        <span className="font-mono text-sm text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.nativeValue)} {baseAssetSymbol}</span>
-                                        <span className="font-mono text-sm text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.value)} {tokenSymbolDisplay}</span>
-                                        <Link
-                                            href={`${_explorer}tx/${res.hash}`}
-                                            prefetch={false}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="font-mono text-xs text-emerald-200 underline-offset-2 transition hover:text-emerald-100 hover:underline"
-                                        >
-                                            {res.hash.slice(0, 6)}...{res.hash.slice(-4)}
-                                        </Link>
-                                    </div>
-                                </div>
-                            )))}
+                        
+                        <div className="mt-4 overflow-x-auto rounded-xl py-2 border border-white/10">
+                            <table className="table-auto border-seperate border-spacing-0 text-center w-full">
+                                <thead className="text-xs text-white/80">
+                                    <tr>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">Time</span>
+                                                <div className="flex flex-row items-center gap-1">
+                                                    <FilterIcon size={14} className="text-white/60" />
+                                                    <select
+                                                        className="rounded-md border border-white/10 bg-black/60 px-2 py-1 outline-none hover:border-white/20"
+                                                        value={filters.time}
+                                                        onChange={(e) => handleTimeChange(e.target.value as any)}
+                                                    >
+                                                        <option value="all">All</option>
+                                                        <option value="5m">5m</option>
+                                                        <option value="1h">1h</option>
+                                                        <option value="24h">24h</option>
+                                                        <option value="7d">7d</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">From</span>
+                                                <div className="flex flex-row items-center gap-1">
+                                                    <FilterIcon size={14} className="text-white/60" />
+                                                    <input
+                                                        value={filters.from}
+                                                        onChange={handleTextChange("from")}
+                                                        placeholder="address"
+                                                        className="w-28 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">Action</span>
+                                                <div className="flex flex-row  items-center gap-1">
+                                                    <FilterIcon size={14} className="text-white/60" />
+                                                    <button onClick={() => handleActionToggle("buy")} className={`rounded-full border px-2 py-1`} title="Buy">Buy</button>
+                                                    <button onClick={() => handleActionToggle("sell")} className={`rounded-full border px-2 py-1`} title="Sell">Sell</button>
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">Native</span>
+                                                <div className="flex flex-row  items-center gap-1">
+                                                    <FilterIcon size={14} className="text-white/60" />
+                                                    <input
+                                                        type="number"
+                                                        inputMode="decimal"
+                                                        value={filters.nativeMin}
+                                                        onChange={handleNumberChange("nativeMin")}
+                                                        placeholder="min"
+                                                        className="w-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        inputMode="decimal"
+                                                        value={filters.nativeMax}
+                                                        onChange={handleNumberChange("nativeMax")}
+                                                        placeholder="max"
+                                                        className="w-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">Token</span>
+                                                <div className="flex flex-row  items-center gap-1">
+                                                    <FilterIcon size={14} className="text-white/60" />
+                                                    <input
+                                                        type="number"
+                                                        inputMode="decimal"
+                                                        value={filters.tokenMin}
+                                                        onChange={handleNumberChange("tokenMin")}
+                                                        placeholder="min"
+                                                        className="w-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        inputMode="decimal"
+                                                        value={filters.tokenMax}
+                                                        onChange={handleNumberChange("tokenMax")}
+                                                        placeholder="max"
+                                                        className="w-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">Tx</span>
+                                                <div className="flex flex-row  items-center gap-1">
+                                                    <FilterIcon size={14} className="text-white/60" />
+                                                    <input
+                                                        value={filters.hash}
+                                                        onChange={handleTextChange("hash")}
+                                                        placeholder="hash"
+                                                        className="w-28 rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredHx.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={7} className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">No trades yet. Be the first to make a move.</td>
+                                        </tr>
+                                    ) : (
+                                        filteredHx.map((res) => (
+                                            <tr key={res.hash} className="text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
+                                                <td className="py-6">{formatRelativeTime(res.timestamp / 1000)}</td>
+                                                <td className="py-6">
+                                                    <Link
+                                                        href={getExplorerAddressUrl(res.from)}
+                                                        prefetch={false}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="font-mono text-xs text-white/70 underline-offset-2 transition hover:text-white hover:underline"
+                                                    >
+                                                        {res.from.slice(0, 6)}...{res.from.slice(-4)}
+                                                    </Link>
+                                                </td>
+                                                <td className="py-6">
+                                                    <div
+                                                        className={`hidden rounded-full bg-white/10 px-2 py-1 capitalize md:inline-block text-xs font-semibold uppercase ${
+                                                            res.action === "buy" ? "text-emerald-300" :
+                                                            res.action === "sell" ? "text-rose-300" : "text-cyan-300"
+                                                        }`}
+                                                    >
+                                                        {res.action}
+                                                    </div>
+                                                </td>
+                                                <td className="py-6 font-mono text-sm text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.nativeValue)} {baseAssetSymbol}</td>
+                                                <td className="py-6 font-mono text-sm text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.value)} {tokenSymbolDisplay}</td>
+                                                <td className="py-6">
+                                                    <Link
+                                                        href={`${_explorer}tx/${res.hash}`}
+                                                        prefetch={false}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="font-mono text-xs text-emerald-200 underline-offset-2 transition hover:text-emerald-100 hover:underline"
+                                                    >
+                                                        {res.hash.slice(0, 6)}...{res.hash.slice(-4)}
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
-                
+
                 <div className="space-y-6">
-                    <div className="space-y-6">
-                        <div className="rounded-3xl border border-white/10 bg-black/40 p-6 shadow-2xl backdrop-blur">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <h2 className="text-lg font-semibold text-white">Trade {tokenSymbolDisplay || "Token"}</h2>
-                                <div className="flex gap-2 rounded-full border border-white/10 bg-black/60 p-1 text-xs font-semibold">
-                                    <button
-                                        className={`rounded-full px-4 py-1 transition ${
-                                            trademode ? "text-black" : "text-white/50 hover:text-white"
-                                        }`}
-                                        style={gradientButtonStyle(trademode, "buy")}
-                                        onClick={() => {
-                                            setTrademode(true);
-                                            setInputBalance("");
-                                            setOutputBalance("0");
-                                        }}
-                                    >
-                                        Buy
-                                    </button>
-                                    <button
-                                        className={`rounded-full px-4 py-1 transition ${
-                                            !trademode ? "text-black" : "text-white/50 hover:text-white"
-                                        }`}
-                                        style={gradientButtonStyle(!trademode, "sell")}
-                                        onClick={() => {
-                                            setTrademode(false);
-                                            setInputBalance("");
-                                            setOutputBalance("0");
-                                        }}
-                                    >
-                                        Sell
-                                    </button>
-                                </div>
-                            </div>
+                    <div className="rounded-2xl border border-white/10 bg-black/50 p-4 text-xs text-white/60">
+                        <div className="rounded-3xl border border-white/10 bg-white/10 p-2 text-md font-semibold shadow-2xl backdrop-blur grid grid-cols-2">
+                            <button
+                                className={`rounded-full px-4 py-2 transition ${trademode ? "text-black" : "text-white/50 hover:text-white"}`}
+                                style={gradientButtonStyle(trademode, "buy")}
+                                onClick={() => {
+                                    setTrademode(true);
+                                    setInputBalance("");
+                                    setOutputBalance("0");
+                                }}
+                            >
+                                Buy
+                            </button>
+                            <button
+                                className={`rounded-full px-4 py-2 transition ${!trademode ? "text-black" : "text-white/50 hover:text-white"}`}
+                                style={gradientButtonStyle(!trademode, "sell")}
+                                onClick={() => {
+                                    setTrademode(false);
+                                    setInputBalance("");
+                                    setOutputBalance("0");
+                                }}
+                            >
+                                Sell
+                            </button>
                         </div>
 
                         <div className="mt-6 space-y-6">
@@ -1618,7 +1638,7 @@ export default function Trade({
                                     <span>You pay</span>
                                     <span>Balance: {formattedAvailableBalance} {inputAssetSymbol}</span>
                                 </div>
-                                <div className="mt-2 flex items-center justify-between rounded-2xl border border-white/10 bg-black/60 px-4 py-3">
+                                <div className="mt-2 flex items-center justify-between rounded-2xl border border-white/10 bg-white/10 px-4 py-3">
                                     <input
                                         type="number"
                                         placeholder="0.0"
@@ -1629,9 +1649,9 @@ export default function Trade({
                                         }}
                                         className="flex-1 bg-transparent text-2xl font-semibold text-white outline-none placeholder:text-white/30"
                                     />
-                                    <span className="ml-3 text-sm uppercase tracking-wide text-white/60">{inputAssetSymbol}</span>
+                                    <span className="-ml-10 text-sm uppercase tracking-wide text-white/60">{inputAssetSymbol}</span>
                                 </div>
-                                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-white/50">
+                                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-white/50">
                                     <div className="flex items-center gap-2 text-white/40">
                                         <span>You get</span>
                                         <span className="font-semibold text-white">{formattedOutput} {outputAssetSymbol}</span>
@@ -1661,50 +1681,11 @@ export default function Trade({
                                     </div>
                                 </div>
                             </div>
-                            <div className="rounded-2xl border border-white/10 bg-black/50 p-4 text-xs text-white/60">
-                                <div className="flex items-center justify-between">
-                                    <span>Status</span>
-                                    <span className={`font-semibold ${isGraduated ? "text-emerald-300" : "text-white"}`}>{isGraduated ? "Graduated" : "Bonding curve"}</span>
-                                </div>
-                                <div className="mt-3 flex items-center justify-between">
-                                    <span>Max payout balance</span>
-                                    <span className="font-semibold text-white">{formattedCounterBalance} {outputAssetSymbol}</span>
-                                </div>
-                                <div className="mt-4">
-                                    <div className="flex items-center justify-between text-xs text-white/50">
-                                        <span>Bonding Progress</span>
-                                        <span>{progressPercent.toFixed(2)}%</span>
-                                    </div>
-                                    <div className="mt-2 h-2 w-full rounded-full bg-white/10">
-                                        <div
-                                            className="h-2 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500"
-                                            style={{ width: `${progressPercent}%` }}
-                                        />
-                                    </div>
-                                    <p className="mt-2 text-[11px] leading-relaxed text-white/45">
-                                        {bondingTooltip}
-                                        {isGraduated && graduationLink && (
-                                            <>
-                                                {" "}
-                                                <Link
-                                                    href={graduationLink}
-                                                    prefetch={false}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-emerald-200 underline-offset-2 transition hover:text-emerald-100 hover:underline"
-                                                >
-                                                    View graduation txn
-                                                </Link>
-                                            </>
-                                        )}
-                                    </p>
-                                </div>
-                            </div>
 
                             <button
                                 onClick={trade}
                                 disabled={!isWalletReady}
-                                className={`w-full rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                                className={`w-full rounded-lg px-4 py-3 text-md font-semibold transition ${
                                     isWalletReady ? "bg-gradient-to-r from-emerald-400 to-sky-500 text-black shadow-[0_20px_60px_rgba(16,185,129,0.35)] hover:brightness-110" : "cursor-not-allowed border border-white/10 bg-white/5 text-white/40"
                                 }`}
                                 style={gradientButtonStyle(!trademode, "sell")}
@@ -1712,6 +1693,46 @@ export default function Trade({
                                 {tradeButtonLabel}
                             </button>
                             {!isWalletReady && (<p className="text-center text-xs text-white/40">Connect your wallet on {chainLabel} to trade.</p>)}
+                        </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-black/50 p-4 text-xs text-white/60">
+                        <div className="flex items-center justify-between">
+                            <span>Status</span>
+                            <span className={`font-semibold ${isGraduated ? "text-emerald-300" : "text-white"}`}>{isGraduated ? "Graduated" : "Bonding curve"}</span>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between">
+                            <span>Max payout balance</span>
+                            <span className="font-semibold text-white">{formattedCounterBalance} {outputAssetSymbol}</span>
+                        </div>
+                        <div className="mt-4">
+                            <div className="flex items-center justify-between text-xs text-white/50">
+                                <span>Bonding Progress</span>
+                                <span>{progressPercent.toFixed(2)}%</span>
+                            </div>
+                            <div className="mt-2 h-2 w-full rounded-full bg-white/10">
+                                <div
+                                    className="h-2 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500"
+                                    style={{ width: `${progressPercent}%` }}
+                                />
+                            </div>
+                            <p className="mt-2 text-[11px] leading-relaxed text-white/45">
+                                {bondingTooltip}
+                                {isGraduated && graduationLink && (
+                                    <>
+                                        {" "}
+                                        <Link
+                                            href={graduationLink}
+                                            prefetch={false}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-emerald-200 underline-offset-2 transition hover:text-emerald-100 hover:underline"
+                                        >
+                                            View graduation txn
+                                        </Link>
+                                    </>
+                                )}
+                            </p>
                         </div>
                     </div>
 
