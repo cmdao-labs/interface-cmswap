@@ -1390,7 +1390,7 @@ export default function Trade({
                 </div> 
             </div>
 
-            <div className="mt-4 grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6">
+            <div className="mt-4 grid grid-cols-1 2xl:grid-cols-[2fr_1fr] gap-6">
                 <div className="space-y-6">
                     <div className="rounded-3xl border border-white/10 bg-black/30 p-4 sm:p-6 shadow-xl backdrop-blur">
                         <div className="flex flex-wrap items-center justify-between gap-3">
