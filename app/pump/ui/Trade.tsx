@@ -1264,7 +1264,7 @@ export default function Trade({
     }, [socialsResult]);
 
     return (
-        <main className="relative min-h-screen w-full lg:w-7/8 overflow-hidden pt-20 pb-24 text-white">
+        <main className="relative min-h-screen w-full 2xl:w-7/8 overflow-hidden pt-20 pb-24 text-white">
             <div className="w-full my-4 px-4 flex items-center gap-6 text-[8px] sm:text-sm">
                 <Link href={`/pump/launchpad?chain=${chain}${mode === "pro" ? "&mode=pro" : "&mode=lite"}`} prefetch={false} className="underline hover:font-bold">Back to launchpad</Link>
                 <div className="flex gap-2 uppercase tracking-[0.2em] text-white/60">
@@ -1390,7 +1390,7 @@ export default function Trade({
                 </div> 
             </div>
 
-            <div className="mt-4 grid grid-cols-1 2xl:grid-cols-[2fr_1fr] gap-6">
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[2fr_1fr] gap-6">
                 <div className="space-y-6">
                     <div className="rounded-3xl border border-white/10 bg-black/30 p-4 sm:p-6 shadow-xl backdrop-blur">
                         <div className="flex flex-wrap items-center justify-between gap-3">
