@@ -36,7 +36,7 @@ export default async function Launchpad(props: {
 	return (
 		<div className="min-h-screen w-full text-slate-100">
 			<LaunchpadHeader ctaHref={ctaHref} activeRoute="Markets" />
-			<main className="mx-auto flex w-full flex-col gap-4 pb-16 pt-1 sm:px-6 lg:px-10 overflow-hidden">
+			<main className="mx-auto flex w-full flex-col gap-4 py-1 sm:px-6 lg:px-10 overflow-hidden">
 				<ReferralTracker />
 				<section className="grid gap-6">
 					<Suspense

@@ -23,8 +23,8 @@ export default function LaunchpadHeader({ activeRoute = "Markets" }: LaunchpadHe
 
     return (
         <header className="sticky top-0 z-50 backdrop-blur-xl">
-            <div className="pt-24 md:pt-22 mx-auto flex flex-col-reverse md:flex-row w-full flex-wrap items-center justify-between gap-4 px-2 py-4 sm:px-6 lg:px-10">
-                <nav className="flex flex-1 gap-3 items-center text-xs md:text-sm">
+            <div className="pt-22 mx-auto flex flex-col-reverse md:flex-row w-full flex-wrap items-center justify-between gap-4 px-2 py-4 sm:px-6 lg:px-10">
+                <nav className="flex gap-4 text-xs md:text-sm rounded-lg border border-white/10 bg-white/5 px-4 py-1 shadow-inner shadow-black/20">
                     <Link href="/pump/launchpad" prefetch={false} className="p-2 font-semibold tracking-wider text-[#00FF41]">Pump</Link>
                     {NAV_ITEMS.map((item) => {
                         const isActive = item.label === activeRoute;
@@ -33,7 +33,7 @@ export default function LaunchpadHeader({ activeRoute = "Markets" }: LaunchpadHe
                                 key={item.label}
                                 href={item.href}
                                 prefetch={false}
-                                className={`rounded-full p-2 font-medium transition-colors duration-300 ${
+                                className={`rounded-full px-3 py-2 font-medium transition-colors duration-300 ${
                                 isActive
                                     ? "bg-white/10 text-white"
                                     : "text-slate-400 hover:bg-white/5 hover:text-white"

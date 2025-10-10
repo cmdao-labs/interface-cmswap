@@ -1264,7 +1264,7 @@ export default function Trade({
     }, [socialsResult]);
 
     return (
-        <main className="relative min-h-screen w-full 2xl:w-5/6 overflow-hidden pt-20 pb-24 text-white">
+        <main className="relative min-h-screen w-full 2xl:w-5/6 overflow-hidden pt-20 text-white">
             <div className="w-full my-4 px-4 flex items-center gap-6 text-[8px] sm:text-sm">
                 <Link href={`/pump/launchpad?chain=${chain}${mode === "pro" ? "&mode=pro" : "&mode=lite"}`} prefetch={false} className="underline hover:font-bold">Back to launchpad</Link>
                 <div className="flex gap-2 uppercase tracking-[0.2em] text-white/60">

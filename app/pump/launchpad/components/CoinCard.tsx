@@ -37,7 +37,7 @@ export default function CoinCard({
 						onError={() => setSrc("/default.ico")}
 						fill
 						className="object-cover"
-						sizes="64px"
+						sizes="256px"
 					/>
 				</div>
 				<div className="flex flex-col gap-1 overflow-hidden">
