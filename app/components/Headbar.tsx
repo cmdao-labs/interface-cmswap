@@ -67,7 +67,7 @@ export default function Headbar() {
                             </div>
                         </div>
                     </div>
-                    <div className="flex align-center justify-end xl:mr-2 p-6">
+                    <div className="flex items-center gap-2 justify-end xl:mr-2 p-6">
                         {/* @ts-expect-error msg */}
                         <appkit-button />
                         <Link href="/"><Button variant="ghost" className="cursor-pointer" size="icon"><img alt="" src="/flag-of-singapore.png" className="rounded-full w-[25px] h-[25px] object-cover" /></Button></Link>
