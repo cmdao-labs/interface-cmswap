@@ -212,7 +212,7 @@ export default function Page() {
                                         </div>
                                         <h3 className="text-white font-mono text-lg mb-2 tracking-wider text-right">Deep Liquidity</h3>
                                         <div className="h-px w-12 bg-[#0096FF]/30 mb-4 ml-auto" />
-                                        <p className="text-white/60 font-mono text-xs leading-relaxed text-right">Amplify market depth through community-driven incentives, frictionless execution at any scale.</p>
+                                        <p className="text-white/60 font-mono text-xs leading-relaxed text-right">Amplify market depth through community-driven incentives.</p>
                                     </div>
                                 </div>
                             </div>
