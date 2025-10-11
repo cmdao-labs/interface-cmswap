@@ -216,6 +216,8 @@ export default function Trade({
     const [outputBalance, setOutputBalance] = useState("0");
     const [hash, setHash] = useState("");
     const [headnoti, setHeadnoti] = useState(false);
+    // Tracks if the head notification has played its initial shake
+    const [headnotiShaken, setHeadnotiShaken] = useState(false);
     const [gradHash, setGradHash] = useState("");
     const [ethBal, setEthBal] = useState(BigInt(0));
     const [state, setState] = useState<any>([
@@ -239,6 +241,11 @@ export default function Trade({
     const [logo, setLogo] = useState<string | null>(null);
     const [description, setDescription] = useState<string | null>(null);
     const [progress, setProgress] = useState(0);
+
+    // Reset shake state whenever the head notification is shown
+    React.useEffect(() => {
+        if (headnoti) setHeadnotiShaken(false);
+    }, [headnoti]);
 
     const resolvedLogo = React.useMemo(() => {
         if (!logo) return "https://cmswap.mypinata.cloud/ipfs/";
@@ -442,21 +449,20 @@ export default function Trade({
 
     const handleMaxClick = () => {
         try {
-            let value = 0;
+            let value = '';
             if (mode === "pro") {
                 if (trademode) {
-                    value = Number(formatEther(ethBal)) - 0.00001;
+                    value = String(Number(formatEther(ethBal)) - 0.00001);
                 } else {
-                    value = Number(formatEther(state[1].result as bigint));
+                    value = formatEther(state[1].result as bigint);
                 }
             } else {
-                value = Number(formatEther(trademode ? (state[0].result as bigint) : (state[1].result as bigint)));
+                value = formatEther(trademode ? (state[0].result as bigint) : (state[1].result as bigint));
             }
-            if (!Number.isFinite(value)) value = 0;
-            if (value < 0) value = 0;
-            const formatted = value.toFixed(6);
-            setInputBalance(formatted);
-            qoute(formatted);
+            if (!Number.isFinite(Number(value))) value = '0';
+            if (Number(value) < 0) value = '0';
+            setInputBalance(value);
+            qoute(value);
         } catch (error) {
             console.error("Failed to apply max", error);
         }
@@ -1425,27 +1431,37 @@ export default function Trade({
             </div>
 
             {headnoti && (
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm shadow-[0_0_25px_rgba(16,185,129,0.25)]">
-                    <div className="flex items-center gap-2 text-emerald-200">
-                        <Check size={16} />
-                        <span>Trade successful</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs">
-                        <Link
-                            href={`${_explorer}tx/${hash}`}
-                            prefetch={false}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="rounded-full border border-emerald-300/30 px-3 py-1 text-emerald-200 transition hover:border-emerald-200 hover:text-emerald-100"
-                        >
-                            View transaction
-                        </Link>
-                        <button
-                            onClick={() => setHeadnoti(false)}
-                            className="rounded-full border border-transparent bg-emerald-400/20 px-3 py-1 text-emerald-100 transition hover:bg-emerald-400/30"
-                        >
-                            Close
-                        </button>
+                <div className="fixed top-22 left-0 right-0 z-50 px-2 sm:px-4">
+                    <div
+                        className={
+                            `mx-auto w-full 2xl:w-5/6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500 bg-emerald-500/50 px-4 py-3 text-sm shadow-[0_0_25px_rgba(16,185,129,0.25)] ` +
+                            (headnotiShaken ? "animate-pulse" : "animate-shake-once")
+                        }
+                        onAnimationEnd={(e) => {
+                            if (e.animationName === 'shake') setHeadnotiShaken(true);
+                        }}
+                    >
+                        <div className="flex items-center gap-2 text-emerald-200">
+                            <Check size={16} />
+                            <span>Trade successful</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs">
+                            <Link
+                                href={`${_explorer}tx/${hash}`}
+                                prefetch={false}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded-full border border-emerald-300/30 px-3 py-1 text-emerald-200 transition hover:border-emerald-200 hover:text-emerald-100"
+                            >
+                                View transaction
+                            </Link>
+                            <button
+                                onClick={() => setHeadnoti(false)}
+                                className="rounded-full border border-transparent bg-emerald-400/20 px-3 py-1 text-emerald-100 transition hover:bg-emerald-400/30"
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -1700,7 +1716,7 @@ export default function Trade({
                                     <span>You pay</span>
                                     <span>Balance: {formattedAvailableBalance} {inputAssetSymbol}</span>
                                 </div>
-                                <div className="mt-2 flex items-center justify-between rounded-2xl border border-white/10 bg-white/10 px-4 py-3">
+                                <div className="w-full mt-2 flex items-center justify-between rounded-2xl border border-white/10 bg-white/10 px-4 py-3 overflow-hidden">
                                     <input
                                         type="number"
                                         placeholder="0.0"
@@ -1709,7 +1725,7 @@ export default function Trade({
                                             setInputBalance(event.target.value);
                                             qoute(event.target.value);
                                         }}
-                                        className="flex-1 bg-transparent text-2xl font-semibold text-white outline-none placeholder:text-white/30"
+                                        className="bg-transparent text-2xl font-semibold text-white outline-none placeholder:text-white/30 truncate"
                                     />
                                     <span className="-ml-10 text-sm uppercase tracking-wide text-white/60">{inputAssetSymbol}</span>
                                 </div>
