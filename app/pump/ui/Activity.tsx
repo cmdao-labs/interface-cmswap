@@ -4,9 +4,10 @@ import { connection } from 'next/server';
 import { readContracts } from '@wagmi/core';
 import { createPublicClient, http, formatEther, erc20Abi } from 'viem'
 import { bitkub, monadTestnet , bitkubTestnet } from 'viem/chains';
-import { config } from '@/app/config'
+import { config } from '@/app/config';
 import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
 import { UniswapV2FactoryABI } from '@/app/pump/abi/UniswapV2Factory';
+import { PumpCoreNativeABI } from '@/app/pump/abi/PumpCoreNative';
 
 export default async function Activity({
     addr, mode, chain, token,
@@ -38,12 +39,10 @@ export default async function Activity({
         _rpc = 'https://rpc-testnet.bitkubchain.io' as string;
     }
     // add chain here
-    const publicClient = createPublicClient({ 
-        chain: _chain,
-        transport: http(_rpc)
-    });
+    const publicClient = createPublicClient({ chain: _chain, transport: http(_rpc) });
     let currencyAddr: string = '';
     let bkgafactoryAddr: string = '';
+    let pumpCoreAddr: string = '';
     let _blockcreated: number = 1;
     let v2facAddr: string = '';
     if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '') && (token === 'cmm' || token === '')) {
@@ -64,9 +63,10 @@ export default async function Activity({
     } else if (chain === 'kubtestnet' && mode === 'pro') {
         currencyAddr = '0x700D3ba307E1256e509eD3E45D6f9dff441d6907';
         bkgafactoryAddr = '0x46a4073c830031ea19d7b9825080c05f8454e530';
+        pumpCoreAddr = '0x46a4073c830031ea19d7b9825080c05f8454e530';
        _blockcreated = 23935659;
         v2facAddr = '0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b';
-    }   // add chain and mode here
+    }  // add chain and mode here
     const dataofcurr = {addr: currencyAddr, blockcreated: _blockcreated};
     const dataofuniv2factory = {addr: v2facAddr};
     const bkgafactoryContract = {
@@ -80,57 +80,183 @@ export default async function Activity({
         chainId: _chainId,
     } as const
 
-    const indexCount = await readContracts(config, {
-        contracts: [
-            {
-            ...bkgafactoryContract,
-            functionName: 'totalIndex',
-            },
-        ],
-    });
-    const init: any = {contracts: []};
-    for (let i = 0; i <= Number(indexCount[0].result) - 1; i++) {
-        init.contracts.push(
-            {
-                ...bkgafactoryContract,
-                functionName: 'index',
-                args: [BigInt(i + 1)],
-            }
-        );
-    }
-    const result = await readContracts(config, init);
-    const result2 = result.map(async (res: any) => {
-        return await readContracts(config, {
-        contracts: [
-            {
-                address: res.result!,
-                abi: erc20Abi,
-                functionName: 'symbol',
-                chainId: _chainId,
-            },
-            {
-                ...bkgafactoryContract,
-                functionName: 'logo',
-                args: [res.result!],
-            },
-            {
-                ...univ2factoryContract,
-                functionName: 'getPool',
-                args: [res.result!, dataofcurr.addr as '0xstring', 10000],
-            },
-        ],
+    let fulldatabuy: any[] = [];
+    let fulldatasell: any[] = [];
+    let launchEvents: any[] = [];
+    let lplist: any[] = [];
+    let tokenlist: any[] = [];
+
+    if (chain === 'kubtestnet' && mode === 'pro') {
+        const coreAddress = (pumpCoreAddr || bkgafactoryAddr) as '0xstring';
+        const rpcUrl = _rpc || bitkubTestnet.rpcUrls.default?.http?.[0] || '';
+        const client = rpcUrl
+            ? createPublicClient({
+                chain: _chain,
+                transport: http(rpcUrl),
+            })
+            : publicClient;
+
+        const creationLogs = await client.getContractEvents({
+            address: coreAddress,
+            abi: PumpCoreNativeABI,
+            eventName: 'Creation',
+            fromBlock: BigInt(dataofcurr.blockcreated),
+            toBlock: 'latest',
         });
-    })
-    const result3: any = await Promise.all(result2);
-    const lplist = result3.map((res: any) => {return {lp: res[2].result, lpSearch: res[2].result.toUpperCase(), ticker: res[0].result, logo: res[1].result}});
-    const lparr: any = [];
-    for (let i = 0; i <= lplist.length - 1; i++) {
-        lparr.push(lplist[i].lp);
-    }
-    const tokenlist = result.map((res: any) => {return res.result.toUpperCase()});
-    let fulldatabuy: any[]
-    let fulldatasell: any[]
-    if (chain === 'monad') {
+        const _getticker = creationLogs.map(async (log: any) => {
+            return await readContracts(config, {
+                contracts: [
+                    {
+                        address: log.args.tokenAddr,
+                        abi: erc20Abi,
+                        functionName: 'symbol',
+                        chainId: _chainId,
+                    },
+                ],
+            });
+        });
+        const getticker: any = await Promise.all(_getticker);
+
+        const tokenslist = creationLogs.map((log: any, index: number) => {
+            const symbolEntry = getticker[index]?.[0];
+            const symbol =
+                symbolEntry?.status === 'success' && typeof symbolEntry.result === 'string'
+                    ? symbolEntry.result
+                    : log.args.tokenAddr.slice(2, 8).toUpperCase();
+            return {
+                addr: log.args.tokenAddr,
+                ticker: symbol,
+                logo: log.args.logo,
+                creator: log.args.creator,
+                blockNumber: log.blockNumber,
+                transactionHash: log.transactionHash,
+            };
+        });
+
+        const tokenMap = new Map(tokenslist.map((token: any) => [token.addr.toUpperCase(), token]));
+        const normalizedAddr = addr?.toUpperCase?.() ?? '';
+
+        launchEvents = tokenslist
+            .filter((token) => (token.creator as string)?.toUpperCase() === normalizedAddr && token.transactionHash)
+            .map((token) => ({
+                action: 'launch',
+                value: 0,
+                hash: token.transactionHash,
+                block: token.blockNumber,
+                ticker: token.ticker,
+                logo: token.logo,
+            }));
+
+        const sellLogs = await client.getContractEvents({
+            abi: erc20Abi,
+            eventName: 'Transfer',
+            args: {
+                from: addr as '0xstring',
+                to: coreAddress,
+            },
+            fromBlock: BigInt(dataofcurr.blockcreated),
+            toBlock: 'latest',
+        });
+        fulldatasell = sellLogs
+            .filter((log: any) => tokenMap.has(log.address.toUpperCase()))
+            .filter(
+                (log: any) =>
+                    (log.args?.from as string)?.toUpperCase() !==
+                    '0x0000000000000000000000000000000000000000'.toUpperCase(),
+            )
+            .map((log: any) => {
+                const token = tokenMap.get(log.address.toUpperCase());
+                const valueBig = log.args.value as bigint;
+                return {
+                    action: 'sell',
+                    value: Number(formatEther(valueBig)),
+                    hash: log.transactionHash,
+                    block: log.blockNumber,
+                    ticker: token?.ticker ?? log.address,
+                    logo: token?.logo ?? '',
+                };
+            });
+
+        const buyLogs = await client.getContractEvents({
+            abi: erc20Abi,
+            eventName: 'Transfer',
+            args: {
+                from: coreAddress,
+                to: addr as '0xstring',
+            },
+            fromBlock: BigInt(dataofcurr.blockcreated),
+            toBlock: 'latest',
+        });
+        fulldatabuy = buyLogs
+            .filter((log: any) => tokenMap.has(log.address.toUpperCase()))
+            .filter(
+                (log: any) =>
+                    (log.args?.to as string)?.toUpperCase() !==
+                    '0x1fE5621152A33a877f2b40a4bB7bc824eEbea1EA'.toUpperCase(),
+            )
+            .map((log: any) => {
+                const token = tokenMap.get(log.address.toUpperCase());
+                const valueBig = log.args.value as bigint;
+                return {
+                    action: 'buy',
+                    value: Number(formatEther(valueBig)),
+                    hash: log.transactionHash,
+                    block: log.blockNumber,
+                    ticker: token?.ticker ?? log.address,
+                    logo: token?.logo ?? '',
+                };
+            });
+    } else {
+        const indexCount = await readContracts(config, {
+            contracts: [
+                {
+                    ...bkgafactoryContract,
+                    functionName: 'totalIndex',
+                },
+            ],
+        });
+        const init: any = {contracts: []};
+        for (let i = 0; i <= Number(indexCount[0].result) - 1; i++) {
+            init.contracts.push(
+                {
+                    ...bkgafactoryContract,
+                    functionName: 'index',
+                    args: [BigInt(i + 1)],
+                }
+            );
+        }
+        const result = await readContracts(config, init);
+        const result2 = result.map(async (res: any) => {
+            return await readContracts(config, {
+            contracts: [
+                {
+                    address: res.result!,
+                    abi: erc20Abi,
+                    functionName: 'symbol',
+                    chainId: _chainId,
+                },
+                {
+                    ...bkgafactoryContract,
+                    functionName: 'logo',
+                    args: [res.result!],
+                },
+                {
+                    ...univ2factoryContract,
+                    functionName: 'getPool',
+                    args: [res.result!, dataofcurr.addr as '0xstring', 10000],
+                },
+            ],
+            });
+        })
+        const result3: any = await Promise.all(result2);
+        lplist = result3.map((res: any) => {return {lp: res[2].result, lpSearch: res[2].result.toUpperCase(), ticker: res[0].result, logo: res[1].result}});
+        const lparr: any = [];
+        for (let i = 0; i <= lplist.length - 1; i++) {
+            lparr.push(lplist[i].lp);
+        }
+        tokenlist = result.map((res: any) => {return res.result.toUpperCase()});
+
+        if (chain === 'monad') {
         const headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
         fulldatabuy = []
         fulldatasell = []
@@ -221,8 +347,9 @@ export default async function Activity({
         }).map((res: any) => {
             return {action: (Number(formatEther(res.args.value)) === 90661089.38801491 || Number(formatEther(res.args.value)) === 99729918.975692707812343703) ? 'launch' : 'buy', value: Number(formatEther(res.args.value)), hash: res.transactionHash, block: res.blockNumber, ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.from.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.from.toUpperCase())].logo}
         });
+        }
     }
-    const mergedata = fulldatasell.concat(fulldatabuy);
+    const mergedata = fulldatasell.concat(fulldatabuy, launchEvents);
     const _timestamparr = mergedata.map(async (res) => {
         return await publicClient.getBlock({ 
             blockNumber: res.block,
