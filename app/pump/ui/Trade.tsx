@@ -1468,7 +1468,7 @@ export default function Trade({
 
             <section className="flex flex-col gap-2 relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-4 sm:p-8 shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur">
                 <div className="flex flex-row gap-4 sm:gap-10">
-                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-3xl border border-white/10 shadow-[0_0_35px_rgba(34,197,94,0.35)] sm:mx-0 sm:h-28 sm:w-28">
+                    <div className="relative shrink-0 overflow-hidden rounded-3xl border border-white/10 shadow-[0_0_35px_rgba(34,197,94,0.35)] sm:mx-0 h-28 w-28">
                         <Image
                             src={resolvedLogo}
                             alt={tokenSymbolDisplay ? `${tokenSymbolDisplay} logo` : "Token logo"}

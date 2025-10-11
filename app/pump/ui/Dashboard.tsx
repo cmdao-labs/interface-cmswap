@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { readContracts } from "@wagmi/core";
 import { createPublicClient, erc20Abi, formatEther, formatUnits, http } from "viem";
@@ -174,12 +175,33 @@ export default function Dashboard({
                             const price = tokenReserve === BigInt(0) || tokenReserveNormalized === 0 ? 0 : numerator / tokenReserveNormalized;
                             const logo = (evt?.args?.logo as string) ?? (evt?.args?.link1 as string) ?? "";
 
+                            // try to resolve LP/pool address for this token
+                            let poolAddress: string | undefined = undefined;
+                            try {
+                                const poolRes = await readContracts(config, {
+                                    contracts: [
+                                        {
+                                            address: dataofuniv2factory.addr as '0xstring',
+                                            abi: UniswapV2FactoryABI,
+                                            functionName: "getPool",
+                                            args: [tokenAddress, currencyAddr as '0xstring', 10000],
+                                            chainId: _chainId,
+                                        },
+                                    ],
+                                });
+                                const pr = poolRes?.[0];
+                                if (pr?.status === 'success' && typeof pr.result === 'string') poolAddress = pr.result;
+                            } catch {
+                                poolAddress = undefined;
+                            }
+
                             return [
                                 { result: symbol },
                                 { result: logo },
                                 { result: Number.isFinite(balance) ? balance : 0 },
                                 { result: Number.isFinite(price) ? price : 0 },
                                 { result: tokenAddress },
+                                { result: poolAddress ?? '' },
                             ];
                         }),
                     );
@@ -256,6 +278,7 @@ export default function Dashboard({
                     { result: Number(formatEther(item[3].result as bigint)) },
                     { result: price },
                     { result: item[0].result === "$THB" || item[0].result === "ETH" ? dataofcurr.addr : result[index].result },
+                    { result: item[2].result },
                 ];
             });
             const _allvalue = _resultfinal.map((res: any) => {return res[2].result * res[3].result;}).reduce((a: any, b: any) => a + b, 0);
@@ -299,7 +322,13 @@ export default function Dashboard({
                         <div className="w-[25px] h-[25px] sm:w-[40px] sm:h-[40px] rounded-full overflow-hidden relative">
                             <Image src={res[1].result!.slice(0, 7) === 'ipfs://' ? "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!.slice(7) : "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!} alt="token_waiting_for_approve" fill />
                         </div>
-                        <span className="font-bold truncate">{res[0].result}</span>
+                        <Link
+                            href={`/pump/launchpad/token?chain=${chain}&mode=${mode}${token ? `&token=${token}` : ''}&ticker=${res[4].result}${res[5]?.result ? `&lp=${res[5].result}` : ''}`}
+                            prefetch={false}
+                            className="font-bold truncate underline decoration-dotted underline-offset-4"
+                        >
+                            {res[0].result}
+                        </Link>
                         <button 
                             className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm cursor-pointer"
                             onClick={async () => {

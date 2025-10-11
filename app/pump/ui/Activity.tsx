@@ -145,6 +145,8 @@ export default async function Activity({
                 block: token.blockNumber,
                 ticker: token.ticker,
                 logo: token.logo,
+                tickerAddr: token.addr,
+                lpAddr: '',
             }));
 
         const sellLogs = await client.getContractEvents({
@@ -174,6 +176,8 @@ export default async function Activity({
                     block: log.blockNumber,
                     ticker: token?.ticker ?? log.address,
                     logo: token?.logo ?? '',
+                    tickerAddr: log.address,
+                    lpAddr: '',
                 };
             });
 
@@ -204,6 +208,8 @@ export default async function Activity({
                     block: log.blockNumber,
                     ticker: token?.ticker ?? log.address,
                     logo: token?.logo ?? '',
+                    tickerAddr: log.address,
+                    lpAddr: '',
                 };
             });
     } else {
@@ -329,7 +335,16 @@ export default async function Activity({
         fulldatasell = result5.filter((res) => {
             return tokenlist.indexOf(res.address.toUpperCase()) !== -1;
         }).map((res: any) => {
-            return {action: 'sell', value: Number(formatEther(res.args.value)), hash: res.transactionHash, block: res.blockNumber, ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.to.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.to.toUpperCase())].logo}
+            return {
+                action: 'sell',
+                value: Number(formatEther(res.args.value)),
+                hash: res.transactionHash,
+                block: res.blockNumber,
+                ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.to.toUpperCase())].ticker,
+                logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.to.toUpperCase())].logo,
+                tickerAddr: res.address,
+                lpAddr: res.args.to,
+            }
         });
         const result6 = await publicClient.getContractEvents({
             abi: erc20Abi,
@@ -345,7 +360,16 @@ export default async function Activity({
         fulldatabuy = result7.filter((res) => {
             return tokenlist.indexOf(res.address.toUpperCase()) !== -1;
         }).map((res: any) => {
-            return {action: (Number(formatEther(res.args.value)) === 90661089.38801491 || Number(formatEther(res.args.value)) === 99729918.975692707812343703) ? 'launch' : 'buy', value: Number(formatEther(res.args.value)), hash: res.transactionHash, block: res.blockNumber, ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.from.toUpperCase())].ticker, logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.from.toUpperCase())].logo}
+            return {
+                action: (Number(formatEther(res.args.value)) === 90661089.38801491 || Number(formatEther(res.args.value)) === 99729918.975692707812343703) ? 'launch' : 'buy',
+                value: Number(formatEther(res.args.value)),
+                hash: res.transactionHash,
+                block: res.blockNumber,
+                ticker: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.from.toUpperCase())].ticker,
+                logo: lplist[lplist.map((res: any) => {return res.lpSearch}).indexOf(res.args.from.toUpperCase())].logo,
+                tickerAddr: res.address,
+                lpAddr: res.args.from,
+            }
         });
         }
     }
@@ -360,7 +384,16 @@ export default async function Activity({
         return Number(res.timestamp) * 1000;
     })
     const theresult = mergedata.map((res, index) => {
-        return {action: res.action, value: res.value, hash: res.hash, timestamp: restimestamp[index], ticker: res.ticker, logo: res.logo}
+        return {
+            action: res.action,
+            value: res.value,
+            hash: res.hash,
+            timestamp: restimestamp[index],
+            ticker: res.ticker,
+            logo: res.logo,
+            tickerAddr: res.tickerAddr ?? '',
+            lpAddr: res.lpAddr ?? '',
+        }
     }).sort((a: any, b: any) => {return b.timestamp - a.timestamp});
 
     return (
@@ -390,7 +423,13 @@ export default async function Activity({
                             <div className="w-[15px] h-[15px] sm:w-[30px] sm:h-[30px] rounded-full overflow-hidden relative">
                                 <Image src={res.logo.slice(0, 7) === 'ipfs://' ? "https://cmswap.mypinata.cloud/ipfs/" + res.logo.slice(7) : "https://cmswap.mypinata.cloud/ipfs/" + res.logo} alt="token_waiting_for_approve" fill />
                             </div>
-                            <span className="truncate">{res.ticker}</span>
+                            <Link
+                                href={`/pump/launchpad/token?chain=${chain}&mode=${mode}${token ? `&token=${token}` : ''}&ticker=${res.tickerAddr}${res.lpAddr ? `&lp=${res.lpAddr}` : ''}`}
+                                prefetch={false}
+                                className="truncate underline decoration-dotted underline-offset-4"
+                            >
+                                {res.ticker}
+                            </Link>
                         </div>
                         <span className="text-right w-[50px] sm:w-[200px]">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res.value)}</span>
                         <Link href={_explorer + "tx/" + res.hash} rel="noopener noreferrer" target="_blank" prefetch={false} className="font-bold text-right w-[50px] sm:w-[200px] underline truncate">{res.hash.slice(0, 5) + '...' + res.hash.slice(61)}</Link>
