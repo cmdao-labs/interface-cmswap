@@ -1631,11 +1631,22 @@ export default function Trade({
                                 <span>Bonding Progress</span>
                                 <span className="text-emerald-300">{progressPercent.toFixed(2)}%</span>
                             </div>
-                            <div className="mt-2 h-2 w-full rounded-full bg-white/10">
-                                <div
-                                    className="h-2 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500"
-                                    style={{ width: `${progressPercent}%` }}
-                                />
+                            <div className="mt-2 relative h-2 w-full overflow-hidden rounded-full">
+                                <div className="absolute inset-0 rounded-full p-[1px] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600">
+                                    <div className="h-full w-full rounded-full bg-black/60" />
+                                </div>
+                                <div className="relative h-2 overflow-hidden rounded-full bg-white/10">
+                                    <div
+                                        className="relative h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500 animate-bonding"
+                                        style={{ width: `${progressPercent}%` }}
+                                    >
+                                        <div className="absolute inset-0 rounded-full opacity-50 blur-[6px] bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500 animate-bonding-glow" />
+                                    </div>
+                                    <div
+                                        className="pointer-events-none absolute left-0 top-0 h-full rounded-full bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.35),transparent_40%),radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.25),transparent_40%)] bg-repeat-x bg-[length:14px_14px,18px_18px] animate-spark"
+                                        style={{ width: `${progressPercent}%` }}
+                                    />
+                                </div>
                             </div>
                             <p className="mt-2 text-[11px] leading-relaxed text-white/45">
                                 {bondingTooltip}
@@ -2951,11 +2962,22 @@ export default function Trade({
                                 <span>Bonding Progress</span>
                                 <span className="text-emerald-300">{progressPercent.toFixed(2)}%</span>
                             </div>
-                            <div className="mt-2 h-2 w-full rounded-full bg-white/10">
-                                <div
-                                    className="h-2 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500"
-                                    style={{ width: `${progressPercent}%` }}
-                                />
+                            <div className="mt-2 relative h-2 w-full overflow-hidden rounded-full">
+                                <div className="absolute inset-0 rounded-full p-[1px] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600">
+                                    <div className="h-full w-full rounded-full bg-black/60" />
+                                </div>
+                                <div className="relative h-2 overflow-hidden rounded-full bg-white/10">
+                                    <div
+                                        className="relative h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500 animate-bonding"
+                                        style={{ width: `${progressPercent}%` }}
+                                    >
+                                        <div className="absolute inset-0 rounded-full opacity-50 blur-[6px] bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500 animate-bonding-glow" />
+                                    </div>
+                                    <div
+                                        className="pointer-events-none absolute left-0 top-0 h-full rounded-full bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.35),transparent_40%),radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.25),transparent_40%)] bg-repeat-x bg-[length:14px_14px,18px_18px] animate-spark"
+                                        style={{ width: `${progressPercent}%` }}
+                                    />
+                                </div>
                             </div>
                             <p className="mt-2 text-[11px] leading-relaxed text-white/45">
                                 {bondingTooltip}
@@ -3147,6 +3169,16 @@ export default function Trade({
                     0%, 100% { opacity: 0.35; filter: blur(6px); }
                     50% { opacity: 0.75; filter: blur(12px); }
                 }
+                /* Bonding curve gradient animation */
+                @keyframes bondingShift {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+                @keyframes bondingGlow {
+                    0%, 100% { opacity: 0.35; filter: blur(6px); }
+                    50% { opacity: 0.75; filter: blur(12px); }
+                }
                 @keyframes spark {
                     0% { background-position: 0 0, 0 0; opacity: 0.25; }
                     50% { background-position: 14px 0, 18px 0; opacity: 0.6; }
@@ -3154,6 +3186,8 @@ export default function Trade({
                 }
                 .animate-fire { background-size: 200% 200%; animation: fireShift 2.2s ease-in-out infinite; }
                 .animate-fire-glow { background-size: 200% 200%; animation: fireGlow 1.6s ease-in-out infinite, fireShift 2.8s linear infinite; }
+                .animate-bonding { background-size: 200% 200%; animation: bondingShift 2.2s ease-in-out infinite; }
+                .animate-bonding-glow { background-size: 200% 200%; animation: bondingGlow 1.6s ease-in-out infinite, bondingShift 2.8s linear infinite; }
                 .animate-spark { animation: spark 0.9s linear infinite; }
             `}</style>
         </main>
