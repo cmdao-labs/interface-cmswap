@@ -61,7 +61,7 @@ export default async function TokenGrid({
     const filteredListings = filterListings(listings, query);
     const sortedListings = sortListings(filteredListings, sort, order);
     const coins = mapToCoinCards(sortedListings, {
-        baseSymbol: currencySymbol || network.baseSymbol,
+        baseSymbol: mode === 'lite' ? currencySymbol : network.baseSymbol,
         chainParam: network.queryChain,
         modeParam: network.queryMode,
     });
@@ -510,6 +510,7 @@ function mapToCoinCards(
     return listings.map((listing) => {
         const href = buildTokenHref(listing.address, listing.pool, chainParam, modeParam);
         const marketCapDisplay = formatMarketCap(listing.marketCap, baseSymbol);
+        const progressPercent = computeProgressPercent(listing, chainParam, modeParam);
         return {
             id: listing.id,
             href,
@@ -518,6 +519,7 @@ function mapToCoinCards(
             logoUrl: listing.logoUrl,
             marketCapDisplay,
             createdAgo: formatRelativeTime(listing.createdAt),
+            progressPercent,
         } satisfies CoinCardData;
     });
 }
@@ -576,6 +578,31 @@ function formatMarketCap(value: number, symbol: string) {
         notation: "compact",
         maximumFractionDigits: 1,
     }).format(value)}`;
+}
+
+function computeProgressPercent(
+    listing: ListingMetrics,
+    chain: string,
+    mode: "lite" | "pro",
+) {
+    const c = chain.toLowerCase();
+    const m = mode.toLowerCase();
+    const denom = (() => {
+        if (c === "kubtestnet" && m === "pro") return 47800; // testnet target
+        if (c === "kub" && m === "pro") return 2000;
+        if (c === "kub" && m === "lite") return 100000;
+        if (c === "monad" && m === "pro") return 1;
+        return undefined;
+    })();
+
+    if (!denom || denom <= 0) return 0;
+
+    // Mirror Trade.tsx logic: kubtestnet uses market cap, others use price
+    const raw = c === "kubtestnet" ? listing.marketCap : listing.price;
+    const pct = (raw * 100) / denom;
+    if (!Number.isFinite(pct)) return 0;
+    // Do not clamp here; CoinCard clamps for display.
+    return pct;
 }
 
 function formatRelativeTime(timestamp?: number) {

@@ -50,7 +50,7 @@ export default async function Launchpad(props: {
 					<div className="flex flex-row flex-wrap gap-4 py-3 shadow-inner">
 						<Sort4 />
 						<Sort />
-						{mode === "lite" && chain === "kub" && (<div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4"><Sort5 /></div>)}
+						{mode === "lite" && chain === "kub" && (<div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-1 flex items-center"><Sort5 /></div>)}
 					</div>
 					<Suspense
 						key={`grid-${mode}-${chain}-${query}-${sort}-${order}`}
