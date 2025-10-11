@@ -1,5 +1,6 @@
 'use client';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
+import { TrendingUp, TrendingDown, ClockArrowUp, ClockArrowDown } from "lucide-react";
 
 const baseCardClasses = 'flex flex-row items-center justify-between gap-4 px-6 py-2 text-xs';
 const baseButtonClasses = 'flex-1 rounded-xl border border-white/10 px-4 py-2 text-center text-xs font-semibold transition-all duration-200';
@@ -66,7 +67,13 @@ export default function Sort() {
                 </div>
             </div>
             <div className={baseCardClasses}>
-                <span className="text-slate-500">Order By</span>
+                <span className="text-slate-500 inline-flex items-center gap-1">
+                    Order By
+                    {sort === 'mcap' && order === 'ascending' && (<TrendingUp className="h-4 w-4" aria-hidden="true" />)}
+                    {sort === 'mcap' && order === 'descending' && (<TrendingDown className="h-4 w-4" aria-hidden="true" />)}
+                    {sort === 'created' && order === 'ascending' && (<ClockArrowUp className="h-4 w-4" aria-hidden="true" />)}
+                    {sort === 'created' && order === 'descending' && (<ClockArrowDown className="h-4 w-4" aria-hidden="true" />)}
+                </span>
                 <div className="flex gap-2">
                     {orderOptions.map((option) => {
                         const isActive = order === option.key || (!order && option.key === 'ascending');
