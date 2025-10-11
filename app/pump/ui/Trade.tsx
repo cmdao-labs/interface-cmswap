@@ -336,6 +336,11 @@ export default function Trade({
     const formattedChangePct = React.useMemo(() => `${Number.isFinite(changePct) ? Math.abs(changePct).toFixed(2) : "0.00"}%`, [changePct]);
     const formattedAth = React.useMemo(() => priceFormatter(athPrice || 0), [athPrice, priceFormatter]);
 
+    const athProgressPercent = React.useMemo(() => {
+        if (!Number.isFinite(mcap) || !Number.isFinite(athPrice) || athPrice <= 0) return 0;
+        return Math.max(0, Math.min(100, (mcap / athPrice) * 100));
+    }, [mcap, athPrice]);
+
     const progressPercent = React.useMemo(() => {
         if (!Number.isFinite(progress)) return 0;
         return Math.max(0, Math.min(100, progress));
@@ -1464,43 +1469,54 @@ export default function Trade({
                     </div>
                 </div>
 
-                <div className="mt-4 px-2 grid grid-cols-[1fr_2fr] lg:grid-cols-[2fr_1fr]">
-                    <div className="flex flex-col gap-2">
+                <div className="mt-4 px-2 grid grid-cols-2 lg:grid-cols-[2fr_1fr]">
+                    <div className="flex flex-col gap-1">
                         <span className="text-xs text-slate-300">Market Cap</span>
                         <span className="text-lg sm:text-2xl font-bold tracking-wider text-emerald-300">{formattedMcap} {baseAssetSymbol}</span>
+                        <div className="flex flex-row flex-wrap gap-1 text-[10px] sm:text-xs text-white/70"> 
+                            <span className="text-white/60">24h: </span>
+                            {Number.isFinite(changeAbs) && Number.isFinite(changePct) ? (
+                                <>
+                                    <span className={`${changeAbs > 0 ? "text-emerald-300" : changeAbs < 0 ? "text-red-300" : "text-white/70"}`}>
+                                        {changeAbs > 0 ? "+" : changeAbs < 0 ? "-" : ""}{formattedChangeAbs} {baseAssetSymbol}
+                                    </span>
+                                    <span className={`ml-1 ${changePct > 0 ? "text-emerald-300" : changePct < 0 ? "text-red-300" : "text-white/70"}`}>
+                                        ({changePct > 0 ? "+" : changePct < 0 ? "-" : ""}{formattedChangePct})
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="text-white/50">N/A</span>
+                            )}
+                        </div>
                     </div>
                     <div className="flex flex-col gap-2">
-                        <div className="mt-2 h-2 rounded-full bg-white/10">
-                            <div className="h-2 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500" style={{ width: `${progressPercent}%` }} />
+                        <div className="mt-2 relative h-2 rounded-full">
+                            <div className="absolute inset-0 rounded-full p-[1px] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600">
+                                <div className="h-full w-full rounded-full bg-black/60" />
+                            </div>
+                            <div className="relative h-2 overflow-hidden rounded-full">
+                                <div
+                                    className="relative h-full rounded-full bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 animate-fire"
+                                    style={{ width: `${athProgressPercent}%` }}
+                                >
+                                    <div className="absolute inset-0 rounded-full opacity-50 blur-[6px] bg-gradient-to-r from-yellow-300 via-orange-500 to-red-600 animate-fire-glow" />
+                                </div>
+                                <div
+                                    className="pointer-events-none absolute left-0 top-0 h-full rounded-full bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.35),transparent_40%),radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.25),transparent_40%)] bg-repeat-x bg-[length:14px_14px,18px_18px] animate-spark"
+                                    style={{ width: `${athProgressPercent}%` }}
+                                />
+                            </div>
                         </div>
-                        <span className="w-full text-right">{progressPercent.toFixed(2)}%</span>
+                        <span className="w-full text-right font-bold tracking-wider text-orange-500">{athProgressPercent.toFixed(2)}%</span>
+                        <div className="w-full text-right text-[10px] sm:text-xs text-white/70">
+                            <span className="text-white">ATH: </span>
+                            {Number.isFinite(athPrice) ? (
+                                <span className="text-white">{formattedAth} {baseAssetSymbol}</span>
+                            ) : (
+                                <span className="text-white/50">N/A</span>
+                            )}
+                        </div>
                     </div> 
-                </div>
-
-                <div className="px-2 flex flex-row gap-1 text-[10px] sm:text-xs text-white/70">
-                    <div>
-                        <span className="text-white/60">24h: </span>
-                        {Number.isFinite(changeAbs) && Number.isFinite(changePct) ? (
-                            <>
-                                <span className={`${changeAbs > 0 ? "text-emerald-300" : changeAbs < 0 ? "text-red-300" : "text-white/70"}`}>
-                                    {changeAbs > 0 ? "+" : changeAbs < 0 ? "-" : ""}{formattedChangeAbs} {baseAssetSymbol}
-                                </span>
-                                <span className={`ml-1 ${changePct > 0 ? "text-emerald-300" : changePct < 0 ? "text-red-300" : "text-white/70"}`}>
-                                    ({changePct > 0 ? "+" : changePct < 0 ? "-" : ""}{formattedChangePct})
-                                </span>
-                            </>
-                        ) : (
-                            <span className="text-white/50">N/A</span>
-                        )}
-                    </div>
-                    <div>
-                        <span className="text-white">ATH: </span>
-                        {Number.isFinite(athPrice) ? (
-                            <span className="text-white">{formattedAth} {baseAssetSymbol}</span>
-                        ) : (
-                            <span className="text-white/50">N/A</span>
-                        )}
-                    </div>
                 </div>
             </section>
 
@@ -1540,7 +1556,6 @@ export default function Trade({
                             )}
                         </div>
                     </div>
-                    
                     <div className="rounded-2xl border border-white/10 bg-black/50 p-4 text-sm text-white/60 block md:hidden">
                         <div className="flex items-center justify-between">
                             <span>Status</span>
@@ -1667,12 +1682,70 @@ export default function Trade({
                         </div>
                     </div>
 
-                    <div className="rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl backdrop-blur">
-                        <Tabs defaultValue="activity" className="w-full">
-                            <TabsList className="w-full grid grid-cols-2 rounded-md p-1 mb-2 border border-white/10 font-mono">
+                    <div className="sm:hidden rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl backdrop-blur">
+                        <Tabs defaultValue="info" className="w-full">
+                            <TabsList className="w-full grid grid-cols-3 rounded-md p-1 mb-2 border border-white/10 font-mono">
+                                <TabsTrigger value="info" className="text-sm data-[state=active]:bg-black/50 data-[state=active]:text-white rounded cursor-pointer">Info</TabsTrigger>
                                 <TabsTrigger value="activity" className="text-sm data-[state=active]:bg-black/50 data-[state=active]:text-white rounded cursor-pointer">Activity</TabsTrigger>
                                 <TabsTrigger value="holders" className="text-sm data-[state=active]:bg-black/50 data-[state=active]:text-white rounded cursor-pointer">Holders</TabsTrigger>
                             </TabsList>
+
+                            <TabsContent value="info">
+                                <div className="mt-2">
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <h2 className="text-lg font-semibold text-white">Project Info</h2>
+                                        {creator === account.address && (
+                                            <button
+                                                onClick={() => setShowSocials(true)}
+                                                className="text-xs text-emerald-300 underline-offset-2 transition hover:text-emerald-100 hover:underline"
+                                            >
+                                                Edit socials
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className="mt-4 text-sm leading-relaxed text-white/70">{description ? description : "No description has been shared yet."}</p>
+                                    <div className="mt-4 flex gap-3">
+                                        {socialItems.filter((item) => socials[item.field]).length === 0 ? (
+                                            <div className="rounded-2xl border border-dashed border-white/10 p-4 text-sm text-white/50">No socials linked yet.</div>
+                                        ) : (
+                                            socialItems
+                                                .filter((item) => socials[item.field])
+                                                .map((item) => (
+                                                    <Link
+                                                        key={item.field}
+                                                        href={socials[item.field]}
+                                                        prefetch={false}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="rounded-full border border-white/10 bg-white/5 p-3 text-sm text-white/80 transition hover:border-white/30 hover:text-white"
+                                                    >
+                                                        {item.icon}
+                                                    </Link>
+                                                ))
+                                        )}
+                                    </div>
+                                    <div className="mt-4 rounded-2xl border border-white/10 bg-black/50 p-4 text-xs text-white/60">
+                                        <div className="font-mono text-[10px] sm:text-sm text-white/80 break-all">{ticker}</div>
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                            <button
+                                                onClick={() => copyToClipboard(ticker)}
+                                                className="rounded-full border border-white/10 px-3 py-1 transition hover:border-white/30 hover:text-white"
+                                            >
+                                                {copiedAddress === ticker ? "Copied" : "Copy"}
+                                            </button>
+                                            <Link
+                                                href={`${_explorer}address/${ticker}`}
+                                                prefetch={false}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="rounded-full border border-white/10 px-3 py-1 text-emerald-200 transition hover:border-emerald-200 hover:text-emerald-100"
+                                            >
+                                                View on explorer
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            </TabsContent>
 
                             <TabsContent value="activity">
                                 <div className="ml-auto flex items-center gap-2 text-xs">
@@ -1939,10 +2012,15 @@ export default function Trade({
                                                         className={`font-mono text-xs transition hover:text-white ${
                                                             res.addr.toUpperCase() === String(creator).toUpperCase() ? 
                                                                 "text-emerald-300" :
-                                                                res.addr.toUpperCase() === lp.toUpperCase() ? "text-purple-300" : "text-white/70"
+                                                                res.addr.toUpperCase() === lp.toUpperCase() ? "text-emerald-300" : "text-white/70"
                                                         }`}
                                                     >
-                                                        {res.addr.slice(0, 6)}...{res.addr.slice(-4)}
+                                                        {res.addr.toUpperCase() === lp.toUpperCase() ? 
+                                                            'Liquidity pool' : 
+                                                            res.addr.toUpperCase() === String(creator).toUpperCase() ? 
+                                                                'Creator' : 
+                                                                `${res.addr.slice(0, 6)}...${res.addr.slice(-4)}`
+                                                        }
                                                     </Link>
                                                 </div>
                                                 <span className="text-sm font-semibold text-white">{res.value.toFixed(4)}%</span>
@@ -1973,6 +2051,252 @@ export default function Trade({
                                 )}
                             </TabsContent>
                         </Tabs>
+                    </div>
+
+                    <div className="hidden sm:block rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl backdrop-blur">
+                        <h2 className="mb-3 text-lg font-semibold text-white">Activity</h2>
+                        <div className="ml-auto flex items-center gap-2 text-xs">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <button
+                                        className={`rounded-md px-2 py-1 transition border ${hasActiveFilters ? "border-emerald-400/50 text-emerald-200" : "border-white/10 text-white/80 hover:border-white/20"}`}
+                                        title="Filter"
+                                        aria-label="Filter activity"
+                                    >
+                                        <FilterIcon size={14} />
+                                    </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[320px] p-0 z-50">
+                                    <div className="p-3 space-y-3 text-[11px] text-white/80">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-white/60">Filters</span>
+                                            <button
+                                                onClick={clearFilters}
+                                                className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20"
+                                                title="Clear filters"
+                                            >
+                                                <X size={12} />
+                                                Clear
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-white/60">Time</label>
+                                            <select
+                                                className="w-full rounded-md border border-white/10 bg-black/60 p-2 text-xs outline-none hover:border-white/20"
+                                                value={filters.time}
+                                                onChange={(e) => handleTimeChange(e.target.value as any)}
+                                            >
+                                                <option value="all">All</option>
+                                                <option value="5m">5m</option>
+                                                <option value="1h">1h</option>
+                                                <option value="24h">24h</option>
+                                                <option value="7d">7d</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-white/60">From</label>
+                                            <input
+                                                value={filters.from}
+                                                onChange={handleTextChange("from")}
+                                                placeholder="address"
+                                                className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-white/60">Action</label>
+                                            <div className="flex items-center gap-2">
+                                                <button onClick={() => handleActionToggle("buy")} className={`rounded-full border px-2 py-1 text-[11px] ${filters.actions.buy && !filters.actions.sell ? "border-emerald-300/50 text-emerald-200" : "border-white/10 text-white/80 hover:border-white/20"}`} title="Buy">Buy</button>
+                                                <button onClick={() => handleActionToggle("sell")} className={`rounded-full border px-2 py-1 text-[11px] ${filters.actions.sell && !filters.actions.buy ? "border-rose-300/50 text-rose-200" : "border-white/10 text-white/80 hover:border-white/20"}`} title="Sell">Sell</button>
+                                                <button
+                                                    onClick={() => {
+                                                        const next = { ...filters, actions: { buy: true, sell: true } };
+                                                        setFilters(next);
+                                                        setAppliedFilters(next);
+                                                    }}
+                                                    className="rounded-full border px-2 py-1 text-[11px] border-white/10 text-white/60 hover:border-white/20"
+                                                    title="Show all"
+                                                >
+                                                    All
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-white/60">Native amount</label>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="number"
+                                                    inputMode="decimal"
+                                                    value={filters.nativeMin}
+                                                    onChange={handleNumberChange("nativeMin")}
+                                                    placeholder="min"
+                                                    className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                />
+                                                <input
+                                                    type="number"
+                                                    inputMode="decimal"
+                                                    value={filters.nativeMax}
+                                                    onChange={handleNumberChange("nativeMax")}
+                                                    placeholder="max"
+                                                    className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-white/60">Token amount</label>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="number"
+                                                    inputMode="decimal"
+                                                    value={filters.tokenMin}
+                                                    onChange={handleNumberChange("tokenMin")}
+                                                    placeholder="min"
+                                                    className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                />
+                                                <input
+                                                    type="number"
+                                                    inputMode="decimal"
+                                                    value={filters.tokenMax}
+                                                    onChange={handleNumberChange("tokenMax")}
+                                                    placeholder="max"
+                                                    className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-white/60">Tx hash</label>
+                                            <input
+                                                value={filters.hash}
+                                                onChange={handleTextChange("hash")}
+                                                placeholder="hash"
+                                                className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                            />
+                                        </div>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                            <div className="text-white/50">Showing {filteredHx.length} of {hx.length}</div>
+                            <button
+                                onClick={clearFilters}
+                                className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20"
+                                title="Clear filters"
+                            >
+                                <X size={14} />
+                                Clear
+                            </button>
+                        </div>
+
+                        <div className="mt-4 overflow-x-auto rounded-xl py-2 border border-white/10">
+                            <table className="table-auto border-seperate border-spacing-0 text-center w-full">
+                                <thead className="text-xs text-white/80">
+                                    <tr>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">Time</span>
+                                            </div>
+                                        </th>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">From</span>
+                                            </div>
+                                        </th>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">Action</span>
+                                            </div>
+                                        </th>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">Native</span>
+                                            </div>
+                                        </th>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">Token</span>
+                                            </div>
+                                        </th>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">Tx</span>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredHx.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={7} className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">No trades yet. Be the first to make a move.</td>
+                                        </tr>
+                                    ) : (
+                                        paginatedActivity.map((res) => (
+                                            <tr key={res.hash} className="font-mono text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
+                                                <td className="py-6">{formatRelativeTime(res.timestamp / 1000)}</td>
+                                                <td className="py-6">
+                                                    <Link
+                                                        href={getExplorerAddressUrl(res.from)}
+                                                        prefetch={false}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-white/70 underline-offset-2 transition hover:text-white hover:underline"
+                                                    >
+                                                        {res.from.slice(0, 6)}...{res.from.slice(-4)}
+                                                    </Link>
+                                                </td>
+                                                <td className="sm:px-0 py-6">
+                                                    <div
+                                                        className={`inline-block rounded-full bg-white/10 px-2 py-1 capitalize font-semibold uppercase ${
+                                                            res.action === "buy" ? "text-emerald-300" :
+                                                            res.action === "sell" ? "text-rose-300" : "text-cyan-300"
+                                                        }`}
+                                                    >
+                                                        {res.action}
+                                                    </div>
+                                                </td>
+                                                <td className="py-6 text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.nativeValue)} {baseAssetSymbol}</td>
+                                                <td className="py-6 text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.value)} {tokenSymbolDisplay}</td>
+                                                <td className="py-6">
+                                                    <Link
+                                                        href={`${_explorer}tx/${res.hash}`}
+                                                        prefetch={false}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-emerald-200 underline-offset-2 transition hover:text-emerald-100 hover:underline"
+                                                    >
+                                                        {res.hash.slice(0, 6)}...{res.hash.slice(-4)}
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        {filteredHx.length > 0 && (
+                            <div className="mt-3 flex items-center justify-between text-xs text-white/60">
+                                <span>Page {activityPage} of {activityTotalPages}</span>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
+                                        disabled={activityPage <= 1}
+                                        className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        Previous
+                                    </button>
+                                    <button
+                                        onClick={() => setActivityPage((p) => Math.min(activityTotalPages, p + 1))}
+                                        disabled={activityPage >= activityTotalPages}
+                                        className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -2103,7 +2427,7 @@ export default function Trade({
                         </div>
                     </div>
 
-                    <div className="rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl backdrop-blur">
+                    <div className="hidden sm:block rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl backdrop-blur">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <h2 className="text-lg font-semibold text-white">Project Info</h2>
                             {creator === account.address && (
@@ -2158,6 +2482,66 @@ export default function Trade({
                         </div>
                     </div>
 
+                    {/* Separate Holder card for sm and up */}
+                    <div className="hidden sm:block rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl backdrop-blur">
+                        <h2 className="text-lg font-semibold text-white">Holder</h2>
+                        <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-1">
+                            {sortedHolders.length === 0 ? (
+                                <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">Holder data is loading...</div>
+                            ) : (
+                                paginatedHolders.map((res, index) => (
+                                    <div
+                                        key={`${res.addr}-${index}`}
+                                        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/5 bg-white/5 p-4 text-sm text-white/80"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-white/40">#{(holdersPage - 1) * ROWS_PER_PAGE + index + 1}</span>
+                                            <Link
+                                                href={getExplorerAddressUrl(res.addr)}
+                                                prefetch={false}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className={`font-mono text-xs transition hover:text-white ${
+                                                    res.addr.toUpperCase() === String(creator).toUpperCase() ? 
+                                                        "text-emerald-300" :
+                                                        res.addr.toUpperCase() === lp.toUpperCase() ? "text-emerald-300" : "text-white/70"
+                                                }`}
+                                            >
+                                                {res.addr.toUpperCase() === lp.toUpperCase() ? 
+                                                    'Liquidity pool' : 
+                                                    res.addr.toUpperCase() === String(creator).toUpperCase() ? 
+                                                        'Creator' : 
+                                                        `${res.addr.slice(0, 6)}...${res.addr.slice(-4)}`
+                                                }
+                                            </Link>
+                                        </div>
+                                        <span className="text-sm font-semibold text-white">{res.value.toFixed(4)}%</span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        {sortedHolders.length > 0 && (
+                            <div className="mt-3 flex items-center justify-between text-xs text-white/60">
+                                <span>Page {holdersPage} of {holdersTotalPages}</span>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setHoldersPage((p) => Math.max(1, p - 1))}
+                                        disabled={holdersPage <= 1}
+                                        className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        Previous
+                                    </button>
+                                    <button
+                                        onClick={() => setHoldersPage((p) => Math.min(holdersTotalPages, p + 1))}
+                                        disabled={holdersPage >= holdersTotalPages}
+                                        className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                     
                 </div>
             </div>
@@ -2203,6 +2587,25 @@ export default function Trade({
                     </div>
                 </div>
             )}
+            <style jsx>{`
+                @keyframes fireShift {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+                @keyframes fireGlow {
+                    0%, 100% { opacity: 0.35; filter: blur(6px); }
+                    50% { opacity: 0.75; filter: blur(12px); }
+                }
+                @keyframes spark {
+                    0% { background-position: 0 0, 0 0; opacity: 0.25; }
+                    50% { background-position: 14px 0, 18px 0; opacity: 0.6; }
+                    100% { background-position: 0 0, 0 0; opacity: 0.25; }
+                }
+                .animate-fire { background-size: 200% 200%; animation: fireShift 2.2s ease-in-out infinite; }
+                .animate-fire-glow { background-size: 200% 200%; animation: fireGlow 1.6s ease-in-out infinite, fireShift 2.8s linear infinite; }
+                .animate-spark { animation: spark 0.9s linear infinite; }
+            `}</style>
         </main>
     );
 }

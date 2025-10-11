@@ -172,7 +172,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
 
         infoEl.innerHTML = `
             <span class="text-xs text-emerald-200">CMSWAP-PUMP · ${metric === 'mcap' ? 'MCap' : 'Price'}</span>
-            <div>
+            <div class="flex flex-wrap">
                 <span class="text-xs text-white/70">O <span style="color:${directionColor}">${formatByMetric(candle.open)}</span></span>
                 <span class="text-xs text-white/70">H <span style="color:${directionColor}">${formatByMetric(candle.high)}</span></span>
                 <span class="text-xs text-white/70">L <span style="color:${directionColor}">${formatByMetric(candle.low)}</span></span>
