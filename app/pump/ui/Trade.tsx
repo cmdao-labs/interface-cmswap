@@ -479,6 +479,10 @@ export default function Trade({
         timeStyle: "short",
         timeZone: "Asia/Bangkok",
     }), []);
+    const compactNumberFormatter = React.useMemo(
+        () => new Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }),
+        []
+    );
 
     const isValidUrl = (url: string) => {return (url === "" || url.startsWith("http://") || url.startsWith("https://"))};
 
@@ -559,6 +563,7 @@ export default function Trade({
     const ROWS_PER_PAGE = 10;
     const [activityPage, setActivityPage] = useState(1);
     const [holdersPage, setHoldersPage] = useState(1);
+    const [tradersPage, setTradersPage] = useState(1);
     const [hx, setHx] = useState(
         [] as {
             action: string;
@@ -700,6 +705,60 @@ export default function Trade({
             return true;
         });
     }, [hx, appliedFilters, filters.time, filters.actions]);
+    const totalTraders = React.useMemo(() => {
+        const unique = new Set<string>();
+        hx.forEach((res: any) => {
+            if (res && typeof res.from === "string" && res.from) {
+                unique.add(res.from.toLowerCase());
+            }
+        });
+        return unique.size;
+    }, [hx]);
+    const traderStats = React.useMemo(() => {
+        const stats = new Map<
+            string,
+            {
+                address: string;
+                totalBought: number;
+                totalSold: number;
+                trades: number;
+                lastActive: number;
+            }
+        >();
+        filteredHx.forEach((res: any) => {
+            const from = typeof res?.from === "string" ? res.from : "";
+            if (!from) return;
+            const key = from.toLowerCase();
+            let entry = stats.get(key);
+            if (!entry) {
+                entry = {
+                    address: from,
+                    totalBought: 0,
+                    totalSold: 0,
+                    trades: 0,
+                    lastActive: 0,
+                };
+                stats.set(key, entry);
+            }
+            const nativeValue = Number.isFinite(res?.nativeValue) ? Number(res.nativeValue) : 0;
+            const action = String(res?.action || "").toLowerCase();
+            if (action === "buy") entry.totalBought += nativeValue;
+            if (action === "sell") entry.totalSold += nativeValue;
+            entry.trades += 1;
+            const timestamp = Number(res?.timestamp) || 0;
+            if (timestamp > entry.lastActive) entry.lastActive = timestamp;
+        });
+        return Array.from(stats.values())
+            .map((entry) => ({
+                ...entry,
+                profit: entry.totalSold - entry.totalBought,
+            }))
+            .sort((a, b) => {
+                if (b.trades !== a.trades) return b.trades - a.trades;
+                if (b.totalBought !== a.totalBought) return b.totalBought - a.totalBought;
+                return b.lastActive - a.lastActive;
+            });
+    }, [filteredHx]);
     // Derived pagination slices
     const activityTotalPages = React.useMemo(() => Math.max(1, Math.ceil(filteredHx.length / ROWS_PER_PAGE)), [filteredHx.length]);
     const paginatedActivity = React.useMemo(() => {
@@ -711,9 +770,15 @@ export default function Trade({
         const start = (holdersPage - 1) * ROWS_PER_PAGE;
         return sortedHolders.slice(start, start + ROWS_PER_PAGE);
     }, [sortedHolders, holdersPage]);
+    const tradersTotalPages = React.useMemo(() => Math.max(1, Math.ceil(traderStats.length / ROWS_PER_PAGE)), [traderStats.length]);
+    const paginatedTraders = React.useMemo(() => {
+        const start = (tradersPage - 1) * ROWS_PER_PAGE;
+        return traderStats.slice(start, start + ROWS_PER_PAGE);
+    }, [traderStats, tradersPage]);
     // Reset pages when data sets change
     React.useEffect(() => { setActivityPage(1); }, [appliedFilters, filters.time, filters.actions, hx.length]);
     React.useEffect(() => { setHoldersPage(1); }, [sortedHolders.length]);
+    React.useEffect(() => { setTradersPage(1); }, [traderStats.length]);
     const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
     const copyToClipboard = async (address: string): Promise<void> => {
         await navigator.clipboard.writeText(address);
@@ -1684,9 +1749,10 @@ export default function Trade({
 
                     <div className="sm:hidden rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl backdrop-blur">
                         <Tabs defaultValue="info" className="w-full">
-                            <TabsList className="w-full grid grid-cols-3 rounded-md p-1 mb-2 border border-white/10 font-mono">
+                            <TabsList className="w-full grid grid-cols-4 rounded-md p-1 mb-2 border border-white/10 font-mono">
                                 <TabsTrigger value="info" className="text-sm data-[state=active]:bg-black/50 data-[state=active]:text-white rounded cursor-pointer">Info</TabsTrigger>
                                 <TabsTrigger value="activity" className="text-sm data-[state=active]:bg-black/50 data-[state=active]:text-white rounded cursor-pointer">Activity</TabsTrigger>
+                                <TabsTrigger value="traders" className="text-sm data-[state=active]:bg-black/50 data-[state=active]:text-white rounded cursor-pointer">Traders</TabsTrigger>
                                 <TabsTrigger value="holders" className="text-sm data-[state=active]:bg-black/50 data-[state=active]:text-white rounded cursor-pointer">Holders</TabsTrigger>
                             </TabsList>
 
@@ -1745,6 +1811,243 @@ export default function Trade({
                                         </div>
                                     </div>
                                 </div>
+                            </TabsContent>
+
+                            <TabsContent value="traders">
+                                <div className="ml-auto flex items-center gap-2 text-xs">
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <button
+                                                className={`rounded-md px-2 py-1 transition border ${hasActiveFilters ? "border-emerald-400/50 text-emerald-200" : "border-white/10 text-white/80 hover:border-white/20"}`}
+                                                title="Filter"
+                                                aria-label="Filter traders"
+                                            >
+                                                <FilterIcon size={14} />
+                                            </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[320px] p-0 z-50">
+                                            <div className="p-3 space-y-3 text-[11px] text-white/80">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-white/60">Filters</span>
+                                                    <button
+                                                        onClick={clearFilters}
+                                                        className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20"
+                                                        title="Clear filters"
+                                                    >
+                                                        <X size={12} />
+                                                        Clear
+                                                    </button>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="block text-white/60">Time</label>
+                                                    <select
+                                                        className="w-full rounded-md border border-white/10 bg-black/60 p-2 text-xs outline-none hover:border-white/20"
+                                                        value={filters.time}
+                                                        onChange={(e) => handleTimeChange(e.target.value as any)}
+                                                    >
+                                                        <option value="all">All</option>
+                                                        <option value="5m">5m</option>
+                                                        <option value="1h">1h</option>
+                                                        <option value="24h">24h</option>
+                                                        <option value="7d">7d</option>
+                                                    </select>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="block text-white/60">From</label>
+                                                    <input
+                                                        value={filters.from}
+                                                        onChange={handleTextChange("from")}
+                                                        placeholder="address"
+                                                        className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="block text-white/60">Action</label>
+                                                    <div className="flex items-center gap-2">
+                                                        <button onClick={() => handleActionToggle("buy")} className={`rounded-full border px-2 py-1 text-[11px] ${filters.actions.buy && !filters.actions.sell ? "border-emerald-300/50 text-emerald-200" : "border-white/10 text-white/80 hover:border-white/20"}`} title="Buy">Buy</button>
+                                                        <button onClick={() => handleActionToggle("sell")} className={`rounded-full border px-2 py-1 text-[11px] ${filters.actions.sell && !filters.actions.buy ? "border-rose-300/50 text-rose-200" : "border-white/10 text-white/80 hover:border-white/20"}`} title="Sell">Sell</button>
+                                                        <button
+                                                            onClick={() => {
+                                                                const next = { ...filters, actions: { buy: true, sell: true } };
+                                                                setFilters(next);
+                                                                setAppliedFilters(next);
+                                                            }}
+                                                            className="rounded-full border px-2 py-1 text-[11px] border-white/10 text-white/60 hover:border-white/20"
+                                                            title="Show all"
+                                                        >
+                                                            All
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="block text-white/60">Native amount</label>
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="number"
+                                                            inputMode="decimal"
+                                                            value={filters.nativeMin}
+                                                            onChange={handleNumberChange("nativeMin")}
+                                                            placeholder="min"
+                                                            className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                        />
+                                                        <input
+                                                            type="number"
+                                                            inputMode="decimal"
+                                                            value={filters.nativeMax}
+                                                            onChange={handleNumberChange("nativeMax")}
+                                                            placeholder="max"
+                                                            className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="block text-white/60">Token amount</label>
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="number"
+                                                            inputMode="decimal"
+                                                            value={filters.tokenMin}
+                                                            onChange={handleNumberChange("tokenMin")}
+                                                            placeholder="min"
+                                                            className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                        />
+                                                        <input
+                                                            type="number"
+                                                            inputMode="decimal"
+                                                            value={filters.tokenMax}
+                                                            onChange={handleNumberChange("tokenMax")}
+                                                            placeholder="max"
+                                                            className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="block text-white/60">Tx hash</label>
+                                                    <input
+                                                        value={filters.hash}
+                                                        onChange={handleTextChange("hash")}
+                                                        placeholder="hash"
+                                                        className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+                                    <div className="text-white/50">Showing {traderStats.length} of {totalTraders}</div>
+                                    <button
+                                        onClick={clearFilters}
+                                        className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20"
+                                        title="Clear filters"
+                                    >
+                                        <X size={14} />
+                                        Clear
+                                    </button>
+                                </div>
+                                <div className="mt-4 overflow-x-auto rounded-xl py-2 border border-white/10">
+                                    <table className="table-auto border-seperate border-spacing-0 text-center w-full">
+                                        <thead className="text-xs text-white/80">
+                                            <tr>
+                                                <th className="px-3 py-2">
+                                                    <span className="text-white/50">Address</span>
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    <span className="text-white/50">Total Bought</span>
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    <span className="text-white/50">Total Sold</span>
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    <span className="text-white/50">Profit</span>
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    <span className="text-white/50">Trades</span>
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    <span className="text-white/50">Last Active</span>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {paginatedTraders.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={6} className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">No trader stats yet.</td>
+                                                </tr>
+                                            ) : (
+                                                paginatedTraders.map((trader) => {
+                                                    const profitClass = trader.profit > 0
+                                                        ? "text-emerald-300"
+                                                        : trader.profit < 0
+                                                            ? "text-rose-300"
+                                                            : "text-white";
+                                                    const profitValue = Math.abs(trader.profit);
+                                                    const formattedProfit = trader.profit === 0
+                                                        ? "0"
+                                                        : compactNumberFormatter.format(profitValue);
+                                                    const profitLabel = trader.profit > 0
+                                                        ? `+${formattedProfit}`
+                                                        : trader.profit < 0
+                                                            ? `-${formattedProfit}`
+                                                            : formattedProfit;
+                                                    return (
+                                                        <tr key={trader.address} className="font-mono text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
+                                                            <td className="py-6">
+                                                                <Link
+                                                                    href={getExplorerAddressUrl(trader.address)}
+                                                                    prefetch={false}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-white/70 underline-offset-2 transition hover:text-white hover:underline"
+                                                                >
+                                                                    {trader.address.slice(0, 6)}...{trader.address.slice(-4)}
+                                                                </Link>
+                                                            </td>
+                                                            <td className="py-6 text-white">
+                                                                {compactNumberFormatter.format(Math.max(trader.totalBought, 0))} {baseAssetSymbol}
+                                                            </td>
+                                                            <td className="py-6 text-white">
+                                                                {compactNumberFormatter.format(Math.max(trader.totalSold, 0))} {baseAssetSymbol}
+                                                            </td>
+                                                            <td className={`py-6 font-semibold ${profitClass}`}>
+                                                                {profitLabel} {baseAssetSymbol}
+                                                            </td>
+                                                            <td className="py-6 text-white">{trader.trades}</td>
+                                                            <td className="py-6 text-white/70">
+                                                                {trader.lastActive ? formatRelativeTime(trader.lastActive / 1000) : "-"}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {traderStats.length > 0 && (
+                                    <div className="mt-3 flex items-center justify-between text-xs text-white/60">
+                                        <span>Page {tradersPage} of {tradersTotalPages}</span>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => setTradersPage((p) => Math.max(1, p - 1))}
+                                                disabled={tradersPage <= 1}
+                                                className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                            >
+                                                Previous
+                                            </button>
+                                            <button
+                                                onClick={() => setTradersPage((p) => Math.min(tradersTotalPages, p + 1))}
+                                                disabled={tradersPage >= tradersTotalPages}
+                                                className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </TabsContent>
 
                             <TabsContent value="activity">
@@ -2055,13 +2358,265 @@ export default function Trade({
 
                     <div className="hidden sm:block rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl backdrop-blur">
                         <h2 className="mb-3 text-lg font-semibold text-white">Activity</h2>
-                        <div className="ml-auto flex items-center gap-2 text-xs">
+                        <Tabs defaultValue="activity" className="w-full">
+                            <TabsList className="w-fit grid grid-cols-2 rounded-md border border-white/10 p-1 font-mono">
+                                <TabsTrigger value="activity" className="px-4 py-1 text-sm data-[state=active]:bg-black/50 data-[state=active]:text-white rounded cursor-pointer">Activity</TabsTrigger>
+                                <TabsTrigger value="traders" className="px-4 py-1 text-sm data-[state=active]:bg-black/50 data-[state=active]:text-white rounded cursor-pointer">Traders</TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="activity">
+                                <div className="mt-4 flex flex-wrap items-center justify-end gap-2 text-xs">
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <button
+                                                className={`rounded-md px-2 py-1 transition border ${hasActiveFilters ? "border-emerald-400/50 text-emerald-200" : "border-white/10 text-white/80 hover:border-white/20"}`}
+                                                title="Filter"
+                                                aria-label="Filter activity"
+                                            >
+                                                <FilterIcon size={14} />
+                                            </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[320px] p-0 z-50">
+                                            <div className="p-3 space-y-3 text-[11px] text-white/80">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-white/60">Filters</span>
+                                                    <button
+                                                        onClick={clearFilters}
+                                                        className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20"
+                                                        title="Clear filters"
+                                                    >
+                                                        <X size={12} />
+                                                        Clear
+                                                    </button>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="block text-white/60">Time</label>
+                                                    <select
+                                                        className="w-full rounded-md border border-white/10 bg-black/60 p-2 text-xs outline-none hover:border-white/20"
+                                                        value={filters.time}
+                                                        onChange={(e) => handleTimeChange(e.target.value as any)}
+                                                    >
+                                                        <option value="all">All</option>
+                                                        <option value="5m">5m</option>
+                                                        <option value="1h">1h</option>
+                                                        <option value="24h">24h</option>
+                                                        <option value="7d">7d</option>
+                                                    </select>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="block text-white/60">From</label>
+                                                    <input
+                                                        value={filters.from}
+                                                        onChange={handleTextChange("from")}
+                                                        placeholder="address"
+                                                        className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="block text-white/60">Action</label>
+                                                    <div className="flex items-center gap-2">
+                                                        <button onClick={() => handleActionToggle("buy")} className={`rounded-full border px-2 py-1 text-[11px] ${filters.actions.buy && !filters.actions.sell ? "border-emerald-300/50 text-emerald-200" : "border-white/10 text-white/80 hover:border-white/20"}`} title="Buy">Buy</button>
+                                                        <button onClick={() => handleActionToggle("sell")} className={`rounded-full border px-2 py-1 text-[11px] ${filters.actions.sell && !filters.actions.buy ? "border-rose-300/50 text-rose-200" : "border-white/10 text-white/80 hover:border-white/20"}`} title="Sell">Sell</button>
+                                                        <button
+                                                            onClick={() => {
+                                                                const next = { ...filters, actions: { buy: true, sell: true } };
+                                                                setFilters(next);
+                                                                setAppliedFilters(next);
+                                                            }}
+                                                            className="rounded-full border px-2 py-1 text-[11px] border-white/10 text-white/60 hover:border-white/20"
+                                                            title="Show all"
+                                                        >
+                                                            All
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="block text-white/60">Native amount</label>
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="number"
+                                                            inputMode="decimal"
+                                                            value={filters.nativeMin}
+                                                            onChange={handleNumberChange("nativeMin")}
+                                                            placeholder="min"
+                                                            className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                        />
+                                                        <input
+                                                            type="number"
+                                                            inputMode="decimal"
+                                                            value={filters.nativeMax}
+                                                            onChange={handleNumberChange("nativeMax")}
+                                                            placeholder="max"
+                                                            className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="block text-white/60">Token amount</label>
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="number"
+                                                            inputMode="decimal"
+                                                            value={filters.tokenMin}
+                                                            onChange={handleNumberChange("tokenMin")}
+                                                            placeholder="min"
+                                                            className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                        />
+                                                        <input
+                                                            type="number"
+                                                            inputMode="decimal"
+                                                            value={filters.tokenMax}
+                                                            onChange={handleNumberChange("tokenMax")}
+                                                            placeholder="max"
+                                                            className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="block text-white/60">Tx hash</label>
+                                                    <input
+                                                        value={filters.hash}
+                                                        onChange={handleTextChange("hash")}
+                                                        placeholder="hash"
+                                                        className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+                                    <div className="text-white/50">Showing {filteredHx.length} of {hx.length}</div>
+                                    <button
+                                        onClick={clearFilters}
+                                        className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20"
+                                        title="Clear filters"
+                                    >
+                                        <X size={14} />
+                                        Clear
+                                    </button>
+                                </div>
+
+                        <div className="mt-4 overflow-x-auto rounded-xl py-2 border border-white/10">
+                            <table className="table-auto border-seperate border-spacing-0 text-center w-full">
+                                <thead className="text-xs text-white/80">
+                                    <tr>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">Time</span>
+                                            </div>
+                                        </th>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">From</span>
+                                            </div>
+                                        </th>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">Action</span>
+                                            </div>
+                                        </th>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">Native</span>
+                                            </div>
+                                        </th>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">Token</span>
+                                            </div>
+                                        </th>
+                                        <th className="px-3 py-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-white/50">Tx</span>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredHx.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={7} className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">No trades yet. Be the first to make a move.</td>
+                                        </tr>
+                                    ) : (
+                                        paginatedActivity.map((res) => (
+                                            <tr key={res.hash} className="font-mono text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
+                                                <td className="py-6">{formatRelativeTime(res.timestamp / 1000)}</td>
+                                                <td className="py-6">
+                                                    <Link
+                                                        href={getExplorerAddressUrl(res.from)}
+                                                        prefetch={false}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-white/70 underline-offset-2 transition hover:text-white hover:underline"
+                                                    >
+                                                        {res.from.slice(0, 6)}...{res.from.slice(-4)}
+                                                    </Link>
+                                                </td>
+                                                <td className="sm:px-0 py-6">
+                                                    <div
+                                                        className={`inline-block rounded-full bg-white/10 px-2 py-1 capitalize font-semibold uppercase ${
+                                                            res.action === "buy" ? "text-emerald-300" :
+                                                            res.action === "sell" ? "text-rose-300" : "text-cyan-300"
+                                                        }`}
+                                                    >
+                                                        {res.action}
+                                                    </div>
+                                                </td>
+                                                <td className="py-6 text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.nativeValue)} {baseAssetSymbol}</td>
+                                                <td className="py-6 text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.value)} {tokenSymbolDisplay}</td>
+                                                <td className="py-6">
+                                                    <Link
+                                                        href={`${_explorer}tx/${res.hash}`}
+                                                        prefetch={false}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-emerald-200 underline-offset-2 transition hover:text-emerald-100 hover:underline"
+                                                    >
+                                                        {res.hash.slice(0, 6)}...{res.hash.slice(-4)}
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        {filteredHx.length > 0 && (
+                            <div className="mt-3 flex items-center justify-between text-xs text-white/60">
+                                <span>Page {activityPage} of {activityTotalPages}</span>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
+                                        disabled={activityPage <= 1}
+                                        className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        Previous
+                                    </button>
+                                    <button
+                                        onClick={() => setActivityPage((p) => Math.min(activityTotalPages, p + 1))}
+                                        disabled={activityPage >= activityTotalPages}
+                                        className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </TabsContent>
+
+                    <TabsContent value="traders">
+                        <div className="mt-4 flex flex-wrap items-center justify-end gap-2 text-xs">
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <button
                                         className={`rounded-md px-2 py-1 transition border ${hasActiveFilters ? "border-emerald-400/50 text-emerald-200" : "border-white/10 text-white/80 hover:border-white/20"}`}
                                         title="Filter"
-                                        aria-label="Filter activity"
+                                        aria-label="Filter traders"
                                     >
                                         <FilterIcon size={14} />
                                     </button>
@@ -2180,7 +2735,7 @@ export default function Trade({
                                     </div>
                                 </PopoverContent>
                             </Popover>
-                            <div className="text-white/50">Showing {filteredHx.length} of {hx.length}</div>
+                            <div className="text-white/50">Showing {traderStats.length} of {totalTraders}</div>
                             <button
                                 onClick={clearFilters}
                                 className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20"
@@ -2196,100 +2751,93 @@ export default function Trade({
                                 <thead className="text-xs text-white/80">
                                     <tr>
                                         <th className="px-3 py-2">
-                                            <div className="flex flex-col items-center gap-1">
-                                                <span className="text-white/50">Time</span>
-                                            </div>
+                                            <span className="text-white/50">Address</span>
                                         </th>
                                         <th className="px-3 py-2">
-                                            <div className="flex flex-col items-center gap-1">
-                                                <span className="text-white/50">From</span>
-                                            </div>
+                                            <span className="text-white/50">Total Bought</span>
                                         </th>
                                         <th className="px-3 py-2">
-                                            <div className="flex flex-col items-center gap-1">
-                                                <span className="text-white/50">Action</span>
-                                            </div>
+                                            <span className="text-white/50">Total Sold</span>
                                         </th>
                                         <th className="px-3 py-2">
-                                            <div className="flex flex-col items-center gap-1">
-                                                <span className="text-white/50">Native</span>
-                                            </div>
+                                            <span className="text-white/50">Profit</span>
                                         </th>
                                         <th className="px-3 py-2">
-                                            <div className="flex flex-col items-center gap-1">
-                                                <span className="text-white/50">Token</span>
-                                            </div>
+                                            <span className="text-white/50">Trades</span>
                                         </th>
                                         <th className="px-3 py-2">
-                                            <div className="flex flex-col items-center gap-1">
-                                                <span className="text-white/50">Tx</span>
-                                            </div>
+                                            <span className="text-white/50">Last Active</span>
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredHx.length === 0 ? (
+                                    {paginatedTraders.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">No trades yet. Be the first to make a move.</td>
+                                            <td colSpan={6} className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">No trader stats yet.</td>
                                         </tr>
                                     ) : (
-                                        paginatedActivity.map((res) => (
-                                            <tr key={res.hash} className="font-mono text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
-                                                <td className="py-6">{formatRelativeTime(res.timestamp / 1000)}</td>
-                                                <td className="py-6">
-                                                    <Link
-                                                        href={getExplorerAddressUrl(res.from)}
-                                                        prefetch={false}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-white/70 underline-offset-2 transition hover:text-white hover:underline"
-                                                    >
-                                                        {res.from.slice(0, 6)}...{res.from.slice(-4)}
-                                                    </Link>
-                                                </td>
-                                                <td className="sm:px-0 py-6">
-                                                    <div
-                                                        className={`inline-block rounded-full bg-white/10 px-2 py-1 capitalize font-semibold uppercase ${
-                                                            res.action === "buy" ? "text-emerald-300" :
-                                                            res.action === "sell" ? "text-rose-300" : "text-cyan-300"
-                                                        }`}
-                                                    >
-                                                        {res.action}
-                                                    </div>
-                                                </td>
-                                                <td className="py-6 text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.nativeValue)} {baseAssetSymbol}</td>
-                                                <td className="py-6 text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.value)} {tokenSymbolDisplay}</td>
-                                                <td className="py-6">
-                                                    <Link
-                                                        href={`${_explorer}tx/${res.hash}`}
-                                                        prefetch={false}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-emerald-200 underline-offset-2 transition hover:text-emerald-100 hover:underline"
-                                                    >
-                                                        {res.hash.slice(0, 6)}...{res.hash.slice(-4)}
-                                                    </Link>
-                                                </td>
-                                            </tr>
-                                        ))
+                                        paginatedTraders.map((trader) => {
+                                            const profitClass = trader.profit > 0
+                                                ? "text-emerald-300"
+                                                : trader.profit < 0
+                                                    ? "text-rose-300"
+                                                    : "text-white";
+                                            const profitValue = Math.abs(trader.profit);
+                                            const formattedProfit = trader.profit === 0
+                                                ? "0"
+                                                : compactNumberFormatter.format(profitValue);
+                                            const profitLabel = trader.profit > 0
+                                                ? `+${formattedProfit}`
+                                                : trader.profit < 0
+                                                    ? `-${formattedProfit}`
+                                                    : formattedProfit;
+                                            return (
+                                                <tr key={trader.address} className="font-mono text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
+                                                    <td className="py-6">
+                                                        <Link
+                                                            href={getExplorerAddressUrl(trader.address)}
+                                                            prefetch={false}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-white/70 underline-offset-2 transition hover:text-white hover:underline"
+                                                        >
+                                                            {trader.address.slice(0, 6)}...{trader.address.slice(-4)}
+                                                        </Link>
+                                                    </td>
+                                                    <td className="py-6 text-white">
+                                                        {compactNumberFormatter.format(Math.max(trader.totalBought, 0))} {baseAssetSymbol}
+                                                    </td>
+                                                    <td className="py-6 text-white">
+                                                        {compactNumberFormatter.format(Math.max(trader.totalSold, 0))} {baseAssetSymbol}
+                                                    </td>
+                                                    <td className={`py-6 font-semibold ${profitClass}`}>
+                                                        {profitLabel} {baseAssetSymbol}
+                                                    </td>
+                                                    <td className="py-6 text-white">{trader.trades}</td>
+                                                    <td className="py-6 text-white/70">
+                                                        {trader.lastActive ? formatRelativeTime(trader.lastActive / 1000) : "-"}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
                                     )}
                                 </tbody>
                             </table>
                         </div>
-                        {filteredHx.length > 0 && (
+                        {traderStats.length > 0 && (
                             <div className="mt-3 flex items-center justify-between text-xs text-white/60">
-                                <span>Page {activityPage} of {activityTotalPages}</span>
+                                <span>Page {tradersPage} of {tradersTotalPages}</span>
                                 <div className="flex items-center gap-2">
                                     <button
-                                        onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
-                                        disabled={activityPage <= 1}
+                                        onClick={() => setTradersPage((p) => Math.max(1, p - 1))}
+                                        disabled={tradersPage <= 1}
                                         className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                         Previous
                                     </button>
                                     <button
-                                        onClick={() => setActivityPage((p) => Math.min(activityTotalPages, p + 1))}
-                                        disabled={activityPage >= activityTotalPages}
+                                        onClick={() => setTradersPage((p) => Math.min(tradersTotalPages, p + 1))}
+                                        disabled={tradersPage >= tradersTotalPages}
                                         className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                         Next
@@ -2297,6 +2845,8 @@ export default function Trade({
                                 </div>
                             </div>
                         )}
+                    </TabsContent>
+                        </Tabs>
                     </div>
                 </div>
 
