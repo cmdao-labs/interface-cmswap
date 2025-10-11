@@ -1,248 +1,393 @@
 'use client';
 import Link from "next/link";
-import { useState } from 'react';
-import { useConnections, useAccount } from 'wagmi';
-import { formatEther, parseEther, erc20Abi } from 'viem';
-import { writeContract, readContracts } from '@wagmi/core';
-import { config } from '@/app/config';
-import { ERC20FactoryABI } from '@/app/pump/abi/ERC20Factory';
-import { ERC20FactoryV2ABI } from '@/app/pump/abi/ERC20FactoryV2';
-import { redirect } from 'next/navigation';
+import { ArrowLeft, UploadCloud, Info, Loader2 } from "lucide-react";
+import { useConnections, useAccount } from "wagmi";
+import { formatEther, parseEther, erc20Abi } from "viem";
+import { writeContract, readContracts } from "@wagmi/core";
+import { useMemo, useState, type ChangeEvent, type ReactNode } from "react";
+import { config } from "@/app/config";
+import { ERC20FactoryABI } from "@/app/pump/abi/ERC20Factory";
+import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
+import { useRouter } from "next/navigation";
 import CustomPopup from "@/app/components/popup-modal";
 
-export default function Create({
-  mode, chain, token,
-}: {
-  mode: string;
-  chain: string;
-  token: string;
+export default function Create({ mode, chain, token, }: {
+    mode: string;
+    chain: string;
+    token: string;
 }) {
-  const connections = useConnections();
+    const router = useRouter();
+    const connections = useConnections();
 
-  let _chainId = 0;
-  if (chain === 'kub' || chain === '') {
-    _chainId = 96;
-  } else if (chain === 'monad') {
-    _chainId = 10143;
-  } else if (chain === 'kubtestnet'){
-    _chainId = 25925;
-  }
-  // add chain here
-  let currencyAddr: string = '';
-  let bkgafactoryAddr: string = '';
-  if ((chain === 'kub' || chain === '') && (mode === 'lite' || mode === '') && (token === 'cmm' || token === '')) {
-    currencyAddr = '0x9b005000a10ac871947d99001345b01c1cef2790';
-    bkgafactoryAddr = '0x10d7c3bDc6652bc3Dd66A33b9DD8701944248c62';
-  } else if ((chain === 'kub' || chain === '') && mode === 'pro') {
-    currencyAddr = '0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5';
-    bkgafactoryAddr = '0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56';
-  } else if (chain === 'monad' && mode === 'pro') {
-    currencyAddr = '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701';
-    bkgafactoryAddr = '0x6dfc8eecca228c45cc55214edc759d39e5b39c93';
-  } else if (chain === 'kubtestnet' && mode === 'pro') {
-        currencyAddr = '0x700D3ba307E1256e509eD3E45D6f9dff441d6907';
-        bkgafactoryAddr = '0x46a4073c830031ea19d7b9825080c05f8454e530';
-    }  
-  // add chain and mode here
-  const dataofcurr = {addr: currencyAddr};
-  const bkgafactoryContract = {
-    address: bkgafactoryAddr as '0xstring',
-    abi: chain === 'kubtestnet' ? ERC20FactoryV2ABI : ERC20FactoryABI,
-    chainId: _chainId,
-  } as const
-
-  const account = useAccount();
-  const [file, setFile] = useState(null as unknown as File);
-  const [name, setName] = useState('');
-  const [ticker, setTicker] = useState('');
-  const [desp, setDesp] = useState('');
-  const [popupState, setPopupState] = useState({
-    isOpen: false,
-    header: '',
-    description: '',
-    actionButton: null as React.ReactNode | null,
-    footer: null as React.ReactNode | null,
-  });
-  
-  const handleIpfsUpload = (upload: any) => {
-    if (!upload || upload.IpfsHash === undefined) {
-      setPopupState({
-        isOpen: true,
-        header: 'IPFS Upload Failed',
-        description: 'Upload IPFS Fail, please contact support.',
-        actionButton: null,
-        footer: <span>Contact support at <Link href={"https://discord.gg/k92ReT5EYy"} target="_blank" rel="noreferrer" className="underline hover:font-bold ">Discord</Link></span>,
-      });
-      return false;
+    let _chainId = 0;
+    if (chain === "kub" || chain === "") _chainId = 96;
+    if (chain === "monad") _chainId = 10143;
+    if (chain === "kubtestnet") _chainId = 25925;
+    let currencyAddr = "";
+    let bkgafactoryAddr = "";
+    if ((chain === "kub" || chain === "") && (mode === "lite" || mode === "") && (token === "cmm" || token === "")) {
+        currencyAddr = "0x9b005000a10ac871947d99001345b01c1cef2790";
+        bkgafactoryAddr = "0x10d7c3bDc6652bc3Dd66A33b9DD8701944248c62";
+    } else if ((chain === "kub" || chain === "") && mode === "pro") {
+        currencyAddr = "0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5";
+        bkgafactoryAddr = "0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56";
+    } else if (chain === "monad" && mode === "pro") {
+        currencyAddr = "0x760afe86e5de5fa0ee542fc7b7b713e1c5425701";
+        bkgafactoryAddr = "0x6dfc8eecca228c45cc55214edc759d39e5b39c93";
+    } else if (chain === "kubtestnet" && mode === "pro") {
+        currencyAddr = "0x700D3ba307E1256e509eD3E45D6f9dff441d6907";
+        bkgafactoryAddr = "0x46a4073c830031ea19d7b9825080c05f8454e530";
     }
-    return true;
-  };
+    const dataofcurr = { addr: currencyAddr };
+    const bkgafactoryContract = {address: bkgafactoryAddr as "0xstring", abi: chain === "kubtestnet" ? ERC20FactoryV2ABI : ERC20FactoryABI, chainId: _chainId} as const;
 
-  const closePopup = () => {
-    setPopupState({ ...popupState, isOpen: false });
-  };
+    const account = useAccount();
+    const [file, setFile] = useState<File | null>(null);
+    const [name, setName] = useState("");
+    const [ticker, setTicker] = useState("");
+    const [desp, setDesp] = useState("");
+    const [isLaunching, setIsLaunching] = useState(false);
+    const [popupState, setPopupState] = useState({
+        isOpen: false,
+        header: "",
+        description: "",
+        actionButton: null as ReactNode | null,
+        footer: null as ReactNode | null,
+    });
 
-  const _launch = async () => {
-    try {
-      setPopupState({
-        isOpen: true,
-        header: 'Creating Token',
-        description: 'Your token is being launched, please wait...',
-        actionButton: null,
-        footer: null,
-      });
-      const data = new FormData();
-      data.set("file", file);
-      const uploadRequest = await fetch("/pump/api/files", { method: "POST", body: data, });
-      const upload = await uploadRequest.json();
-      console.log(name, ticker, desp, 'ipfs://' + upload.IpfsHash);
-
-      if(upload.IpfsHash === undefined){
-        handleIpfsUpload(upload);
-        return;
-      }
-      
-
-      let result = '';
-      if (mode === 'lite' && (token === 'cmm' || token === '')) {
-        const allowance = await readContracts(config, {
-          contracts: [
-            {
-                address: dataofcurr.addr as '0xstring',
-                abi: erc20Abi,
-                functionName: 'allowance',
-                args: [account.address as '0xstring', bkgafactoryAddr as '0xstring'],
-                chainId: _chainId,
-            },
-          ],
-        });
-        if (Number(formatEther(allowance[0].result!)) < 6000) {
-            writeContract(config, {
-                address: dataofcurr.addr as '0xstring',
-                abi: erc20Abi,
-                functionName: 'approve',
-                args: [bkgafactoryAddr as '0xstring', parseEther('10000')],
-                chainId: _chainId,
-            })
+    const chainLabel = useMemo(() => {
+        switch (chain) {
+            case "kub":
+                return "Bitkub Chain";
+            case "kubtestnet":
+                return "Bitkub Testnet";
+            case "monad":
+                return "Monad Testnet";
+            default:
+                return chain ? chain.toUpperCase() : "Bitkub Chain";
         }
-        result = await writeContract(config, {
-          ...bkgafactoryContract,
-          functionName: 'createToken',
-          args: [name, ticker, 'ipfs://' + upload.IpfsHash, desp],
-          value: parseEther('0'),
-        });
-      } else if (chain === 'kubtestnet' && mode === 'pro') {
-        // note ipfs://bafkreiexe7q5ptjflrlccf3vtqdbpwk36j3emlsulksx7ot52e3uqyqu3u is fallback logo
-              result = await writeContract(config, {
-          ...bkgafactoryContract,
-          functionName: 'createToken',
-          args: [name, ticker, 'ipfs://' + upload.IpfsHash, desp,'ipfs://bafkreiexe7q5ptjflrlccf3vtqdbpwk36j3emlsulksx7ot52e3uqyqu3u','l2','l3'],
-          value: parseEther('0'),
-        });
-        
-      }
-        else{
-        result = await writeContract(config, {
-          ...bkgafactoryContract,
-          functionName: 'createToken',
-          args: [name, ticker, 'ipfs://' + upload.IpfsHash, desp],
-          value: parseEther('1'),
-        });
-      }
-      
-      setPopupState({
-        isOpen: true,
-        header: 'Launch Successful',
-        description: 'Your token has been launched successfully!',
-        actionButton: (
-          <button
-            onClick={() => {
-              closePopup();
-              redirect(`/pump/launchpad?chain=${chain}&mode=${mode}`);
-            }}
-            className={`px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600`}
-          >
-            Go to Launchpad
-          </button>
-        ),
-        footer: null,
-      });
+    }, [chain]);
 
-/*       alert("Launch success!, your txn hash: " + 
-        (chain === 'kub' && "https://www.kubscan.com/tx/") + 
-        (chain === 'monad' && "https://monad-testnet.socialscan.io/") +
-        (chain === 'kubtestnet' && "https://testnet.kubscan.com/tx/") 
-        + result); */
-    redirect(`/pump/launchpad?chain=${chain}&mode=${mode}`);
+    const modeLabel = mode === "pro" ? "Pro Mode" : "Lite Mode";
+    const isWalletReady = Boolean(connections) && account.address !== undefined && account.chainId === _chainId;
 
-    } catch (e) {
-      console.log(e);
-        setPopupState({
-        isOpen: true,
-        header: 'Launch Failed',
-        description: `Launch fail with reason ${e}`,
-        actionButton: null,
-        footer: null,
-      });
-    }
-  }
+    const deploymentCostCopy = useMemo(() => {
+        if (chain === "kub" && mode === "pro") return "1 KUB (network fee not included)";
+        if ((chain === "kub" || chain === "") && (mode === "lite" || mode === "") && (token === "cmm" || token === "")) return "6,000 CMM (network fee not included)";
+        if (chain === "monad" && mode === "pro") return "1 MON (network fee not included)";
+        if (chain === "kubtestnet" && mode === "pro") return "0 tKUB (network fee only)";
+        return "Gas fee only";
+    }, [chain, mode, token]);
 
-  const launch = () => {
-    _launch();
-    setName('');
-    setTicker('');
-    setDesp('');
-  };
+    const requirementNotes = useMemo(() => {
+        const notes: string[] = [];
+        if ((mode === "lite" || mode === "") && (token === "cmm" || token === "")) {
+            notes.push("Ensure your wallet holds at least 6,000 CMM and has approved the factory contract.");
+        }
+        notes.push("Your logo is automatically pinned to IPFS; 512x512 PNG works best.");
+        notes.push("Connect to the correct network before confirming the transaction.");
+        return notes;
+    }, [mode, token]);
 
-  return (
-    <main className="mt-[70px] md:mt-[50px] row-start-2 w-full xl:w-1/4 self-center h-full flex flex-col gap-6 items-center xl:items-start mt-[100px] md:mt-1">
-        <Link href={"/pump/launchpad?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")} prefetch={false} className="underline hover:font-bold">Back to launchpad</Link>
-        <span className="text-2xl font-bold mt-4">Create a meme 🚀</span>
-        <form action={launch} className="flex flex-col gap-6">
-          <input className="w-full p-4 bg-gray-700 rounded-xl leading-tight focus:outline-none" placeholder="Coin Name" value={name} onChange={(e) => setName(e.target.value)} required />
-          <input className="w-full p-4 bg-gray-700 rounded-xl leading-tight focus:outline-none" placeholder="Ticker" value={ticker} onChange={(e) => setTicker(e.target.value)} required />
-          <div className="w-full">
-            <input
-              className="w-full p-4 bg-gray-700 rounded-xl leading-tight focus:outline-none"
-              placeholder="Description"
-              value={desp}
-              onChange={(e) => setDesp(e.target.value)}
-              maxLength={200}
+    const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+        const selected = event.target.files?.[0] ?? null;
+        setFile(selected);
+    };
+
+    const handleIpfsUpload = (upload: any) => {
+        if (!upload || upload.IpfsHash === undefined) {
+            setPopupState({
+                isOpen: true,
+                header: "IPFS Upload Failed",
+                description: "Upload IPFS Fail, please contact support.",
+                actionButton: null,
+                footer: (
+                    <span>
+                        Contact support at{" "}
+                        <Link
+                            href="https://discord.gg/k92ReT5EYy"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="underline transition hover:font-bold"
+                        >
+                            Discord
+                        </Link>
+                    </span>
+                ),
+            });
+            return false;
+        }
+        return true;
+    };
+
+    const closePopup = () => {
+        setPopupState((prev) => ({ ...prev, isOpen: false }));
+    };
+
+    const _launch = async () => {
+        if (!file) {
+            setPopupState({
+                isOpen: true,
+                header: "Missing Logo",
+                description: "Please attach a token logo before launching.",
+                actionButton: null,
+                footer: null,
+            });
+            return;
+        }
+
+        try {
+            setIsLaunching(true);
+            setPopupState({
+                isOpen: true,
+                header: "Creating Token",
+                description: "Your token is being launched, please wait...",
+                actionButton: null,
+                footer: null,
+            });
+
+            const data = new FormData();
+            data.set("file", file);
+            const uploadRequest = await fetch("/pump/api/files", { method: "POST", body: data });
+            const upload = await uploadRequest.json();
+
+            if (!handleIpfsUpload(upload)) return;
+
+            let result = "";
+            if (mode === "lite" && (token === "cmm" || token === "")) {
+                const allowance = await readContracts(config, {
+                contracts: [
+                    {
+                        address: dataofcurr.addr as "0xstring",
+                        abi: erc20Abi,
+                        functionName: "allowance",
+                        args: [account.address as "0xstring", bkgafactoryAddr as "0xstring"],
+                        chainId: _chainId,
+                    },
+                ],
+                });
+                if (Number(formatEther(allowance[0].result!)) < 6000) {
+                await writeContract(config, {
+                    address: dataofcurr.addr as "0xstring",
+                    abi: erc20Abi,
+                    functionName: "approve",
+                    args: [bkgafactoryAddr as "0xstring", parseEther("10000")],
+                    chainId: _chainId,
+                });
+                }
+                result = await writeContract(config, {
+                    ...bkgafactoryContract,
+                    functionName: "createToken",
+                    args: [name, ticker, `ipfs://${upload.IpfsHash}`, desp],
+                    value: parseEther("0"),
+                });
+            } else if (chain === "kubtestnet" && mode === "pro") {
+                result = await writeContract(config, {
+                    ...bkgafactoryContract,
+                    functionName: "createToken",
+                    args: [
+                        name,
+                        ticker,
+                        `ipfs://${upload.IpfsHash}`,
+                        desp,
+                        "ipfs://bafkreiexe7q5ptjflrlccf3vtqdbpwk36j3emlsulksx7ot52e3uqyqu3u",
+                        "l2",
+                        "l3",
+                    ],
+                    value: parseEther("0"),
+                });
+            } else {
+                result = await writeContract(config, {
+                    ...bkgafactoryContract,
+                    functionName: "createToken",
+                    args: [name, ticker, `ipfs://${upload.IpfsHash}`, desp],
+                    value: parseEther("1"),
+                });
+            }
+
+            setPopupState({
+                isOpen: true,
+                header: "Launch Successful",
+                description: "Your token has been launched successfully!",
+                actionButton: (
+                    <button
+                        onClick={() => {
+                        closePopup();
+                        router.replace(`/pump/launchpad?chain=${chain}&mode=${mode}`);
+                        }}
+                        className="rounded-full border border-emerald-400/40 bg-emerald-400/20 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-400/30"
+                    >
+                        Go to Launchpad
+                    </button>
+                ),
+                footer: null,
+            });
+
+            setName("");
+            setTicker("");
+            setDesp("");
+            setFile(null);
+            router.replace(`/pump/launchpad?chain=${chain}&mode=${mode}`);
+        } catch (e) {
+            console.log(e);
+            setPopupState({
+                isOpen: true,
+                header: "Launch Failed",
+                description: `Launch fail with reason ${e}`,
+                actionButton: null,
+                footer: null,
+            });
+        } finally {
+            setIsLaunching(false);
+        }
+    };
+
+    const launch = () => {
+        void _launch();
+    };
+
+    const buttonDisabled = !isWalletReady || isLaunching;
+    const buttonLabel = isWalletReady ? (isLaunching ? "Launching..." : "Launch Meme Token") : "Connect Wallet to Launch";
+
+    return (
+        <main className="relative min-h-screen w-full overflow-hidden pt-14 sm:pt-20 text-white">
+            <div className="w-full my-4 px-4 flex items-center gap-6 text-[8px] sm:text-sm">
+                <Link
+                    href={`/pump/launchpad?chain=${chain}${mode === "pro" ? "&mode=pro" : "&mode=lite"}`}
+                    prefetch={false}
+                    className="rounded-full border border-white/10 bg-white/5 p-1 transition hover:border-white/30 hover:bg-white/10"
+                    aria-label="Back to launchpad"
+                >
+                    <ArrowLeft className="h-6 w-6" aria-hidden="true" />
+                </Link>
+                <div className="flex gap-2 uppercase tracking-[0.2em] text-white/60">
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">{chainLabel}</span>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">{modeLabel}</span>
+                </div>
+            </div>
+
+            <section className="relative sm:mx-4 flex flex-col gap-8 overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-6 sm:p-10 shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur">
+                <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
+                    Create a meme <span className="inline-block">🚀</span>
+                </h1>
+
+                <form action={launch} className="grid gap-8 lg:grid-cols-[1.35fr_1fr]">
+                    <div className="flex flex-col gap-6">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <label className="flex flex-col gap-2">
+                                <span className="text-xs uppercase tracking-wide text-white/50">Coin Name</span>
+                                <input
+                                    className="w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-emerald-400/80 focus:bg-white/[0.08]"
+                                    placeholder="e.g. Cosmic Meme"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    required
+                                />
+                            </label>
+                            <label className="flex flex-col gap-2">
+                                <span className="text-xs uppercase tracking-wide text-white/50">Ticker</span>
+                                <input
+                                    className="w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-emerald-400/80 focus:bg-white/[0.08]"
+                                    placeholder="e.g. COSMIC"
+                                    value={ticker}
+                                    onChange={(e) => setTicker(e.target.value)}
+                                    required
+                                />
+                            </label>
+                        </div>
+
+                        <label className="flex flex-col gap-3">
+                            <div className="flex items-center justify-between text-xs uppercase tracking-wide text-white/50">
+                                <span>Description</span>
+                                <span className="text-[10px] font-normal text-white/35">{desp.length}/200</span>
+                            </div>
+                            <textarea
+                                className="min-h-[140px] w-full resize-none rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-emerald-400/80 focus:bg-white/[0.08]"
+                                placeholder="Share your meme coin&apos;s backstory in a sentence or two."
+                                value={desp}
+                                onChange={(e) => setDesp(e.target.value)}
+                                maxLength={200}
+                            />
+                        </label>
+
+                        <div className="flex flex-col gap-2">
+                            <span className="text-xs uppercase tracking-wide text-white/50">Token Logo</span>
+                            <label className="group relative flex flex-col gap-4 rounded-2xl border border-dashed border-white/20 bg-white/[0.04] px-4 py-6 transition hover:border-emerald-300/60 hover:bg-emerald-300/5">
+                                <div className="flex flex-col gap-1 text-sm">
+                                    <span className="font-medium text-white">{file ? file.name : "Upload PNG, JPG or GIF (max 2MB)"}</span>
+                                    <span className="text-xs text-white/40">512 x 512 recommended - Transparent background preferred</span>
+                                </div>
+                                <div className="flex items-center gap-2 self-start rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-xs font-semibold text-emerald-200 transition group-hover:bg-emerald-400/20 group-hover:text-emerald-100">
+                                    <UploadCloud className="h-4 w-4" aria-hidden="true" />
+                                    <span>Select logo</span>
+                                </div>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="absolute inset-0 cursor-pointer opacity-0"
+                                    onChange={handleFileChange}
+                                    required
+                                />
+                            </label>
+                        </div>
+                    </div>
+
+                    <aside className="flex h-full flex-col gap-6 rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+                        <div className="flex items-center gap-3">
+                            <div className="rounded-full border border-emerald-400/40 bg-emerald-400/10 p-2 text-emerald-200">
+                                <Info className="h-4 w-4" aria-hidden="true" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-white">Launch checklist</p>
+                                <p className="text-xs text-white/50">Review fees and prerequisites before confirming.</p>
+                            </div>
+                            </div>
+
+                            <div className="grid gap-4 text-sm text-white/70">
+                            <div>
+                                <span className="text-xs uppercase tracking-wide text-white/40">Deployment Cost</span>
+                                <p className="mt-1 text-base text-white">{deploymentCostCopy}</p>
+                            </div>
+                            <div className="space-y-2">
+                                <span className="text-xs uppercase tracking-wide text-white/40">Before You Launch</span>
+                                <ul className="space-y-2 text-sm leading-relaxed text-white/70">
+                                    {requirementNotes.map((note) => (
+                                        <li key={note} className="flex gap-2">
+                                        <span className="mt-[6px] h-1.5 w-1.5 rounded-full bg-emerald-300/80" />
+                                        <span>{note}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-xs text-emerald-200">Make sure your wallet is connected to {chainLabel} and has enough balance to cover the network fee.</div>
+
+                        <button
+                            type="submit"
+                            disabled={buttonDisabled}
+                            aria-busy={isLaunching}
+                            className={`flex items-center justify-center gap-2 rounded-full border px-6 py-3 text-sm font-semibold tracking-wide transition ${
+                                buttonDisabled
+                                ? "cursor-not-allowed border-white/10 bg-white/5 text-white/40"
+                                : "border-emerald-400/40 bg-emerald-400/20 text-emerald-100 hover:bg-emerald-400/30 hover:shadow-[0_0_25px_rgba(16,185,129,0.35)]"
+                            }`}
+                        >
+                            {isLaunching && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                            <span>{buttonLabel}</span>
+                        </button>
+                    </aside>
+                </form>
+            </section>
+
+            <CustomPopup
+                isOpen={popupState.isOpen}
+                onClose={closePopup}
+                header={popupState.header}
+                description={popupState.description}
+                actionButton={popupState.actionButton}
+                footer={popupState.footer}
             />
-            <div className="text-right text-sm text-gray-400 mt-1">
-              {desp.length}/200
-            </div>
-          </div>
-          <div className="w-full pt-1 flex flex-col gap-4" >
-            <input type="file" className="file:mr-4 file:rounded-full file:border-0 file:bg-gray-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-violet-600 dark:file:text-violet-100 dark:hover:file:bg-violet-500 ..." onChange={(e) => setFile(e.target.files![0])} required />
-          </div>
-          <div className="text-teal-900 pt-2 w-full" role="alert">
-            <div className="flex">
-              <svg className="fill-current h-4 w-4 text-teal-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/></svg>
-              <p className="font-bold text-xs">Deployment cost: 
-                {chain === 'kub' && mode === 'pro' && '1 KUB (not included network fee)'}
-                {chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && '6,000 CMM (not included network fee)'}
-                {chain === 'monad' && mode === 'pro' && '1 MON (not included network fee)'}
-                {chain === 'kubtestnet' && mode === 'pro' && ' 0 tKUB only network fee'}
-              </p>
-            </div>
-          </div>
-          {connections && account.address !== undefined && account.chainId === _chainId ? 
-            <button className="w-1/2 p-2 mb-3 rounded-2xl font-bold bg-emerald-300 text-slate-900 underline hover:bg-sky-500 hover:text-white cursor-pointer" type="submit"><span className="self-center">Launch!</span></button> :
-            <button className="w-1/2 p-2 mb-3 rounded-2xl font-bold bg-gray-500 cursor-not-allowed"><span className="self-center">Launch!</span></button>
-          }
-
-        </form>
-      <CustomPopup
-        isOpen={popupState.isOpen}
-        onClose={closePopup}
-        header={popupState.header}
-        description={popupState.description}
-        actionButton={popupState.actionButton}
-        footer={popupState.footer}
-      />
-    </main>
-
-    
-  );
+        </main>
+    );
 }
