@@ -549,6 +549,10 @@ export default function Trade({
 
     const [holder, setHolder] = useState([] as { addr: string; value: number }[]);
     const sortedHolders = React.useMemo(() => holder.slice().sort((a, b) => b.value - a.value), [holder]);
+    // Pagination
+    const ROWS_PER_PAGE = 10;
+    const [activityPage, setActivityPage] = useState(1);
+    const [holdersPage, setHoldersPage] = useState(1);
     const [hx, setHx] = useState(
         [] as {
             action: string;
@@ -690,6 +694,20 @@ export default function Trade({
             return true;
         });
     }, [hx, appliedFilters, filters.time, filters.actions]);
+    // Derived pagination slices
+    const activityTotalPages = React.useMemo(() => Math.max(1, Math.ceil(filteredHx.length / ROWS_PER_PAGE)), [filteredHx.length]);
+    const paginatedActivity = React.useMemo(() => {
+        const start = (activityPage - 1) * ROWS_PER_PAGE;
+        return filteredHx.slice(start, start + ROWS_PER_PAGE);
+    }, [filteredHx, activityPage]);
+    const holdersTotalPages = React.useMemo(() => Math.max(1, Math.ceil(sortedHolders.length / ROWS_PER_PAGE)), [sortedHolders.length]);
+    const paginatedHolders = React.useMemo(() => {
+        const start = (holdersPage - 1) * ROWS_PER_PAGE;
+        return sortedHolders.slice(start, start + ROWS_PER_PAGE);
+    }, [sortedHolders, holdersPage]);
+    // Reset pages when data sets change
+    React.useEffect(() => { setActivityPage(1); }, [appliedFilters, filters.time, filters.actions, hx.length]);
+    React.useEffect(() => { setHoldersPage(1); }, [sortedHolders.length]);
     const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
     const copyToClipboard = async (address: string): Promise<void> => {
         await navigator.clipboard.writeText(address);
@@ -1834,7 +1852,7 @@ export default function Trade({
                                             <td colSpan={7} className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">No trades yet. Be the first to make a move.</td>
                                         </tr>
                                     ) : (
-                                        filteredHx.map((res) => (
+                                        paginatedActivity.map((res) => (
                                             <tr key={res.hash} className="font-mono text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
                                                 <td className="py-6">{formatRelativeTime(res.timestamp / 1000)}</td>
                                                 <td className="py-6">
@@ -1877,6 +1895,27 @@ export default function Trade({
                                 </tbody>
                             </table>
                         </div>
+                        {filteredHx.length > 0 && (
+                            <div className="mt-3 flex items-center justify-between text-xs text-white/60">
+                                <span>Page {activityPage} of {activityTotalPages}</span>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
+                                        disabled={activityPage <= 1}
+                                        className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        Previous
+                                    </button>
+                                    <button
+                                        onClick={() => setActivityPage((p) => Math.min(activityTotalPages, p + 1))}
+                                        disabled={activityPage >= activityTotalPages}
+                                        className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -2069,13 +2108,13 @@ export default function Trade({
                                 {sortedHolders.length === 0 ? (
                                     <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">Holder data is loading...</div>
                                 ) : (
-                                    sortedHolders.map((res, index) => (
+                                    paginatedHolders.map((res, index) => (
                                         <div
                                             key={`${res.addr}-${index}`}
                                             className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/5 bg-white/5 p-4 text-sm text-white/80"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <span className="text-white/40">#{index + 1}</span>
+                                                <span className="text-white/40">#{(holdersPage - 1) * ROWS_PER_PAGE + index + 1}</span>
                                                 <Link
                                                     href={getExplorerAddressUrl(res.addr)}
                                                     prefetch={false}
@@ -2095,6 +2134,27 @@ export default function Trade({
                                     ))
                                 )}
                             </div>
+                            {sortedHolders.length > 0 && (
+                                <div className="mt-3 flex items-center justify-between text-xs text-white/60">
+                                    <span>Page {holdersPage} of {holdersTotalPages}</span>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => setHoldersPage((p) => Math.max(1, p - 1))}
+                                            disabled={holdersPage <= 1}
+                                            className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                        >
+                                            Previous
+                                        </button>
+                                        <button
+                                            onClick={() => setHoldersPage((p) => Math.min(holdersTotalPages, p + 1))}
+                                            disabled={holdersPage >= holdersTotalPages}
+                                            className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
