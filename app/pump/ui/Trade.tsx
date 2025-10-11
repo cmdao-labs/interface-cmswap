@@ -1434,8 +1434,8 @@ export default function Trade({
                 <div className="fixed top-22 left-0 right-0 z-50 px-2 sm:px-4">
                     <div
                         className={
-                            `mx-auto w-full 2xl:w-5/6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500 bg-emerald-500/50 px-4 py-3 text-sm shadow-[0_0_25px_rgba(16,185,129,0.25)] ` +
-                            (headnotiShaken ? "animate-pulse" : "animate-shake-once")
+                            `mx-auto w-full 2xl:w-5/6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500 bg-emerald-900 px-4 py-3 text-sm shadow-[0_0_25px_rgba(16,185,129,0.25)] ` +
+                            (!headnotiShaken && "animate-shake-once")
                         }
                         onAnimationEnd={(e) => {
                             if (e.animationName === 'shake') setHeadnotiShaken(true);
@@ -1490,7 +1490,7 @@ export default function Trade({
                                     prefetch={false}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="font-mono text-white transition hover:text-emerald-200"
+                                    className="text-white transition hover:text-emerald-200"
                                 >
                                     {`${String(creator).slice(0, 6)}...${String(creator).slice(-4)}`}
                                 </Link>
@@ -1588,13 +1588,12 @@ export default function Trade({
                                 />
                             </div>
                         </div>
-                        <span className="w-full text-right font-bold tracking-wider text-orange-500">{athProgressPercent.toFixed(2)}%</span>
-                        <div className="w-full text-right text-[10px] sm:text-xs text-white/70">
+                        <div className="w-full text-right font-bold tracking-wider text-orange-500">
                             <span className="text-white">ATH: </span>
                             {Number.isFinite(athPrice) ? (
-                                <span className="text-white">{formattedAth} {baseAssetSymbol}</span>
+                                <span>{formattedAth} {baseAssetSymbol}</span>
                             ) : (
-                                <span className="text-white/50">N/A</span>
+                                <span>N/A</span>
                             )}
                         </div>
                     </div> 
@@ -1776,11 +1775,11 @@ export default function Trade({
 
                     <div className="sm:hidden rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl backdrop-blur">
                         <Tabs defaultValue="info" className="w-full">
-                            <TabsList className="w-full grid grid-cols-4 rounded-md p-1 mb-2 border border-white/10 font-mono">
-                                <TabsTrigger value="info" className="text-sm data-[state=active]:bg-black/50 data-[state=active]:text-white rounded cursor-pointer">Info</TabsTrigger>
-                                <TabsTrigger value="activity" className="text-sm data-[state=active]:bg-black/50 data-[state=active]:text-white rounded cursor-pointer">Activity</TabsTrigger>
-                                <TabsTrigger value="traders" className="text-sm data-[state=active]:bg-black/50 data-[state=active]:text-white rounded cursor-pointer">Traders</TabsTrigger>
-                                <TabsTrigger value="holders" className="text-sm data-[state=active]:bg-black/50 data-[state=active]:text-white rounded cursor-pointer">Holders</TabsTrigger>
+                            <TabsList className="!w-full grid grid-cols-4 rounded-md !p-0 mb-2 overflow-hidden bg-transparent">
+                                <TabsTrigger value="info" className="text-sm cursor-pointer rounded-none w-full h-full border-b-2 border-transparent data-[state=active]:bg-black/50 data-[state=active]:text-emerald-300 data-[state=active]:border-emerald-300">Info</TabsTrigger>
+                                <TabsTrigger value="activity" className="text-sm cursor-pointer rounded-none w-full h-full border-b-2 border-transparent data-[state=active]:bg-black/50 data-[state=active]:text-emerald-300 data-[state=active]:border-emerald-300">Activity</TabsTrigger>
+                                <TabsTrigger value="traders" className="text-sm cursor-pointer rounded-none w-full h-full border-b-2 border-transparent data-[state=active]:bg-black/50 data-[state=active]:text-emerald-300 data-[state=active]:border-emerald-300">Traders</TabsTrigger>
+                                <TabsTrigger value="holders" className="text-sm cursor-pointer rounded-none w-full h-full border-b-2 border-transparent data-[state=active]:bg-black/50 data-[state=active]:text-emerald-300 data-[state=active]:border-emerald-300">Holders</TabsTrigger>
                             </TabsList>
 
                             <TabsContent value="info">
@@ -1818,7 +1817,7 @@ export default function Trade({
                                         )}
                                     </div>
                                     <div className="mt-4 rounded-2xl border border-white/10 bg-black/50 p-4 text-xs text-white/60">
-                                        <div className="font-mono text-[10px] sm:text-sm text-white/80 break-all">{ticker}</div>
+                                        <div className="text-[10px] sm:text-sm text-white/80 break-all">{ticker}</div>
                                         <div className="mt-3 flex flex-wrap gap-2">
                                             <button
                                                 onClick={() => copyToClipboard(ticker)}
@@ -2022,7 +2021,7 @@ export default function Trade({
                                                             ? `-${formattedProfit}`
                                                             : formattedProfit;
                                                     return (
-                                                        <tr key={trader.address} className="font-mono text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
+                                                        <tr key={trader.address} className="text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
                                                             <td className="py-6">
                                                                 <Link
                                                                     href={getExplorerAddressUrl(trader.address)}
@@ -2257,7 +2256,7 @@ export default function Trade({
                                                 </tr>
                                             ) : (
                                                 paginatedActivity.map((res) => (
-                                                    <tr key={res.hash} className="font-mono text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
+                                                    <tr key={res.hash} className="text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
                                                         <td className="py-6">{formatRelativeTime(res.timestamp / 1000)}</td>
                                                         <td className="py-6">
                                                             <Link
@@ -2339,7 +2338,7 @@ export default function Trade({
                                                         prefetch={false}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className={`font-mono text-xs transition hover:text-white ${
+                                                        className={`text-xs transition hover:text-white ${
                                                             res.addr.toUpperCase() === String(creator).toUpperCase() ? 
                                                                 "text-emerald-300" :
                                                                 res.addr.toUpperCase() === lp.toUpperCase() ? "text-emerald-300" : "text-white/70"
@@ -2384,11 +2383,10 @@ export default function Trade({
                     </div>
 
                     <div className="hidden sm:block rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl backdrop-blur">
-                        <h2 className="mb-3 text-lg font-semibold text-white">Activity</h2>
                         <Tabs defaultValue="activity" className="w-full">
-                            <TabsList className="w-fit grid grid-cols-2 rounded-md border border-white/10 p-1 font-mono">
-                                <TabsTrigger value="activity" className="px-4 py-1 text-sm data-[state=active]:bg-black/50 data-[state=active]:text-white rounded cursor-pointer">Activity</TabsTrigger>
-                                <TabsTrigger value="traders" className="px-4 py-1 text-sm data-[state=active]:bg-black/50 data-[state=active]:text-white rounded cursor-pointer">Traders</TabsTrigger>
+                            <TabsList className="!w-full grid grid-cols-2 !p-0 overflow-hidden bg-transparent">
+                                <TabsTrigger value="activity" className="text-sm cursor-pointer rounded-none w-full h-full border-b-2 border-transparent data-[state=active]:bg-black/50 data-[state=active]:text-emerald-300 data-[state=active]:border-emerald-300">Activity</TabsTrigger>
+                                <TabsTrigger value="traders" className="text-sm cursor-pointer rounded-none w-full h-full border-b-2 border-transparent data-[state=active]:bg-black/50 data-[state=active]:text-emerald-300 data-[state=active]:border-emerald-300">Traders</TabsTrigger>
                             </TabsList>
 
                             <TabsContent value="activity">
@@ -2571,7 +2569,7 @@ export default function Trade({
                                         </tr>
                                     ) : (
                                         paginatedActivity.map((res) => (
-                                            <tr key={res.hash} className="font-mono text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
+                                            <tr key={res.hash} className="text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
                                                 <td className="py-6">{formatRelativeTime(res.timestamp / 1000)}</td>
                                                 <td className="py-6">
                                                     <Link
@@ -2819,7 +2817,7 @@ export default function Trade({
                                                     ? `-${formattedProfit}`
                                                     : formattedProfit;
                                             return (
-                                                <tr key={trader.address} className="font-mono text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
+                                                <tr key={trader.address} className="text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
                                                     <td className="py-6">
                                                         <Link
                                                             href={getExplorerAddressUrl(trader.address)}
@@ -3049,7 +3047,7 @@ export default function Trade({
                             )}
                         </div>
                         <div className="mt-6 rounded-2xl border border-white/10 bg-black/50 p-4 text-xs text-white/60">
-                            <div className="font-mono text-[10px] sm:text-sm text-white/80 break-all">{ticker}</div>
+                            <div className="text-[10px] sm:text-sm text-white/80 break-all">{ticker}</div>
                             <div className="mt-3 flex flex-wrap gap-2">
                                 <button
                                     onClick={() => copyToClipboard(ticker)}
@@ -3089,7 +3087,7 @@ export default function Trade({
                                                 prefetch={false}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className={`font-mono text-xs transition hover:text-white ${
+                                                className={`text-xs transition hover:text-white ${
                                                     res.addr.toUpperCase() === String(creator).toUpperCase() ? 
                                                         "text-emerald-300" :
                                                         res.addr.toUpperCase() === lp.toUpperCase() ? "text-emerald-300" : "text-white/70"
