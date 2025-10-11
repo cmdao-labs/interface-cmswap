@@ -41,7 +41,7 @@ export default async function Launchpad(props: {
 				<section className="grid gap-6">
 					<Suspense
 						key={`mode-${mode}-chain-${chain}`}
-						fallback={<div className="h-28 w-full animate-pulse rounded-3xl bg-white/5" />}
+						fallback={<div className="h-[74px] w-full animate-pulse rounded-3xl bg-white/5" />}
 					>
 						<Event mode={mode} chain={chain} token={token} />
 					</Suspense>

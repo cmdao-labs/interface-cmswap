@@ -678,7 +678,7 @@ export default function Trade({
                     const va = f[1].result !== undefined ? Number(formatEther(f[1].result)) : 0;
                     const price = (pump0 + va) / pump1;
                     setPrice(price);
-                    const mcap = (1000000000 * price) - 3400;
+                    const mcap = 1000000000 * price;
                     setMcap(mcap);
                     const denominator = 47800;
                     setProgress(Number(((mcap * 100) / denominator).toFixed(2)));
@@ -966,13 +966,21 @@ export default function Trade({
                         return;
                     }
 
+                    const data: any = await readContracts(config, {
+                        contracts: [
+                            { ...bkgafactoryContract, functionName: "virtualAmount", chainId: _chainId },
+                        ],
+                    });
+                    const virtualAmount = data[0].result !== undefined ? Number(formatEther(data[0].result)) : 0;
                     const blocks = await Promise.all(filtered.map((x) => publicClient.getBlock({ blockNumber: x.log.blockNumber })));
                     const points = filtered.map((x, idx) => {
                         const { log } = x;
                         const isBuy = Boolean(log.args.isBuy);
                         const amountIn = BigInt(log.args.amountIn || BigInt(0));
                         const amountOut = BigInt(log.args.amountOut || BigInt(0));
-                        const price = isBuy ? Number(formatEther(amountIn)) / Math.max(1e-18, Number(formatEther(amountOut))) : Number(formatEther(amountOut)) / Math.max(1e-18, Number(formatEther(amountIn)));            
+                        const reserveIn = BigInt(log.args.reserveIn || BigInt(0));
+                        const reserveOut = BigInt(log.args.reserveOut || BigInt(0));
+                        const price = isBuy ? (Number(formatEther(reserveIn)) + virtualAmount) / Math.max(1e-18, Number(formatEther(reserveOut))) : (Number(formatEther(reserveOut)) + virtualAmount) / Math.max(1e-18, Number(formatEther(reserveIn)));            
                         const volume = isBuy ? Number(formatEther(amountIn)) : Number(formatEther(amountOut));
                         const block = blocks[idx];
                         const timeMs = Number(block.timestamp) * 1000;
@@ -984,7 +992,6 @@ export default function Trade({
                     });
 
                     const sorted = points.filter((p) => p && p.time && p.price > 0 && p.volume > 0).sort((a, b) => a.time - b.time);
-                    console.log(sorted)
                     setGraphData(sorted);
                     return;
                 }
@@ -1264,7 +1271,7 @@ export default function Trade({
     }, [socialsResult]);
 
     return (
-        <main className="relative min-h-screen w-full 2xl:w-5/6 overflow-hidden pt-20 text-white">
+        <main className="relative min-h-screen w-full 2xl:w-5/6 overflow-hidden pt-14 sm:pt-20 text-white">
             <div className="w-full my-4 px-4 flex items-center gap-6 text-[8px] sm:text-sm">
                 <Link href={`/pump/launchpad?chain=${chain}${mode === "pro" ? "&mode=pro" : "&mode=lite"}`} prefetch={false} className="underline hover:font-bold"><ArrowLeft className="h-8 w-8 p-1 rounded-full bg-white/5" aria-hidden="true" /></Link>
                 <div className="flex gap-2 uppercase tracking-[0.2em] text-white/60">
@@ -1431,6 +1438,42 @@ export default function Trade({
                             ) : (
                                 <Chart data={graphData} />
                             )}
+                        </div>
+                    </div>
+                    
+                    <div className="rounded-2xl border border-white/10 bg-black/50 p-4 text-sm text-white/60 block md:hidden">
+                        <div className="flex items-center justify-between">
+                            <span>Status</span>
+                            <span className={`font-semibold ${isGraduated ? "text-emerald-300" : "text-white"}`}>{isGraduated ? "Graduated" : "Bonding curve"}</span>
+                        </div>
+                        <div className="mt-4">
+                            <div className="flex items-center justify-between text-sm text-white/50">
+                                <span>Bonding Progress</span>
+                                <span className="text-emerald-300">{progressPercent.toFixed(2)}%</span>
+                            </div>
+                            <div className="mt-2 h-2 w-full rounded-full bg-white/10">
+                                <div
+                                    className="h-2 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500"
+                                    style={{ width: `${progressPercent}%` }}
+                                />
+                            </div>
+                            <p className="mt-2 text-[11px] leading-relaxed text-white/45">
+                                {bondingTooltip}
+                                {isGraduated && graduationLink && (
+                                    <>
+                                        {" "}
+                                        <Link
+                                            href={graduationLink}
+                                            prefetch={false}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-emerald-200 underline-offset-2 transition hover:text-emerald-100 hover:underline"
+                                        >
+                                            View graduation txn
+                                        </Link>
+                                    </>
+                                )}
+                            </p>
                         </div>
                     </div>
 
@@ -1793,19 +1836,15 @@ export default function Trade({
                         </div>
                     </div>
 
-                    <div className="rounded-2xl border border-white/10 bg-black/50 p-4 text-xs text-white/60">
+                    <div className="rounded-2xl border border-white/10 bg-black/50 p-4 text-sm text-white/60 hidden md:block">
                         <div className="flex items-center justify-between">
                             <span>Status</span>
                             <span className={`font-semibold ${isGraduated ? "text-emerald-300" : "text-white"}`}>{isGraduated ? "Graduated" : "Bonding curve"}</span>
                         </div>
-                        <div className="mt-3 flex items-center justify-between">
-                            <span>Max payout balance</span>
-                            <span className="font-semibold text-white">{formattedCounterBalance} {outputAssetSymbol}</span>
-                        </div>
                         <div className="mt-4">
-                            <div className="flex items-center justify-between text-xs text-white/50">
+                            <div className="flex items-center justify-between text-sm text-white/50">
                                 <span>Bonding Progress</span>
-                                <span>{progressPercent.toFixed(2)}%</span>
+                                <span className="text-emerald-300">{progressPercent.toFixed(2)}%</span>
                             </div>
                             <div className="mt-2 h-2 w-full rounded-full bg-white/10">
                                 <div

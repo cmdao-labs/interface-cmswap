@@ -98,6 +98,10 @@ function getTimestampFromTime(time: Time): number | null {
     return null;
 }
 
+type Metric = 'price' | 'mcap';
+
+const MARKET_CAP_SUPPLY = 1_000_000_000; // default assumed supply for mcap calc
+
 const Chart: React.FC<ChartProps> = ({ data }) => {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const tooltipRef = useRef<HTMLDivElement>(null);
@@ -107,8 +111,13 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
     const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
     const resizeObserverRef = useRef<ResizeObserver | null>(null);
     const [timeframe, setTimeframe] = useState<number>(60 * 60 * 1000);
+    const [metric, setMetric] = useState<Metric>('mcap');
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const candles = useMemo(() => aggregateCandlesWithFill(data, timeframe), [data, timeframe]);
+    const transformedData = useMemo(() => {
+        if (metric === 'price') return data;
+        return data.map((p) => ({ ...p, price: p.price * MARKET_CAP_SUPPLY }));
+    }, [data, metric]);
+    const candles = useMemo(() => aggregateCandlesWithFill(transformedData, timeframe), [transformedData, timeframe]);
     const candlestickSeriesData: CandlestickData[] = useMemo(() => candles.map((candle) => ({
         time: candle.time as Time,
         open: candle.open,
@@ -134,6 +143,17 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
     useEffect(() => {candlesRef.current = candles}, [candles]);
     useEffect(() => {timeIndexMapRef.current = timeIndexMap}, [timeIndexMap]);
 
+    const formatCompact = (value: number): string => {
+        if (!Number.isFinite(value)) return '-';
+        try {
+            return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(value);
+        } catch {
+            return tidyNumber(value);
+        }
+    };
+
+    const formatByMetric = useCallback((value: number) => (metric === 'mcap' ? formatCompact(value) : tidyNumber(value)), [metric]);
+
     const updateInfoBar = useCallback((index: number | null) => {
         const infoEl = infoRef.current;
         const list = candlesRef.current;
@@ -151,15 +171,17 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
         const directionColor = change >= 0 ? '#31fca5' : '#ff5f7a';
 
         infoEl.innerHTML = `
-            <span class="text-xs text-emerald-200">CMSWAP-PUMP</span>
-            <span class="text-xs text-white/70">O <span style="color:${directionColor}">${tidyNumber(candle.open)}</span></span>
-            <span class="text-xs text-white/70">H <span style="color:${directionColor}">${tidyNumber(candle.high)}</span></span>
-            <span class="text-xs text-white/70">L <span style="color:${directionColor}">${tidyNumber(candle.low)}</span></span>
-            <span class="text-xs text-white/70">C <span style="color:${directionColor}">${tidyNumber(candle.close)}</span></span>
-            <span class="text-xs" style="color:${directionColor}">${change >= 0 ? '+' : ''}${tidyNumber(change)} (${changePct >= 0 ? '+' : ''}${tidyNumber(changePct)}%)</span>
+            <span class="text-xs text-emerald-200">CMSWAP-PUMP · ${metric === 'mcap' ? 'MCap' : 'Price'}</span>
+            <div>
+                <span class="text-xs text-white/70">O <span style="color:${directionColor}">${formatByMetric(candle.open)}</span></span>
+                <span class="text-xs text-white/70">H <span style="color:${directionColor}">${formatByMetric(candle.high)}</span></span>
+                <span class="text-xs text-white/70">L <span style="color:${directionColor}">${formatByMetric(candle.low)}</span></span>
+                <span class="text-xs text-white/70">C <span style="color:${directionColor}">${formatByMetric(candle.close)}</span></span>
+            </div>
+            <span class="text-xs" style="color:${directionColor}">${change >= 0 ? '+' : ''}${formatByMetric(change)} (${changePct >= 0 ? '+' : ''}${tidyNumber(changePct)}%)</span>
             ${maParts.length ? `<span class="text-xs text-white/60">${maParts.join(' · ')}</span>` : ''}
         `.replace(/\s+/g, ' ').trim();
-    }, []);
+    }, [formatByMetric, metric]);
 
     useEffect(() => {updateInfoBar(null);}, [candles.length, updateInfoBar]);
 
@@ -239,8 +261,8 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
             wickDownColor: '#ff7a95',
             priceFormat: {
                 type: 'price',
-                precision: 8,
-                minMove: 0.00000001,
+                precision: metric === 'mcap' ? 2 : 8,
+                minMove: metric === 'mcap' ? 0.01 : 0.00000001,
             },
             lastValueVisible: true,
             priceLineVisible: true,
@@ -298,10 +320,10 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
             tooltip.innerHTML = `
                 <div class="flex flex-col gap-1">
                     <span class="text-xs text-emerald-200">${toUTCString(timestamp)}</span>
-                    <span class="text-xs text-white/90">Open: ${tidyNumber(candleData.open)}</span>
-                    <span class="text-xs text-white/90">High: ${tidyNumber(candleData.high)}</span>
-                    <span class="text-xs text-white/90">Low: ${tidyNumber(candleData.low)}</span>
-                    <span class="text-xs text-white/90">Close: ${tidyNumber(candleData.close)}</span>
+                    <span class="text-xs text-white/90">Open: ${formatByMetric(candleData.open as number)}</span>
+                    <span class="text-xs text-white/90">High: ${formatByMetric(candleData.high as number)}</span>
+                    <span class="text-xs text-white/90">Low: ${formatByMetric(candleData.low as number)}</span>
+                    <span class="text-xs text-white/90">Close: ${formatByMetric(candleData.close as number)}</span>
                     <span class="text-xs text-white/90">Volume: ${tidyNumber(volume)}</span>
                 </div>
             `;
@@ -328,7 +350,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
             candleSeriesRef.current = null;
             volumeSeriesRef.current = null;
         };
-    }, [updateInfoBar]);
+    }, [updateInfoBar, metric]);
 
     useEffect(() => {
         if (!chartRef.current) return;
@@ -340,6 +362,18 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
         if (!candleSeries) return;
         candleSeries.setData(candlestickSeriesData);
     }, [candlestickSeriesData]);
+
+    useEffect(() => {
+        const candleSeries = candleSeriesRef.current;
+        if (!candleSeries) return;
+        candleSeries.applyOptions({
+            priceFormat: {
+                type: 'price',
+                precision: metric === 'mcap' ? 2 : 8,
+                minMove: metric === 'mcap' ? 0.01 : 0.00000001,
+            },
+        });
+    }, [metric]);
 
     // useEffect(() => {
     //     const volumeSeries = volumeSeriesRef.current;
@@ -384,8 +418,8 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
                     </div>
                 )}
 
-                <div className="absolute top-4 left-4 right-24 flex flex-wrap items-center justify-between gap-3 z-3 overflow-hidden">
-                    <div ref={infoRef} className="flex items-center gap-3 font-mono text-[10px] text-emerald-200 truncate" />
+                <div className="absolute top-4 left-4 right-24 z-3 overflow-hidden">
+                    <div ref={infoRef} className="flex flex-wrap items-center gap-3 font-mono text-[4px] sm:text-[10px] text-emerald-200 truncate" />
                 </div>
 
                 {/* <button
@@ -402,22 +436,43 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
                 />
             </div>
 
-            <div className="flex h-16 items-center justify-center sm:gap-2 border-t border-white/5 bg-[#050509]/80 sm:px-4">
-                {TIMEFRAMES.map((option) => {
-                    const isActive = timeframe === option.value;
-                    return (
-                        <button
-                            key={option.label}
-                            type="button"
-                            onClick={() => handleTimeframeChange(option.value)}
-                            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
-                                isActive ? 'bg-emerald-400/20 text-emerald-200 shadow-[0_0_12px_rgba(0,255,170,0.35)]' : 'text-white/60 hover:text-emerald-200'
-                            }`}
-                        >
-                            {option.label}
-                        </button>
-                    );
-                })}
+            <div className="flex h-16 flex-wrap items-center justify-between gap-2 border-t border-white/5 bg-[#050509]/80 px-1 sm:px-3 py-2 mb-5 sm:mb-0">
+                <div className="flex items-center sm:gap-2">
+                    {TIMEFRAMES.map((option) => {
+                        const isActive = timeframe === option.value;
+                        return (
+                            <button
+                                key={option.label}
+                                type="button"
+                                onClick={() => handleTimeframeChange(option.value)}
+                                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                                    isActive ? 'bg-emerald-400/20 text-emerald-200 shadow-[0_0_12px_rgba(0,255,170,0.35)]' : 'text-white/60 hover:text-emerald-200'
+                                }`}
+                            >
+                                {option.label}
+                            </button>
+                        );
+                    })}
+                </div>
+                <div className="flex items-center gap-1">
+                    {(['price', 'mcap'] as Metric[]).map((m) => {
+                        const active = metric === m;
+                        const label = m === 'mcap' ? 'MCap' : 'Price';
+                        return (
+                            <button
+                                key={m}
+                                type="button"
+                                onClick={() => setMetric(m)}
+                                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                                    active ? 'bg-emerald-400/20 text-emerald-200 shadow-[0_0_12px_rgba(0,255,170,0.35)]' : 'text-white/60 hover:text-emerald-200'
+                                }`}
+                                aria-pressed={active}
+                            >
+                                {label}
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );
