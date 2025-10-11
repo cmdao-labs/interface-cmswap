@@ -293,6 +293,47 @@ export default function Trade({
         return Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short", maximumFractionDigits: 2}).format(mcap || 0);
     }, [mcap]);
 
+    // Derived price stats: 24h change (abs and %) and ATH
+    const priceFormatter = React.useCallback((v: number) => {
+        if (!Number.isFinite(v)) return "0";
+        return Intl.NumberFormat("en-US", {
+            minimumFractionDigits: v < 1 ? 2 : 0,
+            maximumFractionDigits: v < 1 ? 6 : 2,
+        }).format(v);
+    }, []);
+
+    const { price24hAgo, changeAbs, changePct, athPrice } = React.useMemo(() => {
+        const now = Date.now();
+        const cutoff = now - 24 * 60 * 60 * 1000; // 24h in ms
+        let prevPrice: number | null = null;
+        let ath = Number.isFinite(price) ? price : 0;
+        if (Array.isArray(graphData) && graphData.length > 0) {
+            // Ensure chronological order
+            const sorted = [...graphData].sort((a, b) => a.time - b.time);
+            // ATH across known history and current price
+            for (const p of sorted) {
+                if (Number.isFinite(p.price)) ath = Math.max(ath, Number(p.price));
+            }
+            // Pick the last price before or at cutoff; fallback to earliest
+            const before = sorted.filter((p) => p.time <= cutoff);
+            if (before.length > 0) prevPrice = Number(before[before.length - 1].price);
+            else prevPrice = Number(sorted[0].price);
+        }
+        const baseline = Number.isFinite(prevPrice as number) ? (prevPrice as number) : price;
+        const abs = Number.isFinite(price) && Number.isFinite(baseline) ? Number(price) - Number(baseline) : 0;
+        const pct = Number.isFinite(baseline) && baseline !== 0 ? (abs / baseline) * 100 : 0;
+        return {
+            price24hAgo: baseline * 1_000_000_000,
+            changeAbs: abs * 1_000_000_000,
+            changePct: pct,
+            athPrice: ath * 1_000_000_000,
+        };
+    }, [graphData, price]);
+
+    const formattedChangeAbs = React.useMemo(() => priceFormatter(Math.abs(changeAbs || 0)), [changeAbs, priceFormatter]);
+    const formattedChangePct = React.useMemo(() => `${Number.isFinite(changePct) ? Math.abs(changePct).toFixed(2) : "0.00"}%`, [changePct]);
+    const formattedAth = React.useMemo(() => priceFormatter(athPrice || 0), [athPrice, priceFormatter]);
+
     const progressPercent = React.useMemo(() => {
         if (!Number.isFinite(progress)) return 0;
         return Math.max(0, Math.min(100, progress));
@@ -1306,7 +1347,7 @@ export default function Trade({
                 </div>
             )}
 
-            <section className="flex flex-col gap-4 relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-4 sm:p-8 shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur">
+            <section className="flex flex-col gap-2 relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-4 sm:p-8 shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur">
                 <div className="flex flex-row gap-4 sm:gap-10">
                     <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-3xl border border-white/10 shadow-[0_0_35px_rgba(34,197,94,0.35)] sm:mx-0 sm:h-28 sm:w-28">
                         <Image
@@ -1401,6 +1442,32 @@ export default function Trade({
                         </div>
                         <span className="w-full text-right">{progressPercent.toFixed(2)}%</span>
                     </div> 
+                </div>
+
+                <div className="px-2 flex flex-row gap-1 text-[10px] sm:text-xs text-white/70">
+                    <div>
+                        <span className="text-white/60">24h: </span>
+                        {Number.isFinite(changeAbs) && Number.isFinite(changePct) ? (
+                            <>
+                                <span className={`${changeAbs > 0 ? "text-emerald-300" : changeAbs < 0 ? "text-red-300" : "text-white/70"}`}>
+                                    {changeAbs > 0 ? "+" : changeAbs < 0 ? "-" : ""}{formattedChangeAbs} {baseAssetSymbol}
+                                </span>
+                                <span className={`ml-1 ${changePct > 0 ? "text-emerald-300" : changePct < 0 ? "text-red-300" : "text-white/70"}`}>
+                                    ({changePct > 0 ? "+" : changePct < 0 ? "-" : ""}{formattedChangePct})
+                                </span>
+                            </>
+                        ) : (
+                            <span className="text-white/50">N/A</span>
+                        )}
+                    </div>
+                    <div>
+                        <span className="text-white">ATH: </span>
+                        {Number.isFinite(athPrice) ? (
+                            <span className="text-white">{formattedAth} {baseAssetSymbol}</span>
+                        ) : (
+                            <span className="text-white/50">N/A</span>
+                        )}
+                    </div>
                 </div>
             </section>
 

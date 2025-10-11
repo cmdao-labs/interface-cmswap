@@ -69,7 +69,7 @@ export default function Sort() {
             <div className={baseCardClasses}>
                 <span className="text-slate-500 inline-flex items-center gap-1">
                     Order By
-                    {sort === 'mcap' && order === 'ascending' && (<TrendingUp className="h-4 w-4" aria-hidden="true" />)}
+                    {((sort === 'mcap' && order === 'ascending') || (sort === undefined || order === undefined)) && (<TrendingUp className="h-4 w-4" aria-hidden="true" />)}
                     {sort === 'mcap' && order === 'descending' && (<TrendingDown className="h-4 w-4" aria-hidden="true" />)}
                     {sort === 'created' && order === 'ascending' && (<ClockArrowUp className="h-4 w-4" aria-hidden="true" />)}
                     {sort === 'created' && order === 'descending' && (<ClockArrowDown className="h-4 w-4" aria-hidden="true" />)}
