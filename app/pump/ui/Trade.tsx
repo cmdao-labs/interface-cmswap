@@ -17,6 +17,7 @@ import { UniswapV2RouterABI } from "@/app/pump/abi/UniswapV2Router";
 import { UniswapV3QouterABI } from "@/app/pump/abi/UniswapV3Qouter";
 import { SocialsABI } from "@/app/pump/abi/Socials";
 import Chart from "@/app/components/Chart";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const themes: any = {
     96: {
@@ -629,6 +630,19 @@ export default function Trade({
         setFilters(base);
         setAppliedFilters(base);
     };
+    const hasActiveFilters = React.useMemo(() => {
+        return (
+            filters.time !== "all" ||
+            filters.from.trim() !== "" ||
+            !filters.actions.buy ||
+            !filters.actions.sell ||
+            filters.nativeMin.trim() !== "" ||
+            filters.nativeMax.trim() !== "" ||
+            filters.tokenMin.trim() !== "" ||
+            filters.tokenMax.trim() !== "" ||
+            filters.hash.trim() !== ""
+        );
+    }, [filters]);
     const filteredHx = React.useMemo(() => {
         const f = appliedFilters;
         const now = Date.now();
@@ -1637,7 +1651,130 @@ export default function Trade({
                     <div className="rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl backdrop-blur">
                         <h2 className="mb-3 text-lg font-semibold text-white">Activity</h2>
                         <div className="ml-auto flex items-center gap-2 text-xs">
-                            <FilterIcon size={14} className="text-white/60" />
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <button
+                                        className={`rounded-md px-2 py-1 transition border ${hasActiveFilters ? "border-emerald-400/50 text-emerald-200" : "border-white/10 text-white/80 hover:border-white/20"}`}
+                                        title="Filter"
+                                        aria-label="Filter activity"
+                                    >
+                                        <FilterIcon size={14} />
+                                    </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[320px] p-0 z-50">
+                                    <div className="p-3 space-y-3 text-[11px] text-white/80">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-white/60">Filters</span>
+                                            <button
+                                                onClick={clearFilters}
+                                                className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20"
+                                                title="Clear filters"
+                                            >
+                                                <X size={12} />
+                                                Clear
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-white/60">Time</label>
+                                            <select
+                                                className="w-full rounded-md border border-white/10 bg-black/60 p-2 text-xs outline-none hover:border-white/20"
+                                                value={filters.time}
+                                                onChange={(e) => handleTimeChange(e.target.value as any)}
+                                            >
+                                                <option value="all">All</option>
+                                                <option value="5m">5m</option>
+                                                <option value="1h">1h</option>
+                                                <option value="24h">24h</option>
+                                                <option value="7d">7d</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-white/60">From</label>
+                                            <input
+                                                value={filters.from}
+                                                onChange={handleTextChange("from")}
+                                                placeholder="address"
+                                                className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-white/60">Action</label>
+                                            <div className="flex items-center gap-2">
+                                                <button onClick={() => handleActionToggle("buy")} className={`rounded-full border px-2 py-1 text-[11px] ${filters.actions.buy && !filters.actions.sell ? "border-emerald-300/50 text-emerald-200" : "border-white/10 text-white/80 hover:border-white/20"}`} title="Buy">Buy</button>
+                                                <button onClick={() => handleActionToggle("sell")} className={`rounded-full border px-2 py-1 text-[11px] ${filters.actions.sell && !filters.actions.buy ? "border-rose-300/50 text-rose-200" : "border-white/10 text-white/80 hover:border-white/20"}`} title="Sell">Sell</button>
+                                                <button
+                                                    onClick={() => {
+                                                        const next = { ...filters, actions: { buy: true, sell: true } };
+                                                        setFilters(next);
+                                                        setAppliedFilters(next);
+                                                    }}
+                                                    className="rounded-full border px-2 py-1 text-[11px] border-white/10 text-white/60 hover:border-white/20"
+                                                    title="Show all"
+                                                >
+                                                    All
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-white/60">Native amount</label>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="number"
+                                                    inputMode="decimal"
+                                                    value={filters.nativeMin}
+                                                    onChange={handleNumberChange("nativeMin")}
+                                                    placeholder="min"
+                                                    className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                />
+                                                <input
+                                                    type="number"
+                                                    inputMode="decimal"
+                                                    value={filters.nativeMax}
+                                                    onChange={handleNumberChange("nativeMax")}
+                                                    placeholder="max"
+                                                    className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-white/60">Token amount</label>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="number"
+                                                    inputMode="decimal"
+                                                    value={filters.tokenMin}
+                                                    onChange={handleNumberChange("tokenMin")}
+                                                    placeholder="min"
+                                                    className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                />
+                                                <input
+                                                    type="number"
+                                                    inputMode="decimal"
+                                                    value={filters.tokenMax}
+                                                    onChange={handleNumberChange("tokenMax")}
+                                                    placeholder="max"
+                                                    className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-white/60">Tx hash</label>
+                                            <input
+                                                value={filters.hash}
+                                                onChange={handleTextChange("hash")}
+                                                placeholder="hash"
+                                                className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
+                                            />
+                                        </div>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
                             <div className="text-white/50">Showing {filteredHx.length} of {hx.length}</div>
                             <button
                                 onClick={clearFilters}
@@ -1656,106 +1793,37 @@ export default function Trade({
                                         <th className="px-3 py-2">
                                             <div className="flex flex-col items-center gap-1">
                                                 <span className="text-white/50">Time</span>
-                                                <div className="flex flex-row items-center gap-1">
-                                                    <FilterIcon size={14} className="text-white/60" />
-                                                    <select
-                                                        className="rounded-md border border-white/10 bg-black/60 p-1 text-[8px] outline-none hover:border-white/20"
-                                                        value={filters.time}
-                                                        onChange={(e) => handleTimeChange(e.target.value as any)}
-                                                    >
-                                                        <option value="all">All</option>
-                                                        <option value="5m">5m</option>
-                                                        <option value="1h">1h</option>
-                                                        <option value="24h">24h</option>
-                                                        <option value="7d">7d</option>
-                                                    </select>
-                                                </div>
+                                                {/* filters moved to popover */}
                                             </div>
                                         </th>
                                         <th className="px-3 py-2">
                                             <div className="flex flex-col items-center gap-1">
                                                 <span className="text-white/50">From</span>
-                                                <div className="flex flex-row items-center gap-1">
-                                                    <FilterIcon size={14} className="text-white/60" />
-                                                    <input
-                                                        value={filters.from}
-                                                        onChange={handleTextChange("from")}
-                                                        placeholder="address"
-                                                        className="w-24 text-[8px] rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
-                                                    />
-                                                </div>
+                                                {/* filters moved to popover */}
                                             </div>
                                         </th>
                                         <th className="px-3 py-2">
                                             <div className="flex flex-col items-center gap-1">
                                                 <span className="text-white/50">Action</span>
-                                                <div className="flex flex-row  items-center gap-1">
-                                                    <FilterIcon size={14} className="text-white/60" />
-                                                    <button onClick={() => handleActionToggle("buy")} className={`rounded-full border p-1 text-[8px]`} title="Buy">Buy</button>
-                                                    <button onClick={() => handleActionToggle("sell")} className={`rounded-full border p-1 text-[8px]`} title="Sell">Sell</button>
-                                                </div>
+                                                {/* filters moved to popover */}
                                             </div>
                                         </th>
                                         <th className="px-3 py-2">
                                             <div className="flex flex-col items-center gap-1">
                                                 <span className="text-white/50">Native</span>
-                                                <div className="flex flex-row  items-center gap-1">
-                                                    <FilterIcon size={14} className="text-white/60" />
-                                                    <input
-                                                        type="number"
-                                                        inputMode="decimal"
-                                                        value={filters.nativeMin}
-                                                        onChange={handleNumberChange("nativeMin")}
-                                                        placeholder="min"
-                                                        className="w-16 text-[8px] rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
-                                                    />
-                                                    <input
-                                                        type="number"
-                                                        inputMode="decimal"
-                                                        value={filters.nativeMax}
-                                                        onChange={handleNumberChange("nativeMax")}
-                                                        placeholder="max"
-                                                        className="w-16 text-[8px] rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
-                                                    />
-                                                </div>
+                                                {/* filters moved to popover */}
                                             </div>
                                         </th>
                                         <th className="px-3 py-2">
                                             <div className="flex flex-col items-center gap-1">
                                                 <span className="text-white/50">Token</span>
-                                                <div className="flex flex-row  items-center gap-1">
-                                                    <FilterIcon size={14} className="text-white/60" />
-                                                    <input
-                                                        type="number"
-                                                        inputMode="decimal"
-                                                        value={filters.tokenMin}
-                                                        onChange={handleNumberChange("tokenMin")}
-                                                        placeholder="min"
-                                                        className="w-16 text-[8px] rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
-                                                    />
-                                                    <input
-                                                        type="number"
-                                                        inputMode="decimal"
-                                                        value={filters.tokenMax}
-                                                        onChange={handleNumberChange("tokenMax")}
-                                                        placeholder="max"
-                                                        className="w-16 text-[8px] rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
-                                                    />
-                                                </div>
+                                                {/* filters moved to popover */}
                                             </div>
                                         </th>
                                         <th className="px-3 py-2">
                                             <div className="flex flex-col items-center gap-1">
                                                 <span className="text-white/50">Tx</span>
-                                                <div className="flex flex-row  items-center gap-1">
-                                                    <FilterIcon size={14} className="text-white/60" />
-                                                    <input
-                                                        value={filters.hash}
-                                                        onChange={handleTextChange("hash")}
-                                                        placeholder="hash"
-                                                        className="w-24 text-[8px] rounded-md border border-white/10 bg-black/60 px-2 py-1 placeholder-white/30 outline-none hover:border-white/20"
-                                                    />
-                                                </div>
+                                                {/* filters moved to popover */}
                                             </div>
                                         </th>
                                     </tr>
@@ -1767,7 +1835,7 @@ export default function Trade({
                                         </tr>
                                     ) : (
                                         filteredHx.map((res) => (
-                                            <tr key={res.hash} className="text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
+                                            <tr key={res.hash} className="font-mono text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
                                                 <td className="py-6">{formatRelativeTime(res.timestamp / 1000)}</td>
                                                 <td className="py-6">
                                                     <Link
@@ -1775,14 +1843,14 @@ export default function Trade({
                                                         prefetch={false}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="font-mono text-xs text-white/70 underline-offset-2 transition hover:text-white hover:underline"
+                                                        className="text-white/70 underline-offset-2 transition hover:text-white hover:underline"
                                                     >
                                                         {res.from.slice(0, 6)}...{res.from.slice(-4)}
                                                     </Link>
                                                 </td>
-                                                <td className="py-6">
+                                                <td className="sm:px-0 py-6">
                                                     <div
-                                                        className={`inline-block rounded-full bg-white/10 px-2 py-1 capitalize text-xs font-semibold uppercase ${
+                                                        className={`inline-block rounded-full bg-white/10 px-2 py-1 capitalize font-semibold uppercase ${
                                                             res.action === "buy" ? "text-emerald-300" :
                                                             res.action === "sell" ? "text-rose-300" : "text-cyan-300"
                                                         }`}
@@ -1790,15 +1858,15 @@ export default function Trade({
                                                         {res.action}
                                                     </div>
                                                 </td>
-                                                <td className="py-6 font-mono text-sm text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.nativeValue)} {baseAssetSymbol}</td>
-                                                <td className="py-6 font-mono text-sm text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.value)} {tokenSymbolDisplay}</td>
+                                                <td className="py-6 text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.nativeValue)} {baseAssetSymbol}</td>
+                                                <td className="py-6 text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.value)} {tokenSymbolDisplay}</td>
                                                 <td className="py-6">
                                                     <Link
                                                         href={`${_explorer}tx/${res.hash}`}
                                                         prefetch={false}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="font-mono text-xs text-emerald-200 underline-offset-2 transition hover:text-emerald-100 hover:underline"
+                                                        className="text-emerald-200 underline-offset-2 transition hover:text-emerald-100 hover:underline"
                                                     >
                                                         {res.hash.slice(0, 6)}...{res.hash.slice(-4)}
                                                     </Link>
