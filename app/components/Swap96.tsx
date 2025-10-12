@@ -1,6 +1,6 @@
 import React from 'react'
 import { useAccount } from 'wagmi'
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core'
+import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, parseEther } from 'viem'
 import { ArrowDown, ChevronDown } from "lucide-react"
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ import { config } from '@/app/config'
 import { useSwapTokenSelection } from '@/app/components/swap/useSwapTokenSelection'
 import { useSwapQuote } from '@/app/components/swap/useSwapQuote'
 import { encodePath } from '@/app/components/swap/path'
+import { ensureTokenAllowance, executeRouterSwap, wrapNativeToken, unwrapWrappedToken } from '@/app/components/swap/swapActions'
 
 export default function Swap96({
     setIsLoading, setErrMsg,
@@ -277,24 +278,27 @@ export default function Swap96({
         setIsLoading(true)
         try {
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                const h = await sendTransaction(config, { to: tokens[1].value, value: parseEther(amountA) })
-                await waitForTransactionReceipt(config, { hash: h })
-                setTxupdate(h)
-            } else if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                let allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', bkcUnwapped] })
-                if (allowanceA < parseEther(amountA)) {
-                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [bkcUnwapped, parseEther(amountA)] })
-                    const h = await writeContract(config, request)
-                    await waitForTransactionReceipt(config, { hash: h })
-                }
-                let { request } = await simulateContract(config, {
-                    ...unwarppedNative,
-                    functionName: 'withdraw',
-                    args: [parseEther(amountA)]
+                const hash = await wrapNativeToken({
+                    config,
+                    wrappedTokenAddress: tokens[1].value,
+                    amount: parseEther(amountA),
                 })
-                let h = await writeContract(config, request)
-                await waitForTransactionReceipt(config, { hash: h })
-                setTxupdate(h)
+                setTxupdate(hash)
+            } else if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
+                await ensureTokenAllowance({
+                    config,
+                    token: { ...erc20ABI, address: tokenA.value },
+                    owner: address as `0x${string}`,
+                    spender: bkcUnwapped as `0x${string}`,
+                    requiredAmount: parseEther(amountA),
+                    approveArgs: [bkcUnwapped as `0x${string}`, parseEther(amountA)],
+                })
+                const hash = await unwrapWrappedToken({
+                    config,
+                    contract: unwarppedNative,
+                    amount: parseEther(amountA),
+                })
+                setTxupdate(hash)
             }
         } catch (e) {
             setErrMsg(e as WriteContractErrorType)
@@ -318,62 +322,43 @@ export default function Swap96({
                 tokenBvalue = tokenB.value
             }
             if (tokenA.value.toUpperCase() !== tokens[0].value.toUpperCase()) {
-                let allowanceA
-                if (tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {
-                    allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value as '0xstring', functionName: 'allowances', args: [address as '0xstring', ROUTER02] })
-                } else {
-                    allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', ROUTER02] })
-                }
-                if (allowanceA < parseEther(amountA)) {
-                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [ROUTER02, parseEther(amountA)] })
-                    const h = await writeContract(config, request)
-                    await waitForTransactionReceipt(config, { hash: h })
-                }
-            }
-            let h
-            let r
-            if (altRoute === undefined) {
-                const { result, request } = await simulateContract(config, {
-                    ...router02Contract,
-                    functionName: 'exactInputSingle',
-                    args: [{
-                        tokenIn: tokenAvalue as '0xstring',
-                        tokenOut: tokenBvalue as '0xstring',
-                        fee: feeSelect,
-                        recipient: address as '0xstring',
-                        amountIn: parseEther(amountA),
-                        amountOutMinimum: parseEther(amountB) * BigInt(95) / BigInt(100),
-                        sqrtPriceLimitX96: BigInt(0)
-                    }],
-                    value: tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() ? parseEther(amountA) : BigInt(0)
+                const isKap20 = tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()
+                await ensureTokenAllowance({
+                    config,
+                    token: { ...(isKap20 ? kap20ABI : erc20ABI), address: tokenA.value },
+                    owner: address as `0x${string}`,
+                    spender: ROUTER02,
+                    requiredAmount: parseEther(amountA),
+                    allowanceFunctionName: isKap20 ? 'allowances' : 'allowance',
                 })
-                r = result
-                h = await writeContract(config, request)
-            } else {
-                const route = encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect])
-                const { result, request } = await simulateContract(config, {
-                    ...router02Contract,
-                    functionName: 'exactInput',
-                    args: [{
-                        path: route as '0xstring',
-                        recipient: address as '0xstring',
-                        amountIn: parseEther(amountA),
-                        amountOutMinimum: parseEther(amountB) * BigInt(95) / BigInt(100)
-                    }],
-                    value: tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() ? parseEther(amountA) : BigInt(0)
-                })
-                r = result
-                h = await writeContract(config, request)
             }
-            await waitForTransactionReceipt(config, { hash: h })
+            const parsedAmountIn = parseEther(amountA)
+            const amountOutMinimum = parseEther(amountB) * BigInt(95) / BigInt(100)
+            const path = altRoute ? encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect]) : undefined
+
+            const { hash: h, amountOut: r } = await executeRouterSwap({
+                config,
+                router: router02Contract,
+                tokenIn: tokenAvalue as `0x${string}`,
+                tokenOut: tokenBvalue as `0x${string}`,
+                recipient: address as `0x${string}`,
+                amountIn: parsedAmountIn,
+                amountOutMinimum,
+                fee: feeSelect,
+                path,
+                value: tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() ? parsedAmountIn : BigInt(0),
+            })
+
             setTxupdate(h)
             if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                let allowance = await readContract(config, { ...erc20ABI, address: tokens[1].value as '0xstring', functionName: 'allowance', args: [address as '0xstring', bkcUnwapped] })
-                if (allowance < r) {
-                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokens[1].value as '0xstring', functionName: 'approve', args: [bkcUnwapped, r as bigint] })
-                    const h = await writeContract(config, request)
-                    await waitForTransactionReceipt(config, { hash: h })
-                }
+                await ensureTokenAllowance({
+                    config,
+                    token: { ...erc20ABI, address: tokens[1].value },
+                    owner: address as `0x${string}`,
+                    spender: bkcUnwapped as `0x${string}`,
+                    requiredAmount: r,
+                    approveArgs: [bkcUnwapped as `0x${string}`, r],
+                })
                 let { request } = await simulateContract(config, {
                     ...unwarppedNative,
                     functionName: 'withdraw',
