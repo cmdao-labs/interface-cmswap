@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     siteName: 'CMswap',
     images: [
       {
-        url: 'https://cmswap.xyz/CMswap_banner_1200x630.png',
+        url: 'https://cmswap.mypinata.cloud/ipfs/bafkreibddbfpmsborzagg6whymuoprpv53wuzlbaac4ri7fflowjl562qu',
         width: 1200,
         height: 630,
         alt: 'CMswap Banner',
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'CMswap',
     description: 'The Future of Permissionless Multiverse',
-    images: ['https://cmswap.xyz/CMswap_banner2_1200x630.png'],
+    images: ['https://cmswap.mypinata.cloud/ipfs/bafkreibddbfpmsborzagg6whymuoprpv53wuzlbaac4ri7fflowjl562qu'],
     site: '@CMswap',
     creator: '@CMswap',
   },

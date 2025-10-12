@@ -13,9 +13,9 @@ import ErrorModal from '@/app/components/error-modal'
 import ReferralTracker from '../components/Refferal'
 
 const chains: { name: string, id: number, logo: string }[] = [
-    { name: 'JB chain', id: 8899, logo: './8899.png' },
-    { name: 'KUB chain', id: 96, logo: './96.png' },
-    { name: 'BNB chain', id: 56, logo: './56.png' },
+    { name: 'JB chain', id: 8899, logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreiguxm4at5dehn6s7v2qniim7edqsntdmukwjmgyqkr4rv4aujvbdy' },
+    { name: 'KUB chain', id: 96, logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u' },
+    { name: 'BNB chain', id: 56, logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreifw5yj7khnjb7vm6jpsos5cuzmaasi7gbg4y73lgrsvlnsvwxvlai' },
 ]
 
 const tokens: { name: string, value: '0xstring', logo: string }[][] = [
@@ -23,10 +23,10 @@ const tokens: { name: string, value: '0xstring', logo: string }[][] = [
         { name: 'JUSDT', value: '0x24599b658b57f91E7643f4F154B16bcd2884f9ac' as '0xstring', logo: 'https://gateway.pinata.cloud/ipfs/bafkreif3vllg6mwswlqypqgtsh7i7wwap7zgrkvtlhdjoc63zjm7uv6vvi' },
     ],
     [
-        { name: 'KUSDT', value: '0x7d984C24d2499D840eB3b7016077164e15E5faA6' as '0xstring', logo: './usdt.png' },
+        { name: 'KUSDT', value: '0x7d984C24d2499D840eB3b7016077164e15E5faA6' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreieg7yf6iwx7obygg62hz252bwnaddedanvlizonaawagk7eze4qcu' },
     ],
     [
-        { name: 'USDT', value: '0x55d398326f99059fF775485246999027B3197955' as '0xstring', logo: './usdt.png' },
+        { name: 'USDT', value: '0x55d398326f99059fF775485246999027B3197955' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreieg7yf6iwx7obygg62hz252bwnaddedanvlizonaawagk7eze4qcu' },
     ],
 ]
 

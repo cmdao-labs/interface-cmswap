@@ -91,7 +91,7 @@ export default function Sort4() {
             <div className="flex flex-row items-center gap-2">
                 {chainConfig.label === 'Bitkub Testnet' ? (
                     <>
-                        <Image src="/kub.png" alt="" width={64} height={64} />
+                        <Image src="https://cmswap.mypinata.cloud/ipfs/bafkreiggymvcdojbawajbufsesu6npqldlv3hncq5hrolwoqu4whyvrexy" alt="" width={64} height={64} />
                         <span className='text-[8px] px-2 py-1 border border-white'>testnet</span>
                     </>
                 ) : (

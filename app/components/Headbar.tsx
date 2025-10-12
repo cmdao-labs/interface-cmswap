@@ -72,7 +72,7 @@ export default function Headbar() {
                     <div className="flex items-center gap-2 justify-end xl:mr-2 p-6">
                         {/* @ts-expect-error msg */}
                         <appkit-button />
-                        <Link href="/"><Button variant="ghost" className="cursor-pointer" size="icon"><img alt="" src="/flag-of-singapore.png" className="rounded-full w-[25px] h-[25px] object-cover" /></Button></Link>
+                        <Link href="/"><Button variant="ghost" className="cursor-pointer" size="icon"><img alt="" src="https://cmswap.mypinata.cloud/ipfs/bafkreifxc6wzosyzbq2jkrmjoil56h5ldhbboplxzneph45xnhguo3e65u" className="rounded-full w-[25px] h-[25px] object-cover" /></Button></Link>
                     </div>
                 </div>
                 {isMenuOpen && (

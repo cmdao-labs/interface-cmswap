@@ -30,12 +30,11 @@ const modal = createAppKit({
         '--w3m-accent': '#1a1a3a',
     },
     chainImages: {
-        8899: '/8899.png',
-        96: '/96.png',
-        56: '/56.png',
-        10143: '/monad.jpg',
-        25925: '/96.png',
-
+        8899: 'https://cmswap.mypinata.cloud/ipfs/bafkreiguxm4at5dehn6s7v2qniim7edqsntdmukwjmgyqkr4rv4aujvbdy',
+        96: 'https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u',
+        56: 'https://cmswap.mypinata.cloud/ipfs/bafkreifw5yj7khnjb7vm6jpsos5cuzmaasi7gbg4y73lgrsvlnsvwxvlai',
+        10143: 'https://cmswap.mypinata.cloud/ipfs/bafkreihsrmtri6lexqqudhckcttijekrerjmckq22v4p5d6tyolpa7qsx4',
+        25925: 'https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u',
     },
     features: {
         analytics: true,

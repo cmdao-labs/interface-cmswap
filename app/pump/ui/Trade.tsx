@@ -994,7 +994,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                 >
                                     <Plus size={12} />
                                 </button>
-                                <Link href={`${_explorer}address/${ticker}`} prefetch={false} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/10 bg-white/10 p-1 transition hover:border-white/40 hover:bg-white/20" title="View on explorer"><Image src="/bs.png" alt="block explorer" width={12} height={12} /></Link>
+                                <Link href={`${_explorer}address/${ticker}`} prefetch={false} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/10 bg-white/10 p-1 transition hover:border-white/40 hover:bg-white/20" title="View on explorer"><Image src="https://cmswap.mypinata.cloud/ipfs/bafkreigg4272v2iffgcehwh7xmel6ioixrs6r3beavdeb2dflewitcimui" alt="block explorer" width={12} height={12} /></Link>
                             </div>
                         </div>
                     </div>
