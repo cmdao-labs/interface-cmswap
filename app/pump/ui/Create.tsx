@@ -6,7 +6,6 @@ import { formatEther, parseEther, erc20Abi } from "viem";
 import { writeContract, readContracts } from "@wagmi/core";
 import { useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import { config } from "@/app/config";
-import { ERC20FactoryABI } from "@/app/pump/abi/ERC20Factory";
 import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
 import { useRouter } from "next/navigation";
 import CustomPopup from "@/app/components/popup-modal";
@@ -20,26 +19,14 @@ export default function Create({ mode, chain, token, }: {
     const connections = useConnections();
 
     let _chainId = 0;
-    if (chain === "kub" || chain === "") _chainId = 96;
-    if (chain === "monad") _chainId = 10143;
-    if (chain === "kubtestnet") _chainId = 25925;
+    if (chain === "kubtestnet" || chain === "") _chainId = 25925;
     let currencyAddr = "";
     let bkgafactoryAddr = "";
-    if ((chain === "kub" || chain === "") && (mode === "lite" || mode === "") && (token === "cmm" || token === "")) {
-        currencyAddr = "0x9b005000a10ac871947d99001345b01c1cef2790";
-        bkgafactoryAddr = "0x10d7c3bDc6652bc3Dd66A33b9DD8701944248c62";
-    } else if ((chain === "kub" || chain === "") && mode === "pro") {
-        currencyAddr = "0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5";
-        bkgafactoryAddr = "0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56";
-    } else if (chain === "monad" && mode === "pro") {
-        currencyAddr = "0x760afe86e5de5fa0ee542fc7b7b713e1c5425701";
-        bkgafactoryAddr = "0x6dfc8eecca228c45cc55214edc759d39e5b39c93";
-    } else if (chain === "kubtestnet" && mode === "pro") {
+    if ((chain === "kubtestnet" || chain === "") && (mode === "pro" || mode === "") && (token === "cmm" || token === "")) {
         currencyAddr = "0x700D3ba307E1256e509eD3E45D6f9dff441d6907";
         bkgafactoryAddr = "0x46a4073c830031ea19d7b9825080c05f8454e530";
     }
-    const dataofcurr = { addr: currencyAddr };
-    const bkgafactoryContract = {address: bkgafactoryAddr as "0xstring", abi: chain === "kubtestnet" ? ERC20FactoryV2ABI : ERC20FactoryABI, chainId: _chainId} as const;
+    const factoryContract = {address: bkgafactoryAddr as "0xstring", abi: ERC20FactoryV2ABI, chainId: _chainId} as const;
 
     const account = useAccount();
     const [file, setFile] = useState<File | null>(null);
@@ -57,12 +44,8 @@ export default function Create({ mode, chain, token, }: {
 
     const chainLabel = useMemo(() => {
         switch (chain) {
-            case "kub":
-                return "Bitkub Chain";
             case "kubtestnet":
                 return "Bitkub Testnet";
-            case "monad":
-                return "Monad Testnet";
             default:
                 return chain ? chain.toUpperCase() : "Bitkub Chain";
         }
@@ -72,18 +55,12 @@ export default function Create({ mode, chain, token, }: {
     const isWalletReady = Boolean(connections) && account.address !== undefined && account.chainId === _chainId;
 
     const deploymentCostCopy = useMemo(() => {
-        if (chain === "kub" && mode === "pro") return "1 KUB (network fee not included)";
-        if ((chain === "kub" || chain === "") && (mode === "lite" || mode === "") && (token === "cmm" || token === "")) return "6,000 CMM (network fee not included)";
-        if (chain === "monad" && mode === "pro") return "1 MON (network fee not included)";
-        if (chain === "kubtestnet" && mode === "pro") return "0 tKUB (network fee only)";
+        if ((chain === "kubtestnet" || chain === "") && (mode === "pro" || mode === "") && (token === "cmm" || token === "")) return "0 tKUB (network fee not included)";
         return "Gas fee only";
     }, [chain, mode, token]);
 
     const requirementNotes = useMemo(() => {
         const notes: string[] = [];
-        if ((mode === "lite" || mode === "") && (token === "cmm" || token === "")) {
-            notes.push("Ensure your wallet holds at least 6,000 CMM and has approved the factory contract.");
-        }
         notes.push("Your logo is automatically pinned to IPFS; 512x512 PNG works best.");
         notes.push("Connect to the correct network before confirming the transaction.");
         return notes;
@@ -154,36 +131,9 @@ export default function Create({ mode, chain, token, }: {
             if (!handleIpfsUpload(upload)) return;
 
             let result = "";
-            if (mode === "lite" && (token === "cmm" || token === "")) {
-                const allowance = await readContracts(config, {
-                contracts: [
-                    {
-                        address: dataofcurr.addr as "0xstring",
-                        abi: erc20Abi,
-                        functionName: "allowance",
-                        args: [account.address as "0xstring", bkgafactoryAddr as "0xstring"],
-                        chainId: _chainId,
-                    },
-                ],
-                });
-                if (Number(formatEther(allowance[0].result!)) < 6000) {
-                await writeContract(config, {
-                    address: dataofcurr.addr as "0xstring",
-                    abi: erc20Abi,
-                    functionName: "approve",
-                    args: [bkgafactoryAddr as "0xstring", parseEther("10000")],
-                    chainId: _chainId,
-                });
-                }
+            if (chain === "kubtestnet" && mode === "pro") {
                 result = await writeContract(config, {
-                    ...bkgafactoryContract,
-                    functionName: "createToken",
-                    args: [name, ticker, `ipfs://${upload.IpfsHash}`, desp],
-                    value: parseEther("0"),
-                });
-            } else if (chain === "kubtestnet" && mode === "pro") {
-                result = await writeContract(config, {
-                    ...bkgafactoryContract,
+                    ...factoryContract,
                     functionName: "createToken",
                     args: [
                         name,
@@ -195,13 +145,6 @@ export default function Create({ mode, chain, token, }: {
                         "l3",
                     ],
                     value: parseEther("0"),
-                });
-            } else {
-                result = await writeContract(config, {
-                    ...bkgafactoryContract,
-                    functionName: "createToken",
-                    args: [name, ticker, `ipfs://${upload.IpfsHash}`, desp],
-                    value: parseEther("1"),
                 });
             }
 

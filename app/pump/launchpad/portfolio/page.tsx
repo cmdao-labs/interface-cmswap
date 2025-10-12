@@ -12,13 +12,11 @@ export const metadata: Metadata = {
 };
 
 const chainLabelMap: Record<string, string> = {
-    kub: "Bitkub Chain",
     kubtestnet: "Bitkub Testnet",
-    monad: "Monad Testnet",
 };
 
 const getChainLabel = (chain: string) => {
-    if (!chain) return "Bitkub Chain";
+    if (!chain) return "Bitkub Testnet";
     return chainLabelMap[chain] ?? chain.toUpperCase();
 };
 
@@ -56,14 +54,14 @@ export default async function Portfolio(props: {
     const searchParams = await props.searchParams;
     const addr = searchParams?.addr || '';
     const activity = searchParams?.activity || '';
-    const mode = searchParams?.mode || '';
-    const chain = searchParams?.chain || '';
+    const mode = searchParams?.mode || 'pro';
+    const chain = searchParams?.chain || 'kubtestnet';
     const token = searchParams?.token || '';
     const showActivity = activity === "true";
     const chainLabel = getChainLabel(chain);
     const modeLabel = mode === "pro" ? "Pro Mode" : "Lite Mode";
     const truncatedAddr = truncateAddress(addr);
-    const backHref = `/pump/launchpad?chain=${chain}${mode === "pro" ? "&mode=pro" : "&mode=lite"}`;
+    const backHref = `/pump/launchpad?chain=${chain}${(mode === "pro" || mode === "") ? "&mode=pro" : "&mode=lite"}`;
 
     return (
         <main className="relative min-h-screen w-full overflow-hidden pt-16 pb-12 text-white">
@@ -96,7 +94,7 @@ export default async function Portfolio(props: {
                     </div>
                 </header>
 
-                <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-4 sm:p-8 shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur">
+                <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-4 shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur">
                     <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_60%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.18),transparent_55%)]" />
                     <div className="relative z-10 flex flex-col gap-6">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><Sort3 /></div>

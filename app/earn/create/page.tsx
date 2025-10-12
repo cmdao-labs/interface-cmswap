@@ -25,7 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Button } from '@/components/ui/button';
 import { useAccount } from 'wagmi';
-import { UniswapV2PairABI } from '@/app/pump/abi/UniswapV2Pair';
+import { UniswapV2PairABI } from '@/app/earn/abi/UniswapV2Pair';
 import { intervalToDuration } from 'date-fns';
 import DateTimePicker from '@/app/components/DateSelector';
 import { Copy, CopyCheck, Plus, Minus } from "lucide-react";

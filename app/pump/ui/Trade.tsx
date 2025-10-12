@@ -7,95 +7,19 @@ import { readContracts, writeContract, simulateContract, waitForTransactionRecei
 import { useDebouncedCallback } from "use-debounce";
 import { formatEther, parseEther, erc20Abi, createPublicClient, http, decodeFunctionData} from "viem";
 import { Copy, Check, Plus, Filter as FilterIcon, X, Sprout, Users, ArrowLeft } from "lucide-react";
-import { bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
+import { bitkubTestnet } from "viem/chains";
 import { config } from "@/app/config";
-import { ERC20FactoryABI } from "@/app/pump/abi/ERC20Factory";
 import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
-import { UniswapV2FactoryABI } from "@/app/pump/abi/UniswapV2Factory";
-import { UniswapV2PairABI } from "@/app/pump/abi/UniswapV2Pair";
-import { UniswapV2RouterABI } from "@/app/pump/abi/UniswapV2Router";
-import { UniswapV3QouterABI } from "@/app/pump/abi/UniswapV3Qouter";
 import { SocialsABI } from "@/app/pump/abi/Socials";
-import Chart from "@/app/components/Chart";
+import Chart from "@/app/pump/ui/Chart";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-const themes: any = {
-    96: {
-        primary: "from-green-400 to-emerald-400",
-        secondary: "from-green-600 to-emerald-600",
-        accent: "green-400",
-        glow: "",
-        border: "border-green-400/30",
-        text: "text-green-300",
-        btn: "radial-gradient(circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3%)",
-        tradebtn: "bg-emerald-300",
-    },
-    25925: {
-        primary: "from-green-400 to-emerald-400",
-        secondary: "from-green-600 to-emerald-600",
-        accent: "green-400",
-        glow: "",
-        border: "border-green-400/30",
-        text: "text-green-300",
-        btn: "radial-gradient(circle farthest-corner at 10% 20%, rgba(0,255,147,1) 0.2%, rgba(22,255,220,1) 100.3%)",
-        tradebtn: "bg-emerald-300",
-    },
-    8899: {
-        primary: "from-blue-400 to-cyan-400",
-        secondary: "from-blue-600 to-cyan-600",
-        accent: "blue-400",
-        glow: "",
-        border: "border-blue-400/30",
-        text: "text-blue-300",
-        btn: "linear-gradient(135deg, #3B82F6, #06B6D4)",
-        tradebtn: "bg-emerald-300",
-    },
-    56: {
-        primary: "from-yellow-400 to-amber-400",
-        secondary: "from-yellow-600 to-amber-600",
-        accent: "yellow-400",
-        glow: "",
-        border: "border-yellow-400/30",
-        text: "text-yellow-300",
-        btn: "linear-gradient(135deg, #FBBF24, #F59E0B)",
-        tradebtn: "bg-emerald-300",
-    },
-    3501: {
-        primary: "from-red-400 to-rose-400",
-        secondary: "from-red-600 to-rose-600",
-        accent: "red-400",
-        glow: "",
-        border: "border-red-400/30",
-        text: "text-red-300",
-        btn: "linear-gradient(135deg, #F87171, #F43F5E)",
-        tradebtn: "bg-emerald-300",
-    },
-    10143: {
-        primary: "from-purple-400 to-violet-400",
-        secondary: "from-purple-600 to-violet-600",
-        accent: "purple-400",
-        glow: "",
-        border: "border-purple-400/30",
-        text: "text-purple-300",
-        btn: "linear-gradient(135deg, #D6BEF7, #A683EF)",
-        tradebtn: "bg-purple-300",
-    },
-};
-
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-const { ethereum } = window as any;
+const ethereum = typeof window !== "undefined" ? (window as any).ethereum : null;
 import {FaFacebookF, FaTelegramPlane, FaGlobe} from "react-icons/fa";
 import { BsTwitterX } from "react-icons/bs";
-import { CMswapChartABI } from "@/app/lib/abi";
 
-export default function Trade({
-    mode,
-    chain,
-    ticker,
-    lp,
-    token,
-}: {
+export default function Trade({ mode, chain, ticker, lp, token }: {
     mode: string;
     chain: string;
     ticker: string;
@@ -106,106 +30,39 @@ export default function Trade({
     let _chainId = 0;
     let _explorer = "";
     let _rpc = "";
-    if (chain === "kub" || chain === "") {
-        _chain = bitkub;
-        _chainId = 96;
-        _explorer = "https://www.kubscan.com/";
-    } else if (chain === "monad") {
-        _chain = monadTestnet;
-        _chainId = 10143;
-        _explorer = "https://monad-testnet.socialscan.io/";
-        _rpc = process.env.NEXT_PUBLIC_MONAD_RPC as string;
-    } else if (chain === "kubtestnet") {
+    if (chain === "kubtestnet" || chain === "") {
         _chain = bitkubTestnet;
         _chainId = 25925;
         _explorer = "https://testnet.kubscan.com/";
         _rpc = "https://rpc-testnet.bitkubchain.io" as string;
     } // add chain here
     const publicClient = createPublicClient({chain: _chain, transport: http(_rpc)});
-    const [theme, setTheme] = React.useState(themes[Number(_chainId)] || themes[96]);
     let currencyAddr: string = "";
-    let bkgafactoryAddr: string = "";
+    let factoryAddr: string = "";
     let _blockcreated: number = 1;
-    let v2facAddr: string = "";
-    let v2routerAddr: string = "";
-    let v3qouterAddr: string = "";
     let socialAddr: string = "";
-    let graduatedAddr: string = "";
     if (
-        (chain === "kub" || chain === "") &&
-        (mode === "lite" || mode === "") &&
+        (chain === "kubtestnet" || chain === "") &&
+        (mode === "pro" || mode === "") &&
         (token === "cmm" || token === "")
     ) {
-        currencyAddr = "0x9b005000a10ac871947d99001345b01c1cef2790";
-        bkgafactoryAddr = "0x10d7c3bDc6652bc3Dd66A33b9DD8701944248c62";
-        _blockcreated = 25229488;
-        v2facAddr = "0x090c6e5ff29251b1ef9ec31605bdd13351ea316c";
-        v2routerAddr = "0x3F7582E36843FF79F173c7DC19f517832496f2D8";
-        v3qouterAddr = "0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f";
-        socialAddr = "0xf8dec288D2438771f65ed59509ab474edaf067Da";
-        graduatedAddr = "0x7479A1e11e9940CAb6ee6c44aa1a72F3F02EEd8b";
-    } else if ((chain === "kub" || chain === "") && mode === "pro") {
-        currencyAddr = "0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5";
-        bkgafactoryAddr = "0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56";
-        _blockcreated = 25232899;
-        v2facAddr = "0x090c6e5ff29251b1ef9ec31605bdd13351ea316c";
-        v2routerAddr = "0x3F7582E36843FF79F173c7DC19f517832496f2D8";
-        v3qouterAddr = "0xCB0c6E78519f6B4c1b9623e602E831dEf0f5ff7f";
-        socialAddr = "0xf8dec288D2438771f65ed59509ab474edaf067Da";
-        graduatedAddr = "0xd1D024be49c90f7bA83fb97c1857D45B98Ad294b";
-    } else if (chain === "monad" && mode === "pro") {
-        currencyAddr = "0x760afe86e5de5fa0ee542fc7b7b713e1c5425701";
-        bkgafactoryAddr = "0x6dfc8eecca228c45cc55214edc759d39e5b39c93";
-        _blockcreated = 16912084;
-        v2facAddr = "0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142";
-        v2routerAddr = "0x5a16536bb85a2fa821ec774008d6068eced79c96";
-        v3qouterAddr = "0x555756bd5b347853af6f713a2af6231414bedefc";
-        socialAddr = "0x01837156518e60362048e78d025a419C51346f55";
-        graduatedAddr = "0x6dfc8eecca228c45cc55214edc759d39e5b39c93";
-    } else if (chain === "kubtestnet" && mode === "pro") {
         currencyAddr = "0x700D3ba307E1256e509eD3E45D6f9dff441d6907";
-        bkgafactoryAddr = "0x46a4073c830031ea19d7b9825080c05f8454e530";
+        factoryAddr = "0x46a4073c830031ea19d7b9825080c05f8454e530";
         _blockcreated = 23935659;
-        v2facAddr = "0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b";
-        v2routerAddr = "0x3C5514335dc4E2B0D9e1cc98ddE219c50173c5Be";
-        v3qouterAddr = "0x3F64C4Dfd224a102A4d705193a7c40899Cf21fFe";
         socialAddr = "0x6F17157b4EcD3734A9EA8ED4bfE78694e3695b90";
-        lp = "0x46a4073C830031eA19D7b9825080c05F8454E530"
     }
     const reachData = [
-        {
-            chain: "kub",
-            proAmount: "2000",
-            proSymbol: "KUB",
-            lite: "100000",
-            liteSymbol: "CMM",
-        },
         {
             chain: "kubtestnet",
             proAmount: "47800",
             proSymbol: "tKUB",
             lite: "",
             liteSymbol: "",
-        },
-        {
-            chain: "monad",
-            proAmount: "1",
-            proSymbol: "MON",
-            lite: "",
-            liteSymbol: "",
-        },
-    ];
-    // add chain and mode here
+        }
+    ]; // add chain and mode here
 
     const dataofcurr = { addr: currencyAddr, blockcreated: _blockcreated };
-    const dataofuniv2factory = { addr: v2facAddr };
-    const dataofuniv2router = { addr: v2routerAddr };
-    const dataofuniv3qouter = { addr: v3qouterAddr };
-    const bkgafactoryContract = { address: bkgafactoryAddr as "0xstring", abi: chain === "kubtestnet" ? ERC20FactoryV2ABI : ERC20FactoryABI, chainId: _chainId } as const;
-    const graduatedContract = { address: graduatedAddr as "0xstring", abi: ERC20FactoryABI, chainId: _chainId };
-    const univ2factoryContract = { address: dataofuniv2factory.addr as "0xstring", abi: UniswapV2FactoryABI, chainId: _chainId } as const;
-    const univ2RouterContract = { address: dataofuniv2router.addr as "0xstring", abi: UniswapV2RouterABI, chainId: _chainId } as const;
-    const univ3QouterContract = { address: dataofuniv3qouter.addr as "0xstring", abi: UniswapV3QouterABI, chainId: _chainId } as const;
+    const factoryContract = { address: factoryAddr as "0xstring", abi: ERC20FactoryV2ABI, chainId: _chainId } as const;
     const socialContrct = { address: socialAddr as "0xstring", abi: SocialsABI, chainId: _chainId } as const;
 
     const [trademode, setTrademode] = useState(true);
@@ -248,7 +105,7 @@ export default function Trade({
     }, [headnoti]);
 
     const resolvedLogo = React.useMemo(() => {
-        if (!logo) return "https://cmswap.mypinata.cloud/ipfs/";
+        if (!logo) return "/default.ico";
         const logoString = String(logo);
         if (logoString.startsWith("ipfs://")) return `https://cmswap.mypinata.cloud/ipfs/${logoString.slice(7)}`;
         return `https://cmswap.mypinata.cloud/ipfs/${logoString}`;
@@ -285,18 +142,6 @@ export default function Trade({
     };
 
     const relativeCreatedTime = formatRelativeTime(createTime);
-    const createdAtAbsolute = React.useMemo(() => {
-        if (!createTime) return "";
-        return new Date(Number(createTime) * 1000).toLocaleString();
-    }, [createTime]);
-
-    const formattedPrice = React.useMemo(() => {
-        if (!price) return "0.00";
-        return Intl.NumberFormat("en-US", {
-            minimumFractionDigits: price < 1 ? 2 : 0,
-            maximumFractionDigits: price < 1 ? 6 : 2,
-        }).format(price);
-    }, [price]);
 
     const formattedMcap = React.useMemo(() => {
         return Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short", maximumFractionDigits: 2}).format(mcap || 0);
@@ -361,14 +206,10 @@ export default function Trade({
 
     const chainLabel = React.useMemo(() => {
         switch (chain) {
-        case "kub":
-            return "Bitkub Chain";
-        case "kubtestnet":
-            return "Bitkub Testnet";
-        case "monad":
-            return "Monad Testnet";
-        default:
-            return chain ? chain.toUpperCase() : "Bitkub Chain";
+            case "kubtestnet":
+                return "Bitkub Testnet";
+            default:
+                return chain ? chain.toUpperCase() : "Bitkub Testnet";
         }
     }, [chain]);
 
@@ -391,12 +232,6 @@ export default function Trade({
         mode === "pro" ? 
             trademode ? Number(formatEther(ethBal)) : Number(formatEther(state[1].result as bigint)) :
             trademode ? Number(formatEther(state[0].result as bigint)) : Number(formatEther(state[1].result as bigint))
-    ), [mode, trademode, ethBal, state]);
-
-    const formattedCounterBalance = React.useMemo(() => Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short", maximumFractionDigits: 3}).format(
-        mode === "pro" ? 
-            !trademode ? Number(formatEther(ethBal)) : Number(formatEther(state[1].result as bigint)) :
-            !trademode ? Number(formatEther(state[0].result as bigint)) : Number(formatEther(state[1].result as bigint))
     ), [mode, trademode, ethBal, state]);
 
     const formattedOutput = React.useMemo(() => Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short", maximumFractionDigits: 6}).format(Number(outputBalance || 0)), [outputBalance]);
@@ -805,12 +640,12 @@ export default function Trade({
                     });
                     const f: any = await readContracts(config, {
                         contracts: [
-                            { ...bkgafactoryContract, functionName: "pumpReserve", args: [ticker as '0xstring'], chainId: _chainId },
-                            { ...bkgafactoryContract, functionName: "virtualAmount", chainId: _chainId },
+                            { ...factoryContract, functionName: "pumpReserve", args: [ticker as '0xstring'], chainId: _chainId },
+                            { ...factoryContract, functionName: "virtualAmount", chainId: _chainId },
                         ],
                     });
                     const logCreateData = await publicClient.getContractEvents({
-                        ...bkgafactoryContract,
+                        ...factoryContract,
                         eventName: "Creation",
                         fromBlock: BigInt(_blockcreated),
                         toBlock: "latest",
@@ -832,38 +667,6 @@ export default function Trade({
                     setMcap(mcap);
                     const denominator = 47800;
                     setProgress(Number(((mcap * 100) / denominator).toFixed(2)));
-                } else {
-                    const result2: any = await readContracts(config, {
-                        contracts: [
-                            { ...tickerContract, functionName: "name" },
-                            { ...tickerContract, functionName: "symbol" },
-                            { ...bkgafactoryContract, functionName: "desp", args: [ticker as "0xstring"] },
-                            { ...bkgafactoryContract, functionName: "logo", args: [ticker as "0xstring"] },
-                            { ...univ2factoryContract, functionName: "getPool", args: [ticker as "0xstring", dataofcurr.addr as "0xstring", 10000] },
-                            { ...bkgafactoryContract, functionName: "creator", args: [ticker as "0xstring"] },
-                            { ...bkgafactoryContract, functionName: "createdTime", args: [ticker as "0xstring"] },
-                        ],
-                    });
-                    setSymbol(result2[1].result);
-                    setName(result2[0].result);
-                    setCreator(result2[5].result);
-                    setCreateTime(result2[6].result);
-                    setLogo(result2[3].result);
-                    setDescription(result2[2].result);
-                    const result3 = await readContracts(config, {
-                        contracts: [
-                            { address: lp as "0xstring", abi: UniswapV2PairABI, functionName: "slot0", chainId: _chainId },
-                            { address: lp as "0xstring", abi: UniswapV2PairABI, functionName: "token0", chainId: _chainId },
-                        ],
-                    });
-                    const sqrtPriceX96 = result3[0] && result3[0].status === "success" && result3[0].result !== undefined ? Number(result3[0].result[0]) / (2 ** 96) : 0;          
-                    const isToken0 = result3[1].result?.toUpperCase() !== currencyAddr.toUpperCase();
-                    const price = isToken0 ? sqrtPriceX96 ** 2 : 1 / sqrtPriceX96 ** 2;
-                    const getItems = reachData.find((item) => item.chain === chain)
-                    const denominator = getItems ? mode === 'pro' ? Number(getItems?.proAmount) : Number(getItems?.lite) : 1;                    
-                    setProgress(Number(((Number(price) * 100) / denominator).toFixed(2)));
-                    setPrice(Number(price));
-                    setMcap(Number(price !== 0 ? price * 1000000000 : 0));
                 }
             } catch (error) {
                 console.error("error with reason", error);
@@ -878,8 +681,6 @@ export default function Trade({
                     contracts: [
                         { address: dataofcurr.addr as "0xstring", abi: erc20Abi, functionName: "balanceOf", args: account.address !== undefined ? [account.address as "0xstring"] : ["0x0000000000000000000000000000000000000001"], chainId: _chainId },
                         { ...tickerContract, functionName: "balanceOf", args: account.address !== undefined ? [account.address as "0xstring"] : ["0x0000000000000000000000000000000000000001"] },
-                        { ...graduatedContract, functionName: "isGraduate", args: [lp as "0xstring"] },
-                        { address: lp as "0xstring", abi: UniswapV2PairABI, functionName: "slot0", chainId: _chainId },
                     ],
                 }) :
                 [ { result: BigInt(0) }, { result: BigInt(0) }, { result: false }, { result: [BigInt(0)] } ];
@@ -888,35 +689,17 @@ export default function Trade({
 
         const fetchLogs = async () => {
             let result5removedup;
-            if (chain === "monad") {
-                const headers = {Accept: "application/json", "Content-Type": "application/json"};
-                const body = JSON.stringify({
-                    id: 1, jsonrpc: "2.0", method: "alchemy_getAssetTransfers",
-                    params: [{
-                        fromBlock: "0x0",
-                        toBlock: "latest",
-                        contractAddresses: [ticker as "0xstring"],
-                        excludeZeroValue: true,
-                        category: ["erc20"],
-                    }],
-                });
-                const response = await fetch(_rpc, {method: "POST", headers: headers, body: body});
-                const data = await response.json();
-                const _holder = data.result.transfers.map(async (res: any) => {return res.to});
-                result5removedup = [...new Set(await Promise.all(_holder))];
-            } else {
-                const result4 = await publicClient.getContractEvents({
-                    abi: erc20Abi,
-                    address: ticker as "0xstring",
-                    eventName: "Transfer",
-                    fromBlock: BigInt(dataofcurr.blockcreated),
-                    toBlock: "latest",
-                });
-                const result5 = (await Promise.all(result4)).map((res) => {
-                return res.args.to;
-                });
-                result5removedup = [...new Set(result5)];
-            }
+            const result4 = await publicClient.getContractEvents({
+                abi: erc20Abi,
+                address: ticker as "0xstring",
+                eventName: "Transfer",
+                fromBlock: BigInt(dataofcurr.blockcreated),
+                toBlock: "latest",
+            });
+            const result5 = (await Promise.all(result4)).map((res) => {
+            return res.args.to;
+            });
+            result5removedup = [...new Set(result5)];
             const result6 = result5removedup.map(async (res) => {
                 return await readContracts(config, {
                     contracts: [
@@ -940,158 +723,53 @@ export default function Trade({
                 return res.value !== 0;
             });
             setHolder(result8);
-            let fulldatabuy;
-            let fulldatasell;
-            if (chain === "monad") {
-                const headers = {Accept: "application/json", "Content-Type": "application/json"};
-                const body = JSON.stringify({
-                    id: 2, jsonrpc: "2.0", method: "alchemy_getAssetTransfers",
-                    params: [
-                        {
-                            fromBlock: "0x0",
-                            toBlock: "latest",
-                            fromAddress: lp as "0xstring",
-                            contractAddresses: [ticker as "0xstring"],
-                            excludeZeroValue: true,
-                            category: ["erc20"],
-                        },
-                    ],
+            if (chain === "kubtestnet") {
+                const swapLogs = await publicClient.getContractEvents({
+                    ...factoryContract,
+                    eventName: "Swap",
+                    fromBlock: BigInt(_blockcreated),
+                    toBlock: "latest",
                 });
-                const response = await fetch(_rpc, {method: "POST", headers: headers, body: body});
-                const data = await response.json();
-                fulldatabuy = data.result.transfers.map((res: any) => {
+                const decoded = await Promise.all(swapLogs.map(async (log: any) => {
+                    try {
+                        const tx = await publicClient.getTransaction({hash: log.transactionHash});
+                        const decodedInput = decodeFunctionData({abi: ERC20FactoryV2ABI, data: tx.input as `0x${string}`});
+                        const fn = decodedInput.functionName;
+                        const args = decodedInput.args as any;
+                        const tokenArg = (args && args.length > 0) ? String(args[0]) : "";
+                        const isTargetToken = tokenArg.toLowerCase() === ticker.toLowerCase();
+                        if (!isTargetToken) return null;
+                        return { log, fn };
+                    } catch (e) {
+                        return null;
+                    }
+                }));
+                const filtered = decoded.filter((x) => x !== null) as { log: any; fn: string }[];
+                const _timestamparr = filtered.map(async (r: any) => {return await publicClient.getBlock({blockNumber: r.log.blockNumber})});
+                const timestamparr = await Promise.all(_timestamparr);
+                const restimestamp = timestamparr.map((res) => {return Number(res.timestamp) * 1000});
+                const theresult = filtered.map((r: any, index: any) => {
                     return {
-                        action: "buy",
-                        value: Number(formatEther(BigInt(res.rawContract.value))),
-                        from: res.to,
-                        hash: res.hash,
-                        block: Number(res.blockNum),
+                        action: r.fn === 'buy' ? 'buy' : 'sell',
+                        nativeValue: r.fn === 'buy' ? Number(formatEther(r.log.args.amountIn)) : Number(formatEther(r.log.args.amountOut)), 
+                        value: r.fn === 'buy' ? Number(formatEther(r.log.args.amountOut)) : Number(formatEther(r.log.args.amountIn)),
+                        from: r.log.args.sender,
+                        hash: r.log.transactionHash,
+                        timestamp: restimestamp[index],
                     };
+                }).sort((a: any, b: any) => {
+                    return b.timestamp - a.timestamp;
                 });
-                const body2 = JSON.stringify({
-                    id: 3, jsonrpc: "2.0", method: "alchemy_getAssetTransfers",
-                    params: [
-                        {
-                            fromBlock: "0x0",
-                            toBlock: "latest",
-                            toAddress: lp as "0xstring",
-                            contractAddresses: [ticker as "0xstring"],
-                            excludeZeroValue: true,
-                            category: ["erc20"],
-                        },
-                    ],
-                });
-                const response2 = await fetch(_rpc, {method: "POST", headers: headers, body: body2});
-                const data2 = await response2.json();
-                fulldatasell = data2.result.transfers.map((res: any) => {
-                    return {
-                        action: "sell",
-                        value: Number(formatEther(BigInt(res.rawContract.value))),
-                        from: res.from,
-                        hash: res.hash,
-                        block: Number(res.blockNum),
-                    };
-                });
-            } else {
-                if (chain === "kubtestnet") {
-                    const swapLogs = await publicClient.getContractEvents({
-                        ...bkgafactoryContract,
-                        eventName: "Swap",
-                        fromBlock: BigInt(_blockcreated),
-                        toBlock: "latest",
-                    });
-                    const decoded = await Promise.all(swapLogs.map(async (log: any) => {
-                        try {
-                            const tx = await publicClient.getTransaction({hash: log.transactionHash});
-                            const decodedInput = decodeFunctionData({abi: ERC20FactoryV2ABI, data: tx.input as `0x${string}`});
-                            const fn = decodedInput.functionName;
-                            const args = decodedInput.args as any;
-                            const tokenArg = (args && args.length > 0) ? String(args[0]) : "";
-                            const isTargetToken = tokenArg.toLowerCase() === ticker.toLowerCase();
-                            if (!isTargetToken) return null;
-                            return { log, fn };
-                        } catch (e) {
-                            return null;
-                        }
-                    }));
-                    const filtered = decoded.filter((x) => x !== null) as { log: any; fn: string }[];
-                    const _timestamparr = filtered.map(async (r: any) => {return await publicClient.getBlock({blockNumber: r.log.blockNumber})});
-                    const timestamparr = await Promise.all(_timestamparr);
-                    const restimestamp = timestamparr.map((res) => {return Number(res.timestamp) * 1000});
-                    const theresult = filtered.map((r: any, index: any) => {
-                        return {
-                            action: r.fn === 'buy' ? 'buy' : 'sell',
-                            nativeValue: r.fn === 'buy' ? Number(formatEther(r.log.args.amountIn)) : Number(formatEther(r.log.args.amountOut)), 
-                            value: r.fn === 'buy' ? Number(formatEther(r.log.args.amountOut)) : Number(formatEther(r.log.args.amountIn)),
-                            from: r.log.args.sender,
-                            hash: r.log.transactionHash,
-                            timestamp: restimestamp[index],
-                        };
-                    }).sort((a: any, b: any) => {
-                        return b.timestamp - a.timestamp;
-                    });
-                    setHx(theresult);
-                    return;
-                } else {
-                    const result9 = await publicClient.getContractEvents({
-                        address: ticker as "0xstring",
-                        abi: erc20Abi,
-                        eventName: "Transfer",
-                        args: {from: lp as "0xstring"},
-                        fromBlock: BigInt(dataofcurr.blockcreated),
-                        toBlock: "latest",
-                    });
-                    fulldatabuy = result9.map((res: any) => {
-                        return {
-                            action: "buy",
-                            value: Number(formatEther(res.args.value)),
-                            from: res.args.to,
-                            hash: res.transactionHash,
-                            block: res.blockNumber,
-                        };
-                    });
-                    const result10 = await publicClient.getContractEvents({
-                        address: ticker as "0xstring",
-                        abi: erc20Abi,
-                        eventName: "Transfer",
-                        args: {to: lp as "0xstring"},
-                        fromBlock: BigInt(dataofcurr.blockcreated),
-                        toBlock: "latest",
-                    });
-                    fulldatasell = result10.map((res: any) => {
-                        return {
-                            action: "sell",
-                            value: Number(formatEther(res.args.value)),
-                            from: res.args.from,
-                            hash: res.transactionHash,
-                            block: res.blockNumber,
-                        };
-                    });
-                }
+                setHx(theresult);
+                return;
             }
-            const mergedata = fulldatasell.slice(1).concat(fulldatabuy);
-            const _timestamparr = mergedata.map(async (res: any) => {return await publicClient.getBlock({blockNumber: res.block})});
-            const timestamparr = await Promise.all(_timestamparr);
-            const restimestamp = timestamparr.map((res) => {return Number(res.timestamp) * 1000});
-            const theresult = mergedata.map((res: any, index: any) => {
-                return {
-                    action: res.action,
-                    value: res.value,
-                    from: res.from,
-                    hash: res.hash,
-                    timestamp: restimestamp[index],
-                };
-            }).sort((a: any, b: any) => {
-                return b.timestamp - a.timestamp;
-            });
-            setHx(theresult);
         };
 
         const fetchGraph = async () => {
             try {
                 if (chain === "kubtestnet") {
                     const swapLogs = await publicClient.getContractEvents({
-                        ...bkgafactoryContract,
+                        ...factoryContract,
                         eventName: "Swap",
                         fromBlock: BigInt(_blockcreated),
                         toBlock: "latest",
@@ -1118,7 +796,7 @@ export default function Trade({
 
                     const data: any = await readContracts(config, {
                         contracts: [
-                            { ...bkgafactoryContract, functionName: "virtualAmount", chainId: _chainId },
+                            { ...factoryContract, functionName: "virtualAmount", chainId: _chainId },
                         ],
                     });
                     const virtualAmount = data[0].result !== undefined ? Number(formatEther(data[0].result)) : 0;
@@ -1145,54 +823,6 @@ export default function Trade({
                     setGraphData(sorted);
                     return;
                 }
-
-                const result = await readContracts(config, {
-                    contracts: [
-                        {
-                            address: "0x7a90f3F76E88D4A2079E90197DD2661B8FEcA9B6" as "0xstring",
-                            abi: CMswapChartABI,
-                            functionName: "getCandleDataCount",
-                            args: [ticker as "0xstring", currencyAddr as "0xstring"],
-                            chainId: 88991001,
-                        },
-                    ],
-                }); // Fallback to CMswap aggregator (for non-kubtestnet)
-                let dataSet: any[] = [];
-                if (result && result[0]?.status === "success") {
-                    const count = result[0].result;
-                    const totalCount = Number(count);
-                    const pageSize = 100;
-                    for (let startIndex = 0; startIndex < totalCount; startIndex += pageSize) {
-                        const fetch = await readContracts(config, {
-                            contracts: [
-                                {
-                                    address: "0x7a90f3F76E88D4A2079E90197DD2661B8FEcA9B6" as "0xstring",
-                                    abi: CMswapChartABI,
-                                    functionName: "getCandleData",
-                                    args: [
-                                        ticker as "0xstring",
-                                        currencyAddr as "0xstring",
-                                        BigInt(startIndex),
-                                        BigInt(pageSize),
-                                    ],
-                                    chainId: 88991001,
-                                },
-                            ],
-                        });
-                        if (fetch && fetch[0]?.status === "success") {
-                        dataSet = dataSet.concat(fetch[0].result);
-                        }
-                    }
-                }
-                const timestamps = dataSet[0];
-                const prices = dataSet[1];
-                const volumes = dataSet[2];
-                const formattedData = (timestamps || []).map((time: any, index: number) => ({
-                    time: Number(timestamps[index]) * 1000,
-                    price: Number(formatEther(prices[index]?.toString() || "0")),
-                    volume: Number(formatEther(volumes[index]?.toString() || "0")),
-                }));
-                setGraphData(formattedData);
             } catch (err) {
                 console.error("fetchGraph error", err);
             }
@@ -1217,9 +847,9 @@ export default function Trade({
                 if (chain === "kubtestnet") {
                     const result = await readContracts(config, {
                         contracts: [
-                            { ...bkgafactoryContract, functionName: "pumpReserve", args: [ticker as "0xstring"], chainId: _chainId },
-                            { ...bkgafactoryContract, functionName: "virtualAmount", chainId: _chainId },
-                            { ...bkgafactoryContract, functionName: "pumpFee", chainId: _chainId },
+                            { ...factoryContract, functionName: "pumpReserve", args: [ticker as "0xstring"], chainId: _chainId },
+                            { ...factoryContract, functionName: "virtualAmount", chainId: _chainId },
+                            { ...factoryContract, functionName: "pumpFee", chainId: _chainId },
                         ],
                     });
                     const getAmountOut = (
@@ -1245,21 +875,6 @@ export default function Trade({
                     const amountInAfterFee = inputAmount - feeAmount;
                     const amountOut = trademode ? getAmountOut(amountInAfterFee, virtualAmount + pumpReserve[0], pumpReserve[1]) : getAmountOut(amountInAfterFee, pumpReserve[1], pumpReserve[0] + virtualAmount);
                     setOutputBalance(amountOut.toFixed(18));
-                } else {
-                    const qouteOutput = await simulateContract(config, {
-                        ...univ3QouterContract,
-                        functionName: "quoteExactInputSingle",
-                        args: [
-                            {
-                                tokenIn: trademode ? (dataofcurr.addr as "0xstring") : (ticker as "0xstring"),
-                                tokenOut: trademode ? (ticker as "0xstring") : (dataofcurr.addr as "0xstring"),
-                                amountIn: parseEther(value),
-                                fee: 10000,
-                                sqrtPriceLimitX96: BigInt(0),
-                            },
-                        ],
-                    });
-                    setOutputBalance(formatEther(qouteOutput.result[0]));
                 }
             } else {
                 setOutputBalance("");
@@ -1276,7 +891,7 @@ export default function Trade({
             if (chain === "kubtestnet") {
                 if (trademode) {
                     result = await writeContract(config, {
-                        ...bkgafactoryContract,
+                        ...factoryContract,
                         functionName: "buy",
                         args: [ticker as "0xstring", (parseEther(outputBalance) * BigInt(95)) / BigInt(100)],
                         value: parseEther(inputBalance),
@@ -1289,7 +904,7 @@ export default function Trade({
                                 address: ticker as "0xstring",
                                 abi: erc20Abi,
                                 functionName: "allowance",
-                                args: [account.address as "0xstring", bkgafactoryContract.address as "0xstring"],
+                                args: [account.address as "0xstring", factoryContract.address as "0xstring"],
                                 chainId: _chainId,
                             },
                         ],
@@ -1299,103 +914,20 @@ export default function Trade({
                             address: ticker as "0xstring",
                             abi: erc20Abi,
                             functionName: "approve",
-                            args: [bkgafactoryContract.address as "0xstring", parseEther(String(Number(inputBalance) + 1))],
+                            args: [factoryContract.address as "0xstring", parseEther(String(Number(inputBalance) + 1))],
                             chainId: _chainId,
                         });
                         const h = await writeContract(config, request);
                         await waitForTransactionReceipt(config, { hash: h });
                     }
                     result = await writeContract(config, {
-                        ...bkgafactoryContract,
+                        ...factoryContract,
                         functionName: "sell",
                         args: [ticker as "0xstring", parseEther(inputBalance), (parseEther(outputBalance) * BigInt(90)) / BigInt(100)],
                         chainId: _chainId,
                     });
                 }
-            } else {
-                if (mode === "pro") {
-                    if (!trademode) {
-                        const allowance = await readContracts(config, {
-                            contracts: [
-                                {
-                                    address: ticker as "0xstring",
-                                    abi: erc20Abi,
-                                    functionName: "allowance",
-                                    args: [account.address as "0xstring", dataofuniv2router.addr as "0xstring"],
-                                    chainId: _chainId,
-                                },
-                            ],
-                        });
-                        if (Number(formatEther(allowance[0].result!)) < Number(inputBalance)) {
-                            const { request } = await simulateContract(config, {
-                                address: ticker as "0xstring",
-                                abi: erc20Abi,
-                                functionName: "approve",
-                                args: [dataofuniv2router.addr as "0xstring", parseEther(String(Number(inputBalance) + 1))],
-                                chainId: _chainId,
-                            });
-                            const h = await writeContract(config, request);
-                            await waitForTransactionReceipt(config, { hash: h });
-                        }
-                    }
-                    result = await writeContract(config, {
-                        ...univ2RouterContract,
-                        functionName: "exactInputSingle",
-                        args: [
-                            {
-                                tokenIn: trademode ? (dataofcurr.addr as "0xstring") : (ticker as "0xstring"),
-                                tokenOut: trademode ? (ticker as "0xstring") : (dataofcurr.addr as "0xstring"),
-                                fee: 10000,
-                                recipient: account.address as "0xstring",
-                                amountIn: parseEther(inputBalance),
-                                amountOutMinimum: (parseEther(outputBalance) * BigInt(95)) / BigInt(100),
-                                sqrtPriceLimitX96: BigInt(0),
-                            },
-                        ],
-                        value: trademode ? parseEther(inputBalance) : BigInt(0),
-                    });
-                } else {
-                    const allowance = await readContracts(config, {
-                        contracts: [
-                            {
-                                address: trademode ? (dataofcurr.addr as "0xstring") : (ticker as "0xstring"),
-                                abi: erc20Abi,
-                                functionName: "allowance",
-                                args: [account.address as "0xstring", dataofuniv2router.addr as "0xstring"],
-                                chainId: _chainId,
-                            },
-                        ],
-                    });
-                    if (
-                        Number(formatEther(allowance[0].result!)) < Number(inputBalance)
-                    ) {
-                        const { request } = await simulateContract(config, {
-                            address: trademode ? (dataofcurr.addr as "0xstring") : (ticker as "0xstring"),
-                            abi: erc20Abi,
-                            functionName: "approve",
-                            args: [dataofuniv2router.addr as "0xstring", parseEther(String(Number(inputBalance) + 1))],
-                            chainId: _chainId,
-                        });
-                        const h = await writeContract(config, request);
-                        await waitForTransactionReceipt(config, { hash: h });
-                    }
-                    result = await writeContract(config, {
-                        ...univ2RouterContract,
-                        functionName: "exactInputSingle",
-                        args: [
-                            {
-                                tokenIn: trademode ? (dataofcurr.addr as "0xstring") : (ticker as "0xstring"),
-                                tokenOut: trademode ? (ticker as "0xstring") : (dataofcurr.addr as "0xstring"),
-                                fee: 10000,
-                                recipient: account.address as "0xstring",
-                                amountIn: parseEther(inputBalance),
-                                amountOutMinimum: (parseEther(outputBalance) * BigInt(95)) / BigInt(100),
-                                sqrtPriceLimitX96: BigInt(0),
-                            },
-                        ],
-                    });
-                }
-            }
+            } 
             setHeadnoti(true);
             setHash(result);
             setInputBalance("");
@@ -1437,9 +969,7 @@ export default function Trade({
                             `mx-auto w-full 2xl:w-5/6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500 bg-emerald-900 px-4 py-3 text-sm shadow-[0_0_25px_rgba(16,185,129,0.25)] ` +
                             (!headnotiShaken && "animate-shake-once")
                         }
-                        onAnimationEnd={(e) => {
-                            if (e.animationName === 'shake') setHeadnotiShaken(true);
-                        }}
+                        onAnimationEnd={(e) => {if (e.animationName === 'shake') setHeadnotiShaken(true)}}
                     >
                         <div className="flex items-center gap-2 text-emerald-200">
                             <Check size={16} />
@@ -1469,13 +999,7 @@ export default function Trade({
             <section className="flex flex-col gap-2 relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-4 sm:p-8 shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur">
                 <div className="flex flex-row gap-4 sm:gap-10">
                     <div className="relative shrink-0 overflow-hidden rounded-3xl border border-white/10 shadow-[0_0_35px_rgba(34,197,94,0.35)] sm:mx-0 h-28 w-28">
-                        <Image
-                            src={resolvedLogo}
-                            alt={tokenSymbolDisplay ? `${tokenSymbolDisplay} logo` : "Token logo"}
-                            width={112}
-                            height={112}
-                            className="h-full w-full object-cover"
-                        />
+                        <Image src={resolvedLogo} alt="" width={112} height={112} className="h-full w-full object-cover" />
                     </div>
                     <div className="flex flex-1 flex-col gap-2 sm:gap-4">
                         <div className="flex flex-wrap items-center gap-3">
@@ -1521,13 +1045,13 @@ export default function Trade({
                                         await ethereum.request({
                                             method: "wallet_watchAsset",
                                             params: {
-                                            type: "ERC20",
-                                            options: {
-                                                address: ticker,
-                                                symbol: tokenSymbolDisplay || "TOKEN",
-                                                decimals: 18,
-                                                image: resolvedLogo,
-                                            },
+                                                type: "ERC20",
+                                                options: {
+                                                    address: ticker,
+                                                    symbol: tokenSymbolDisplay || "TOKEN",
+                                                    decimals: 18,
+                                                    image: resolvedLogo,
+                                                },
                                             },
                                         });
                                     }}
@@ -1590,11 +1114,7 @@ export default function Trade({
                         </div>
                         <div className="w-full text-right font-bold tracking-wider text-orange-500">
                             <span className="text-white">ATH: </span>
-                            {Number.isFinite(athPrice) ? (
-                                <span>{formattedAth} {baseAssetSymbol}</span>
-                            ) : (
-                                <span>N/A</span>
-                            )}
+                            {Number.isFinite(athPrice) ? <span>{formattedAth} {baseAssetSymbol}</span> : <span>N/A</span>}
                         </div>
                     </div> 
                 </div>
@@ -1606,7 +1126,7 @@ export default function Trade({
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <h2 className="text-lg font-semibold text-white"></h2>
                             <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1 text-xs font-semibold">
-                                {["CMswap", "GeckoTerminal"].map((type) => (
+                                {["CMswap"].map((type) => (
                                     <button
                                         key={type}
                                         onClick={() => setGrapthType(type)}
@@ -1618,22 +1138,9 @@ export default function Trade({
                                     </button>
                                 ))}
                             </div>
-                        </div>
-                        <div className="mt-4 h-[520px] w-full overflow-hidden rounded-2xl border border-white/5 bg-black/40">
-                            {grapthType === "GeckoTerminal" ? (
-                                <iframe
-                                    className="h-full w-full"
-                                    allow="clipboard-write"
-                                    title="GeckoTerminal Embed"
-                                    src={`https://www.geckoterminal.com/${
-                                    chain === "kub" ? 
-                                        "bitkub_chain" : 
-                                        chain === "monad" ? "monad-testnet" : ""
-                                    }/pools/${lp}?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=market_cap&resolution=1m`}
-                                />
-                            ) : (
+                            <div className="mt-4 h-[520px] w-full overflow-hidden rounded-2xl border border-white/5 bg-black/40">                        
                                 <Chart data={graphData} />
-                            )}
+                            </div>
                         </div>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-black/50 p-4 text-sm text-white/60 block md:hidden">

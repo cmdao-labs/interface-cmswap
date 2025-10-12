@@ -4,7 +4,6 @@ import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { useCallback, type KeyboardEvent } from 'react';
 
 type ModeType = 'lite' | 'pro';
-
 type ChainStyle = {
     gradient: string;
     accentBorder: string;
@@ -12,11 +11,7 @@ type ChainStyle = {
     label: string;
     supportedModes: ModeType[];
 };
-
 const baseCardClasses = 'flex flex-row gap-3 rounded-lg border border-white/20 p-4 text-sm shadow-inner shadow-black/30';
-const baseButtonClasses = 'flex-1 rounded-xl border border-white/10 px-8 py-2 text-center text-sm font-semibold transition-all duration-200';
-const inactiveButtonClasses = 'text-slate-400 hover:border-emerald-400/30 hover:text-white';
-
 const chainStyles: Record<string, ChainStyle> = {
     kub: {
         gradient: 'from-emerald-500/40 via-emerald-400/20 to-emerald-500/30',
@@ -40,7 +35,6 @@ const chainStyles: Record<string, ChainStyle> = {
         supportedModes: ['pro'],
     },
 };
-
 const defaultStyle: ChainStyle = {
     gradient: 'from-emerald-500/40 via-emerald-400/20 to-emerald-500/30',
     accentBorder: 'border-emerald-400/50 shadow-emerald-500/20',
@@ -48,7 +42,6 @@ const defaultStyle: ChainStyle = {
     label: 'CMSwap',
     supportedModes: ['lite', 'pro'],
 };
-
 const modeVisuals = {
     pro: {
         track: 'bg-gradient-to-r from-emerald-500/20 via-emerald-400/10 to-emerald-500/20 border-emerald-400/40',
@@ -64,25 +57,20 @@ export default function Sort4() {
     const searchParams = useSearchParams();
     const pathname = usePathname();
     const { replace } = useRouter();
-
     const mode = (searchParams.get('mode') || 'lite') as ModeType;
     const chain = searchParams.get('chain') || 'kub';
-
     const chainConfig = chainStyles[chain] ?? defaultStyle;
     const { supportedModes } = chainConfig;
-
     const setMode = useCallback((newMode: ModeType) => {
         if (!supportedModes.includes(newMode)) return;
         const params = new URLSearchParams(searchParams);
         params.set('mode', newMode);
         replace(`${pathname}?${params.toString()}`);
     }, [replace, pathname, searchParams, supportedModes]);
-
     const isPro = mode === 'pro';
     const canGoLite = supportedModes.includes('lite');
     const canGoPro = supportedModes.includes('pro');
     const canSwitch = isPro ? canGoLite : canGoPro;
-
     const handleToggle = useCallback(() => {
         if (isPro) {
             if (canGoLite) setMode('lite');
@@ -90,7 +78,6 @@ export default function Sort4() {
             if (canGoPro) setMode('pro');
         }
     }, [isPro, canGoLite, canGoPro, setMode]);
-
     const handleKey = useCallback((e: KeyboardEvent<HTMLButtonElement>) => {
         if (!canSwitch) return;
         if (e.key === 'Enter' || e.key === ' ') {

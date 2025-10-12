@@ -32,9 +32,11 @@ export default function Headbar() {
                                         <Link href="/bridge" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
                                             <Button variant="ghost" className="cursor-pointer">Bridge</Button>
                                         </Link>
-                                        <Link href="/pump" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                            <Button variant="ghost" className="cursor-pointer">Pump</Button>
-                                        </Link>
+                                        {typeof chainId === 'number' && [25925].includes(chainId) && (
+                                            <Link href="/pump" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
+                                                <Button variant="ghost" className="cursor-pointer">Pump</Button>
+                                            </Link>
+                                        )}
                                         {typeof chainId === 'number' && [25925].includes(chainId) && (
                                             <Link href="/earn" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
                                                 <Button variant="ghost" className="cursor-pointer">Earn</Button>

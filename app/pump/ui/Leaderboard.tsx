@@ -2,10 +2,7 @@ import { createPublicClient, erc20Abi, formatEther, http } from "viem";
 import { bitkub, bitkubTestnet, monadTestnet } from "viem/chains";
 import { readContracts } from "@wagmi/core";
 import { config } from "@/app/config";
-import { ERC20FactoryABI } from "@/app/pump/abi/ERC20Factory";
-import { UniswapV2FactoryABI } from "@/app/pump/abi/UniswapV2Factory";
-import { UniswapV2PairABI } from "@/app/pump/abi/UniswapV2Pair";
-import { PumpCoreNativeABI } from '@/app/pump/abi/PumpCoreNative';
+import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
 import LeaderboardTabs, { LeaderboardEntry, LeaderboardTab, } from "./LeaderboardTabs";
 
 interface LeaderboardProps {
@@ -54,7 +51,7 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
         const r2 = await Promise.all(r1);
         const r3 = await publicClient.getContractEvents({
             address: network.pumpCoreAddress,
-            abi: PumpCoreNativeABI,
+            abi: ERC20FactoryV2ABI,
             eventName: 'Swap',
             fromBlock: BigInt(network.blockCreated),
             toBlock: 'latest',
@@ -126,14 +123,6 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
             }
         });
         console.log(swapEvents)
-    } else {
-        swapEvents = await publicClient.getContractEvents({
-            abi: UniswapV2PairABI,
-            address: pairs.map((pair: any) => pair.pairAddress),
-            eventName: "Swap",
-            fromBlock: BigInt(network.blockCreated),
-            toBlock: "latest",
-        });
     }
 
     // Enrich events with block timestamps for time-based filtering
@@ -259,7 +248,7 @@ async function fetchPairs(network: NetworkConfig, publicClient: any) {
     if (network.chainId === 25925) {
         const r1 = await publicClient.getContractEvents({
             address: network.pumpCoreAddress,
-            abi: PumpCoreNativeABI,
+            abi: ERC20FactoryV2ABI,
             eventName: 'Creation',
             fromBlock: BigInt(network.blockCreated),
             toBlock: 'latest',
@@ -294,95 +283,6 @@ async function fetchPairs(network: NetworkConfig, publicClient: any) {
                 logo: r.args.logo,
             });
         });
-    } else {
-        const factoryContract = { address: network.erc20FactoryAddress, abi: ERC20FactoryABI, chainId: network.chainId, } as const;
-        const factoryIndexResult = await readContracts(config, {contracts: [{ ...factoryContract, functionName: "totalIndex", },],});
-        const tokenCount = Number(factoryIndexResult[0].result ?? BigInt(0));
-        if (!tokenCount) return { tokens: new Map<string, TokenMetadata>(), pairs: [] as PairMetadata[] };
-
-        const indexContracts = Array.from({ length: tokenCount }, (_, idx) => ({...factoryContract, functionName: "index", args: [BigInt(idx + 1)],}));
-        const tokenList = await readContracts(config, { contracts: indexContracts });
-
-        const uniswapFactory = {
-            address: network.poolFactoryAddress,
-            abi: UniswapV2FactoryABI,
-            chainId: network.chainId,
-        } as const;
-        const poolContracts = tokenList
-            .map((entry) => entry.result as `0x${string}` | undefined)
-            .filter((address): address is `0x${string}` => Boolean(address && address !== PLACEHOLDER_ADDRESS),)
-            .map((tokenAddress) => ({
-                ...uniswapFactory,
-                functionName: "getPool",
-                args: [tokenAddress, network.currencyAddress, 10000],
-            }));
-        const poolList = await readContracts(config, { contracts: poolContracts });
-        const rawPairs = poolList
-            .map((pool) => pool.result as `0x${string}` | undefined)
-            .filter((address): address is `0x${string}` => Boolean(address && address !== PLACEHOLDER_ADDRESS),);
-        if (!rawPairs.length) return { tokens: new Map<string, TokenMetadata>(), pairs: [] as PairMetadata[] };
-
-        const token0and1Contracts = rawPairs.flatMap((pairAddress) => [
-            {
-                address: pairAddress,
-                abi: UniswapV2PairABI,
-                functionName: "token0",
-                chainId: network.chainId,
-            } as const,
-            {
-                address: pairAddress,
-                abi: UniswapV2PairABI,
-                functionName: "token1",
-                chainId: network.chainId,
-            } as const,
-        ]);
-        const token0and1 = await readContracts(config, {contracts: token0and1Contracts,});
-
-        const pairs: PairMetadata[] = rawPairs
-            .map((pair, index) => {
-                const token0 = token0and1[index * 2].result as `0x${string}` | undefined;
-                const token1 = token0and1[index * 2 + 1].result as `0x${string}` | undefined;
-                if (!token0 || !token1) return null;
-                const baseIsToken0 = token0.toUpperCase() === network.currencyAddress.toUpperCase();
-                const tokenAddress = baseIsToken0 ? token1 : token0;
-
-                return {
-                    pairAddress: pair,
-                    tokenAddress,
-                    baseIsToken0,
-                };
-            })
-            .filter((pair): pair is PairMetadata => Boolean(pair));
-        
-        const uniqueTokenAddresses = Array.from(new Set(pairs.map((pair) => pair.tokenAddress.toLowerCase())),);
-        const tokenMetadataContracts = uniqueTokenAddresses.flatMap((tokenAddress) => [
-            {
-                address: tokenAddress as `0x${string}`,
-                abi: erc20Abi,
-                functionName: "symbol",
-                chainId: network.chainId,
-            },
-            {
-                address: tokenAddress as `0x${string}`,
-                abi: erc20Abi,
-                functionName: "name",
-                chainId: network.chainId,
-            },
-        ]);
-        const tokenMetadataResults = await readContracts(config, {allowFailure: true, contracts: tokenMetadataContracts,});
-
-        for (let i = 0; i < uniqueTokenAddresses.length; i++) {
-            const symbolResult = tokenMetadataResults[i * 2];
-            const nameResult = tokenMetadataResults[i * 2 + 1];
-            const originalAddress = uniqueTokenAddresses[i] as `0x${string}`;
-            const upperAddress = originalAddress.toUpperCase();
-            tokens.set(upperAddress, {
-                address: originalAddress,
-                symbol: typeof symbolResult.result === "string" && symbolResult.result.length ? symbolResult.result : truncateAddress(upperAddress),
-                name: typeof nameResult.result === "string" && nameResult.result.length ? nameResult.result : undefined,
-                logo: '',
-            });
-        }
     }
     return { tokens, pairs };
 }

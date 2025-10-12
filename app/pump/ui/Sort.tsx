@@ -11,34 +11,27 @@ export default function Sort() {
     const searchParams = useSearchParams();
     const pathname = usePathname();
     const { replace } = useRouter();
-
     const sort = searchParams.get('sort')?.toString();
     const order = searchParams.get('order')?.toString();
-
     const handleSort = (term: string) => {
         const params = new URLSearchParams(searchParams);
         params.set('sort', term);
         params.set('order', 'ascending');
         replace(`${pathname}?${params.toString()}`);
     };
-
     const handleOrder = (term: string) => {
         const params = new URLSearchParams(searchParams);
         params.set('order', term);
-        if (!sort) {
-            params.set('sort', 'mcap');
-        }
+        if (!sort) params.set('sort', 'mcap');
         replace(`${pathname}?${params.toString()}`);
     };
-
     const isMarketCap = !sort || sort === 'mcap';
-
-    const orderOptions = isMarketCap
-        ? [
+    const orderOptions = isMarketCap ? 
+        [
             { key: 'ascending', label: 'Highest' },
             { key: 'descending', label: 'Lowest' },
-        ]
-        : [
+        ] :
+        [
             { key: 'ascending', label: 'Newest' },
             { key: 'descending', label: 'Oldest' },
         ];

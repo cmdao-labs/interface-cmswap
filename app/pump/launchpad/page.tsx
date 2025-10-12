@@ -1,43 +1,29 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-
-import LaunchpadHeader from "./components/Header";
-import GridSkeleton from "./components/GridSkeleton";
-import ReferralTracker from "../../components/Refferal";
+import LaunchpadHeader from "../ui/Header";
+import GridSkeleton from "../ui/GridSkeleton";
 import Event from "@/app/pump/ui/Event";
 import Sort from "@/app/pump/ui/Sort";
 import Sort4 from "@/app/pump/ui/Sort4";
-import Sort5 from "@/app/pump/ui/Sort5";
 import TokenGrid from "@/app/pump/ui/Table";
-
 export const metadata: Metadata = { title: "CMswap - PUMP", description: "hello pump.", };
 
 export default async function Launchpad(props: {
-	searchParams?: Promise<{
-		chain?: string;
-		mode?: string;
-		query?: string;
-		sort?: string;
-		order?: string;
-		page?: string;
-		token?: string;
-	}>;
+	searchParams?: Promise<{ chain?: string; mode?: string; query?: string; sort?: string; order?: string; page?: string; token?: string; }>;
 }) {
 	const searchParams = await props.searchParams;
-	const chain = searchParams?.chain || "";
-	const mode = searchParams?.mode || "";
+	const chain = searchParams?.chain || "kubtestnet";
+	const mode = searchParams?.mode || "pro";
 	const query = searchParams?.query || "";
 	const sort = searchParams?.sort || "";
 	const order = searchParams?.order || "";
 	const token = searchParams?.token || "";
-
 	const ctaHref = `launchpad/launch?chain=${chain}${mode === "pro" ? "&mode=pro" : "&mode=lite"}`;
 
 	return (
 		<div className="min-h-screen w-full text-slate-100">
 			<LaunchpadHeader ctaHref={ctaHref} activeRoute="Markets" />
 			<main className="mx-auto flex w-full flex-col gap-4 py-1 sm:px-6 lg:px-10 overflow-hidden">
-				<ReferralTracker />
 				<section className="grid gap-6">
 					<Suspense
 						key={`mode-${mode}-chain-${chain}`}
@@ -50,20 +36,12 @@ export default async function Launchpad(props: {
 					<div className="flex flex-row flex-wrap gap-4 py-3 shadow-inner">
 						<Sort4 />
 						<Sort />
-						{mode === "lite" && chain === "kub" && (<div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-1 flex items-center"><Sort5 /></div>)}
 					</div>
 					<Suspense
 						key={`grid-${mode}-${chain}-${query}-${sort}-${order}`}
 						fallback={<GridSkeleton />}
 					>
-						<TokenGrid
-							mode={mode}
-							query={query}
-							sort={sort}
-							order={order}
-							chain={chain}
-							token={token}
-						/>
+						<TokenGrid mode={mode} query={query} sort={sort} order={order} chain={chain} token={token} />
 					</Suspense>
 				</section>
 			</main>
