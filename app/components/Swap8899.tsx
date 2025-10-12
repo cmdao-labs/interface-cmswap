@@ -9,7 +9,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useDebouncedCallback } from 'use-debounce'
 import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, v3PoolABI, wrappedNative, CMswapPoolDualRouterContract, CMswapPoolDualRouter, CMswapUniSmartRoute, CMswapUniSmartRouteContract } from '@/app/lib/8899'
 import { config } from '@/app/config'
-import { useSearchParams } from 'next/navigation'
+import { useSwapTokenSelection } from '@/app/components/swap/useSwapTokenSelection'
+import { useSwapQuote } from '@/app/components/swap/useSwapQuote'
+import { encodePath } from '@/app/components/swap/path'
 
 export default function Swap8899({
     setIsLoading, setErrMsg,
@@ -28,10 +30,26 @@ export default function Swap8899({
     const [JibSwapTvl, setJibSwapTvl] = React.useState<{ tvl10000: string; exchangeRate: string; t0: string; }>({ tvl10000: "", exchangeRate: "",t0: "" as '0xstring'  });
 
     const [newPrice, setNewPrice] = React.useState("")
-    const [tokenA, setTokenA] = React.useState<{ name: string, value: '0xstring', logo: string }>(tokens[0])
+    const {
+        tokenA,
+        tokenB,
+        setTokenA,
+        setTokenB,
+        hasInitializedFromParams,
+        updateURLWithTokens,
+        switchTokens,
+    } = useSwapTokenSelection(tokens, {
+        defaultTokenAIndex: 0,
+        defaultTokenBIndex: 2,
+        referralAddress: address,
+    })
+    const { resolveTokenAddress, quoteExactInputSingle, quoteExactInput } = useSwapQuote({
+        config,
+        contract: qouterV2Contract,
+        tokens,
+    })
     const [tokenABalance, setTokenABalance] = React.useState("")
     const [amountA, setAmountA] = React.useState("")
-    const [tokenB, setTokenB] = React.useState<{ name: string, value: '0xstring', logo: string }>(tokens[2])
     const [tokenBBalance, setTokenBBalance] = React.useState("")
     const [amountB, setAmountB] = React.useState("")
     const [feeSelect, setFeeSelect] = React.useState(10000)
@@ -41,85 +59,17 @@ export default function Swap8899({
     const [bestPool, setBestPool] = React.useState("")
     const [swapDirection, setSwapDirection] = React.useState(true) // false = A->B, true = B->A
     const [onLoading, setOnLoading] = React.useState(false)
-    const [hasInitializedFromParams, setHasInitializedFromParams] = React.useState(false)
     const [wrappedRoute, setWrappedRoute] = React.useState(false)
 
     React.useEffect(() => {
-        const searchParams = new URLSearchParams(window.location.search)
-        const tokenAAddress = searchParams.get('input')?.toLowerCase()
-        const tokenBAddress = searchParams.get('output')?.toLowerCase()
-
-        const foundTokenA = tokenAAddress ? tokens.find(t => t.value.toLowerCase() === tokenAAddress) : null
-        const foundTokenB = tokenBAddress ? tokens.find(t => t.value.toLowerCase() === tokenBAddress) : null
-
-        if (foundTokenA) setTokenA(foundTokenA)
-        if (foundTokenB) setTokenB(foundTokenB)
-
-        if (!tokenAAddress || !tokenBAddress) {
-            if (tokenA?.value && tokenB?.value) {updateURLWithTokens(tokenA.value, tokenB.value, address)}
-        } else {
-            updateURLWithTokens(tokenAAddress, tokenBAddress, address)
-        }
-
-        setHasInitializedFromParams(true)
-        }, [])
-
-        React.useEffect(() => {
-            console.log("hasInitializedFromParams : ", hasInitializedFromParams)
-            }, [hasInitializedFromParams])
-
-            const updateURLWithTokens = (
-            tokenAValue?: string,
-            tokenBValue?: string,
-            referralCode?: string
-            ) => {
-            const url = new URL(window.location.href)
-
-            if (tokenAValue) url.searchParams.set('input', tokenAValue)
-            else url.searchParams.delete('tokenA')
-
-            if (tokenBValue) url.searchParams.set('output', tokenBValue)
-            else url.searchParams.delete('tokenB')
-
-            if (referralCode && referralCode.startsWith('0x')) {
-                url.searchParams.set('ref', referralCode)
-            } else {
-                url.searchParams.delete('ref')
-            }
-
-            window.history.replaceState({}, '', url.toString())
-        }
-
-    function encodePath(tokens: string[], fees: number[]): string {
-        let path = "0x"
-        for (let i = 0; i < fees.length; i++) {
-            path += tokens[i].slice(2)
-            path += fees[i].toString(16).padStart(6, "0")
-        }
-        path += tokens[tokens.length - 1].slice(2)
-        return path
-    }
-    function encodeJibPath(tokens: string[]): string {
-        let path = "0x"
-        path += tokens[tokens.length - 1].slice(2)
-        return path
-    }
+        console.log("hasInitializedFromParams : ", hasInitializedFromParams)
+    }, [hasInitializedFromParams])
 
     const getQoute = useDebouncedCallback(async (_amount: string) => {
         let CMswapRate = undefined; let GameswapRate = undefined; let JibswapRate = undefined;
         const amountIn = Number(_amount)
-        let tokenAvalue
-        let tokenBvalue
-        if (tokenA.value === tokens[0].value) {
-            tokenAvalue = tokens[1].value
-        } else {
-            tokenAvalue = tokenA.value
-        }
-        if (tokenB.value === tokens[0].value) {
-            tokenBvalue = tokens[1].value
-        } else {
-            tokenBvalue = tokenB.value
-        }
+        const tokenAvalue = resolveTokenAddress(tokenA)
+        const tokenBvalue = resolveTokenAddress(tokenB)
         if (wrappedRoute) {
             setAmountB(amountIn.toString())
         } else {
@@ -128,37 +78,44 @@ export default function Swap8899({
             try {
                 if (Number(_amount) !== 0) {
                     if (altRoute === undefined) {
-                        const qouteOutput = await simulateContract(config, {
-                            ...qouterV2Contract,
-                            functionName: 'quoteExactInputSingle',
-                            args: [{
-                                tokenIn: tokenAvalue as '0xstring',
-                                tokenOut: tokenBvalue as '0xstring',
-                                amountIn: parseEther(_amount),
-                                fee: feeSelect,
-                                sqrtPriceLimitX96: BigInt(0),
-                            }]
+                        const quoteOutput = await quoteExactInputSingle({
+                            tokenIn: tokenA,
+                            tokenOut: tokenB,
+                            amount: _amount,
+                            fee: feeSelect,
+                            parseAmount: (value: string) => parseEther(value),
+                            suppressErrors: true,
                         })
-                        if (poolSelect === "CMswap") {
-                            setAmountB(formatEther(qouteOutput.result[0]))
+                        if (quoteOutput) {
+                            if (poolSelect === "CMswap") {
+                                setAmountB(formatEther(quoteOutput.amountOut))
+                            }
+                            CMswapRate = formatEther(quoteOutput.amountOut)
+                            if (quoteOutput.sqrtPriceX96 !== undefined) {
+                                const newPrice = 1 / ((Number(quoteOutput.sqrtPriceX96) / (2 ** 96)) ** 2)
+                                setNewPrice(newPrice.toString())
+                            }
                         }
-                        CMswapRate = formatEther(qouteOutput.result[0])
-                        let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
-                        setNewPrice(newPrice.toString())
                     } else {
                         const route = encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect])
-                        const qouteOutput = await simulateContract(config, {
-                            ...qouterV2Contract,
-                            functionName: 'quoteExactInput',
-                            args: [route as '0xstring', parseEther(_amount)]
+                        const quoteOutput = await quoteExactInput({
+                            path: route as `0x${string}`,
+                            tokenIn: tokenA,
+                            amount: _amount,
+                            parseAmount: (value: string) => parseEther(value),
+                            suppressErrors: true,
                         })
-                        setAmountB(formatEther(qouteOutput.result[0]))
-                        if (poolSelect === "CMswap") {
-                            setAmountB(formatEther(qouteOutput.result[0]))
+                        if (quoteOutput) {
+                            setAmountB(formatEther(quoteOutput.amountOut))
+                            if (poolSelect === "CMswap") {
+                                setAmountB(formatEther(quoteOutput.amountOut))
+                            }
+                            CMswapRate = formatEther(quoteOutput.amountOut)
+                            if (quoteOutput.sqrtPriceX96 !== undefined) {
+                                const newPrice = 1 / ((Number(quoteOutput.sqrtPriceX96) / (2 ** 96)) ** 2)
+                                setNewPrice(newPrice.toString())
+                            }
                         }
-                        CMswapRate = formatEther(qouteOutput.result[0])
-                        let newPrice = 1 / ((Number(qouteOutput.result[1]) / (2 ** 96)) ** 2)
-                        setNewPrice(newPrice.toString())
                     }
                 } else {
                     setAmountB("")
@@ -297,10 +254,7 @@ export default function Swap8899({
 
     const switchToken = () => {
         setExchangeRate("")
-        const _tokenA = tokenB
-        const _tokenB = tokenA
-        setTokenA(_tokenA)
-        setTokenB(_tokenB)
+        switchTokens()
     }
 
     const handleSwap = async () => {
