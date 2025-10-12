@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import * as JazziconModule from "@raugfer/jazzicon";
@@ -162,18 +161,12 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                         return (
                             <button
                                 key={tab.id}
-                                className={`group relative overflow-hidden rounded-full border px-5 py-2 text-xs font-semibold transition-all duration-300 ease-out ${
-                                    isActive ? "border-emerald-300/40 bg-emerald-500/15 text-emerald-100 shadow-[0_0_20px_rgba(16,185,129,0.45)]" : "border-white/5 text-slate-400 hover:border-emerald-300/40 hover:text-emerald-100"
-                                }`}
+                                className={`group relative overflow-hidden rounded-full border px-5 py-2 text-xs font-semibold transition-all duration-300 ease-out ${isActive ? "border-emerald-300/40 bg-emerald-500/15 text-emerald-100 shadow-[0_0_20px_rgba(16,185,129,0.45)]" : "border-white/5 text-slate-400 hover:border-emerald-300/40 hover:text-emerald-100"}`}
                                 onClick={() => setActiveTabId(tab.id)}
                                 type="button"
                             >
                                 <span className="relative z-[1]">{tab.label}</span>
-                                <span
-                                    className={`absolute inset-x-4 bottom-1 h-[2px] rounded-full transition-opacity duration-300 ease-out ${
-                                        isActive ? "opacity-100 bg-emerald-300 shadow-[0_0_18px_rgba(16,185,129,0.8)]" : "opacity-0 bg-transparent"
-                                    }`}
-                                />
+                                <span className={`absolute inset-x-4 bottom-1 h-[2px] rounded-full transition-opacity duration-300 ease-out ${isActive ? "opacity-100 bg-emerald-300 shadow-[0_0_18px_rgba(16,185,129,0.8)]" : "opacity-0 bg-transparent"}`} />
                                 {isActive && (<span className="absolute inset-0 -z-[1] bg-emerald-400/10 blur-2xl" />)}
                             </button>
                         );
@@ -193,25 +186,12 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                             onClick={() => setFiltersOpen((v) => !v)}
                         >
                             {filtersOpen ? "Hide" : "Show"}
-                            <svg
-                                className={`h-3.5 w-3.5 transition-transform ${filtersOpen ? "rotate-0" : "-rotate-90"}`}
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                aria-hidden="true"
-                            >
-                                <path d="M6 9l6 6 6-6" />
-                            </svg>
+                            <svg className={`h-3.5 w-3.5 transition-transform ${filtersOpen ? "rotate-0" : "-rotate-90"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
                         </button>
                     </div>
                     <div
                         id="leaderboard-filters"
-                        className={`grid grid-cols-1 gap-2 transition-all duration-300 ease-out md:grid-cols-2 ${
-                            filtersOpen ? "opacity-100 p-4" : "pointer-events-none max-h-0 overflow-hidden opacity-0 p-0"
-                        }`}
+                        className={`grid grid-cols-1 gap-2 transition-all duration-300 ease-out md:grid-cols-2 ${filtersOpen ? "opacity-100 p-4" : "pointer-events-none max-h-0 overflow-hidden opacity-0 p-0"}`}
                     >
                         <div className="flex flex-col gap-2">
                             <label className="text-[11px] font-medium tracking-wide text-slate-400">Time Range</label>
@@ -261,14 +241,12 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                                     const n = Number(v);
                                     if (Number.isFinite(n)) setMinValueInput(v);
                                 }}
-                                onBlur={() => {
-                                    if (minValueInput === "" || Number(minValueInput) < 0) setMinValueInput("0");
-                                }}
+                                onBlur={() => {if (minValueInput === "" || Number(minValueInput) < 0) setMinValueInput("0")}}
                             />
                         </div>
                     </div>
                 </div>
-                {entries.length ? (
+                {entries.length ?
                     <>
                         <table className="hidden w-full border-separate border-spacing-y-4 text-sm text-slate-200 md:table">
                             <tbody>
@@ -289,21 +267,11 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                                                         <span className="text-lg font-semibold tracking-[0.2em] text-slate-300">{index + 1}</span>
                                                         <div className="flex items-center gap-4">
                                                             <div className="h-12 w-12 overflow-hidden rounded-full border border-white/10 bg-[#0b1020]">
-                                                                {isTrader ? (
-                                                                    <JazziconAvatar address={entry.address} size={48} />
-                                                                ) : (
-                                                                    <img
-                                                                        src={resolveLogoUrl(entry.logo)}
-                                                                        alt={entry.name}
-                                                                        className="h-full w-full object-cover"
-                                                                    />
-                                                                )}
+                                                                {isTrader ? <JazziconAvatar address={entry.address} size={48} /> : <img src={resolveLogoUrl(entry.logo)} alt={entry.name} className="h-full w-full object-cover" />}
                                                             </div>
                                                             <div className="flex flex-col">
                                                                 <span className="text-base font-semibold text-slate-100">{primaryText}</span>
-                                                                {secondaryText ? (
-                                                                    <span className="text-xs text-slate-500">{secondaryText}</span>
-                                                                ) : null}
+                                                                {secondaryText ? <span className="text-xs text-slate-500">{secondaryText}</span> : null}
                                                             </div>
                                                         </div>
                                                         <span className="text-right text-lg font-semibold text-emerald-200 drop-shadow-[0_0_8px_rgba(16,185,129,0.55)]">{entry.type === 'degen' ? Number(formatValue(entry.value)).toFixed(0) + ' txn' : formatValue(entry.value) + ' tKub'}</span>
@@ -335,21 +303,11 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                                         </div>
                                         <div className="mt-4 flex items-center gap-4">
                                             <div className="h-12 w-12 overflow-hidden rounded-full border border-white/10 bg-[#0b1020]">
-                                                {isTrader ? (
-                                                    <JazziconAvatar address={entry.address} size={48} />
-                                                ) : (
-                                                    <img
-                                                        src={resolveLogoUrl(entry.logo)}
-                                                        alt={entry.name}
-                                                        className="h-full w-full object-cover"
-                                                    />
-                                                )}
+                                                {isTrader ? <JazziconAvatar address={entry.address} size={48} /> : <img src={resolveLogoUrl(entry.logo)} alt={entry.name} className="h-full w-full object-cover" />}
                                             </div>
                                             <div className="flex flex-1 flex-col">
                                                 <span className="text-base font-semibold text-slate-100">{primaryText}</span>
-                                                {secondaryText ? (
-                                                    <span className="text-xs text-slate-500">{secondaryText}</span>
-                                                ) : null}
+                                                {secondaryText ? <span className="text-xs text-slate-500">{secondaryText}</span> : null}
                                             </div>
                                             <span className="text-right text-lg font-semibold text-emerald-200 drop-shadow-[0_0_8px_rgba(16,185,129,0.55)]">{formatValue(entry.value)}</span>
                                         </div>
@@ -357,28 +315,19 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                                 );
                             })}
                         </div>
-                    </>
-                    ) : (
+                    </> :
                     <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-white/10 bg-[#0b0f1d]/80 px-6 py-16 text-center text-sm text-slate-400">
                         <span className="text-lg font-semibold tracking-[0.24em] text-slate-200">No data yet</span>
                     </div>
-                )}
+                }
             </div>
 
             <style jsx>{`
                 @keyframes fade-in {
-                from {
-                    opacity: 0;
-                    transform: translateY(12px);
+                    from { opacity: 0; transform: translateY(12px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-                }
-                .animate-fade-in {
-                animation: fade-in 0.4s ease forwards;
-                }
+                .animate-fade-in { animation: fade-in 0.4s ease forwards; }
             `}</style>
         </section>
     );

@@ -1,57 +1,45 @@
 'use client'
 import React from "react"
-import Link from "next/link"
-import { ExternalLink, Github, FileText, MessageSquare, Facebook, Globe, Palette, HeartHandshake } from "lucide-react"
+import { Globe, Palette, HeartHandshake } from "lucide-react"
 import ReferralTracker from './components/Refferal'
 
 export default function Page() {
     const canvasRef = React.useRef<HTMLCanvasElement>(null)
     const visualizationCanvasRef = React.useRef<HTMLCanvasElement>(null)
-
-    React.useEffect(() => {
-        
-        // Main header canvas animation
+    React.useEffect(() => {        
         const canvas = canvasRef.current
         if (!canvas) return
         const ctx = canvas.getContext("2d")
         if (!ctx) return
-        // Set canvas size
         const updateSize = () => {
             canvas.width = window.innerWidth
             canvas.height = 400
         }
         updateSize()
         window.addEventListener("resize", updateSize)
-        // Visualization canvas animation
         const initVisualizationCanvas = () => {
             const canvas = visualizationCanvasRef.current
             if (!canvas) return
             const ctx = canvas.getContext("2d")
             if (!ctx) return
-            // Set canvas size
             canvas.width = 500
             canvas.height = 300
             let time = 0
             const speed = 0.001
             const drawVisualization = () => {
                 time += speed
-                // Clear canvas
                 ctx.fillStyle = "rgba(0, 0, 0, 0)"
                 ctx.clearRect(0, 0, canvas.width, canvas.height)
                 const centerX = canvas.width / 2
                 const centerY = canvas.height / 2
-                // Draw orbital rings
                 const ringCount = 15
                 const maxRadius = 120
                 for (let i = 0; i < ringCount; i++) {
-                    // Calculate ring properties
                     const ringRadius = maxRadius * (0.3 + (i / ringCount) * 0.7)
-                    const ringTilt = Math.PI / 4 // 45 degrees tilt
-                    const ringRotation = time * (0.2 + i * 0.05) // Each ring rotates at different speed
+                    const ringTilt = Math.PI / 4
+                    const ringRotation = time * (0.2 + i * 0.05)
                     const ringOpacity = 0.7 - (i / ringCount) * 0.5
-                    // Draw elliptical ring
                     ctx.beginPath()
-                    // Create gradient for the ring
                     const gradient = ctx.createLinearGradient(centerX - ringRadius, centerY, centerX + ringRadius, centerY)
                     if (i % 2 === 0) {
                         gradient.addColorStop(0, `rgba(0, 255, 150, ${ringOpacity})`)
@@ -62,21 +50,14 @@ export default function Page() {
                     }
                     ctx.strokeStyle = gradient
                     ctx.lineWidth = 1
-                    // Draw the elliptical ring with rotation
                     for (let angle = 0; angle < Math.PI * 2; angle += 0.05) {
                         const rotatedAngle = angle + ringRotation
-                        // Calculate point on ellipse
                         const x = centerX + Math.cos(rotatedAngle) * ringRadius
                         const y = centerY + Math.sin(rotatedAngle) * ringRadius * Math.cos(ringTilt)
-                        if (angle === 0) {
-                            ctx.moveTo(x, y)
-                        } else {
-                            ctx.lineTo(x, y)
-                        }
+                        if (angle === 0) {ctx.moveTo(x, y)} else {ctx.lineTo(x, y)}
                     }
                     ctx.closePath()
                     ctx.stroke()
-                    // Add orbital particles
                     if (i % 3 === 0) {
                         const particleCount = 3
                         for (let j = 0; j < particleCount; j++) {
@@ -84,23 +65,17 @@ export default function Page() {
                             const rotatedParticleAngle = particleAngle + ringRotation
                             const particleX = centerX + Math.cos(rotatedParticleAngle) * ringRadius
                             const particleY = centerY + Math.sin(rotatedParticleAngle) * ringRadius * Math.cos(ringTilt)
-                            // Draw particle
                             ctx.beginPath()
                             ctx.arc(particleX, particleY, 2, 0, Math.PI * 2)
                             ctx.fillStyle = i % 2 === 0 ? "rgba(0, 255, 150, 0.9)" : "rgba(0, 150, 255, 0.9)"
                             ctx.fill()
-                            // Draw particle trail
                             ctx.beginPath()
                             const trailLength = Math.PI / 8
                             for (let t = 0; t < trailLength; t += 0.01) {
                                 const trailAngle = rotatedParticleAngle - t
                                 const trailX = centerX + Math.cos(trailAngle) * ringRadius
                                 const trailY = centerY + Math.sin(trailAngle) * ringRadius * Math.cos(ringTilt)
-                                if (t === 0) {
-                                    ctx.moveTo(trailX, trailY)
-                                } else {
-                                    ctx.lineTo(trailX, trailY)
-                                }
+                                if (t === 0) {ctx.moveTo(trailX, trailY)} else {ctx.lineTo(trailX, trailY)}
                             }
                             const trailGradient = ctx.createLinearGradient(
                                 particleX,
@@ -116,7 +91,6 @@ export default function Page() {
                         }
                     }
                 }
-                // Draw central element
                 ctx.beginPath()
                 ctx.arc(centerX, centerY, 6, 0, Math.PI * 2)
                 const coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 6)
@@ -124,7 +98,6 @@ export default function Page() {
                 coreGradient.addColorStop(1, "rgba(0, 200, 255, 0.7)")
                 ctx.fillStyle = coreGradient
                 ctx.fill()
-                // Draw central glow
                 ctx.beginPath()
                 ctx.arc(centerX, centerY, 15, 0, Math.PI * 2)
                 const glowGradient = ctx.createRadialGradient(centerX, centerY, 6, centerX, centerY, 15)
@@ -132,7 +105,6 @@ export default function Page() {
                 glowGradient.addColorStop(1, "rgba(0, 200, 255, 0)")
                 ctx.fillStyle = glowGradient
                 ctx.fill()
-                // Draw axis lines
                 ctx.beginPath()
                 ctx.moveTo(centerX - 20, centerY)
                 ctx.lineTo(centerX + 20, centerY)

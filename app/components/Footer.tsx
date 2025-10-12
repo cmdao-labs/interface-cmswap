@@ -2,11 +2,8 @@ import Link from "next/link"
 import { Github, FileText } from "lucide-react"
 import { FaTelegram } from "react-icons/fa"
 import { BsTwitterX, BsDiscord  } from "react-icons/bs"
-import getConfig from 'next/config'
 
 export default function Footer() {
-    const { publicRuntimeConfig } = getConfig()
-
     return (
         <footer className="relative z-10 bg-black/80">
             <div className="container mx-auto px-4 py-6">

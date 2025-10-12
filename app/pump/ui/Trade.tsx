@@ -41,27 +41,16 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
     let factoryAddr: string = "";
     let _blockcreated: number = 1;
     let socialAddr: string = "";
-    if (
-        (chain === "kubtestnet" || chain === "") &&
-        (mode === "pro" || mode === "") &&
-        (token === "cmm" || token === "")
-    ) {
+    if ((chain === "kubtestnet" || chain === "") && (mode === "pro" || mode === "") && (token === "")) {
         currencyAddr = "0x700D3ba307E1256e509eD3E45D6f9dff441d6907";
         factoryAddr = "0x46a4073c830031ea19d7b9825080c05f8454e530";
         _blockcreated = 23935659;
         socialAddr = "0x6F17157b4EcD3734A9EA8ED4bfE78694e3695b90";
     }
     const reachData = [
-        {
-            chain: "kubtestnet",
-            proAmount: "47800",
-            proSymbol: "tKUB",
-            lite: "",
-            liteSymbol: "",
-        }
+        { chain: "kubtestnet", proAmount: "47800", proSymbol: "tKUB", lite: "", liteSymbol: "" }
     ]; // add chain and mode here
 
-    const dataofcurr = { addr: currencyAddr, blockcreated: _blockcreated };
     const factoryContract = { address: factoryAddr as "0xstring", abi: ERC20FactoryV2ABI, chainId: _chainId } as const;
     const socialContrct = { address: socialAddr as "0xstring", abi: SocialsABI, chainId: _chainId } as const;
 
@@ -633,40 +622,31 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                 if (chain == "kubtestnet") {
                     const t: any = await readContracts(config, {
                         contracts: [
-                            { ...tickerContract, functionName: "name" },
-                            { ...tickerContract, functionName: "symbol" },
-                            { ...tickerContract, functionName: "totalSupply" },
-                        ],
-                    });
-                    const f: any = await readContracts(config, {
-                        contracts: [
+                            { ...tickerContract, functionName: "name", chainId: _chainId },
+                            { ...tickerContract, functionName: "symbol", chainId: _chainId },
                             { ...factoryContract, functionName: "pumpReserve", args: [ticker as '0xstring'], chainId: _chainId },
                             { ...factoryContract, functionName: "virtualAmount", chainId: _chainId },
                         ],
                     });
-                    const logCreateData = await publicClient.getContractEvents({
-                        ...factoryContract,
-                        eventName: "Creation",
-                        fromBlock: BigInt(_blockcreated),
-                        toBlock: "latest",
-                    });
-                    const data: {creator: '0xstring', createdTime: Number, logo: string, description: string }[] = logCreateData.filter((r: any) => {return r.args.tokenAddr.toUpperCase() === ticker.toUpperCase()})
-                        .map((r: any) => {return {creator: r.args.creator, createdTime: r.args.createdTime, logo: r.args.logo, description: r.args.description }});
-                    setSymbol(t[1].result);
                     setName(t[0].result);
-                    setCreator(data[0].creator);
-                    setCreateTime(Number(data[0].createdTime));
-                    setLogo(data[0].logo);
-                    setDescription(data[0].description);
-                    const pump0 = f[0].result && Array.isArray(f[0].result) && f[0].result[0] !== undefined ? Number(formatEther(f[0].result[0])) : 0;
-                    const pump1 = f[0].result && Array.isArray(f[0].result) && f[0].result[1] !== undefined ? Number(formatEther(f[0].result[1])) : 0;
-                    const va = f[1].result !== undefined ? Number(formatEther(f[1].result)) : 0;
+                    setSymbol(t[1].result);
+                    const pump0 = t[2].result && Array.isArray(t[2].result) && t[2].result[0] !== undefined ? Number(formatEther(t[2].result[0])) : 0;
+                    const pump1 = t[2].result && Array.isArray(t[2].result) && t[2].result[1] !== undefined ? Number(formatEther(t[2].result[1])) : 0;
+                    const va = t[3].result !== undefined ? Number(formatEther(t[3].result)) : 0;
                     const price = (pump0 + va) / pump1;
                     setPrice(price);
                     const mcap = 1000000000 * price;
                     setMcap(mcap);
                     const denominator = 47800;
                     setProgress(Number(((mcap * 100) / denominator).toFixed(2)));
+
+                    const logCreateData = await publicClient.getContractEvents({...factoryContract, eventName: "Creation", fromBlock: BigInt(_blockcreated), toBlock: "latest"});
+                    const data: {creator: '0xstring', createdTime: Number, logo: string, description: string }[] = logCreateData.filter((r: any) => {return r.args.tokenAddr.toUpperCase() === ticker.toUpperCase()})
+                        .map((r: any) => {return {creator: r.args.creator, createdTime: r.args.createdTime, logo: r.args.logo, description: r.args.description }});
+                    setCreator(data[0].creator);
+                    setCreateTime(Number(data[0].createdTime));
+                    setLogo(data[0].logo);
+                    setDescription(data[0].description);
                 }
             } catch (error) {
                 console.error("error with reason", error);
@@ -679,10 +659,10 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
             const state0 = account.address !== undefined ? 
                 await readContracts(config, {
                     contracts: [
-                        { address: dataofcurr.addr as "0xstring", abi: erc20Abi, functionName: "balanceOf", args: account.address !== undefined ? [account.address as "0xstring"] : ["0x0000000000000000000000000000000000000001"], chainId: _chainId },
+                        { address: currencyAddr as "0xstring", abi: erc20Abi, functionName: "balanceOf", args: account.address !== undefined ? [account.address as "0xstring"] : ["0x0000000000000000000000000000000000000001"], chainId: _chainId },
                         { ...tickerContract, functionName: "balanceOf", args: account.address !== undefined ? [account.address as "0xstring"] : ["0x0000000000000000000000000000000000000001"] },
                     ],
-                }) :
+                }) : 
                 [ { result: BigInt(0) }, { result: BigInt(0) }, { result: false }, { result: [BigInt(0)] } ];
             setState(state0);
         };
@@ -693,7 +673,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                 abi: erc20Abi,
                 address: ticker as "0xstring",
                 eventName: "Transfer",
-                fromBlock: BigInt(dataofcurr.blockcreated),
+                fromBlock: BigInt(_blockcreated),
                 toBlock: "latest",
             });
             const result5 = (await Promise.all(result4)).map((res) => {
@@ -852,11 +832,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                             { ...factoryContract, functionName: "pumpFee", chainId: _chainId },
                         ],
                     });
-                    const getAmountOut = (
-                        _inputAmount: number,
-                        _inputReserve: bigint,
-                        _outputReserve: bigint
-                    ): number => {
+                    const getAmountOut = (_inputAmount: number, _inputReserve: bigint, _outputReserve: bigint): number => {
                         const inputAmountWithFee = _inputAmount * 99; // Apply 99/100 multiplier for fee
                         const numerator = BigInt(Math.floor(inputAmountWithFee)) * _outputReserve;
                         const denominator = _inputReserve * BigInt(100) + BigInt(Math.floor(inputAmountWithFee));
@@ -965,32 +941,16 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
             {headnoti && (
                 <div className="fixed top-22 left-0 right-0 z-50 px-2 sm:px-4">
                     <div
-                        className={
-                            `mx-auto w-full 2xl:w-5/6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500 bg-emerald-900 px-4 py-3 text-sm shadow-[0_0_25px_rgba(16,185,129,0.25)] ` +
-                            (!headnotiShaken && "animate-shake-once")
-                        }
+                        className={`mx-auto w-full 2xl:w-5/6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500 bg-emerald-900 px-4 py-3 text-sm shadow-[0_0_25px_rgba(16,185,129,0.25)] ` + (!headnotiShaken && "animate-shake-once")}
                         onAnimationEnd={(e) => {if (e.animationName === 'shake') setHeadnotiShaken(true)}}
                     >
                         <div className="flex items-center gap-2 text-emerald-200">
                             <Check size={16} />
-                            <span>Trade successful</span>
+                            <span>Transaction</span>
                         </div>
                         <div className="flex items-center gap-3 text-xs">
-                            <Link
-                                href={`${_explorer}tx/${hash}`}
-                                prefetch={false}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="rounded-full border border-emerald-300/30 px-3 py-1 text-emerald-200 transition hover:border-emerald-200 hover:text-emerald-100"
-                            >
-                                View transaction
-                            </Link>
-                            <button
-                                onClick={() => setHeadnoti(false)}
-                                className="rounded-full border border-transparent bg-emerald-400/20 px-3 py-1 text-emerald-100 transition hover:bg-emerald-400/30"
-                            >
-                                Close
-                            </button>
+                            <Link href={`${_explorer}tx/${hash}`} prefetch={false} target="_blank" rel="noopener noreferrer" className="rounded-full border border-emerald-300/30 px-3 py-1 text-emerald-200 transition hover:border-emerald-200 hover:text-emerald-100">View</Link>
+                            <button onClick={() => setHeadnoti(false)} className="rounded-full border border-transparent bg-emerald-400/20 px-3 py-1 text-emerald-100 transition hover:bg-emerald-400/30">Close</button>
                         </div>
                     </div>
                 </div>
@@ -1009,15 +969,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                         {creator && (
                             <div className="flex flex-wrap items-center gap-2 text-[8px] sm:text-xs">
                                 <span className="text-white/40 uppercase tracking-wide">Creator</span>
-                                <Link
-                                    href={getExplorerAddressUrl(creator)}
-                                    prefetch={false}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-white transition hover:text-emerald-200"
-                                >
-                                    {`${String(creator).slice(0, 6)}...${String(creator).slice(-4)}`}
-                                </Link>
+                                <Link href={getExplorerAddressUrl(creator)} prefetch={false} target="_blank" rel="noopener noreferrer" className="text-white transition hover:text-emerald-200">{`${String(creator).slice(0, 6)}...${String(creator).slice(-4)}`}</Link>
                             </div>
                         )}
                         <div className="flex flex-wrap flex-row gap-1 sm:gap-2 text-[10px] sm:text-xs text-white/70">
@@ -1031,44 +983,18 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                             </div>
                             <div className="rounded-full border border-white/10 bg-black/60 px-3 py-1 sm:py-0 flex flow-col items-center gap-2">
                                 <p>CA: {truncatedTicker}</p>
-                                <button
-                                    onClick={() => copyToClipboard(ticker)}
-                                    className="rounded-full border border-white/10 bg-white/10 p-1 transition hover:border-white/40 hover:bg-white/20"
-                                    title="Copy contract address"
-                                >
-                                    {copiedAddress === ticker ? <Check size={12} /> : <Copy size={12} />}
-                                </button>
+                                <button onClick={() => copyToClipboard(ticker)} className="rounded-full border border-white/10 bg-white/10 p-1 transition hover:border-white/40 hover:bg-white/20" title="Copy contract address">{copiedAddress === ticker ? <Check size={12} /> : <Copy size={12} />}</button>
                                 <button
                                     className="rounded-full border border-white/10 bg-white/10 p-1 transition hover:border-white/40 hover:bg-white/20"
                                     onClick={async () => {
                                         if (!ethereum) return;
-                                        await ethereum.request({
-                                            method: "wallet_watchAsset",
-                                            params: {
-                                                type: "ERC20",
-                                                options: {
-                                                    address: ticker,
-                                                    symbol: tokenSymbolDisplay || "TOKEN",
-                                                    decimals: 18,
-                                                    image: resolvedLogo,
-                                                },
-                                            },
-                                        });
+                                        await ethereum.request({method: "wallet_watchAsset", params: { type: "ERC20", options: {address: ticker, symbol: tokenSymbolDisplay, decimals: 18, image: resolvedLogo} }});
                                     }}
                                     title="Add token to wallet"
                                 >
                                     <Plus size={12} />
                                 </button>
-                                <Link
-                                    href={`${_explorer}address/${ticker}`}
-                                    prefetch={false}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="rounded-full border border-white/10 bg-white/10 p-1 transition hover:border-white/40 hover:bg-white/20"
-                                    title="View on explorer"
-                                >
-                                    <Image src="/bs.png" alt="block explorer" width={12} height={12} />
-                                </Link>
+                                <Link href={`${_explorer}address/${ticker}`} prefetch={false} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/10 bg-white/10 p-1 transition hover:border-white/40 hover:bg-white/20" title="View on explorer"><Image src="/bs.png" alt="block explorer" width={12} height={12} /></Link>
                             </div>
                         </div>
                     </div>
@@ -1080,36 +1006,23 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                         <span className="text-lg sm:text-2xl font-bold tracking-wider text-emerald-300">{formattedMcap} {baseAssetSymbol}</span>
                         <div className="flex flex-row flex-wrap gap-1 text-[10px] sm:text-xs text-white/70"> 
                             <span className="text-white/60">24h: </span>
-                            {Number.isFinite(changeAbs) && Number.isFinite(changePct) ? (
+                            {Number.isFinite(changeAbs) && Number.isFinite(changePct) ?
                                 <>
-                                    <span className={`${changeAbs > 0 ? "text-emerald-300" : changeAbs < 0 ? "text-red-300" : "text-white/70"}`}>
-                                        {changeAbs > 0 ? "+" : changeAbs < 0 ? "-" : ""}{formattedChangeAbs} {baseAssetSymbol}
-                                    </span>
-                                    <span className={`ml-1 ${changePct > 0 ? "text-emerald-300" : changePct < 0 ? "text-red-300" : "text-white/70"}`}>
-                                        ({changePct > 0 ? "+" : changePct < 0 ? "-" : ""}{formattedChangePct})
-                                    </span>
-                                </>
-                            ) : (
+                                    <span className={`${changeAbs > 0 ? "text-emerald-300" : changeAbs < 0 ? "text-red-300" : "text-white/70"}`}>{changeAbs > 0 ? "+" : changeAbs < 0 ? "-" : ""}{formattedChangeAbs} {baseAssetSymbol}</span>
+                                    <span className={`ml-1 ${changePct > 0 ? "text-emerald-300" : changePct < 0 ? "text-red-300" : "text-white/70"}`}>({changePct > 0 ? "+" : changePct < 0 ? "-" : ""}{formattedChangePct})</span>
+                                </> : 
                                 <span className="text-white/50">N/A</span>
-                            )}
+                            }
                         </div>
                     </div>
                     <div className="flex flex-col gap-2">
                         <div className="mt-2 relative h-2 rounded-full">
-                            <div className="absolute inset-0 rounded-full p-[1px] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600">
-                                <div className="h-full w-full rounded-full bg-black/60" />
-                            </div>
+                            <div className="absolute inset-0 rounded-full p-[1px] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600"><div className="h-full w-full rounded-full bg-black/60" /></div>
                             <div className="relative h-2 overflow-hidden rounded-full">
-                                <div
-                                    className="relative h-full rounded-full bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 animate-fire"
-                                    style={{ width: `${athProgressPercent}%` }}
-                                >
+                                <div className="relative h-full rounded-full bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 animate-fire" style={{ width: `${athProgressPercent}%` }}>
                                     <div className="absolute inset-0 rounded-full opacity-50 blur-[6px] bg-gradient-to-r from-yellow-300 via-orange-500 to-red-600 animate-fire-glow" />
                                 </div>
-                                <div
-                                    className="pointer-events-none absolute left-0 top-0 h-full rounded-full bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.35),transparent_40%),radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.25),transparent_40%)] bg-repeat-x bg-[length:14px_14px,18px_18px] animate-spark"
-                                    style={{ width: `${athProgressPercent}%` }}
-                                />
+                                <div className="pointer-events-none absolute left-0 top-0 h-full rounded-full bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.35),transparent_40%),radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.25),transparent_40%)] bg-repeat-x bg-[length:14px_14px,18px_18px] animate-spark" style={{ width: `${athProgressPercent}%` }} />
                             </div>
                         </div>
                         <div className="w-full text-right font-bold tracking-wider text-orange-500">
@@ -1123,25 +1036,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[2fr_1fr] gap-4">
                 <div className="space-y-6">
                     <div className="rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl backdrop-blur">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                            <h2 className="text-lg font-semibold text-white"></h2>
-                            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1 text-xs font-semibold">
-                                {["CMswap"].map((type) => (
-                                    <button
-                                        key={type}
-                                        onClick={() => setGrapthType(type)}
-                                        className={`rounded-full px-3 py-1 transition ${
-                                            grapthType === type ? "bg-white/20 text-white" : "text-white/60 hover:text-white"
-                                        }`}
-                                    >
-                                        {type}
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="mt-4 h-[520px] w-full overflow-hidden rounded-2xl border border-white/5 bg-black/40">                        
-                                <Chart data={graphData} />
-                            </div>
-                        </div>
+                        <div className="mt-4 h-[520px] w-full overflow-hidden rounded-2xl border border-white/5 bg-black/40"><Chart data={graphData} /></div>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-black/50 p-4 text-sm text-white/60 block md:hidden">
                         <div className="flex items-center justify-between">
@@ -1154,20 +1049,12 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                 <span className="text-emerald-300">{progressPercent.toFixed(2)}%</span>
                             </div>
                             <div className="mt-2 relative h-2 w-full overflow-hidden rounded-full">
-                                <div className="absolute inset-0 rounded-full p-[1px] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600">
-                                    <div className="h-full w-full rounded-full bg-black/60" />
-                                </div>
+                                <div className="absolute inset-0 rounded-full p-[1px] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600"><div className="h-full w-full rounded-full bg-black/60" /></div>
                                 <div className="relative h-2 overflow-hidden rounded-full bg-white/10">
-                                    <div
-                                        className="relative h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500 animate-bonding"
-                                        style={{ width: `${progressPercent}%` }}
-                                    >
+                                    <div className="relative h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500 animate-bonding" style={{ width: `${progressPercent}%` }}>
                                         <div className="absolute inset-0 rounded-full opacity-50 blur-[6px] bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500 animate-bonding-glow" />
                                     </div>
-                                    <div
-                                        className="pointer-events-none absolute left-0 top-0 h-full rounded-full bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.35),transparent_40%),radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.25),transparent_40%)] bg-repeat-x bg-[length:14px_14px,18px_18px] animate-spark"
-                                        style={{ width: `${progressPercent}%` }}
-                                    />
+                                    <div className="pointer-events-none absolute left-0 top-0 h-full rounded-full bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.35),transparent_40%),radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.25),transparent_40%)] bg-repeat-x bg-[length:14px_14px,18px_18px] animate-spark" style={{ width: `${progressPercent}%` }} />
                                 </div>
                             </div>
                             <p className="mt-2 text-[11px] leading-relaxed text-white/45">
@@ -1175,15 +1062,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                 {isGraduated && graduationLink && (
                                     <>
                                         {" "}
-                                        <Link
-                                            href={graduationLink}
-                                            prefetch={false}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-emerald-200 underline-offset-2 transition hover:text-emerald-100 hover:underline"
-                                        >
-                                            View graduation txn
-                                        </Link>
+                                        <Link href={graduationLink} prefetch={false} target="_blank" rel="noopener noreferrer" className="text-emerald-200 underline-offset-2 transition hover:text-emerald-100 hover:underline">View graduation txn</Link>
                                     </>
                                 )}
                             </p>
@@ -1241,27 +1120,11 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                         <span className="font-semibold text-white">{formattedOutput} {outputAssetSymbol}</span>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
-                                        <button
-                                            onClick={handleReset}
-                                            className="rounded-full border border-white/10 px-2 py-1 transition hover:border-white/30 hover:text-white"
-                                        >
-                                            Reset
-                                        </button>
+                                        <button onClick={handleReset} className="rounded-full border border-white/10 px-2 py-1 transition hover:border-white/30 hover:text-white">Reset</button>
                                         {presetButtons.map((preset) => (
-                                            <button
-                                                key={preset.label}
-                                                onClick={() => handlePresetClick(preset)}
-                                                className="rounded-full border border-white/10 px-2 py-1 transition hover:border-white/30 hover:text-white"
-                                            >
-                                                {preset.label}
-                                            </button>
+                                            <button key={preset.label} onClick={() => handlePresetClick(preset)} className="rounded-full border border-white/10 px-2 py-1 transition hover:border-white/30 hover:text-white">{preset.label}</button>
                                         ))}
-                                        <button
-                                            onClick={handleMaxClick}
-                                            className="rounded-full border border-emerald-400/40 px-3 py-2 text-emerald-200 transition hover:border-emerald-200 hover:text-emerald-100"
-                                        >
-                                            Max
-                                        </button>
+                                        <button onClick={handleMaxClick} className="rounded-full border border-emerald-400/40 px-3 py-2 text-emerald-200 transition hover:border-emerald-200 hover:text-emerald-100">Max</button>
                                     </div>
                                 </div>
                             </div>
@@ -1269,9 +1132,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                             <button
                                 onClick={trade}
                                 disabled={!isWalletReady}
-                                className={`w-full rounded-lg px-4 py-3 text-md font-semibold transition ${
-                                    isWalletReady ? "bg-gradient-to-r from-emerald-400 to-sky-500 text-black shadow-[0_20px_60px_rgba(16,185,129,0.35)] hover:brightness-110" : "cursor-not-allowed border border-white/10 bg-white/5 text-white/40"
-                                }`}
+                                className={`w-full rounded-lg px-4 py-3 text-md font-semibold transition ${isWalletReady ? "bg-gradient-to-r from-emerald-400 to-sky-500 text-black shadow-[0_20px_60px_rgba(16,185,129,0.35)] hover:brightness-110" : "cursor-not-allowed border border-white/10 bg-white/5 text-white/40"}`}
                                 style={!trademode && isWalletReady ? gradientButtonStyle(!trademode, "sell") : undefined}
                             >
                                 {tradeButtonLabel}
@@ -1293,14 +1154,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                 <div className="mt-2">
                                     <div className="flex flex-wrap items-center justify-between gap-3">
                                         <h2 className="text-lg font-semibold text-white">Project Info</h2>
-                                        {creator === account.address && (
-                                            <button
-                                                onClick={() => setShowSocials(true)}
-                                                className="text-xs text-emerald-300 underline-offset-2 transition hover:text-emerald-100 hover:underline"
-                                            >
-                                                Edit socials
-                                            </button>
-                                        )}
+                                        {creator === account.address && <button onClick={() => setShowSocials(true)} className="text-xs text-emerald-300 underline-offset-2 transition hover:text-emerald-100 hover:underline">Edit socials</button>}
                                     </div>
                                     <p className="mt-4 text-sm leading-relaxed text-white/70">{description ? description : "No description has been shared yet."}</p>
                                     <div className="mt-4 flex gap-3">
@@ -1310,37 +1164,15 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                             socialItems
                                                 .filter((item) => socials[item.field])
                                                 .map((item) => (
-                                                    <Link
-                                                        key={item.field}
-                                                        href={socials[item.field]}
-                                                        prefetch={false}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="rounded-full border border-white/10 bg-white/5 p-3 text-sm text-white/80 transition hover:border-white/30 hover:text-white"
-                                                    >
-                                                        {item.icon}
-                                                    </Link>
+                                                    <Link key={item.field} href={socials[item.field]} prefetch={false} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/10 bg-white/5 p-3 text-sm text-white/80 transition hover:border-white/30 hover:text-white">{item.icon}</Link>
                                                 ))
                                         )}
                                     </div>
                                     <div className="mt-4 rounded-2xl border border-white/10 bg-black/50 p-4 text-xs text-white/60">
                                         <div className="text-[10px] sm:text-sm text-white/80 break-all">{ticker}</div>
                                         <div className="mt-3 flex flex-wrap gap-2">
-                                            <button
-                                                onClick={() => copyToClipboard(ticker)}
-                                                className="rounded-full border border-white/10 px-3 py-1 transition hover:border-white/30 hover:text-white"
-                                            >
-                                                {copiedAddress === ticker ? "Copied" : "Copy"}
-                                            </button>
-                                            <Link
-                                                href={`${_explorer}address/${ticker}`}
-                                                prefetch={false}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="rounded-full border border-white/10 px-3 py-1 text-emerald-200 transition hover:border-emerald-200 hover:text-emerald-100"
-                                            >
-                                                View on explorer
-                                            </Link>
+                                            <button onClick={() => copyToClipboard(ticker)} className="rounded-full border border-white/10 px-3 py-1 transition hover:border-white/30 hover:text-white">{copiedAddress === ticker ? "Copied" : "Copy"}</button>
+                                            <Link href={`${_explorer}address/${ticker}`} prefetch={false} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/10 px-3 py-1 text-emerald-200 transition hover:border-emerald-200 hover:text-emerald-100">View on explorer</Link>
                                         </div>
                                     </div>
                                 </div>
@@ -1362,23 +1194,12 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                             <div className="p-3 space-y-3 text-[11px] text-white/80">
                                                 <div className="flex items-center justify-between">
                                                     <span className="text-white/60">Filters</span>
-                                                    <button
-                                                        onClick={clearFilters}
-                                                        className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20"
-                                                        title="Clear filters"
-                                                    >
-                                                        <X size={12} />
-                                                        Clear
-                                                    </button>
+                                                    <button onClick={clearFilters} className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20" title="Clear filters"><X size={12} />Clear</button>
                                                 </div>
 
                                                 <div className="space-y-2">
                                                     <label className="block text-white/60">Time</label>
-                                                    <select
-                                                        className="w-full rounded-md border border-white/10 bg-black/60 p-2 text-xs outline-none hover:border-white/20"
-                                                        value={filters.time}
-                                                        onChange={(e) => handleTimeChange(e.target.value as any)}
-                                                    >
+                                                    <select className="w-full rounded-md border border-white/10 bg-black/60 p-2 text-xs outline-none hover:border-white/20" value={filters.time} onChange={(e) => handleTimeChange(e.target.value as any)}>
                                                         <option value="all">All</option>
                                                         <option value="5m">5m</option>
                                                         <option value="1h">1h</option>
@@ -1389,12 +1210,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
 
                                                 <div className="space-y-2">
                                                     <label className="block text-white/60">From</label>
-                                                    <input
-                                                        value={filters.from}
-                                                        onChange={handleTextChange("from")}
-                                                        placeholder="address"
-                                                        className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
-                                                    />
+                                                    <input value={filters.from} onChange={handleTextChange("from")} placeholder="address" className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20" />
                                                 </div>
 
                                                 <div className="space-y-2">
@@ -1402,161 +1218,75 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                                     <div className="flex items-center gap-2">
                                                         <button onClick={() => handleActionToggle("buy")} className={`rounded-full border px-2 py-1 text-[11px] ${filters.actions.buy && !filters.actions.sell ? "border-emerald-300/50 text-emerald-200" : "border-white/10 text-white/80 hover:border-white/20"}`} title="Buy">Buy</button>
                                                         <button onClick={() => handleActionToggle("sell")} className={`rounded-full border px-2 py-1 text-[11px] ${filters.actions.sell && !filters.actions.buy ? "border-rose-300/50 text-rose-200" : "border-white/10 text-white/80 hover:border-white/20"}`} title="Sell">Sell</button>
-                                                        <button
-                                                            onClick={() => {
-                                                                const next = { ...filters, actions: { buy: true, sell: true } };
-                                                                setFilters(next);
-                                                                setAppliedFilters(next);
-                                                            }}
-                                                            className="rounded-full border px-2 py-1 text-[11px] border-white/10 text-white/60 hover:border-white/20"
-                                                            title="Show all"
-                                                        >
-                                                            All
-                                                        </button>
+                                                        <button onClick={() => {const next = { ...filters, actions: { buy: true, sell: true } }; setFilters(next); setAppliedFilters(next);}} className="rounded-full border px-2 py-1 text-[11px] border-white/10 text-white/60 hover:border-white/20" title="Show all">All</button>
                                                     </div>
                                                 </div>
 
                                                 <div className="space-y-2">
                                                     <label className="block text-white/60">Native amount</label>
                                                     <div className="flex items-center gap-2">
-                                                        <input
-                                                            type="number"
-                                                            inputMode="decimal"
-                                                            value={filters.nativeMin}
-                                                            onChange={handleNumberChange("nativeMin")}
-                                                            placeholder="min"
-                                                            className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
-                                                        />
-                                                        <input
-                                                            type="number"
-                                                            inputMode="decimal"
-                                                            value={filters.nativeMax}
-                                                            onChange={handleNumberChange("nativeMax")}
-                                                            placeholder="max"
-                                                            className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
-                                                        />
+                                                        <input type="number" inputMode="decimal" value={filters.nativeMin} onChange={handleNumberChange("nativeMin")} placeholder="min" className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20" />
+                                                        <input type="number" inputMode="decimal" value={filters.nativeMax} onChange={handleNumberChange("nativeMax")} placeholder="max" className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20" />
                                                     </div>
                                                 </div>
 
                                                 <div className="space-y-2">
                                                     <label className="block text-white/60">Token amount</label>
                                                     <div className="flex items-center gap-2">
-                                                        <input
-                                                            type="number"
-                                                            inputMode="decimal"
-                                                            value={filters.tokenMin}
-                                                            onChange={handleNumberChange("tokenMin")}
-                                                            placeholder="min"
-                                                            className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
-                                                        />
-                                                        <input
-                                                            type="number"
-                                                            inputMode="decimal"
-                                                            value={filters.tokenMax}
-                                                            onChange={handleNumberChange("tokenMax")}
-                                                            placeholder="max"
-                                                            className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
-                                                        />
+                                                        <input type="number" inputMode="decimal" value={filters.tokenMin} onChange={handleNumberChange("tokenMin")} placeholder="min" className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20" />
+                                                        <input type="number" inputMode="decimal" value={filters.tokenMax} onChange={handleNumberChange("tokenMax")} placeholder="max" className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20" />
                                                     </div>
                                                 </div>
 
                                                 <div className="space-y-2">
                                                     <label className="block text-white/60">Tx hash</label>
-                                                    <input
-                                                        value={filters.hash}
-                                                        onChange={handleTextChange("hash")}
-                                                        placeholder="hash"
-                                                        className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
-                                                    />
+                                                    <input value={filters.hash} onChange={handleTextChange("hash")} placeholder="hash" className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20" />
                                                 </div>
                                             </div>
                                         </PopoverContent>
                                     </Popover>
                                     <div className="text-white/50">Showing {traderStats.length} of {totalTraders}</div>
-                                    <button
-                                        onClick={clearFilters}
-                                        className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20"
-                                        title="Clear filters"
-                                    >
-                                        <X size={14} />
-                                        Clear
-                                    </button>
+                                    <button onClick={clearFilters} className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20" title="Clear filters"><X size={14} />Clear</button>
                                 </div>
                                 <div className="mt-4 overflow-x-auto rounded-xl py-2 border border-white/10">
                                     <table className="table-auto border-seperate border-spacing-0 text-center w-full">
                                         <thead className="text-xs text-white/80">
                                             <tr>
-                                                <th className="px-3 py-2">
-                                                    <span className="text-white/50">Address</span>
-                                                </th>
-                                                <th className="px-3 py-2">
-                                                    <span className="text-white/50">Total Bought</span>
-                                                </th>
-                                                <th className="px-3 py-2">
-                                                    <span className="text-white/50">Total Sold</span>
-                                                </th>
-                                                <th className="px-3 py-2">
-                                                    <span className="text-white/50">Profit</span>
-                                                </th>
-                                                <th className="px-3 py-2">
-                                                    <span className="text-white/50">Trades</span>
-                                                </th>
-                                                <th className="px-3 py-2">
-                                                    <span className="text-white/50">Last Active</span>
-                                                </th>
+                                                <th className="px-3 py-2"><span className="text-white/50">Address</span></th>
+                                                <th className="px-3 py-2"><span className="text-white/50">Total Bought</span></th>
+                                                <th className="px-3 py-2"><span className="text-white/50">Total Sold</span></th>
+                                                <th className="px-3 py-2"><span className="text-white/50">Profit</span></th>
+                                                <th className="px-3 py-2"><span className="text-white/50">Trades</span></th>
+                                                <th className="px-3 py-2"><span className="text-white/50">Last Active</span></th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {paginatedTraders.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan={6} className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">No trader stats yet.</td>
-                                                </tr>
-                                            ) : (
-                                                paginatedTraders.map((trader) => {
-                                                    const profitClass = trader.profit > 0
-                                                        ? "text-emerald-300"
-                                                        : trader.profit < 0
-                                                            ? "text-rose-300"
-                                                            : "text-white";
+                                            {paginatedTraders.length === 0 ? 
+                                                <tr><td colSpan={6} className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">No trader stats yet.</td></tr> : 
+                                                (paginatedTraders.map((trader) => {
+                                                    const profitClass = trader.profit > 0 ? 
+                                                        "text-emerald-300" : 
+                                                        trader.profit < 0 ? "text-rose-300" : "text-white";
                                                     const profitValue = Math.abs(trader.profit);
-                                                    const formattedProfit = trader.profit === 0
-                                                        ? "0"
-                                                        : compactNumberFormatter.format(profitValue);
-                                                    const profitLabel = trader.profit > 0
-                                                        ? `+${formattedProfit}`
-                                                        : trader.profit < 0
-                                                            ? `-${formattedProfit}`
-                                                            : formattedProfit;
+                                                    const formattedProfit = trader.profit === 0 ? "0" : compactNumberFormatter.format(profitValue);
+                                                    const profitLabel = trader.profit > 0 ?
+                                                        `+${formattedProfit}` :
+                                                        trader.profit < 0 ? `-${formattedProfit}` : formattedProfit;
                                                     return (
                                                         <tr key={trader.address} className="text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
                                                             <td className="py-6">
-                                                                <Link
-                                                                    href={getExplorerAddressUrl(trader.address)}
-                                                                    prefetch={false}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="text-white/70 underline-offset-2 transition hover:text-white hover:underline"
-                                                                >
+                                                                <Link href={getExplorerAddressUrl(trader.address)} prefetch={false} target="_blank" rel="noopener noreferrer" className="text-white/70 underline-offset-2 transition hover:text-white hover:underline">
                                                                     {trader.address.slice(0, 6)}...{trader.address.slice(-4)}
                                                                 </Link>
                                                             </td>
-                                                            <td className="py-6 text-white">
-                                                                {compactNumberFormatter.format(Math.max(trader.totalBought, 0))} {baseAssetSymbol}
-                                                            </td>
-                                                            <td className="py-6 text-white">
-                                                                {compactNumberFormatter.format(Math.max(trader.totalSold, 0))} {baseAssetSymbol}
-                                                            </td>
-                                                            <td className={`py-6 font-semibold ${profitClass}`}>
-                                                                {profitLabel} {baseAssetSymbol}
-                                                            </td>
+                                                            <td className="py-6 text-white">{compactNumberFormatter.format(Math.max(trader.totalBought, 0))} {baseAssetSymbol}</td>
+                                                            <td className="py-6 text-white">{compactNumberFormatter.format(Math.max(trader.totalSold, 0))} {baseAssetSymbol}</td>
+                                                            <td className={`py-6 font-semibold ${profitClass}`}>{profitLabel} {baseAssetSymbol}</td>
                                                             <td className="py-6 text-white">{trader.trades}</td>
-                                                            <td className="py-6 text-white/70">
-                                                                {trader.lastActive ? formatRelativeTime(trader.lastActive / 1000) : "-"}
-                                                            </td>
+                                                            <td className="py-6 text-white/70">{trader.lastActive ? formatRelativeTime(trader.lastActive / 1000) : "-"}</td>
                                                         </tr>
                                                     );
-                                                })
-                                            )}
+                                                }))}
                                         </tbody>
                                     </table>
                                 </div>
@@ -1564,20 +1294,8 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                     <div className="mt-3 flex items-center justify-between text-xs text-white/60">
                                         <span>Page {tradersPage} of {tradersTotalPages}</span>
                                         <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => setTradersPage((p) => Math.max(1, p - 1))}
-                                                disabled={tradersPage <= 1}
-                                                className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
-                                            >
-                                                Previous
-                                            </button>
-                                            <button
-                                                onClick={() => setTradersPage((p) => Math.min(tradersTotalPages, p + 1))}
-                                                disabled={tradersPage >= tradersTotalPages}
-                                                className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
-                                            >
-                                                Next
-                                            </button>
+                                            <button onClick={() => setTradersPage((p) => Math.max(1, p - 1))} disabled={tradersPage <= 1} className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed">Previous</button>
+                                            <button onClick={() => setTradersPage((p) => Math.min(tradersTotalPages, p + 1))} disabled={tradersPage >= tradersTotalPages} className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed">Next</button>
                                         </div>
                                     </div>
                                 )}
@@ -1587,11 +1305,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                 <div className="ml-auto flex items-center gap-2 text-xs">
                                     <Popover>
                                         <PopoverTrigger asChild>
-                                            <button
-                                                className={`rounded-md px-2 py-1 transition border ${hasActiveFilters ? "border-emerald-400/50 text-emerald-200" : "border-white/10 text-white/80 hover:border-white/20"}`}
-                                                title="Filter"
-                                                aria-label="Filter activity"
-                                            >
+                                            <button className={`rounded-md px-2 py-1 transition border ${hasActiveFilters ? "border-emerald-400/50 text-emerald-200" : "border-white/10 text-white/80 hover:border-white/20"}`} title="Filter" aria-label="Filter activity">
                                                 <FilterIcon size={14} />
                                             </button>
                                         </PopoverTrigger>
@@ -1599,23 +1313,12 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                             <div className="p-3 space-y-3 text-[11px] text-white/80">
                                                 <div className="flex items-center justify-between">
                                                     <span className="text-white/60">Filters</span>
-                                                    <button
-                                                        onClick={clearFilters}
-                                                        className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20"
-                                                        title="Clear filters"
-                                                    >
-                                                        <X size={12} />
-                                                        Clear
-                                                    </button>
+                                                    <button onClick={clearFilters} className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20" title="Clear filters"><X size={12} />Clear</button>
                                                 </div>
 
                                                 <div className="space-y-2">
                                                     <label className="block text-white/60">Time</label>
-                                                    <select
-                                                        className="w-full rounded-md border border-white/10 bg-black/60 p-2 text-xs outline-none hover:border-white/20"
-                                                        value={filters.time}
-                                                        onChange={(e) => handleTimeChange(e.target.value as any)}
-                                                    >
+                                                    <select className="w-full rounded-md border border-white/10 bg-black/60 p-2 text-xs outline-none hover:border-white/20" value={filters.time} onChange={(e) => handleTimeChange(e.target.value as any)}>
                                                         <option value="all">All</option>
                                                         <option value="5m">5m</option>
                                                         <option value="1h">1h</option>
@@ -1626,12 +1329,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
 
                                                 <div className="space-y-2">
                                                     <label className="block text-white/60">From</label>
-                                                    <input
-                                                        value={filters.from}
-                                                        onChange={handleTextChange("from")}
-                                                        placeholder="address"
-                                                        className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
-                                                    />
+                                                    <input value={filters.from} onChange={handleTextChange("from")} placeholder="address" className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20" />
                                                 </div>
 
                                                 <div className="space-y-2">
@@ -1639,169 +1337,69 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                                     <div className="flex items-center gap-2">
                                                         <button onClick={() => handleActionToggle("buy")} className={`rounded-full border px-2 py-1 text-[11px] ${filters.actions.buy && !filters.actions.sell ? "border-emerald-300/50 text-emerald-200" : "border-white/10 text-white/80 hover:border-white/20"}`} title="Buy">Buy</button>
                                                         <button onClick={() => handleActionToggle("sell")} className={`rounded-full border px-2 py-1 text-[11px] ${filters.actions.sell && !filters.actions.buy ? "border-rose-300/50 text-rose-200" : "border-white/10 text-white/80 hover:border-white/20"}`} title="Sell">Sell</button>
-                                                        <button
-                                                            onClick={() => {
-                                                                const next = { ...filters, actions: { buy: true, sell: true } };
-                                                                setFilters(next);
-                                                                setAppliedFilters(next);
-                                                            }}
-                                                            className="rounded-full border px-2 py-1 text-[11px] border-white/10 text-white/60 hover:border-white/20"
-                                                            title="Show all"
-                                                        >
-                                                            All
-                                                        </button>
+                                                        <button onClick={() => {const next = { ...filters, actions: { buy: true, sell: true } }; setFilters(next); setAppliedFilters(next);}} className="rounded-full border px-2 py-1 text-[11px] border-white/10 text-white/60 hover:border-white/20" title="Show all">All</button>
                                                     </div>
                                                 </div>
 
                                                 <div className="space-y-2">
                                                     <label className="block text-white/60">Native amount</label>
                                                     <div className="flex items-center gap-2">
-                                                        <input
-                                                            type="number"
-                                                            inputMode="decimal"
-                                                            value={filters.nativeMin}
-                                                            onChange={handleNumberChange("nativeMin")}
-                                                            placeholder="min"
-                                                            className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
-                                                        />
-                                                        <input
-                                                            type="number"
-                                                            inputMode="decimal"
-                                                            value={filters.nativeMax}
-                                                            onChange={handleNumberChange("nativeMax")}
-                                                            placeholder="max"
-                                                            className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
-                                                        />
+                                                        <input type="number" inputMode="decimal" value={filters.nativeMin} onChange={handleNumberChange("nativeMin")} placeholder="min" className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20" />
+                                                        <input type="number" inputMode="decimal" value={filters.nativeMax} onChange={handleNumberChange("nativeMax")} placeholder="max" className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20" />
                                                     </div>
                                                 </div>
 
                                                 <div className="space-y-2">
                                                     <label className="block text-white/60">Token amount</label>
                                                     <div className="flex items-center gap-2">
-                                                        <input
-                                                            type="number"
-                                                            inputMode="decimal"
-                                                            value={filters.tokenMin}
-                                                            onChange={handleNumberChange("tokenMin")}
-                                                            placeholder="min"
-                                                            className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
-                                                        />
-                                                        <input
-                                                            type="number"
-                                                            inputMode="decimal"
-                                                            value={filters.tokenMax}
-                                                            onChange={handleNumberChange("tokenMax")}
-                                                            placeholder="max"
-                                                            className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
-                                                        />
+                                                        <input type="number" inputMode="decimal" value={filters.tokenMin} onChange={handleNumberChange("tokenMin")} placeholder="min" className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20" />
+                                                        <input type="number" inputMode="decimal" value={filters.tokenMax} onChange={handleNumberChange("tokenMax")} placeholder="max" className="w-full text-xs rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20" />
                                                     </div>
                                                 </div>
 
                                                 <div className="space-y-2">
                                                     <label className="block text-white/60">Tx hash</label>
-                                                    <input
-                                                        value={filters.hash}
-                                                        onChange={handleTextChange("hash")}
-                                                        placeholder="hash"
-                                                        className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20"
-                                                    />
+                                                    <input value={filters.hash} onChange={handleTextChange("hash")} placeholder="hash" className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-2 placeholder-white/30 outline-none hover:border-white/20" />
                                                 </div>
                                             </div>
                                         </PopoverContent>
                                     </Popover>
                                     <div className="text-white/50">Showing {filteredHx.length} of {hx.length}</div>
-                                    <button
-                                        onClick={clearFilters}
-                                        className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20"
-                                        title="Clear filters"
-                                    >
-                                        <X size={14} />
-                                        Clear
-                                    </button>
+                                    <button onClick={clearFilters} className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 transition hover:border-white/20 hover:bg-white/20" title="Clear filters"><X size={14} />Clear</button>
                                 </div>
 
                                 <div className="mt-4 overflow-x-auto rounded-xl py-2 border border-white/10">
                                     <table className="table-auto border-seperate border-spacing-0 text-center w-full">
                                         <thead className="text-xs text-white/80">
                                             <tr>
-                                                <th className="px-3 py-2">
-                                                    <div className="flex flex-col items-center gap-1">
-                                                        <span className="text-white/50">Time</span>
-                                                    </div>
-                                                </th>
-                                                <th className="px-3 py-2">
-                                                    <div className="flex flex-col items-center gap-1">
-                                                        <span className="text-white/50">From</span>
-                                                    </div>
-                                                </th>
-                                                <th className="px-3 py-2">
-                                                    <div className="flex flex-col items-center gap-1">
-                                                        <span className="text-white/50">Action</span>
-                                                    </div>
-                                                </th>
-                                                <th className="px-3 py-2">
-                                                    <div className="flex flex-col items-center gap-1">
-                                                        <span className="text-white/50">Native</span>
-                                                    </div>
-                                                </th>
-                                                <th className="px-3 py-2">
-                                                    <div className="flex flex-col items-center gap-1">
-                                                        <span className="text-white/50">Token</span>
-                                                    </div>
-                                                </th>
-                                                <th className="px-3 py-2">
-                                                    <div className="flex flex-col items-center gap-1">
-                                                        <span className="text-white/50">Tx</span>
-                                                    </div>
-                                                </th>
+                                                <th className="px-3 py-2"><div className="flex flex-col items-center gap-1"><span className="text-white/50">Time</span></div></th>
+                                                <th className="px-3 py-2"><div className="flex flex-col items-center gap-1"><span className="text-white/50">From</span></div></th>
+                                                <th className="px-3 py-2"><div className="flex flex-col items-center gap-1"><span className="text-white/50">Action</span></div></th>
+                                                <th className="px-3 py-2"><div className="flex flex-col items-center gap-1"><span className="text-white/50">Native</span></div></th>
+                                                <th className="px-3 py-2"><div className="flex flex-col items-center gap-1"><span className="text-white/50">Token</span></div></th>
+                                                <th className="px-3 py-2"><div className="flex flex-col items-center gap-1"><span className="text-white/50">Tx</span></div></th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {filteredHx.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan={7} className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">No trades yet. Be the first to make a move.</td>
-                                                </tr>
-                                            ) : (
+                                            {filteredHx.length === 0 ? 
+                                                <tr><td colSpan={7} className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">No trades yet. Be the first to make a move.</td></tr> :
                                                 paginatedActivity.map((res) => (
                                                     <tr key={res.hash} className="text-xs text-white/80 hover:bg-white/10 border-t border-white/10">
                                                         <td className="py-6">{formatRelativeTime(res.timestamp / 1000)}</td>
                                                         <td className="py-6">
-                                                            <Link
-                                                                href={getExplorerAddressUrl(res.from)}
-                                                                prefetch={false}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="text-white/70 underline-offset-2 transition hover:text-white hover:underline"
-                                                            >
-                                                                {res.from.slice(0, 6)}...{res.from.slice(-4)}
-                                                            </Link>
+                                                            <Link href={getExplorerAddressUrl(res.from)} prefetch={false} target="_blank" rel="noopener noreferrer" className="text-white/70 underline-offset-2 transition hover:text-white hover:underline">{res.from.slice(0, 6)}...{res.from.slice(-4)}</Link>
                                                         </td>
                                                         <td className="sm:px-0 py-6">
-                                                            <div
-                                                                className={`inline-block rounded-full bg-white/10 px-2 py-1 capitalize font-semibold uppercase ${
-                                                                    res.action === "buy" ? "text-emerald-300" :
-                                                                    res.action === "sell" ? "text-rose-300" : "text-cyan-300"
-                                                                }`}
-                                                            >
-                                                                {res.action}
-                                                            </div>
+                                                            <div className={`inline-block rounded-full bg-white/10 px-2 py-1 capitalize font-semibold uppercase ${res.action === "buy" ? "text-emerald-300" : res.action === "sell" ? "text-rose-300" : "text-cyan-300"}`}>{res.action}</div>
                                                         </td>
                                                         <td className="py-6 text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.nativeValue)} {baseAssetSymbol}</td>
                                                         <td className="py-6 text-white">{Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short"}).format(res.value)} {tokenSymbolDisplay}</td>
                                                         <td className="py-6">
-                                                            <Link
-                                                                href={`${_explorer}tx/${res.hash}`}
-                                                                prefetch={false}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="text-emerald-200 underline-offset-2 transition hover:text-emerald-100 hover:underline"
-                                                            >
-                                                                {res.hash.slice(0, 6)}...{res.hash.slice(-4)}
-                                                            </Link>
+                                                            <Link href={`${_explorer}tx/${res.hash}`} prefetch={false} target="_blank" rel="noopener noreferrer" className="text-emerald-200 underline-offset-2 transition hover:text-emerald-100 hover:underline">{res.hash.slice(0, 6)}...{res.hash.slice(-4)}</Link>
                                                         </td>
                                                     </tr>
                                                 ))
-                                            )}
+                                            }
                                         </tbody>
                                     </table>
                                 </div>
@@ -1809,20 +1407,8 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                     <div className="mt-3 flex items-center justify-between text-xs text-white/60">
                                         <span>Page {activityPage} of {activityTotalPages}</span>
                                         <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
-                                                disabled={activityPage <= 1}
-                                                className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
-                                            >
-                                                Previous
-                                            </button>
-                                            <button
-                                                onClick={() => setActivityPage((p) => Math.min(activityTotalPages, p + 1))}
-                                                disabled={activityPage >= activityTotalPages}
-                                                className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
-                                            >
-                                                Next
-                                            </button>
+                                            <button onClick={() => setActivityPage((p) => Math.max(1, p - 1))} disabled={activityPage <= 1} className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed">Previous</button>
+                                            <button onClick={() => setActivityPage((p) => Math.min(activityTotalPages, p + 1))} disabled={activityPage >= activityTotalPages} className="rounded-md border border-white/10 bg-white/10 px-2 py-1 transition hover:border-white/20 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed">Next</button>
                                         </div>
                                     </div>
                                 )}
@@ -1830,39 +1416,20 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
 
                             <TabsContent value="holders">
                                 <div className="mt-2 max-h-[420px] space-y-3 overflow-y-auto pr-1">
-                                    {sortedHolders.length === 0 ? (
-                                        <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">Holder data is loading...</div>
-                                    ) : (
+                                    {sortedHolders.length === 0 ? 
+                                        <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">Holder data is loading...</div> :
                                         paginatedHolders.map((res, index) => (
-                                            <div
-                                                key={`${res.addr}-${index}`}
-                                                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/5 bg-white/5 p-4 text-sm text-white/80"
-                                            >
+                                            <div key={`${res.addr}-${index}`} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/5 bg-white/5 p-4 text-sm text-white/80">
                                                 <div className="flex items-center gap-3">
                                                     <span className="text-white/40">#{(holdersPage - 1) * ROWS_PER_PAGE + index + 1}</span>
-                                                    <Link
-                                                        href={getExplorerAddressUrl(res.addr)}
-                                                        prefetch={false}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className={`text-xs transition hover:text-white ${
-                                                            res.addr.toUpperCase() === String(creator).toUpperCase() ? 
-                                                                "text-emerald-300" :
-                                                                res.addr.toUpperCase() === lp.toUpperCase() ? "text-emerald-300" : "text-white/70"
-                                                        }`}
-                                                    >
-                                                        {res.addr.toUpperCase() === lp.toUpperCase() ? 
-                                                            'Liquidity pool' : 
-                                                            res.addr.toUpperCase() === String(creator).toUpperCase() ? 
-                                                                'Creator' : 
-                                                                `${res.addr.slice(0, 6)}...${res.addr.slice(-4)}`
-                                                        }
+                                                    <Link href={getExplorerAddressUrl(res.addr)} prefetch={false} target="_blank" rel="noopener noreferrer" className={`text-xs transition hover:text-white ${res.addr.toUpperCase() === String(creator).toUpperCase() ? "text-emerald-300" : res.addr.toUpperCase() === factoryAddr.toUpperCase() ? "text-emerald-300" : "text-white/70"}`}>
+                                                        {res.addr.toUpperCase() === factoryAddr.toUpperCase() ? 'Liquidity pool' :  res.addr.toUpperCase() === String(creator).toUpperCase() ?  'Creator' : `${res.addr.slice(0, 6)}...${res.addr.slice(-4)}`}
                                                     </Link>
                                                 </div>
                                                 <span className="text-sm font-semibold text-white">{res.value.toFixed(4)}%</span>
                                             </div>
                                         ))
-                                    )}
+                                    }
                                 </div>
                                 {sortedHolders.length > 0 && (
                                     <div className="mt-3 flex items-center justify-between text-xs text-white/60">
@@ -2597,10 +2164,10 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                                 className={`text-xs transition hover:text-white ${
                                                     res.addr.toUpperCase() === String(creator).toUpperCase() ? 
                                                         "text-emerald-300" :
-                                                        res.addr.toUpperCase() === lp.toUpperCase() ? "text-emerald-300" : "text-white/70"
+                                                        res.addr.toUpperCase() === factoryAddr.toUpperCase() ? "text-emerald-300" : "text-white/70"
                                                 }`}
                                             >
-                                                {res.addr.toUpperCase() === lp.toUpperCase() ? 
+                                                {res.addr.toUpperCase() === factoryAddr.toUpperCase() ? 
                                                     'Liquidity pool' : 
                                                     res.addr.toUpperCase() === String(creator).toUpperCase() ? 
                                                         'Creator' : 
