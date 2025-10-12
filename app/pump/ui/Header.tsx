@@ -35,11 +35,7 @@ export default function LaunchpadHeader({ activeRoute = "Markets" }: LaunchpadHe
                                 key={item.label}
                                 href={item.href}
                                 prefetch={false}
-                                className={`rounded-full px-3 py-2 font-medium transition-colors duration-300 ${
-                                    isActive
-                                        ? "bg-white/10 text-white"
-                                        : "text-slate-400 hover:bg-white/5 hover:text-white"
-                                }`}
+                                className={`rounded-full px-3 py-2 font-medium transition-colors duration-300 ${isActive ? "bg-white/10 text-white" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}
                             >
                                 {item.label}
                             </Link>
@@ -57,11 +53,7 @@ export default function LaunchpadHeader({ activeRoute = "Markets" }: LaunchpadHe
                         aria-expanded={isMobileMenuOpen}
                         aria-label="Toggle navigation menu"
                     >
-                        {isMobileMenuOpen ? (
-                            <X className="h-6 w-6" aria-hidden="true" />
-                        ) : (
-                            <Menu className="h-6 w-6" aria-hidden="true" />
-                        )}
+                        {isMobileMenuOpen ? <X className="h-6 w-6" aria-hidden="true" /> : <Menu className="h-6 w-6" aria-hidden="true" />}
                     </button>
                 </div>
 
@@ -88,11 +80,7 @@ export default function LaunchpadHeader({ activeRoute = "Markets" }: LaunchpadHe
                                         href={item.href}
                                         prefetch={false}
                                         onClick={() => setIsMobileMenuOpen(false)}
-                                        className={`px-4 py-3 text-sm font-medium transition-colors duration-200 ${
-                                            isActive
-                                                ? "text-white bg-white/5"
-                                                : "text-slate-300 hover:bg-white/5 hover:text-white"
-                                        }`}
+                                        className={`px-4 py-3 text-sm font-medium transition-colors duration-200 ${isActive ? "text-white bg-white/5" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}
                                     >
                                         {item.label}
                                     </Link>

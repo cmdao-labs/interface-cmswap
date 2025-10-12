@@ -1,5 +1,5 @@
 import { createPublicClient, erc20Abi, formatEther, http } from "viem";
-import { bitkub, bitkubTestnet, monadTestnet } from "viem/chains";
+import { bitkubTestnet } from "viem/chains";
 import { readContracts } from "@wagmi/core";
 import { config } from "@/app/config";
 import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
@@ -13,14 +13,12 @@ interface LeaderboardProps {
 }
 
 interface NetworkConfig {
-    chain: typeof bitkub | typeof monadTestnet | typeof bitkubTestnet;
+    chain: typeof bitkubTestnet;
     chainId: number;
     explorer: string;
     rpcUrl: string;
     currencyAddress: `0x${string}`;
-    erc20FactoryAddress: `0x${string}`;
-    poolFactoryAddress: `0x${string}`;
-    pumpCoreAddress: `0x${string}`;
+    factoryAddress: `0x${string}`;
     blockCreated: number;
 }
 
@@ -44,13 +42,13 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
         const r1 = await publicClient.getContractEvents({
             abi: erc20Abi,
             eventName: 'Transfer',
-            args: { to: network.pumpCoreAddress as '0xstring', },
+            args: { to: network.factoryAddress as '0xstring', },
             fromBlock: BigInt(network.blockCreated),
             toBlock: 'latest',
         });
         const r2 = await Promise.all(r1);
         const r3 = await publicClient.getContractEvents({
-            address: network.pumpCoreAddress,
+            address: network.factoryAddress,
             abi: ERC20FactoryV2ABI,
             eventName: 'Swap',
             fromBlock: BigInt(network.blockCreated),
@@ -80,7 +78,7 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
         const r5 = await publicClient.getContractEvents({
             abi: erc20Abi,
             eventName: 'Transfer',
-            args: { from: network.pumpCoreAddress as '0xstring', },
+            args: { from: network.factoryAddress as '0xstring', },
             fromBlock: BigInt(network.blockCreated),
             toBlock: 'latest',
         });
@@ -122,7 +120,6 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
                 logo: r.logo,
             }
         });
-        console.log(swapEvents)
     }
 
     // Enrich events with block timestamps for time-based filtering
@@ -156,74 +153,36 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
 }
 
 function resolveNetworkConfig({ chain, mode, token, }: Pick<LeaderboardProps, "chain" | "mode" | "token">): NetworkConfig {
-    const normalizedChain = chain || "kub";
-    const normalizedMode = mode || "lite";
-    const normalizedToken = token || "cmm";
-    const isMonad = normalizedChain === "monad";
+    const normalizedChain = chain || "kubtestnet";
+    const normalizedMode = mode || "pro";
+    const normalizedToken = token || "";
     const isKubTestnet = normalizedChain === "kubtestnet";
-    let chainConfig: typeof bitkub | typeof monadTestnet | typeof bitkubTestnet = bitkub;
+    let chainConfig: typeof bitkubTestnet = bitkubTestnet;
     let explorer = "https://www.kubscan.com";
     const defaultRpc = chainConfig.rpcUrls.default?.http?.[0] ?? "";
     let rpcUrl = process.env.NEXT_PUBLIC_KUB_RPC ?? defaultRpc;
-    if (isMonad) {
-        chainConfig = monadTestnet;
-        explorer = "https://monad-testnet.socialscan.io";
-        rpcUrl = process.env.NEXT_PUBLIC_MONAD_RPC ?? (chainConfig.rpcUrls.default?.http?.[0] ?? "");
-    } else if (isKubTestnet) {
+    if (isKubTestnet) {
         chainConfig = bitkubTestnet;
         explorer = "https://testnet.kubscan.com";
         rpcUrl = process.env.NEXT_PUBLIC_KUB_TESTNET_RPC ?? (chainConfig.rpcUrls.default?.http?.[0] ?? "");
     }
 
     const networkMatrix = {
-        kub: {
-            lite: {
-                cmm: {
-                    currencyAddress: "0x9b005000a10ac871947d99001345b01c1cef2790" as const,
-                    erc20FactoryAddress: "0x10d7c3bDc6652bc3Dd66A33b9DD8701944248c62" as const,
-                    poolFactoryAddress: "0x090c6e5ff29251b1ef9ec31605bdd13351ea316c" as const,
-                    pumpCoreAddress: "0x090c6e5ff29251b1ef9ec31605bdd13351ea316c" as const,
-                    blockCreated: 25229488,
-                },
-            },
-            pro: {
-                default: {
-                    currencyAddress: "0x67ebd850304c70d983b2d1b93ea79c7cd6c3f6b5" as const,
-                    erc20FactoryAddress: "0x7bdceEAf4F62ec61e2c53564C2DbD83DB2015a56" as const,
-                    poolFactoryAddress: "0x090c6e5ff29251b1ef9ec31605bdd13351ea316c" as const,
-                    pumpCoreAddress: "0x090c6e5ff29251b1ef9ec31605bdd13351ea316c" as const,
-                    blockCreated: 25232899,
-                },
-            },
-        },
-        monad: {
-            pro: {
-                default: {
-                    currencyAddress: "0x760afe86e5de5fa0ee542fc7b7b713e1c5425701" as const,
-                    erc20FactoryAddress: "0x6dfc8eecca228c45cc55214edc759d39e5b39c93" as const,
-                    poolFactoryAddress: "0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142" as const,
-                    pumpCoreAddress: "0x399FE73Bb0Ee60670430FD92fE25A0Fdd308E142" as const,
-                    blockCreated: 16912084,
-                },
-            },
-        },
         kubtestnet: {
             pro: {
                 default: {
                     currencyAddress: "0x700D3ba307E1256e509eD3E45D6f9dff441d6907" as const,
-                    erc20FactoryAddress: "0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b" as const,
-                    poolFactoryAddress: "0x46a4073c830031ea19d7b9825080c05f8454e530" as const,
-                    pumpCoreAddress: "0x46a4073c830031ea19d7b9825080c05f8454e530" as const,
+                    factoryAddress: "0x46a4073c830031ea19d7b9825080c05f8454e530" as const,
                     blockCreated: 23935659,
                 },
             },
         },
     } as const;
 
-    const chainKey = isMonad ? "monad" : isKubTestnet ? "kubtestnet" : "kub";
+    const chainKey = isKubTestnet ? "kubtestnet" : "kubtestnet";
     const availableModes = networkMatrix[chainKey];
     const modeKey = normalizedMode in availableModes ? normalizedMode : Object.keys(availableModes)[0];
-    const modeBucket = availableModes[modeKey as keyof typeof availableModes] as Record<string, { currencyAddress: `0x${string}`; erc20FactoryAddress: `0x${string}`; poolFactoryAddress: `0x${string}`; pumpCoreAddress: `0x${string}`; blockCreated: number }>;
+    const modeBucket = availableModes[modeKey as keyof typeof availableModes] as Record<string, { currencyAddress: `0x${string}`; factoryAddress: `0x${string}`; blockCreated: number }>;
     const tokenKey = normalizedToken in modeBucket ? normalizedToken : "default";
     const resolved = modeBucket[tokenKey];
 
@@ -235,10 +194,8 @@ function resolveNetworkConfig({ chain, mode, token, }: Pick<LeaderboardProps, "c
         explorer,
         rpcUrl,
         currencyAddress: resolved.currencyAddress,
-        erc20FactoryAddress: resolved.erc20FactoryAddress,
-        poolFactoryAddress: resolved.poolFactoryAddress,
         blockCreated: resolved.blockCreated,
-        pumpCoreAddress: resolved.pumpCoreAddress,
+        factoryAddress: resolved.factoryAddress,
     };
 }
 
@@ -247,7 +204,7 @@ async function fetchPairs(network: NetworkConfig, publicClient: any) {
     let pairs: any = [];
     if (network.chainId === 25925) {
         const r1 = await publicClient.getContractEvents({
-            address: network.pumpCoreAddress,
+            address: network.factoryAddress,
             abi: ERC20FactoryV2ABI,
             eventName: 'Creation',
             fromBlock: BigInt(network.blockCreated),

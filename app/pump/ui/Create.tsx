@@ -2,8 +2,8 @@
 import Link from "next/link";
 import { ArrowLeft, UploadCloud, Info, Loader2 } from "lucide-react";
 import { useConnections, useAccount } from "wagmi";
-import { formatEther, parseEther, erc20Abi } from "viem";
-import { writeContract, readContracts } from "@wagmi/core";
+import { parseEther } from "viem";
+import { writeContract } from "@wagmi/core";
 import { useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import { config } from "@/app/config";
 import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
@@ -22,7 +22,7 @@ export default function Create({ mode, chain, token, }: {
     if (chain === "kubtestnet" || chain === "") _chainId = 25925;
     let currencyAddr = "";
     let bkgafactoryAddr = "";
-    if ((chain === "kubtestnet" || chain === "") && (mode === "pro" || mode === "") && (token === "cmm" || token === "")) {
+    if ((chain === "kubtestnet" || chain === "") && (mode === "pro" || mode === "") && (token === "")) {
         currencyAddr = "0x700D3ba307E1256e509eD3E45D6f9dff441d6907";
         bkgafactoryAddr = "0x46a4073c830031ea19d7b9825080c05f8454e530";
     }
@@ -81,14 +81,7 @@ export default function Create({ mode, chain, token, }: {
                 footer: (
                     <span>
                         Contact support at{" "}
-                        <Link
-                            href="https://discord.gg/k92ReT5EYy"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="underline transition hover:font-bold"
-                        >
-                            Discord
-                        </Link>
+                        <Link href="https://discord.gg/k92ReT5EYy" target="_blank" rel="noreferrer" className="underline transition hover:font-bold">Discord</Link>
                     </span>
                 ),
             });
@@ -135,15 +128,7 @@ export default function Create({ mode, chain, token, }: {
                 result = await writeContract(config, {
                     ...factoryContract,
                     functionName: "createToken",
-                    args: [
-                        name,
-                        ticker,
-                        `ipfs://${upload.IpfsHash}`,
-                        desp,
-                        "ipfs://bafkreiexe7q5ptjflrlccf3vtqdbpwk36j3emlsulksx7ot52e3uqyqu3u",
-                        "l2",
-                        "l3",
-                    ],
+                    args: [name, ticker, `ipfs://${upload.IpfsHash}`, desp, "ipfs://bafkreiexe7q5ptjflrlccf3vtqdbpwk36j3emlsulksx7ot52e3uqyqu3u", "l2", "l3"],
                     value: parseEther("0"),
                 });
             }

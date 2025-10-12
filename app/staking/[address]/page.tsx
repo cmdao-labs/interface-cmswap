@@ -3,14 +3,11 @@ import React from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAccount } from 'wagmi'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
-import { cn } from "@/lib/utils"
 import { config } from '@/app/config'
 import ErrorModal from '@/app/components/error-modal'
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
-import { formatEther, parseEther } from "viem"
+import { formatEther } from "viem"
 import { v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, publicClient, erc721ABI, POSITION_MANAGER, positionManagerCreatedAt, V3_STAKER, v3StakerContract } from '@/app/lib/25925'
-import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 
 type MyPosition = {
     Id: number;

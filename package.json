@@ -1,6 +1,6 @@
 {
   "name": "cmswap",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": true,
   "dependencies": {
     "-": "^0.0.1",
