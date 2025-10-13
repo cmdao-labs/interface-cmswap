@@ -1,11 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { connection } from 'next/server';
-import { readContracts } from '@wagmi/core';
-import { createPublicClient, http, formatEther, erc20Abi } from 'viem';
-import { bitkubTestnet } from 'viem/chains';
-import { config } from '@/app/config';
-import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
+import { getServiceSupabase } from '@/lib/supabaseServer';
 
 type Activity = {
     action: 'buy' | 'sell' | 'launch';
@@ -63,129 +59,81 @@ export default async function Event({
     token: string;
 }) {
     await connection();
-    let _chain: any = null;
-    let _chainId = 0;
-    let _rpc = '';
-    if (chain === 'kubtestnet') {
-        _chain = bitkubTestnet;
-        _chainId = 25925;
-        _rpc = 'https://rpc-testnet.bitkubchain.io' as string;
-    } // add chain here
-    const publicClient = createPublicClient({ chain: _chain, transport: http(_rpc) });
-    let currencyAddr: string = '';
-    let pumpCoreAddr: string = '';
-    let _blockcreated: number = 0;
-    let v3facAddr: string = '';
-    if (chain === 'kubtestnet' && mode === 'pro') {
-        currencyAddr = '0x700D3ba307E1256e509eD3E45D6f9dff441d6907';
-        pumpCoreAddr = '0x46a4073c830031ea19d7b9825080c05f8454e530';
-        _blockcreated = 23935659;
-        v3facAddr = '0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b';
-    }  // add chain and mode here
-
     let timeline: Activity[] = [];
     if (chain === 'kubtestnet' && mode === 'pro') {
-        const r1 = await publicClient.getContractEvents({
-            address: pumpCoreAddr as '0xstring',
-            abi: ERC20FactoryV2ABI,
-            eventName: 'Creation',
-            fromBlock: BigInt(_blockcreated),
-            toBlock: 'latest',
-        });
-        const r2 = await Promise.all(r1);
-        const _getticker = r2.map(async (r: any) => {
-            return await readContracts(config, {
-                contracts: [
-                    { address: r.args.tokenAddr, abi: erc20Abi, functionName: 'symbol', chainId: _chainId }
-                ],
-            });
-        })
-        const getticker: any = await Promise.all(_getticker);
-        const tokenslist = r2.map((r: any, index) => {return {addr: r.args.tokenAddr, ticker: getticker[index][0].result, logo: r.args.logo}});
-        const addrs = tokenslist.map(t => {return t.addr.toUpperCase()});
+        const supabase = getServiceSupabase();
+        // Recent swaps across all tokens
+        const swapsRes = await supabase
+            .from('swaps')
+            .select('is_buy, volume_token, tx_hash, timestamp, token_address')
+            .order('timestamp', { ascending: false })
+            .limit(50);
 
-        const launch = r2.map((r: any) => {
-            return {
-                action: 'launch', 
-                value: 0, 
-                hash: r.transactionHash, 
-                block: r.blockNumber, 
-                from: r.args.from,
-                to: r.args.to, 
-                addr: tokenslist[addrs.indexOf(r.args.tokenAddr.toUpperCase())].addr, 
-                ticker: tokenslist[addrs.indexOf(r.args.tokenAddr.toUpperCase())].ticker, 
-                logo: tokenslist[addrs.indexOf(r.args.tokenAddr.toUpperCase())].logo,
+        const swapRows = (swapsRes.data || []) as Array<{
+            is_buy: boolean | null;
+            volume_token: number | string | null;
+            tx_hash: string | null;
+            timestamp: number | string | null;
+            token_address: string | null;
+        }>;
+
+        const addresses = Array.from(
+            new Set(
+                swapRows
+                    .map((r) => String(r.token_address || ''))
+                    .filter((a) => a && a !== '0x0')
+            )
+        );
+
+        // Fetch token meta (symbol/logo) for referenced addresses
+        let tokensMap = new Map<string, { symbol?: string; logo?: string }>();
+        if (addresses.length > 0) {
+            const tokensRes = await supabase
+                .from('tokens')
+                .select('address, symbol, logo')
+                .in('address', addresses);
+            for (const t of tokensRes.data || []) {
+                const key = String(t.address || '').toLowerCase();
+                tokensMap.set(key, { symbol: t.symbol, logo: t.logo });
             }
-        });
+        }
 
-        const r3 = await publicClient.getContractEvents({
-            abi: erc20Abi,
-            eventName: 'Transfer',
-            args: { to: pumpCoreAddr as '0xstring', },
-            fromBlock: BigInt(_blockcreated),
-            toBlock: 'latest',
-        });
-        const r4 = await Promise.all(r3);
-        const sell = r4.filter((r) => {
-            return addrs.indexOf(r.address.toUpperCase()) !== -1;
-        }).map((r: any) => {
+        const buySell: Activity[] = swapRows.map((r) => {
+            const addr = String(r.token_address || '').toLowerCase();
+            const meta = tokensMap.get(addr) || {};
+            const sym = meta.symbol || (addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : '');
             return {
-                action: 'sell', 
-                value: Number(formatEther(r.args.value)), 
-                hash: r.transactionHash, 
-                block: r.blockNumber, 
-                from: r.args.from,
-                to: r.args.to, 
-                addr: tokenslist[addrs.indexOf(r.address.toUpperCase())].addr, 
-                ticker: tokenslist[addrs.indexOf(r.address.toUpperCase())].ticker, 
-                logo: tokenslist[addrs.indexOf(r.address.toUpperCase())].logo,
-            }
-        }).filter((r) => {
-            return r.from.toUpperCase() !== '0x0000000000000000000000000000000000000000'.toUpperCase();
-        });
-
-        const r5 = await publicClient.getContractEvents({
-            abi: erc20Abi,
-            eventName: 'Transfer',
-            args: { from: pumpCoreAddr as '0xstring', },
-            fromBlock: BigInt(_blockcreated),
-            toBlock: 'latest',
-        });
-        const r6 = await Promise.all(r5);
-        const buy = r6.filter((r) => {
-            return addrs.indexOf(r.address.toUpperCase()) !== -1;
-        }).map((r: any) => {
-            return {
-                action: 'buy', 
-                value: Number(formatEther(r.args.value)), 
-                hash: r.transactionHash, 
-                block: r.blockNumber,
-                from: r.args.from,
-                to: r.args.to, 
-                addr: tokenslist[addrs.indexOf(r.address.toUpperCase())].addr, 
-                ticker: tokenslist[addrs.indexOf(r.address.toUpperCase())].ticker, 
-                logo: tokenslist[addrs.indexOf(r.address.toUpperCase())].logo,
-            }
-        }).filter((r) => {
-            return r.to.toUpperCase() !== '0x1fE5621152A33a877f2b40a4bB7bc824eEbea1EA'.toUpperCase();
-        });
-
-        const merge = launch.concat(sell, buy);
-        const _timestamparr = merge.map(async (res: any) => { return await publicClient.getBlock({ blockNumber: res.block, }) });
-        const timestamparr = await Promise.all(_timestamparr);
-        const restimestamp = timestamparr.map((res) => { return Number(res.timestamp) * 1000; })
-        timeline = merge.map((res: any, index: any) => {
-            return {
-                action: res.action,
-                value: res.value,
-                hash: res.hash,
-                timestamp: restimestamp[index],
-                ticker: res.ticker,
-                logo: res.logo,
-                address: res.addr,
-                lp: res.lp,
+                action: r.is_buy ? 'buy' : 'sell',
+                value: Number(r.volume_token || 0),
+                hash: String(r.tx_hash || ''),
+                timestamp: Number(r.timestamp || 0),
+                ticker: sym,
+                logo: meta.logo || '',
+                address: String(r.token_address || ''),
             } as Activity;
-        }).sort((a: Activity, b: Activity) => {return b.timestamp - a.timestamp}).slice(0, 10);
+        });
+
+        // Recent launches based on tokens created_time
+        const launchesRes = await supabase
+            .from('tokens')
+            .select('address, symbol, logo, created_time')
+            .order('created_time', { ascending: false })
+            .limit(20);
+        const launches: Activity[] = (launchesRes.data || []).map((t: any) => ({
+            action: 'launch',
+            value: 0,
+            hash: `launch-${String(t.address || '')}`,
+            timestamp: Number(t.created_time || 0),
+            ticker: String(t.symbol || ''),
+            logo: String(t.logo || ''),
+            address: String(t.address || ''),
+        }));
+
+        timeline = launches
+            .concat(buySell)
+            .filter((e) => Number.isFinite(e.timestamp) && e.timestamp > 0)
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .slice(0, 10);
     }
 
     const activity = timeline.slice(0, 10);

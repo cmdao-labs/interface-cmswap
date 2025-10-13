@@ -1,10 +1,6 @@
 import { connection } from "next/server";
-import { readContracts } from "@wagmi/core";
-import { createPublicClient, http, erc20Abi, formatUnits, type Chain, type PublicClient, } from "viem";
-import { bitkubTestnet } from "viem/chains";
+import { getServiceSupabase } from "@/lib/supabaseServer";
 import GridLayout, { CoinCardData } from "./GridLayout";
-import { config } from "@/app/config";
-import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
 
 const FALLBACK_LOGO = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%230a111f'/><path d='M20 34c0-7.732 6.268-14 14-14s14 6.268 14 14-6.268 14-14 14-14-6.268-14-14Zm14-10a10 10 0 1 0 10 10 10.011 10.011 0 0 0-10-10Zm1 6v5.586l3.707 3.707-1.414 1.414L33 37.414V30h2Z' fill='%235965f7'/></svg>";
 const RELATIVE_TIME_FORMAT = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
@@ -20,24 +16,11 @@ export default async function TokenGrid({ mode, query, sort, order, chain, token
     await connection();
 
     const network = resolveNetworkConfig(chain, mode, token);
-    const transportUrl = network.rpcUrl || network.chain.rpcUrls?.public?.http?.[0] || network.chain.rpcUrls?.default?.http?.[0];
-    if (!transportUrl) throw new Error("Missing RPC URL for selected chain");
-    const publicClient = createPublicClient({ chain: network.chain, transport: http(transportUrl), });
-
-    const currencyMeta = await readContracts(config, {
-        contracts: [
-            { address: network.currencyAddress, abi: erc20Abi, functionName: "symbol", chainId: network.chainId },
-            { address: network.currencyAddress, abi: erc20Abi, functionName: "decimals", chainId: network.chainId },
-        ],
-    });
-
-    const currencySymbol = extractResult<string>(currencyMeta, 0) || network.baseSymbol;
-
-    const listings = await fetchKubTestnetListings({network, publicClient,})
+    const listings = await fetchSupabaseListings({ network });
     const filteredListings = filterListings(listings, query);
     const sortedListings = sortListings(filteredListings, sort, order);
     const coins = mapToCoinCards(sortedListings, {
-        baseSymbol: mode === 'lite' ? currencySymbol : network.baseSymbol,
+        baseSymbol: network.baseSymbol,
         chainParam: network.queryChain,
         modeParam: network.queryMode,
     });
@@ -49,14 +32,6 @@ type NetworkKey = "kubtestnet";
 
 type NetworkConfig = {
     key: NetworkKey;
-    chainId: number;
-    chain: Chain;
-    currencyAddress: `0x${string}`;
-    factoryAddress: `0x${string}`;
-    poolFactoryAddress: `0x${string}`;
-    factoryAbi: typeof ERC20FactoryV2ABI;
-    blockCreated: bigint;
-    rpcUrl?: string;
     baseSymbol: string;
     chainTag: string;
     queryChain: string;
@@ -77,10 +52,7 @@ type ListingMetrics = {
     searchTerms: string;
 };
 
-type KubTestnetContext = {
-    network: NetworkConfig;
-    publicClient: PublicClient;
-};
+type KubTestnetContext = { network: NetworkConfig };
 
 function resolveNetworkConfig(chain: string, mode: string, token: string): NetworkConfig {
     const normalizedChain = (chain || "kubtestnet").toLowerCase() as NetworkKey;
@@ -88,14 +60,6 @@ function resolveNetworkConfig(chain: string, mode: string, token: string): Netwo
 
     return {
         key: "kubtestnet",
-        chainId: 25925,
-        chain: bitkubTestnet,
-        currencyAddress: "0x700D3ba307E1256e509eD3E45D6f9dff441d6907",
-        factoryAddress: "0x46a4073c830031ea19d7b9825080c05f8454e530",
-        poolFactoryAddress: "0xCBd41F872FD46964bD4Be4d72a8bEBA9D656565b",
-        factoryAbi: ERC20FactoryV2ABI,
-        blockCreated: BigInt(23935659),
-        rpcUrl: "https://rpc-testnet.bitkubchain.io",
         baseSymbol: "tKUB",
         chainTag: "tKUB",
         queryChain: "kubtestnet",
@@ -103,64 +67,68 @@ function resolveNetworkConfig(chain: string, mode: string, token: string): Netwo
     };
 }
 
-async function fetchKubTestnetListings({
-    network,
-    publicClient,
-}: KubTestnetContext): Promise<ListingMetrics[]> {
-    const creationEvents = await publicClient.getContractEvents({
-        address: network.factoryAddress,
-        abi: network.factoryAbi,
-        eventName: "Creation",
-        fromBlock: network.blockCreated,
-        toBlock: "latest",
+async function fetchSupabaseListings({ network }: KubTestnetContext): Promise<ListingMetrics[]> {
+    const supabase = getServiceSupabase();
+
+    // Fetch tokens metadata
+    const tokenRes = await supabase
+        .from('tokens')
+        .select('address, symbol, name, description, logo, created_time, creator')
+        .order('created_time', { ascending: false });
+    const tokens = (tokenRes.data || []) as Array<{
+        address?: string;
+        symbol?: string;
+        name?: string;
+        description?: string;
+        logo?: string;
+        created_time?: number | string | null;
+        creator?: string;
+    }>;
+
+    const addresses = tokens.map((t) => String(t.address || '')).filter(Boolean);
+
+    // Fetch latest swap price per token in a single query, then reduce
+    let latestPriceByToken = new Map<string, { price: number; timestamp: number }>();
+    if (addresses.length > 0) {
+        const swapsRes = await supabase
+            .from('swaps')
+            .select('token_address, price, timestamp')
+            .in('token_address', addresses)
+            .order('timestamp', { ascending: false });
+        for (const r of swapsRes.data || []) {
+            const addr = String((r as any).token_address || '');
+            if (!addr || latestPriceByToken.has(addr)) continue; // first row per token (latest)
+            const p = Number((r as any).price || 0);
+            const ts = Number((r as any).timestamp || 0);
+            latestPriceByToken.set(addr, { price: Number.isFinite(p) ? p : 0, timestamp: ts });
+        }
+    }
+
+    // Map into ListingMetrics
+    const listings: ListingMetrics[] = tokens.map((t) => {
+        const addr = String(t.address || '');
+        const sym = String(t.symbol || '');
+        const nm = String(t.name || sym || '');
+        const logoUrl = resolveLogoUrl(String(t.logo || ''));
+        const createdAt = toSecondsMaybe(Number(t.created_time || 0));
+        const latest = latestPriceByToken.get(addr);
+        const price = latest?.price || 0;
+        const marketCap = Number.isFinite(price) ? price * 1_000_000_000 : 0; // assume 1e9 supply
+        return {
+            id: addr,
+            address: addr as `0x${string}`,
+            symbol: sym || 'N/A',
+            name: nm || sym || 'Token',
+            description: t.description || undefined,
+            logoUrl,
+            createdAt,
+            creator: t.creator as `0x${string}` | undefined,
+            price,
+            marketCap,
+            searchTerms: `${sym} ${nm}`.toLowerCase(),
+        } satisfies ListingMetrics;
     });
 
-    const listings = await Promise.all(
-        creationEvents.map(async (event: any) => {
-            const tokenAddress = event.args?.tokenAddr as '0xstring';
-            const metadata = await readContracts(config, {
-                contracts: [
-                    { address: tokenAddress, abi: erc20Abi, functionName: "symbol", chainId: network.chainId },
-                    { address: tokenAddress, abi: erc20Abi, functionName: "name", chainId: network.chainId },
-                    { address: tokenAddress, abi: erc20Abi, functionName: "decimals", chainId: network.chainId },
-                    { address: tokenAddress, abi: erc20Abi, functionName: "totalSupply", chainId: network.chainId },
-                    { ...{ address: network.factoryAddress, abi: network.factoryAbi, chainId: network.chainId }, functionName: "pumpReserve", args: [tokenAddress] },
-                    { ...{ address: network.factoryAddress, abi: network.factoryAbi, chainId: network.chainId }, functionName: "virtualAmount" },
-                ],
-            });
-
-            const symbol = extractResult<string>(metadata, 0) || "N/A";
-            const name = extractResult<string>(metadata, 1) || symbol;
-            const decimals = Number(extractResult<number | bigint>(metadata, 2) ?? 18,);
-            const totalSupply = extractResult<bigint>(metadata, 3) ?? BigInt(0);
-            const pumpReserve = extractResult<readonly bigint[]>(metadata, 4);
-            const virtualAmount = extractResult<bigint>(metadata, 5) ?? BigInt(0);
-            const reserve0 = Number(pumpReserve?.[0] ?? BigInt(0));
-            const reserve1 = Number(pumpReserve?.[1] ?? BigInt(0));
-            const virtual = Number(virtualAmount);
-            const denominator = reserve1 === 0 ? 1 : reserve1;
-            const priceRaw = (reserve0 + virtual) / denominator;
-            const price = Number.isFinite(priceRaw) ? priceRaw : 0;
-            const supply = Number(formatUnits(totalSupply, decimals));
-            const marketCap = Number.isFinite(price) ? price * supply : 0;
-            const logoRaw = event.args?.logo as string | undefined;
-            const fallbackLogo = event.args?.link1 as string | undefined;
-
-            return {
-                id: tokenAddress,
-                address: tokenAddress,
-                symbol,
-                name,
-                description: event.args?.description as string | undefined,
-                logoUrl: resolveLogoUrl(logoRaw || fallbackLogo),
-                createdAt: event.args?.createdTime ? Number(event.args.createdTime) : undefined,
-                creator: event.args?.creator as `0x${string}` | undefined,
-                price,
-                marketCap,
-                searchTerms: `${symbol} ${name}`.toLowerCase(),
-            } satisfies ListingMetrics;
-        }),
-    );
     return listings;
 }
 
@@ -271,8 +239,10 @@ function resolveLogoUrl(raw?: string) {
     return `https://cmswap.mypinata.cloud/ipfs/${raw}`;
 }
 
-function extractResult<T>(responses: readonly any[], index: number): T | undefined {
-    const entry = responses[index];
-    if (!entry || entry.status !== "success") return undefined;
-    return entry.result as T;
+function toSecondsMaybe(ts: number | undefined | null): number | undefined {
+    if (!ts || !Number.isFinite(Number(ts))) return undefined;
+    const n = Number(ts);
+    // Heuristic: if timestamp looks like ms, convert to seconds
+    if (n > 1e12) return Math.floor(n / 1000);
+    return n;
 }
