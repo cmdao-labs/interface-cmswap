@@ -11,7 +11,7 @@ type ChainStyle = {
     label: string;
     supportedModes: ModeType[];
 };
-const baseCardClasses = 'flex flex-row gap-3 rounded-full border border-white/20 p-4 text-sm shadow-inner shadow-black/30';
+const baseCardClasses = 'flex flex-row gap-6 sm:gap-3 rounded-full border border-white/20 px-4 py-2 sm:py-4 text-sm shadow-inner shadow-black/30';
 const chainStyles: Record<string, ChainStyle> = {
     kub: {
         gradient: 'from-emerald-500/40 via-emerald-400/20 to-emerald-500/30',
@@ -88,11 +88,11 @@ export default function Sort4() {
 
     return (
         <div className={baseCardClasses}>
-            <div className="flex flex-row items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-center gap-2">
                 {chainConfig.label === 'Bitkub Testnet' ? (
                     <>
                         <Image src="https://cmswap.mypinata.cloud/ipfs/bafkreiggymvcdojbawajbufsesu6npqldlv3hncq5hrolwoqu4whyvrexy" alt="" width={64} height={64} />
-                        <span className='text-[8px] px-2 py-1 border border-white'>testnet</span>
+                        <span className='text-[8px] px-1 sm:px-2 sm:py-1 border border-white'>testnet</span>
                     </>
                 ) : (
                     <span className={`font-semibold uppercase tracking-[0.2em] ${chainConfig.accentText}`}>{chainConfig.label}</span>

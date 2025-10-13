@@ -58,13 +58,13 @@ export default function LaunchpadHeader({ activeRoute = "Markets" }: LaunchpadHe
                     </button>
                 </div>
 
-                <div className="flex flex-col-reverse sm:flex-row gap-5 sm:gap-3">
+                <div className="flex flex-row-reverse sm:flex-row gap-3">
                     <div className="hidden sm:block"><Search /></div>
                     <div className="block sm:hidden"><Sort4 /></div>
                     <Link
                         href={"launchpad/launch?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")}
                         prefetch={false}
-                        className="w-full inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-700 px-6 py-2 font-semibold text-white shadow-lg shadow-emerald-500/40 transition-transform duration-300 hover:scale-[1.03] focus:outline-none"
+                        className="w-full inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-700 px-2 sm:px-6 py-2 font-semibold text-white shadow-lg shadow-emerald-500/40 transition-transform duration-300 hover:scale-[1.03] focus:outline-none"
                     >
                         <span>Launch Token</span>
                         <Rocket className="ml-2 h-6 w-6 rounded-xs border border-white/10 bg-white/10" aria-hidden="true" />

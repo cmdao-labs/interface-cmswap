@@ -655,7 +655,22 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                 }
                 if (Array.isArray(data?.graph)) setGraphData(data.graph)
                 if (Array.isArray(data?.activity)) setHx(data.activity)
-                if (Array.isArray(data?.holders)) setHolder(data.holders)
+
+                // Fetch holders via dedicated API and normalize to percentage of total supply (1e9)
+                try {
+                    const hres = await fetch(`/api/token/holders?token=${ticker}&limit=500`, { cache: 'no-store' })
+                    if (hres.ok) {
+                        const hdata = await hres.json()
+                        const raw = Array.isArray(hdata?.holders) ? hdata.holders : []
+                        const holders = raw.map((h: any) => ({
+                            addr: String(h.holder || h.addr || ''),
+                            value: Number(h.balance || h.value || 0) / 1e25,
+                        }))
+                        setHolder(holders)
+                    }
+                } catch (e) {
+                    console.error('fetch holders error', e)
+                }
                 // Traders are derived from activity locally; server 'traders' is optional
             } catch (e) {
                 console.error('fetch summary error', e)
@@ -1268,7 +1283,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                             </TabsContent>
 
                             <TabsContent value="holders">
-                                <div className="mt-2 max-h-[420px] space-y-3 overflow-y-auto pr-1">
+                                <div className="mt-2 space-y-3 overflow-y-auto pr-1">
                                     {sortedHolders.length === 0 ? 
                                         <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">Holder data is loading...</div> :
                                         paginatedHolders.map((res, index) => (
@@ -1697,7 +1712,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
 
                     <div className="hidden sm:block rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl backdrop-blur">
                         <h2 className="text-lg font-semibold text-white">Holder</h2>
-                        <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-1">
+                        <div className="mt-4 space-y-3 overflow-y-auto pr-1">
                             {sortedHolders.length === 0 ?
                                 <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/50">Holder data is loading...</div> :
                                 paginatedHolders.map((res, index) => (
