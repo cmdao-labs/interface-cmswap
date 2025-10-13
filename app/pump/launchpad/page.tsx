@@ -34,7 +34,7 @@ export default async function Launchpad(props: {
 				</section>
 				<section className="space-y-3">
 					<div className="flex flex-row flex-wrap gap-4 py-3 shadow-inner">
-						<Sort4 />
+						<div className="hidden sm:block"><Sort4 /></div>
 						<Sort />
 					</div>
 					<Suspense

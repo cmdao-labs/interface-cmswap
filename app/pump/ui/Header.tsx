@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useAccount } from 'wagmi';
 import Search from "@/app/pump/ui/Search";
 import { useState } from "react";
+import Sort4 from "@/app/pump/ui/Sort4";
 
 type LaunchpadHeaderProps = {
     activeRoute?: "Markets" | "Portfolio" | "Leaderboard";
@@ -59,6 +60,7 @@ export default function LaunchpadHeader({ activeRoute = "Markets" }: LaunchpadHe
 
                 <div className="flex flex-col-reverse sm:flex-row gap-5 sm:gap-3">
                     <div className="hidden sm:block"><Search /></div>
+                    <div className="block sm:hidden"><Sort4 /></div>
                     <Link
                         href={"launchpad/launch?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")}
                         prefetch={false}

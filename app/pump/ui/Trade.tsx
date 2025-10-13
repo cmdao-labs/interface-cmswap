@@ -214,8 +214,12 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
     , [mode, trademode]);
 
     const tokenSymbolDisplay = symbol ? String(symbol) : "";
-    const inputAssetSymbol = trademode ? baseAssetSymbol : tokenSymbolDisplay;
-    const outputAssetSymbol = trademode ? tokenSymbolDisplay : baseAssetSymbol;
+    const inputAssetSymbol = trademode ? 
+        baseAssetSymbol : 
+        tokenSymbolDisplay.length >= 7 ? tokenSymbolDisplay.slice(0, 6) + "..." : tokenSymbolDisplay;
+    const outputAssetSymbol = trademode ? 
+        tokenSymbolDisplay.length >= 7 ? tokenSymbolDisplay.slice(0, 6) + "..." : tokenSymbolDisplay : 
+        baseAssetSymbol;
 
     const formattedAvailableBalance = React.useMemo(() => Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short", maximumFractionDigits: 3}).format(
         mode === "pro" ? 
@@ -836,7 +840,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                         const inputAmountWithFee = _inputAmount * 99; // Apply 99/100 multiplier for fee
                         const numerator = BigInt(Math.floor(inputAmountWithFee)) * _outputReserve;
                         const denominator = _inputReserve * BigInt(100) + BigInt(Math.floor(inputAmountWithFee));
-                        return Number(numerator / denominator);
+                        return Number(Number(numerator) / Number(denominator));
                     };
                     if (!result || !Array.isArray(result) || result.length < 3) {
                         console.error("Invalid contract result:", result);
@@ -1114,7 +1118,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                     />
                                     <span className="-ml-10 text-sm uppercase tracking-wide text-white/60">{inputAssetSymbol}</span>
                                 </div>
-                                <div className="mt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-white/50">
+                                <div className="mt-2 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-2 text-xs text-white/50">
                                     <div className="flex items-center gap-2 text-white/40">
                                         <span>You get</span>
                                         <span className="font-semibold text-white">{formattedOutput} {outputAssetSymbol}</span>
@@ -1759,7 +1763,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                     />
                                     <span className="-ml-10 text-sm uppercase tracking-wide text-white/60">{inputAssetSymbol}</span>
                                 </div>
-                                <div className="mt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-white/50">
+                                <div className="mt-2 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-2 text-xs text-white/50">
                                     <div className="flex items-center gap-2 text-white/40">
                                         <span>You get</span>
                                         <span className="font-semibold text-white">{formattedOutput} {outputAssetSymbol}</span>

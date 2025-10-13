@@ -212,7 +212,7 @@ export default function Dashboard({
                                         type: 'ERC20',
                                         options: {
                                             address: res[4].result,
-                                            symbol: res[0].result,
+                                            symbol: (res[0].result).length >= 7 ? (res[0].result).slice(0, 6) : res[0].result,
                                             decimals: 18,
                                             image: res[1].result!.slice(0, 7) === 'ipfs://' ? "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!.slice(7) : "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!
                                         },

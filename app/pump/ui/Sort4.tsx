@@ -11,7 +11,7 @@ type ChainStyle = {
     label: string;
     supportedModes: ModeType[];
 };
-const baseCardClasses = 'flex flex-row gap-3 rounded-lg border border-white/20 p-4 text-sm shadow-inner shadow-black/30';
+const baseCardClasses = 'flex flex-row gap-3 rounded-full border border-white/20 p-4 text-sm shadow-inner shadow-black/30';
 const chainStyles: Record<string, ChainStyle> = {
     kub: {
         gradient: 'from-emerald-500/40 via-emerald-400/20 to-emerald-500/30',
