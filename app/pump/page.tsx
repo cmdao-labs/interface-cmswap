@@ -9,9 +9,7 @@ export default function Home() {
   const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
-    if (chainId === undefined) return; // ยังไม่เชื่อม wallet
-
-    if (chainId === 25925 || chainId === null) {
+    if (chainId === 25925 || chainId === null || chainId === undefined) {
       router.push('/pump/launchpad?chain=kubtestnet&mode=pro');
     } 
     else if (chainId === 96 || chainId === 10143) {
