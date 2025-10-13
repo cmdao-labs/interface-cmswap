@@ -1,6 +1,6 @@
 {
   "name": "cmswap",
-  "version": "0.2.7",
+  "version": "0.3.0",
   "private": true,
   "dependencies": {
     "-": "^0.0.1",
@@ -16,6 +16,7 @@
     "@radix-ui/react-toggle-group": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.2.4",
     "@raugfer/jazzicon": "^1.0.6",
+    "@supabase/supabase-js": "^2.75.0",
     "@tanstack/react-query": "^5.66.9",
     "@types/react-webcam": "^3.0.0",
     "@zxing/library": "^0.21.3",
@@ -24,6 +25,7 @@
     "cmdk": "1.0.0",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
+    "dotenv": "^17.2.3",
     "jsqr": "^1.4.0",
     "lightweight-charts": "5.0.9",
     "lucide-react": "^0.479.0",
@@ -45,7 +47,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "npx serve@latest ./build"
+    "start": "npx serve@latest ./build",
+    "indexer": "node scripts/standalone-indexer.mjs"
   },
   "browserslist": {
     "production": [
