@@ -11,7 +11,7 @@ export const tokens: {name: string, value: '0xstring', logo: string}[] = [
     { name: 'ISOLA', value: '0xC8925E89bE4Ce76218a3e52B995C5Ae02662A94F' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreiggs47xpvrutabszgn73mwchzambqbv4dspreoglqqioazof4k2sa' }, 
     { name: 'KSOLA', value: '0x9cf6dF95b918307Ff81feF70E616a094e9977a28' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreie7n4loanq3vbji47ijr6xhsf47xsbf4fybrjwzkerwd2aonnr6xq' },
     { name: 'KJFIN', value: '0x9BEc198c43B0714aEEd3c1bF21498ecBeFEB19F8' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreicsaxloa43u6xq2pscenskkmqwyb2w5gwauik735opgoc2qzpmob4' }, 
-    { name: "SHK", value: "0xF27DF35ead39E2aed24cc05C52db303Ef4C4aA83" as "0xstring", logo: "https://gateway.pinata.cloud/ipfs/bafybeictpc76cigf42dly6c3qtnbu5cbtons4qvsqr4juxcs7g7k4nbche" },
+    { name: "SHK", value: "0xF27DF35ead39E2aed24cc05C52db303Ef4C4aA83" as "0xstring", logo: "https://cmswap.mypinata.cloud/ipfs/bafybeictpc76cigf42dly6c3qtnbu5cbtons4qvsqr4juxcs7g7k4nbche" },
     // can PR listing here
 ]
 
