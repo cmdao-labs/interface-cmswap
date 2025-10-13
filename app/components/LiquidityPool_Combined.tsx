@@ -466,26 +466,57 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
             </p>
           </div>
         </div>
-        <div
-          className={`flex items-center gap-1.5 my-4 p-1 rounded-full w-fit border ${theme.border} shadow-inner shadow-${theme.accent}/10 backdrop-blur-md bg-[#061f1c]`}
+     <div className="my-4">
+      {/* --- PC --- */}
+      <div
+        className={`hidden sm:flex items-center gap-1.5 p-1 rounded-full w-fit border ${theme.border} shadow-inner shadow-${theme.accent}/10 backdrop-blur-md bg-[#061f1c]`}
+      >
+        {[
+          { label: 'ALL Reward', value: 'allRP' },
+          { label: 'My Reward', value: 'myRP' },
+          { label: 'All Liquidity', value: 'allLP' },
+          { label: 'Listed', value: 'listedLP' },
+          { label: 'Not Listed', value: 'unlistedLP' },
+        ].map(({ label, value }) => (
+          <button
+            key={value}
+            onClick={() => setListFilter(value)}
+            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200
+              ${listFilter === value
+                ? `bg-gradient-to-r ${theme.primary} text-black shadow-lg shadow-${theme.accent}/30`
+                : `${theme.text} hover:text-white hover:bg-${theme.accent}/10`
+              }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* --- Mobile --- */}
+    <div className="sm:hidden grid grid-cols-2 gap-2 mt-2">
+      {[
+        { label: 'ALL Reward', value: 'allRP' },
+        { label: 'My Reward', value: 'myRP' },
+        { label: 'All Liquidity', value: 'allLP' },
+        { label: 'Listed', value: 'listedLP' },
+        { label: 'Not Listed', value: 'unlistedLP' },
+      ].map(({ label, value }) => (
+        <button
+          key={value}
+          onClick={() => setListFilter(value)}
+          className={`p-3 text-xs font-medium rounded-xl border transition-all duration-200 
+            ${listFilter === value
+              ? `bg-gradient-to-r ${theme.primary} text-black`
+              : `text-gray-300 border-${theme.accent}/20 hover:bg-${theme.accent}/10`
+            }`}
         >
-          {[
-            { label: 'All Reward Programs', value: 'allRP' },
-            { label: 'My Reward Programs', value: 'myRP' },
-            { label: 'All Liquidity', value: 'allLP' },
-            { label: 'Listed Liquidity', value: 'listedLP' },
-            { label: 'Not Listed', value: 'unlistedLP' },
-          ].map(({ label, value }) => (
-            <button
-              key={value}
-              onClick={() => setListFilter(value)}
-              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200
-                ${listFilter === value ? `bg-gradient-to-r ${theme.primary} text-black shadow-lg shadow-${theme.accent}/30` : `${theme.text} hover:text-white hover:bg-${theme.accent}/10`}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+          {label}
+        </button>
+      ))}
+    </div>
+
+    </div>
+
         {
           ['allRP', 'myRP'].includes(listFilter) ? (
             <div>
