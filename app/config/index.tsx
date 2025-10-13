@@ -9,7 +9,7 @@ if (!projectId) {
     throw new Error('Project ID is not defined')
 }
 
-export const networks = [bsc, monadTestnet, bitkub, jbc,cmChain,bitkubTestnet]
+export const networks = [bitkub, bsc, monadTestnet, jbc,cmChain,bitkubTestnet]
 
 export const wagmiAdapter = new WagmiAdapter({
     storage: createStorage({
