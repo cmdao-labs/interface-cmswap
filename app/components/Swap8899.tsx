@@ -1,18 +1,19 @@
 import React from 'react'
 import { useAccount } from 'wagmi'
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, type WriteContractErrorType } from '@wagmi/core'
-import { formatEther, parseEther, parseGwei } from 'viem'
+import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
+import { formatEther, parseEther } from 'viem'
 import { ArrowDown, ChevronDown } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, ROUTER02, v3FactoryContract, qouterV2Contract, router02Contract, erc20ABI, v3PoolABI, wrappedNative, CMswapPoolDualRouterContract, CMswapPoolDualRouter, CMswapUniSmartRoute, CMswapUniSmartRouteContract } from '@/app/lib/8899'
+import { tokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, wrappedNative, CMswapPoolDualRouterContract, CMswapPoolDualRouter, CMswapUniSmartRoute, CMswapUniSmartRouteContract } from '@/app/lib/8899'
 import { config } from '@/app/config'
 import { useSwapTokenSelection } from '@/app/components/swap/useSwapTokenSelection'
 import { useSwapQuote } from '@/app/components/swap/useSwapQuote'
 import { encodePath } from '@/app/components/swap/path'
 import { ensureTokenAllowance, executeRouterSwap, wrapNativeToken, unwrapWrappedToken } from '@/app/components/swap/swapActions'
+import { useSwap8899PoolData } from '@/app/components/swap/hooks/useSwap8899PoolData'
 
 export default function Swap8899({
     setIsLoading, setErrMsg,
@@ -61,6 +62,32 @@ export default function Swap8899({
     const [swapDirection, setSwapDirection] = React.useState(true) // false = A->B, true = B->A
     const [onLoading, setOnLoading] = React.useState(false)
     const [wrappedRoute, setWrappedRoute] = React.useState(false)
+
+    useSwap8899PoolData({
+        config,
+        address,
+        tokens,
+        tokenA,
+        tokenB,
+        feeSelect,
+        txupdate,
+        hasInitializedFromParams,
+        setTokenA,
+        setTokenB,
+        setTokenABalance,
+        setTokenBBalance,
+        setWrappedRoute,
+        setExchangeRate,
+        setAltRoute,
+        setCMswapTVL,
+        setGameSwapTvl,
+        setJibSwapTvl,
+        setBestPathArray,
+        setFixedExchangeRate,
+        setOnLoading,
+        setAmountA,
+        setAmountB,
+    })
 
     React.useEffect(() => {
         console.log("hasInitializedFromParams : ", hasInitializedFromParams)
@@ -533,467 +560,11 @@ export default function Swap8899({
     }
 
 
-    React.useEffect(() => {
-        const updateTvlKey = (key: keyof typeof CMswapTVL, value: number) => {
-            setCMswapTVL(prevTvl => ({
-                ...prevTvl,
-                [key]: value >= 1e-9 ? value.toString() : '0',
-            }));
-        };
-        const CMswapUpdateT0 = (value: string ) => {
-            setCMswapTVL(prevTvl => ({
-                ...prevTvl,
-                t0: value as '0xstring'
-            }));
-        };
-        const updateExchangeRateCmswapTVL = (feeAmount: number, exchangeRate: number) => {
-            setCMswapTVL(prevTvl => ({
-                ...prevTvl,
-                exchangeRate: feeSelect === feeAmount ? exchangeRate.toString() : prevTvl.exchangeRate
-            }));
-        };
-        
-        const fetch0 = async () => {
-            setOnLoading(true)
-            tokenA.value.toUpperCase() === tokenB.value.toUpperCase() && setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
-
-            let tokenAvalue
-            let tokenBvalue
-            if (tokenA.value === tokens[0].value) {
-                tokenAvalue = tokens[1].value
-            } else {
-                tokenAvalue = tokenA.value
-            }
-            if (tokenB.value === tokens[0].value) {
-                tokenBvalue = tokens[1].value
-            } else {
-                tokenBvalue = tokenB.value
-            }
-            const nativeBal = await getBalance(config, { address: address as '0xstring' })
-            const stateA = await readContracts(config, {
-                contracts: [
-                    { ...erc20ABI, address: tokenAvalue, functionName: 'symbol' },
-                    { ...erc20ABI, address: tokenAvalue, functionName: 'balanceOf', args: [address as '0xstring'] }
-                ]
-            })
-            const stateB = await readContracts(config, {
-                contracts: [
-                    { ...erc20ABI, address: tokenBvalue, functionName: 'symbol' },
-                    { ...erc20ABI, address: tokenBvalue, functionName: 'balanceOf', args: [address as '0xstring'] },
-                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenAvalue, tokenBvalue, 10000] }, //  
-                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenAvalue, tokenBvalue, 3000] }, //  
-                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenAvalue, tokenBvalue, 500] }, //  
-                    { ...v3FactoryContract, functionName: 'getPool', args: [tokenAvalue, tokenBvalue, 100] }, //  
-                ]
-            })
-
-            stateA[0].result !== undefined && tokenA.name === "Choose Token" && setTokenA({
-                name: stateA[0].result,
-                value: tokenA.value,
-                logo: tokens.map(obj => obj.value).indexOf(tokenA.value) !== -1 ?
-                    tokens[tokens.map(obj => obj.value).indexOf(tokenA.value)].logo :
-                    "../favicon.ico"
-            })
-            stateB[0].result !== undefined && tokenB.name === "Choose Token" && setTokenB({
-                name: stateB[0].result,
-                value: tokenB.value,
-                logo: tokens.map(obj => obj.value).indexOf(tokenB.value) !== -1 ?
-                    tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].logo :
-                    "../favicon.ico"
-            });
-            tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() ?
-                setTokenABalance(formatEther(nativeBal.value)) :
-                stateA[1].result !== undefined && setTokenABalance(formatEther(stateA[1].result))
-            tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() ?
-                setTokenBBalance(formatEther(nativeBal.value)) :
-                stateB[1].result !== undefined && setTokenBBalance(formatEther(stateB[1].result))
-
-            const pair10000 = stateB[2].result !== undefined ? stateB[2].result as '0xstring' : '' as '0xstring'
-            const pair3000 = stateB[3].result !== undefined ? stateB[3].result as '0xstring' : '' as '0xstring'
-            const pair500 = stateB[4].result !== undefined ? stateB[4].result as '0xstring' : '' as '0xstring'
-            const pair100 = stateB[5].result !== undefined ? stateB[5].result as '0xstring' : '' as '0xstring'
-
-            const JCLP = '0x472d0e2E9839c140786D38110b3251d5ED08DF41' as '0xstring'
-            const JULP = '0x280608DD7712a5675041b95d0000B9089903B569' as '0xstring'
-
-            if (tokenA.name !== 'Choose Token' && tokenB.name !== 'Choose Token') {
-                if ((tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[1].value.toUpperCase()) || (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenA.value.toUpperCase() === tokens[1].value.toUpperCase())) {
-                    setExchangeRate("1")
-                    setWrappedRoute(true)
-                } else {
-                    setWrappedRoute(false)
-                    try {
-                        setAltRoute(undefined)
-                        const poolState = await readContracts(config, {
-                            contracts: [
-                                { ...v3PoolABI, address: pair10000, functionName: 'token0' },
-                                { ...v3PoolABI, address: pair10000, functionName: 'slot0' },
-                                { ...erc20ABI, address: tokenAvalue, functionName: 'balanceOf', args: [pair10000] },
-                                { ...erc20ABI, address: tokenBvalue, functionName: 'balanceOf', args: [pair10000] },
-                                { ...v3PoolABI, address: pair3000, functionName: 'token0' },
-                                { ...v3PoolABI, address: pair3000, functionName: 'slot0' },
-                                { ...erc20ABI, address: tokenAvalue, functionName: 'balanceOf', args: [pair3000] },
-                                { ...erc20ABI, address: tokenBvalue, functionName: 'balanceOf', args: [pair3000] },
-                                { ...v3PoolABI, address: pair500, functionName: 'token0' },
-                                { ...v3PoolABI, address: pair500, functionName: 'slot0' },
-                                { ...erc20ABI, address: tokenAvalue, functionName: 'balanceOf', args: [pair500] },
-                                { ...erc20ABI, address: tokenBvalue, functionName: 'balanceOf', args: [pair500] },
-                                { ...v3PoolABI, address: pair100, functionName: 'token0' },
-                                { ...v3PoolABI, address: pair100, functionName: 'slot0' },
-                                { ...erc20ABI, address: tokenAvalue, functionName: 'balanceOf', args: [pair100] },
-                                { ...erc20ABI, address: tokenBvalue, functionName: 'balanceOf', args: [pair100] },
-                                { ...erc20ABI, address: tokenAvalue, functionName: 'balanceOf', args: [JULP] }, // I16 JULP => Check JUSDT Balance
-                                { ...erc20ABI, address: tokenBvalue, functionName: 'balanceOf', args: [JULP] }, // I17 JULP => Check JUSDT Balance
-                                { ...erc20ABI, address: tokenAvalue, functionName: 'balanceOf', args: [JCLP] }, // I18 JCLP => Check CMJ Balance
-                                { ...erc20ABI, address: tokenBvalue, functionName: 'balanceOf', args: [JCLP] }, // I19 JCLP => Check CMJ Balance
-                            ]
-                        })
-                        const token0_10000 = poolState[0].result !== undefined ? poolState[0].result : "" as '0xstring'
-                        const sqrtPriceX96_10000 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
-                        const tokenAamount_10000 = poolState[2].result !== undefined ? poolState[2].result : BigInt(0)
-                        const tokenBamount_10000 = poolState[3].result !== undefined ? poolState[3].result : BigInt(0)
-                        const currPrice_10000 = token0_10000.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2))
-                        const tvl_10000 = currPrice_10000 !== 0 ? (Number(formatEther(tokenAamount_10000)) * (1 / currPrice_10000)) + Number(formatEther(tokenBamount_10000)) : 0
-                        const exchangeRatetvl_10000 = tvl_10000 < 1e-9 ? 0 : currPrice_10000;
-                        feeSelect === 10000 && currPrice_10000 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2).toString())
-                        feeSelect === 10000 && CMswapUpdateT0(token0_10000)
-
-                        updateTvlKey('tvl10000', tvl_10000);
-                        updateExchangeRateCmswapTVL(10000, exchangeRatetvl_10000);
-                        
-
-                        if (feeSelect === 10000 && tvl_10000 < 1e-9 && poolSelect === "CMswap") {
-                            const init: any = { contracts: [] }
-                            for (let i = 0; i <= tokens.length - 1; i++) {
-                                init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokenAvalue, tokens[i].value, 10000] })
-                                init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokens[i].value, tokenBvalue, 10000] })
-                            }
-                            const findAltRoute = await readContracts(config, init)
-                            let altIntermediate
-                            let altPair0
-                            let altPair1
-                            for (let i = 0; i <= findAltRoute.length - 1; i += 2) {
-                                if (findAltRoute[i].result !== '0x0000000000000000000000000000000000000000' && findAltRoute[i + 1].result !== '0x0000000000000000000000000000000000000000') {
-                                    altIntermediate = tokens[i / 2]
-                                    altPair0 = findAltRoute[i].result
-                                    altPair1 = findAltRoute[i + 1].result
-                                    break
-                                }
-                            }
-                            console.log({ altIntermediate, altPair0, altPair1 }) // for quick debugging
-                            if (altIntermediate !== undefined) {
-                                setAltRoute({ a: tokenAvalue, b: altIntermediate.value, c: tokenBvalue })
-                                const altPoolState = await readContracts(config, {
-                                    contracts: [
-                                        { ...v3PoolABI, address: altPair0 as '0xstring', functionName: 'token0' },
-                                        { ...v3PoolABI, address: altPair0 as '0xstring', functionName: 'slot0' },
-                                        { ...v3PoolABI, address: altPair1 as '0xstring', functionName: 'token0' },
-                                        { ...v3PoolABI, address: altPair1 as '0xstring', functionName: 'slot0' },
-                                    ]
-                                })
-                                const altToken0 = altPoolState[0].result !== undefined ? altPoolState[0].result : "" as '0xstring'
-                                const alt0sqrtPriceX96 = altPoolState[1].result !== undefined ? altPoolState[1].result[0] : BigInt(0)
-                                const altPrice0 = altToken0.toUpperCase() === tokenAvalue.toUpperCase() ? (Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2))
-                                const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
-                                const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
-                                const altPrice1 = altToken1.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
-                                updateExchangeRateCmswapTVL(10000, Number((altPrice1 / altPrice0).toString()));
-                            }
-                        }
-
-                        const token0_3000 = poolState[4].result !== undefined ? poolState[4].result : "" as '0xstring'
-                        const sqrtPriceX96_3000 = poolState[5].result !== undefined ? poolState[5].result[0] : BigInt(0)
-                        const tokenAamount_3000 = poolState[6].result !== undefined ? poolState[6].result : BigInt(0)
-                        const tokenBamount_3000 = poolState[7].result !== undefined ? poolState[7].result : BigInt(0)
-                        const currPrice_3000 = token0_3000.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2))
-                        const tvl_3000 = (Number(formatEther(tokenAamount_3000)) * (1 / currPrice_3000)) + Number(formatEther(tokenBamount_3000));
-                        const exchangeRatetvl_3000 = tvl_3000 < 1e-9 ? 0 : currPrice_3000
-                        feeSelect === 3000 && currPrice_3000 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2).toString())
-                        updateTvlKey('tvl3000', tvl_3000);
-                        updateExchangeRateCmswapTVL(3000, exchangeRatetvl_3000);
-                        feeSelect === 3000 && CMswapUpdateT0(token0_3000)
-
-                        if (feeSelect === 3000 && tvl_3000 < 1e-9 && poolSelect === "CMswap") {
-                            const init: any = { contracts: [] }
-                            for (let i = 0; i <= tokens.length - 1; i++) {
-                                init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokenAvalue, tokens[i].value, 3000] })
-                                init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokens[i].value, tokenBvalue, 3000] })
-                            }
-                            const findAltRoute = await readContracts(config, init)
-                            let altIntermediate
-                            let altPair0
-                            let altPair1
-                            for (let i = 0; i <= findAltRoute.length - 1; i += 2) {
-                                if (findAltRoute[i].result !== '0x0000000000000000000000000000000000000000' && findAltRoute[i + 1].result !== '0x0000000000000000000000000000000000000000') {
-                                    altIntermediate = tokens[0]
-                                    altPair0 = findAltRoute[i].result
-                                    altPair1 = findAltRoute[i + 1].result
-                                    break
-                                }
-                            }
-                            if (altIntermediate !== undefined) {
-                                setAltRoute({ a: tokenAvalue, b: altIntermediate.value, c: tokenBvalue })
-                                const altPoolState = await readContracts(config, {
-                                    contracts: [
-                                        { ...v3PoolABI, address: altPair0 as '0xstring', functionName: 'token0' },
-                                        { ...v3PoolABI, address: altPair0 as '0xstring', functionName: 'slot0' },
-                                        { ...v3PoolABI, address: altPair1 as '0xstring', functionName: 'token0' },
-                                        { ...v3PoolABI, address: altPair1 as '0xstring', functionName: 'slot0' },
-                                    ]
-                                })
-                                const altToken0 = altPoolState[0].result !== undefined ? altPoolState[0].result : "" as '0xstring'
-                                const alt0sqrtPriceX96 = altPoolState[1].result !== undefined ? altPoolState[1].result[0] : BigInt(0)
-                                const altPrice0 = altToken0.toUpperCase() === tokenAvalue.toUpperCase() ? (Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2))
-                                const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
-                                const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
-                                const altPrice1 = altToken1.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
-                                updateExchangeRateCmswapTVL(3000, Number((altPrice1 / altPrice0).toString()));
-                            }
-                        }
-
-                        const token0_500 = poolState[8].result !== undefined ? poolState[8].result : "" as '0xstring'
-                        const sqrtPriceX96_500 = poolState[9].result !== undefined ? poolState[9].result[0] : BigInt(0)
-                        const tokenAamount_500 = poolState[10].result !== undefined ? poolState[10].result : BigInt(0)
-                        const tokenBamount_500 = poolState[11].result !== undefined ? poolState[11].result : BigInt(0)
-                        const currPrice_500 = token0_500.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_500) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2))
-                        const tvl_500 = (Number(formatEther(tokenAamount_500)) * (1 / currPrice_500)) + Number(formatEther(tokenBamount_500));
-                        const exchangeRatetvl_500 = tvl_500 < 1e-9 ? 0 : currPrice_500
-                        feeSelect === 500 && currPrice_500 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2).toString())
-                        updateTvlKey('tvl500', tvl_500);
-                        updateExchangeRateCmswapTVL(500, exchangeRatetvl_500);
-                        feeSelect === 500 && CMswapUpdateT0(token0_500)
-
-                        if (feeSelect === 500 && tvl_500 < 1e-9 && poolSelect === "CMswap") {
-                            const init: any = { contracts: [] }
-                            for (let i = 0; i <= tokens.length - 1; i++) {
-                                init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokenAvalue, tokens[i].value, 500] })
-                                init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokens[i].value, tokenBvalue, 500] })
-                            }
-                            const findAltRoute = await readContracts(config, init)
-                            let altIntermediate
-                            let altPair0
-                            let altPair1
-                            for (let i = 0; i <= findAltRoute.length - 1; i += 2) {
-                                if (findAltRoute[i].result !== '0x0000000000000000000000000000000000000000' && findAltRoute[i + 1].result !== '0x0000000000000000000000000000000000000000') {
-                                    altIntermediate = tokens[0]
-                                    altPair0 = findAltRoute[i].result
-                                    altPair1 = findAltRoute[i + 1].result
-                                    break
-                                }
-                            }
-                            if (altIntermediate !== undefined) {
-                                setAltRoute({ a: tokenAvalue, b: altIntermediate.value, c: tokenBvalue })
-                                const altPoolState = await readContracts(config, {
-                                    contracts: [
-                                        { ...v3PoolABI, address: altPair0 as '0xstring', functionName: 'token0' },
-                                        { ...v3PoolABI, address: altPair0 as '0xstring', functionName: 'slot0' },
-                                        { ...v3PoolABI, address: altPair1 as '0xstring', functionName: 'token0' },
-                                        { ...v3PoolABI, address: altPair1 as '0xstring', functionName: 'slot0' },
-                                    ]
-                                })
-                                const altToken0 = altPoolState[0].result !== undefined ? altPoolState[0].result : "" as '0xstring'
-                                const alt0sqrtPriceX96 = altPoolState[1].result !== undefined ? altPoolState[1].result[0] : BigInt(0)
-                                const altPrice0 = altToken0.toUpperCase() === tokenAvalue.toUpperCase() ? (Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2))
-                                const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
-                                const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
-                                const altPrice1 = altToken1.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
-                                updateExchangeRateCmswapTVL(500, Number((altPrice1 / altPrice0).toString()));
-                            }
-                        }
-
-                        const token0_100 = poolState[12].result !== undefined ? poolState[12].result : "" as '0xstring'
-                        const sqrtPriceX96_100 = poolState[13].result !== undefined ? poolState[13].result[0] : BigInt(0)
-                        const tokenAamount_100 = poolState[14].result !== undefined ? poolState[14].result : BigInt(0)
-                        const tokenBamount_100 = poolState[15].result !== undefined ? poolState[15].result : BigInt(0)
-                        const currPrice_100 = token0_100.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96_100) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96_100) / (2 ** 96)) ** 2))
-                        const tvl_100 = (Number(formatEther(tokenAamount_100)) * (1 / currPrice_100)) + Number(formatEther(tokenBamount_100));
-                        const exchangeRatetvl_100 = tvl_100 < 1e-9 ? 0 : currPrice_100;
-                        feeSelect === 100 && currPrice_100 !== Infinity && setFixedExchangeRate(((Number(sqrtPriceX96_100) / (2 ** 96)) ** 2).toString())
-                        feeSelect === 100 && CMswapUpdateT0(token0_100)
-
-                        updateTvlKey('tvl100', tvl_100);
-                        updateExchangeRateCmswapTVL(100, exchangeRatetvl_100);
-
-                        if (feeSelect === 100 && tvl_100 < 1e-9 && poolSelect === "CMswap") {
-                            const init: any = { contracts: [] }
-                            for (let i = 0; i <= tokens.length - 1; i++) {
-                                init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokenAvalue, tokens[i].value, 100] })
-                                init.contracts.push({ ...v3FactoryContract, functionName: 'getPool', args: [tokens[i].value, tokenBvalue, 100] })
-                            }
-                            const findAltRoute = await readContracts(config, init)
-                            let altIntermediate
-                            let altPair0
-                            let altPair1
-                            for (let i = 0; i <= findAltRoute.length - 1; i += 2) {
-                                if (findAltRoute[i].result !== '0x0000000000000000000000000000000000000000' && findAltRoute[i + 1].result !== '0x0000000000000000000000000000000000000000') {
-                                    altIntermediate = tokens[0]
-                                    altPair0 = findAltRoute[i].result
-                                    altPair1 = findAltRoute[i + 1].result
-                                    break
-                                }
-                            }
-                            if (altIntermediate !== undefined) {
-                                setAltRoute({ a: tokenAvalue, b: altIntermediate.value, c: tokenBvalue })
-                                const altPoolState = await readContracts(config, {
-                                    contracts: [
-                                        { ...v3PoolABI, address: altPair0 as '0xstring', functionName: 'token0' },
-                                        { ...v3PoolABI, address: altPair0 as '0xstring', functionName: 'slot0' },
-                                        { ...v3PoolABI, address: altPair1 as '0xstring', functionName: 'token0' },
-                                        { ...v3PoolABI, address: altPair1 as '0xstring', functionName: 'slot0' },
-                                    ]
-                                })
-                                const altToken0 = altPoolState[0].result !== undefined ? altPoolState[0].result : "" as '0xstring'
-                                const alt0sqrtPriceX96 = altPoolState[1].result !== undefined ? altPoolState[1].result[0] : BigInt(0)
-                                const altPrice0 = altToken0.toUpperCase() === tokenAvalue.toUpperCase() ? (Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt0sqrtPriceX96) / (2 ** 96)) ** 2))
-                                const altToken1 = altPoolState[2].result !== undefined ? altPoolState[2].result : "" as '0xstring'
-                                const alt1sqrtPriceX96 = altPoolState[3].result !== undefined ? altPoolState[3].result[0] : BigInt(0)
-                                const altPrice1 = altToken1.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(alt1sqrtPriceX96) / (2 ** 96)) ** 2))
-                                updateExchangeRateCmswapTVL(100, Number((altPrice1 / altPrice0).toString()));
-                            }
-                        }
-
-                        //** Start Route Price via CMswapDualRoute for GameSwap */
-                        if (
-                            tokenAvalue.toUpperCase() === tokens[1].value.toUpperCase() && tokenBvalue.toUpperCase() === tokens[3].value.toUpperCase()
-                            ||
-                            tokenBvalue.toUpperCase() === tokens[1].value.toUpperCase() && tokenAvalue.toUpperCase() === tokens[3].value.toUpperCase()
-                        ) {
-                            console.log('JCLP GameSwap view active')
-                            let tokenAamount_JCLP = BigInt(0);
-                            let tokenBamount_JCLP = BigInt(0);
-
-                            if (tokenAvalue.toUpperCase() === tokens[1].value.toUpperCase() && tokenBvalue.toUpperCase() === tokens[3].value.toUpperCase()) {
-                                tokenAamount_JCLP = (await getBalance(config, { address: JCLP as '0xstring' })).value
-                                tokenBamount_JCLP = poolState[19].result !== undefined ? poolState[19].result : BigInt(0)
-                            } else if (tokenBvalue.toUpperCase() === tokens[1].value.toUpperCase() && tokenAvalue.toUpperCase() === tokens[3].value.toUpperCase()) {
-                                tokenAamount_JCLP = poolState[18].result !== undefined ? poolState[18].result : BigInt(0)
-                                tokenBamount_JCLP = (await getBalance(config, { address: JCLP as '0xstring' })).value
-                            }
-
-                            let currPrice_jclp = Number(tokenBamount_JCLP) / Number(tokenAamount_JCLP);
-                            const tvlJCLP = (Number(formatEther(tokenAamount_JCLP)) * (1 / currPrice_jclp)) + Number(formatEther(tokenBamount_JCLP));
-                            const exchangeRateJCLP = tvlJCLP < 1e-9 ? 0 : currPrice_jclp
-                            console.log(`tokenA Amn ${tokenAamount_JCLP}\nTokenB Amn ${tokenBamount_JCLP}\nCurrPrice ${currPrice_jclp}\nTVL : ${tvlJCLP}`)
-                            currPrice_jclp !== Infinity && poolSelect === "GameSwap" && setFixedExchangeRate(Number(currPrice_jclp).toString())
-
-                            const setJulpTVL = (tvl10000: number, exchangeRate: number) => {
-                                setGameSwapTvl(prevTvl => ({
-                                    ...prevTvl,
-                                    tvl10000: tvl10000 >= 1e-9 ? tvlJCLP.toString() : '0',
-                                    exchangeRate: exchangeRate.toString(),
-                                }));
-                            };
-                            setJulpTVL(tvlJCLP, exchangeRateJCLP)
-                        } else if (
-                            tokenAvalue.toUpperCase() === tokens[1].value.toUpperCase() && tokenBvalue.toUpperCase() === tokens[2].value.toUpperCase()
-                            ||
-                            tokenBvalue.toUpperCase() === tokens[1].value.toUpperCase() && tokenAvalue.toUpperCase() === tokens[2].value.toUpperCase()
-                        ) {
-                            console.log('JULP GameSwap view active')
-                            let tokenAamount_JULP = BigInt(0);
-                            let tokenBamount_JULP = BigInt(0);
-
-                            if (tokenAvalue.toUpperCase() === tokens[1].value.toUpperCase() && tokenBvalue.toUpperCase() === tokens[2].value.toUpperCase()) {
-                                tokenAamount_JULP = (await getBalance(config, { address: JULP as '0xstring' })).value
-                                tokenBamount_JULP = poolState[17].result !== undefined ? poolState[17].result : BigInt(0)
-                            } else if (tokenBvalue.toUpperCase() === tokens[1].value.toUpperCase() && tokenAvalue.toUpperCase() === tokens[2].value.toUpperCase()) {
-                                tokenAamount_JULP = poolState[16].result !== undefined ? poolState[16].result : BigInt(0)
-                                tokenBamount_JULP = (await getBalance(config, { address: JULP as '0xstring' })).value
-                            }
-
-                            const currPrice_julp = Number(tokenAamount_JULP) / Number(tokenBamount_JULP);
-                            const tvlJULP = (Number(formatEther(tokenAamount_JULP)) * (1 / currPrice_julp)) + Number(formatEther(tokenBamount_JULP));
-                            const exchangeRateJULP = tvlJULP < 1e-9 ? 0 : currPrice_julp
-
-                            const setJulpTVL = (tvl10000: number, exchangeRate: number) => {
-                                setGameSwapTvl(prevTvl => ({
-                                    ...prevTvl,
-                                    tvl10000: tvlJULP >= 1e-9 ? tvlJULP.toString() : '0',
-                                    exchangeRate: exchangeRate.toString()
-                                }));
-                            };
-                            setJulpTVL(tvlJULP, exchangeRateJULP)
-                        } else {
-                            const resetDefault = () => {
-                                setGameSwapTvl(prevTvl => ({
-                                    ...prevTvl,
-                                    tvl10000: '0',
-                                    exchangeRate: (0).toString()
-                                }));
-                            };
-                            resetDefault()
-                        }
-
-                        //** Start Quote Price from JibSwap via CMswapUniSmartRoute  */
-                        let TokenA = tokenAvalue === "0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747" as '0xstring' ? "0x99999999990FC47611b74827486218f3398A4abD" as '0xstring' : tokenAvalue; // convert WJBC Meow to WJBC Jib
-                        let TokenB = tokenBvalue === "0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747" as '0xstring' ? "0x99999999990FC47611b74827486218f3398A4abD" as '0xstring' : tokenBvalue; // convert WJBC Meow to WJBC Jib
-                        // Handle WJBC contract
-
-                        const getPairAddr = await readContracts(config, { contracts: [{ ...CMswapUniSmartRouteContract, functionName: 'getPairAddress', args: [TokenA, TokenB], }] })
-                        const jibPair = getPairAddr[0].result !== undefined ? getPairAddr[0].result as '0xstring' : '' as '0xstring'
-                        const getPoolState = await readContracts(config, {
-                            contracts: [
-                                { ...erc20ABI, address: TokenA, functionName: 'balanceOf', args: [jibPair] },
-                                { ...erc20ABI, address: TokenB, functionName: 'balanceOf', args: [jibPair] }
-                            ]
-                        })
-                        const tokenAamount = getPoolState[0].result !== undefined ? getPoolState[0].result : BigInt(0)
-                        const tokenBamount = getPoolState[1].result !== undefined ? getPoolState[1].result : BigInt(0)
-                        const currPriceJib = Number(tokenAamount) / Number(tokenBamount);
-                        const tvlJib = (Number(formatEther(tokenAamount)) * (1 / currPriceJib)) + Number(formatEther(tokenBamount));
-                        const exchangeRateJib = tvlJib < 1e-9 ? 0 : currPriceJib
-                        currPriceJib !== Infinity && poolSelect === "JibSwap" && setFixedExchangeRate(Number(currPriceJib).toString())
-
-                        console.log("Token A ", tokenAamount)
-                        console.log("Token B ", tokenBamount)
-                        console.log("Price ", currPriceJib)
-                        console.log("TVL ", tvlJib)
-                        console.log("exRate ", exchangeRateJib)
-
-                        const setJibTVL = (tvl10000: number, exchangeRate: number) => {
-                            setJibSwapTvl(prevTvl => ({
-                                ...prevTvl,
-                                tvl10000: tvl10000 >= 1e-9 ? tvl10000.toString() : '0',
-                                exchangeRate: exchangeRate !== undefined ? exchangeRate.toString() : (0).toString()
-                            }));
-                        };
-                        setJibTVL(tvlJib, exchangeRateJib)
-                        //** set alt at quote price section */
-                    } catch {
-                        setExchangeRate("0")
-                    }
-                }
-            }
-        }
-
-        setAmountA("")
-        setAmountB("")
-        if (hasInitializedFromParams) {
-            fetch0()
-        }
-    }, [config, address, tokenA, tokenB, feeSelect, txupdate,hasInitializedFromParams])
+    // Pool data loading handled by useSwap8899PoolData hook
 
     React.useEffect(() => {
         const updateRate = async () => {
-                const quote = await getQoute(amountA);  
-/*             if (Number(amountA) !== 0) {
-                const quote = await getQoute(amountA);
-                if (poolSelect === "CMswap" && quote?.CMswapRate) {
-                    setExchangeRate(quote.CMswapRate);
-                    console.log('Quote Price CMswap', quote.CMswapRate);
-                    return;
-                } else if (poolSelect === "GameSwap" && quote?.GameswapRate) {
-                    setExchangeRate(quote.GameswapRate);
-                    console.log('Quote Price GameSwap', quote.GameswapRate);
-                    return;
-                } else if (poolSelect === "JibSwap" && quote?.JibswapRate) {
-                    setExchangeRate(quote.JibswapRate);
-                    console.log('Quote Price JibSwap', quote.JibswapRate);
-                    return;
-                }
-            }
- */
-            // Fallback: use TVL values
+            const quote = await getQoute(amountA);  
             if (poolSelect === "CMswap") {
                 setExchangeRate(CMswapTVL.exchangeRate);
                 setAmountB(quote?.CMswapRate || "0")
@@ -1033,13 +604,10 @@ export default function Swap8899({
         };
 
         fetchQuoteAndSetPool();
-    }, [onLoading, CMswapTVL, GameSwapTvl, JibSwapTvl, amountA,poolSelect]);
+    }, [onLoading, CMswapTVL, GameSwapTvl, JibSwapTvl, amountA ]);
 
     React.useEffect(() => {
-        if (poolSelect === "" && bestPool) {
-            setPoolSelect(bestPool);
-            console.log("BestPool set to", bestPool);
-        }
+        if (poolSelect === "" && bestPool) setPoolSelect(bestPool);
     }, [bestPool]);
 
     return (
