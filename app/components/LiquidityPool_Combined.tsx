@@ -15,6 +15,8 @@ import {
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { usePrice } from '@/app/context/getPrice';
+import { v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, publicClient, erc721ABI, POSITION_MANAGER, positionManagerCreatedAt, V3_STAKER, v3StakerContract } from '@/app/lib/25925'
+import { useRouter } from 'next/navigation';
 
 type ThemeId = 96 | 8899 | 56 | 3501 | 10143 | 25925;
 type Theme = {
@@ -119,7 +121,7 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
   type SortField = 'liquidity' | 'volume24h' | 'fee24h' | 'apr' | 'name';
   const [sortBy, setSortBy] = useState<SortField>('liquidity');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [listFilter, setListFilter] = useState<any>('all');
+  const [listFilter, setListFilter] = useState<any>('allRP');
   const [validPools, setValidPools] = useState<{
       tokenA: string;
       tokenALogo: string;
@@ -147,20 +149,48 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
       pending: number;
       staked: number;
       themeId: number;
+      url : string;
+      feeList: string[];
+      chain: string;
 
   }[]>([]);
 
   const feeOptions = [100, 500, 3000, 10000];
-  const { chainId } = useAccount();
+  const { chainId,address } = useAccount();
   const selectedChainId = chainId || chainConfig.chainId;
   const { chain, rpc, blocktime, tokens, lib } = chainConfig;
   const { priceList } = usePrice();
   const theme = themes[selectedChainId as ThemeId] || themes[96];
+  const [isMobile, setIsMobile] = useState(false);
+  const router = useRouter();
 
   const publicClient = createPublicClient({
     chain,
     transport: http(rpc),
   });
+
+  const publicClientTestnet = createPublicClient({
+    chain: bitkubTestnet,
+    transport: http('https://rpc-testnet.bitkubchain.io'),
+  });
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const checkMobile = () => setIsMobile(window.innerWidth < 768);
+      checkMobile();
+      window.addEventListener("resize", checkMobile);
+      return () => window.removeEventListener("resize", checkMobile);
+    }
+  }, []);
+
+
+  const handleClick = (url: string) => {
+      if (isMobile) {
+        router.push(url);
+      } else {
+        window.open(url, "_blank");
+      }
+    };
 
   const generatePairs = (tokens: { name: string; value: string; logo: string }[]) => {
     const pairs: [string, string][] = [];
@@ -217,7 +247,7 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
           tokenA = {
             name: symbolA.result ?? 'UNKNOWN',
             value: item.token0,
-            logo: '/default2.png',
+            logo: '/default.png',
           };
         }
 
@@ -233,7 +263,7 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
           tokenB = {
             name: symbolB.result ?? 'UNKNOWN',
             value: item.token1,
-            logo: '/default2.png',
+            logo: '/default.png',
           };
         }
 
@@ -365,18 +395,99 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
     };
 
     const fetchPrograms = async () => {
-      
+      const incentiveStat = await readContract(config, { ...v3StakerContract, functionName: 'incentives', args: ['0x54f969cc76b69f12f67a135d9a7f088edafa2e8ebb3e247859acd17d8e849993'] })
+    const getMyReward = async () => {
+      try {
+        // 1️⃣ ดึง Event ของ NFT ที่ stake เข้าสู่ V3_STAKER
+        const events = await publicClientTestnet.getContractEvents({
+          ...erc721ABI,
+          address: POSITION_MANAGER,
+          eventName: 'Transfer',
+          args: { to: V3_STAKER },
+          fromBlock: positionManagerCreatedAt,
+          toBlock: 'latest',
+        });
+
+        // 2️⃣ เอาเฉพาะ tokenId ที่ unique
+        const eventMyNftStaking = [...new Set(events.map(obj => obj.args.tokenId))];
+        console.log("eventMyNftStaking", eventMyNftStaking);
+
+        if (eventMyNftStaking.length === 0) return 0;
+
+        // 3️⃣ อ่านข้อมูล deposit ของแต่ละ NFT
+        const checkMyNftOwner = await readContracts(config, {
+          contracts: eventMyNftStaking.map(tokenId => ({
+            ...v3StakerContract,
+            functionName: 'deposits',
+            args: [tokenId],
+          })),
+        });
+
+        console.log("checkMyNftOwner", checkMyNftOwner);
+
+        // 4️⃣ filter เฉพาะ NFT ที่ owner เป็น address ของเรา
+        const checkedMyNftStaking = eventMyNftStaking.filter((obj, index) => {
+                const res = checkMyNftOwner[index].result as unknown as [string, bigint, bigint, bigint][]
+                return res[0].toString().toUpperCase() === address?.toUpperCase()
+            })
+
+        console.log("checkedMyNftStaking", checkedMyNftStaking);
+
+        if (checkedMyNftStaking.length === 0) return 0;
+
+        // 5️⃣ ดึง reward info ของแต่ละ NFT
+        const myReward = await readContracts(config, {
+          contracts: checkedMyNftStaking.map(tokenId => ({
+            ...v3StakerContract,
+            functionName: 'getRewardInfo',
+            args: [{
+              rewardToken: '0xE7f64C5fEFC61F85A8b851d8B16C4E21F91e60c0' as '0xstring',
+              pool: '0x77069e705dce52ed903fd577f46dcdb54d4db0ac' as '0xstring',
+              startTime: BigInt(1755589200),
+              endTime: BigInt(3270351988),
+              refundee: '0x1fe5621152a33a877f2b40a4bb7bc824eebea1ea' as '0xstring',
+            }, tokenId],
+          })),
+        });
+
+        console.log("myReward", myReward);
+
+        // 6️⃣ รวม pending reward ทั้งหมด
+        let _allPending = 0
+        for (let i = 0; i <= myReward.length - 1; i++) {
+            const result: any = myReward[i].result
+            _allPending += Number(formatEther(result[0]))
+        }
+
+        console.log("totalPending", _allPending);
+        return {
+          totalPending: _allPending,
+          totalStaked: myReward.length
+        };
+      } catch (err) {
+        console.error("getMyReward error:", err);
+        return 0;
+      }
+    };
+
+      const result = await getMyReward();
+      console.log("pendingRewards",result);
+
+
       //** FOR KUB STAKING */
       const initials = async () => {
         setStakingList([{
           name: "Staking tKKUB-tK earn Points",
-          tokenALogo: tokens[1].logo,
-          tokenBLogo: tokens[2].logo,
-          totalStaked: 22,
-          apr: 20.21,
-          pending: 1000,
-          staked: 10,
+          tokenALogo: "https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u",
+          tokenBLogo: "https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u",
+          totalStaked: Number(incentiveStat[2]),
+          apr: 0,
+          pending: result ? result.totalPending : 0,
+          staked: result ? result.totalStaked : 0,
           themeId: 96,
+          url: '/staking/0x',
+          feeList: ["0.01%","0.05%","0.3%","1%"],
+          chain: "Bitkub Testnet"
         }]);
       };
         
@@ -536,11 +647,11 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
                       <SortIcon field="volume24h" />
                     </button>
                     <button onClick={() => handleSort('fee24h')} className="flex mx-[-48px] items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
-                      Pending Reward
+                      Pending 
                       <SortIcon field="fee24h" />
                     </button>
                     <button onClick={() => handleSort('apr')} className="flex mx-[-60px] items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
-                      Staked
+                      Your Stake
                       <SortIcon field="apr" />
                     </button>
                     <div className="font-medium text-slate-300">Action</div>
@@ -553,18 +664,40 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
                           key={index}
                           className="grid [grid-template-columns:1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 p-6 hover:bg-slate-800/30 transition-colors cursor-pointer group"
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="relative w-10 h-10">
-                              <img src={pool.tokenALogo || '/default2.png'} alt="token1" className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0" />
-                              <img src={pool.tokenBLogo || '/default2.png'} alt="token2" className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0" />
+                        <div className="flex items-center gap-3">
+                          {/* โลโก้คู่ Token */}
+                          <div className="relative w-10 h-10">
+                            <img
+                              src={pool.tokenALogo || '/default2.png'}
+                              alt="token1"
+                              className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0"
+                            />
+                            <img
+                              src={pool.tokenBLogo || '/default2.png'}
+                              alt="token2"
+                              className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0"
+                            />
+                          </div>
+
+                          {/* ชื่อ Pool + Chain + FeeList */}
+                          <div className="flex flex-col">
+                            {/* Chain badge */}
+                            <div className="text-[10px] text-slate-400 mb-0.5 uppercase tracking-wide">
+                              {pool.chain}
                             </div>
-                            <div>
-                              <div className={`font-semibold text-white group-hover:${theme.text} transition-colors`}>
-                                {pool.name}
-                              </div>
-                      
+
+                            {/* ชื่อโปรแกรม */}
+                            <div className={`font-semibold text-white group-hover:${theme.text} transition-colors`}>
+                              {pool.name}
+                            </div>
+
+                            {/* FeeList แสดงใต้ชื่อ */}
+                            <div className="text-[11px] text-slate-400 mt-1">
+                              Fee Tiers: {pool.feeList?.join(' , ')}
                             </div>
                           </div>
+                        </div>
+
                           <div className="flex flex-col justify-center">
                             <span className="text-white font-medium">{(pool.totalStaked)}</span>
                           </div>
@@ -573,16 +706,19 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
 
                           </div>
                           <div className="flex flex-col justify-center">
-                            <span className="text-white font-medium">{(pool.pending)}</span>
+                            <span className="text-white font-medium">{Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 }).format(Number(pool.pending))}</span>
                           </div>
                           <div className="flex flex-col justify-center">
                             <span className="text-white font-medium">{(pool.staked)}</span>
                           </div>
                           <div className="flex items-center gap-2 whitespace-nowrap">
-                            <Link href={`/staking?program=${pool.name}`}>
-                              <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs">Go Farm</Button>
-                            </Link>
-                       
+                            <Button
+                              variant="ghost"
+                              className="cursor-pointer px-2 py-1 text-xs"
+                              onClick={() =>handleClick(pool.url)}
+                            >
+                              Go Farm
+                            </Button>
                           </div>
                         </div>
                       );
@@ -603,27 +739,62 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
                       className={`bg-slate-800/50 backdrop-blur-xl rounded-xl border ${theme.border} p-4 hover:bg-slate-800/70 transition-all cursor-pointer`}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="relative w-10 h-10">
-                            <img src={pool.tokenALogo || '/default2.png'} alt="token1" className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0" />
-                            <img src={pool.tokenBLogo || '/default2.png'} alt="token2" className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0" />
-                          </div>
-                          <div>
-                            <div className="font-semibold text-white">
-                              {pool.name}
-                            </div>
-                        
-                            <div className="text-xs text-slate-400 mt-1">
-                              TVL: {formatNumber(pool.totalStaked)}
-                            </div>
-                          </div>
-                        </div>
+ <div className="flex items-center gap-3 sm:gap-4">
+  {/* Token logos */}
+  <div className="relative w-10 h-10 shrink-0">
+    <img
+      src={pool.tokenALogo || '/default2.png'}
+      alt="token1"
+      className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0"
+    />
+    <img
+      src={pool.tokenBLogo || '/default2.png'}
+      alt="token2"
+      className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0"
+    />
+  </div>
+
+  {/* Text info */}
+  <div className="flex flex-col min-w-0">
+    {/* Chain badge */}
+    <div className="inline-block text-[10px] sm:text-[11px] px-2 py-[2px] rounded-md bg-slate-700/40 text-slate-300 w-fit mb-1">
+      {pool.chain}
+    </div>
+
+    {/* Pool name */}
+    <div className="font-semibold text-white text-sm sm:text-base leading-tight truncate">
+      {pool.name}
+    </div>
+
+    {/* Fee tiers */}
+    <div className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
+      Fee: {pool.feeList?.join(' • ')}
+    </div>
+
+    {/* TVL */}
+    <div className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
+      Total Staked: {(pool.totalStaked)}
+    </div>
+  </div>
+</div>
+
                         <div className="text-right">
-                          <div className="text-white font-medium">{formatNumber(pool.pending)}</div>
+                          <div className="text-white font-medium">{pool.pending.toFixed(4)}</div>
                           <div className={`font-bold text-lg ${theme.text}`}>{formatPercentage(pool.apr)}</div>
                      
                         </div>
+                        
                       </div>
+                          <div className="flex items-center gap-2 whitespace-nowrap">
+                            <Button
+                              variant="ghost"
+                              className="cursor-pointer px-2 py-1 text-xs"
+                              onClick={() => handleClick(`${pool.url}`)}
+                            >
+                              Go Farm
+                            </Button>
+                          </div>
+                        
                     </div>
                   );
                 })}
@@ -693,15 +864,30 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
                             <span className={`font-bold text-lg ${theme.text}`}>{formatPercentage(pool.apr)}</span>
                           </div>
 
-                          <div className="flex items-center gap-2 whitespace-nowrap hidden lg:flex">
-                            <Link href={`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=liquidity`} target='_blank'>
-                              <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs">Supply</Button>
-                            </Link>
-                            <Link href={`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=swap`} target='_blank'>
-                              <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs">Swap</Button>
-                            </Link>
-                          </div>
+                          <div className="flex items-center gap-2 whitespace-nowrap">
 
+                            {/* Supply */}
+                            <Button
+                              variant="ghost"
+                              className="cursor-pointer px-2 py-1 text-xs"
+                              onClick={() =>
+                                handleClick(`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=liquidity`)
+                              }
+                            >
+                              Supply
+                            </Button>
+
+                            {/* Swap */}
+                            <Button
+                              variant="ghost"
+                              className="cursor-pointer px-2 py-1 text-xs"
+                              onClick={() =>
+                                handleClick(`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=swap`)
+                              }
+                            >
+                              Swap
+                            </Button>
+                          </div>
 
                         </div>
                       );
@@ -747,14 +933,29 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
                           </div>
                         </div>
                       </div>
-                        <div className="flex items-center gap-2 whitespace-nowrap space-between w-full flex lg:hidden">
-                            <Link href={`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=liquidity`} >
-                              <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs">Supply</Button>
-                            </Link>
-                            <Link href={`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=swap`}>
-                              <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs">Swap</Button>
-                            </Link>
-                          </div>
+                            <div className="flex items-center gap-2 whitespace-nowrap">
+                              {/* Supply */}
+                              <Button
+                                variant="ghost"
+                                className="cursor-pointer px-2 py-1 text-xs"
+                                onClick={() =>
+                                  handleClick(`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=liquidity`)
+                                }
+                              >
+                                Supply
+                              </Button>
+
+                              {/* Swap */}
+                              <Button
+                                variant="ghost"
+                                className="cursor-pointer px-2 py-1 text-xs"
+                                onClick={() =>
+                                  handleClick(`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=swap`)
+                                }
+                              >
+                                Swap
+                              </Button>
+                            </div>
                     </div>
                   );
                 })}
