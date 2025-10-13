@@ -3,6 +3,7 @@ import React from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAccount } from 'wagmi'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
 import { config } from '@/app/config'
 import ErrorModal from '@/app/components/error-modal'
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
@@ -468,22 +469,46 @@ export default function Page() {
     }, [config, address, addr, pathname, chain, txupdate])
 
     return (
-        <div className="min-h-screen bg-black text-white font-mono">
-            {isLoading && <div className="w-full h-full fixed backdrop-blur-[12px] z-999" />}
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-black to-emerald-950 text-white">
+            {isLoading && (
+                <div className="fixed inset-0 z-[999] backdrop-blur-md bg-black/20 flex items-center justify-center">
+                    <div className="h-10 w-10 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
+                </div>
+            )}
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
             <header className="relative">
                 <div className="relative h-50 w-full overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black" />
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 transform translate-y-1/2 z-20">
-                    <div className="container mx-auto px-4">
-                        <div className="inline-flex items-center">
-                            <h1 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-wider text-white">
-                                <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-green-200">Staking</span>
-                            </h1>
-                        </div>
-                    </div>
-                </div>
+<div className="absolute bottom-0 left-0 right-0 transform translate-y-1/2 z-20">
+  <div className="container mx-auto px-4">
+    <div className="flex flex-col items-center text-center">
+      {/* Title */}
+      <h1 className="text-3xl md:text-5xl lg:text-6xl font-light tracking-wider text-white drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]">
+        <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-green-200">
+          Staking (tK-tKKUB) earn Points
+        </span>
+      </h1>
+
+      {/* Subtitle */}
+      <p className="mt-3 text-sm md:text-lg text-gray-300 leading-relaxed max-w-2xl">
+        Stake your tokens to earn <span className="text-green-400 font-semibold">reward points</span> 
+        and participate in <span className="text-green-300 font-semibold">Node Revenue Distribution</span>.  
+        <br className="hidden sm:block" />
+        If you <span className="text-red-400 font-semibold">withdraw</span> before distribution, 
+        you <span className="text-red-400 font-semibold">forfeit your eligibility</span>.
+         
+      </p>
+      <p>
+        <span className="text-red-400 font-semibold">kubtestnet no real distribution</span>
+      </p>
+
+      {/* Divider line (optional aesthetic) */}
+      <div className="mt-5 h-[2px] w-32 bg-gradient-to-r from-green-400/70 to-green-100/20 rounded-full" />
+    </div>
+  </div>
+</div>
+
             </header>
             <main className="container mx-auto p-4 md:p-6 mt-16 relative z-10">
                 <div className="mb-8">
@@ -495,13 +520,13 @@ export default function Page() {
                         <TabsContent value='0'>
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-8">
-                                    <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-6">
+                                    <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6">
                                         <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">my reward point pending</div>
                                         <div className="flex items-center text-3xl font-light">
                                             <span>{Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 }).format(Number(allPending))}</span>
                                         </div>
                                     </div>
-                                    <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-6">
+                                    <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6">
                                         <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">total stakers</div>
                                         <div className="flex items-center text-3xl font-light">
                                             <span>{Intl.NumberFormat('en-US').format(Number(allStaker))}</span>
@@ -509,7 +534,7 @@ export default function Page() {
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {position[0] !== undefined &&
+                                    {position[0] !== undefined ? (
                                         <>
                                             {position.map(obj => 
                                                 <div key={Number(obj.Id)} className="mb-4 bg-[#0a0b1e]/80 border border-[#00ff9d]/10 rounded-xl gap-2 flex flex-col items-start text-xs">
@@ -528,7 +553,7 @@ export default function Page() {
                                                     </div>
                                                     <div className="w-full py-1 px-6 flex flex-row justify-between">
                                                         <span className="text-gray-500">Current : Min : Max</span>
-                                                        <span>{obj.CurrPrice.toFixed(4)} : {obj.MinPrice.toFixed(4)} : {obj.MaxPrice > 1e18 ? '♾️' : obj.MaxPrice.toFixed(4)} <span className="text-gray-500">{obj.Token0}/{obj.Token1}</span></span>
+                                                        <span>{obj.CurrPrice.toFixed(4)} : {obj.MinPrice.toFixed(4)} : {obj.MaxPrice > 1e18 ? 'Infinity' : obj.MaxPrice.toFixed(4)} <span className="text-gray-500">{obj.Token0}/{obj.Token1}</span></span>
                                                     </div>
                                                     <div className="w-full py-1 px-6 flex flex-row justify-between">
                                                         <span className="text-gray-500">Percentage pending reward</span>
@@ -536,20 +561,24 @@ export default function Page() {
                                                     </div>
                                                     <div className="w-full my-4 px-6 flex space-x-2">
                                                         {obj.IsStaking ?                                            
-                                                            <button className="flex-1 px-3 py-2 bg-red-900/30 border border-red-900/50 rounded-md text-xs text-red-400 hover:bg-red-900/40 transition-colors cursor-pointer" onClick={() => {unstakeNft(obj.Id as unknown as bigint)}}>Unstake</button> :
-                                                            <button className="flex-1 px-3 py-2 bg-green-900/30 border border-green-900/50 rounded-md text-xs text-green-400 hover:bg-green-900/40 transition-colors cursor-pointer" onClick={() => {stakeNft(obj.Id as unknown as bigint)}}>Stake</button>
+                                                            <Button variant="ghost" className="flex-1 px-3 py-2 bg-red-900/30 border border-red-900/50 rounded-md text-xs text-red-400 hover:bg-red-900/40" onClick={() => {unstakeNft(obj.Id as unknown as bigint)}}>Unstake</Button> :
+                                                            <Button variant="ghost" className="flex-1 px-3 py-2 bg-green-900/30 border border-green-900/50 rounded-md text-xs text-green-400 hover:bg-green-900/40" onClick={() => {stakeNft(obj.Id as unknown as bigint)}}>Stake</Button>
                                                         }
                                                     </div>
                                                 </div>
                                             )}
                                         </>
-                                    }
+                                    ) : (
+                                        <div className="col-span-full bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-xl p-8 text-center text-slate-400">
+                                            No positions found.
+                                        </div>
+                                    )}
                                 </div>
                             </>
                         </TabsContent>
                         <TabsContent value='1'>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-8">
-                                <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-lg p-6">
+                                <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6">
                                     <div className='text-xs text-gray-400 uppercase tracking-wider mb-2'>TOTAL POINT</div>
                                     <div className='text-3xl font-light'>
                                         {addr !== undefined ? Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(totalPoint) : 0}                                
@@ -564,3 +593,5 @@ export default function Page() {
     )
 }
     
+
+
