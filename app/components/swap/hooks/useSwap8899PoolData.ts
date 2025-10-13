@@ -4,6 +4,7 @@ import * as React from 'react'
 import { formatEther } from 'viem'
 import { getBalance, readContracts } from '@wagmi/core'
 import { tokens as defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI, CMswapUniSmartRouteContract } from '@/app/lib/8899'
+import { normalizeTokenPair } from './shared'
 
 type Token = typeof defaultTokens[number]
 
@@ -81,14 +82,19 @@ export function useSwap8899PoolData({
         const fetchData = async () => {
             setOnLoading(true)
             try {
-                if (tokenA.value.toUpperCase() === tokenB.value.toUpperCase()) {
+                const {
+                    tokenAValue: tokenAvalue,
+                    tokenBValue: tokenBvalue,
+                    isSameToken,
+                    isTokenANative,
+                    isTokenBNative,
+                } = normalizeTokenPair(tokens, tokenA, tokenB)
+
+                if (isSameToken) {
                     setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
                     setOnLoading(false)
                     return
                 }
-
-                const tokenAvalue = tokenA.value === tokens[0].value ? tokens[1].value : tokenA.value
-                const tokenBvalue = tokenB.value === tokens[0].value ? tokens[1].value : tokenB.value
 
                 setAltRoute(undefined)
 
@@ -130,13 +136,13 @@ export function useSwap8899PoolData({
                     })
                 }
 
-                if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
+                if (isTokenANative) {
                     setTokenABalance(formatEther(nativeBal.value))
                 } else if (stateA[1].result !== undefined) {
                     setTokenABalance(formatEther(stateA[1].result))
                 }
 
-                if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
+                if (isTokenBNative) {
                     setTokenBBalance(formatEther(nativeBal.value))
                 } else if (stateB[1].result !== undefined) {
                     setTokenBBalance(formatEther(stateB[1].result))

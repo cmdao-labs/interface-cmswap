@@ -4,6 +4,7 @@ import * as React from 'react'
 import { formatEther } from 'viem'
 import { getBalance, readContracts } from '@wagmi/core'
 import { tokens as defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI } from '@/app/lib/25925'
+import { normalizeTokenPair } from './shared'
 
 type Token = typeof defaultTokens[number]
 
@@ -62,13 +63,19 @@ export function useSwap25925PoolData({
 }: UseSwap25925PoolDataParams) {
     React.useEffect(() => {
         const fetch0 = async () => {
-            if (tokenA.value.toUpperCase() === tokenB.value.toUpperCase()) {
+            const {
+                tokenAValue: tokenAvalue,
+                tokenBValue: tokenBvalue,
+                isSameToken,
+                isNativeWrappedPair,
+                isTokenANative,
+                isTokenBNative,
+            } = normalizeTokenPair(tokens, tokenA, tokenB)
+
+            if (isSameToken) {
                 setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
                 return
             }
-
-            const tokenAvalue = tokenA.value === tokens[0].value ? tokens[1].value : tokenA.value
-            const tokenBvalue = tokenB.value === tokens[0].value ? tokens[1].value : tokenB.value
 
             const nativeBal = address !== undefined ? await getBalance(config, { address: address as '0xstring' }) : { value: BigInt(0) }
 
@@ -106,13 +113,13 @@ export function useSwap25925PoolData({
                 })
             }
 
-            if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
+            if (isTokenANative) {
                 setTokenABalance(formatEther(nativeBal.value))
             } else if (stateA[1].result !== undefined) {
                 setTokenABalance(formatEther(stateA[1].result))
             }
 
-            if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
+            if (isTokenBNative) {
                 setTokenBBalance(formatEther(nativeBal.value))
             } else if (stateB[1].result !== undefined) {
                 setTokenBBalance(formatEther(stateB[1].result))
@@ -156,10 +163,7 @@ export function useSwap25925PoolData({
             }
 
             if (tokenA.name !== 'Choose Token' && tokenB.name !== 'Choose Token') {
-                if (
-                    (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenB.value.toUpperCase() === tokens[1].value.toUpperCase()) ||
-                    (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase() && tokenA.value.toUpperCase() === tokens[1].value.toUpperCase())
-                ) {
+                if (isNativeWrappedPair) {
                     setExchangeRate('1')
                     setWrappedRoute(true)
                 } else {

@@ -2,10 +2,8 @@ import React from 'react'
 import { useAccount } from 'wagmi'
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, parseEther } from 'viem'
-import { ArrowDown, ChevronDown } from "lucide-react"
+import { ArrowDown } from "lucide-react"
 import { Button } from '@/components/ui/button'
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDebouncedCallback } from 'use-debounce'
 import { tokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, wrappedNative, CMswapPoolDualRouterContract, CMswapPoolDualRouter, CMswapUniSmartRoute, CMswapUniSmartRouteContract } from '@/app/lib/8899'
 import { config } from '@/app/config'
@@ -14,6 +12,7 @@ import { useSwapQuote } from '@/app/components/swap/useSwapQuote'
 import { encodePath } from '@/app/components/swap/path'
 import { ensureTokenAllowance, executeRouterSwap, wrapNativeToken, unwrapWrappedToken } from '@/app/components/swap/swapActions'
 import { useSwap8899PoolData } from '@/app/components/swap/hooks/useSwap8899PoolData'
+import { SwapTokenPanel } from '@/app/components/swap/SwapTokenPanel'
 
 export default function Swap8899({
     setIsLoading, setErrMsg,
@@ -92,6 +91,13 @@ export default function Swap8899({
     React.useEffect(() => {
         console.log("hasInitializedFromParams : ", hasInitializedFromParams)
     }, [hasInitializedFromParams])
+
+    const tokenABalanceLabel = tokenA.name !== 'Choose Token'
+        ? `${Number(tokenABalance).toFixed(4)} ${tokenA.name}`
+        : '0.0000'
+    const tokenBBalanceLabel = tokenB.name !== 'Choose Token'
+        ? `${Number(tokenBBalance).toFixed(4)} ${tokenB.name}`
+        : '0.0000'
 
     const getQoute = useDebouncedCallback(async (_amount: string) => {
         let CMswapRate = undefined; let GameswapRate = undefined; let JibswapRate = undefined;
@@ -612,144 +618,72 @@ export default function Swap8899({
 
     return (
         <div className='space-y-2'>
-            <div className="rounded-lg bg-[#0a0b1e]/80 border border-[#00ff9d]/10 p-4">
-                <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-400 text-sm">From</span>
-                    <input
-                        className="py-2 w-[340px] focus:outline-none text-gray-400 text-xs text-right"
-                        value={tokenA.value}
-                        onChange={e => {
-                            if (e.target.value !== '0x') {
-                                setTokenA({ name: 'Choose Token', value: e.target.value as '0xstring', logo: '../favicon.ico' })
-                            } else {
-                                setTokenA({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
-                            }
+            <SwapTokenPanel
+                label="From"
+                tokenAddress={tokenA.value}
+                onTokenAddressChange={value => {
+                    if (value !== '0x') {
+                        setTokenA({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico' })
+                    } else {
+                        setTokenA({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
+                    }
+                }}
+                amount={amountA}
+                onAmountChange={value => {
+                    setAmountA(value)
+                    getQoute(value)
+                }}
+                amountAutoFocus
+                selectedToken={tokenA}
+                tokens={tokens}
+                onSelectToken={token => {
+                    setTokenA(token)
+                    updateURLWithTokens(token.value, tokenB?.value, address)
+                }}
+                popoverOpen={open}
+                onPopoverOpenChange={setOpen}
+                balanceLabel={tokenABalanceLabel}
+                footerContent={
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-[#00ff9d] text-xs px-2 cursor-pointer"
+                        onClick={() => {
+                            setAmountA(tokenABalance)
+                            getQoute(tokenABalance)
                         }}
-                    />
-                </div>
-                <div className="flex items-center justify-between">
-                    <input placeholder="0.0" autoFocus className="w-[140px] sm:w-[200px] bg-transparent border-none text-white text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountA} onChange={e => { setAmountA(e.target.value); getQoute(e.target.value); }} />
-                    <Popover open={open} onOpenChange={setOpen}>
-                        <PopoverTrigger asChild>
-                            <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 flex items-center justify-between h-10 cursor-pointer">
-                                <div className='gap-2 flex flex-row items-center justify-center'>
-                                    <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
-                                        <span className="text-[#00ff9d] text-xs">
-                                            {tokenA.logo !== '../favicon.ico' ? <img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
-                                        </span>
-                                    </div>
-                                    <span className='truncate'>{tokenA.name}</span>
-                                </div>
-                                <ChevronDown className="h-4 w-4 text-[#00ff9d]" />
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[200px] p-0 z-100">
-                            <Command>
-                                <CommandInput placeholder="Search tokens..." />
-                                <CommandList>
-                                    <CommandEmpty>No tokens found.</CommandEmpty>
-                                    <CommandGroup>
-                                        {tokens.map(token => (
-                                            <CommandItem
-                                                key={token.name}
-                                                value={token.name}
-                                                onSelect={() => {
-                                                    setTokenA(token)
-                                                    setOpen(false)
-                                                    updateURLWithTokens(token.value, tokenB?.value,address)
-                                                }}
-                                                className='cursor-pointer'
-                                            >
-                                                <div className="flex items-center">
-                                                    <img alt="" src={token.logo} className="size-5 shrink-0 rounded-full" />
-                                                    <span className="ml-3 truncate">{token.name}</span>
-                                                </div>
-                                            </CommandItem>
-                                        ))}
-                                    </CommandGroup>
-                                </CommandList>
-                            </Command>
-                        </PopoverContent>
-                    </Popover>
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                    <span />
-                    <div>
-                        <span className="text-gray-400 text-xs">{tokenA.name !== 'Choose Token' ? Number(tokenABalance).toFixed(4) + ' ' + tokenA.name : '0.0000'}</span>
-                        <Button variant="ghost" size="sm" className="h-6 text-[#00ff9d] text-xs px-2 cursor-pointer" onClick={() => { setAmountA(tokenABalance); getQoute(tokenABalance); }}>MAX</Button>
-                    </div>
-                </div>
-            </div>
+                    >
+                        MAX
+                    </Button>
+                }
+            />
             <div className="flex justify-center">
                 <Button variant="outline" size="icon" className="bg-[#0a0b1e] border border-[#00ff9d]/30 rounded-md h-10 w-10 shadow-md cursor-pointer" onClick={switchToken}>
                     <ArrowDown className="h-4 w-4 text-[#00ff9d]" />
                 </Button>
             </div>
-            <div className="rounded-lg border border-[#00ff9d]/10 p-4">
-                <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-400 text-sm">To</span>
-                    <input
-                        className="py-2 w-[340px] focus:outline-none text-gray-400 text-xs text-right"
-                        value={tokenB.value}
-                        onChange={e => {
-                            if (e.target.value !== '0x') {
-                                setTokenB({ name: 'Choose Token', value: e.target.value as '0xstring', logo: '../favicon.ico' })
-                            } else {
-                                setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
-                            }
-                        }}
-                    />
-                </div>
-                <div className="flex items-center justify-between">
-                    <input placeholder="0.0" className="w-[140px] sm:w-[200px] bg-transparent border-none text-white text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountB} readOnly />
-                    <Popover open={open2} onOpenChange={setOpen2}>
-                        <PopoverTrigger asChild>
-                            <Button variant="outline" role="combobox" aria-expanded={open2} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 flex items-center justify-between h-10 cursor-pointer">
-                                <div className='gap-2 flex flex-row items-center justify-center'>
-                                    <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
-                                        <span className="text-[#00ff9d] text-xs">
-                                            {tokenB.logo !== '../favicon.ico' ? <img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
-                                        </span>
-                                    </div>
-                                    <span className='truncate'>{tokenB.name}</span>
-                                </div>
-                                <ChevronDown className="h-4 w-4 text-[#00ff9d]" />
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[200px] p-0 z-100">
-                            <Command>
-                                <CommandInput placeholder="Search tokens..." />
-                                <CommandList>
-                                    <CommandEmpty>No tokens found.</CommandEmpty>
-                                    <CommandGroup>
-                                        {tokens.map(token => (
-                                            <CommandItem
-                                                key={token.name}
-                                                value={token.name}
-                                                onSelect={() => {
-                                                    setTokenB(token)
-                                                    setOpen2(false)
-                                                    updateURLWithTokens(tokenA?.value, token.value,address)
-                                                }}
-                                                className='cursor-pointer'
-                                            >
-                                                <div className="flex items-center">
-                                                    <img alt="" src={token.logo} className="size-5 shrink-0 rounded-full" />
-                                                    <span className="ml-3 truncate">{token.name}</span>
-                                                </div>
-                                            </CommandItem>
-                                        ))}
-                                    </CommandGroup>
-                                </CommandList>
-                            </Command>
-                        </PopoverContent>
-                    </Popover>
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                    <span />
-                    <span className="text-gray-400 text-xs">{tokenB.name !== 'Choose Token' ? Number(tokenBBalance).toFixed(4) + ' ' + tokenB.name : '0.0000'}</span>
-                </div>
-            </div>
+            <SwapTokenPanel
+                label="To"
+                tokenAddress={tokenB.value}
+                onTokenAddressChange={value => {
+                    if (value !== '0x') {
+                        setTokenB({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico' })
+                    } else {
+                        setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
+                    }
+                }}
+                amount={amountB}
+                amountReadOnly
+                selectedToken={tokenB}
+                tokens={tokens}
+                onSelectToken={token => {
+                    setTokenB(token)
+                    updateURLWithTokens(tokenA?.value, token.value, address)
+                }}
+                popoverOpen={open2}
+                onPopoverOpenChange={setOpen2}
+                balanceLabel={tokenBBalanceLabel}
+            />
             {!wrappedRoute &&
                 <div className="mt-6">
                     {/** LIQUIDITY SELECTION  */}
