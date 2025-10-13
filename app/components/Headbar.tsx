@@ -15,7 +15,7 @@ export default function Headbar() {
     const handleLinkClick = () => {
         setIsMenuOpen(false)
     }
-    const { chainId } = useAccount()
+    const { chainId,address } = useAccount()
 
     return (
         <QueryClientProvider client={queryClient}> 
@@ -32,21 +32,19 @@ export default function Headbar() {
                                         <Link href="/bridge" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
                                             <Button variant="ghost" className="cursor-pointer">Bridge</Button>
                                         </Link>
-                                        {typeof chainId === 'number' && [25925].includes(chainId) && (
+                                        {/* {typeof chainId === 'number' && [25925].includes(chainId) && ( */}
                                             <Link href="/pump" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
                                                 <Button variant="ghost" className="cursor-pointer">Pump</Button>
                                             </Link>
-                                        )}
-                                        {typeof chainId === 'number' && [25925].includes(chainId) && (
+                                        {/* )} */}
+                                        {typeof chainId === 'number' && [25925].includes(chainId) && address === "0xCA811301C650C92fD45ed32A81C0B757C61595b6" && (
                                             <Link href="/earn" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
                                                 <Button variant="ghost" className="cursor-pointer">Earn</Button>
                                             </Link>
                                         )}
-                                        {typeof chainId === 'number' && [25925, 96, 8899].includes(chainId) && (
-                                            <Link href="/liquidity-pool" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                                <Button variant="ghost" className="cursor-pointer">Liquidity</Button>
-                                            </Link>
-                                        )}
+                                        <Link href="/liquidity-pool" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
+                                            <Button variant="ghost" className="cursor-pointer">Liquidity</Button>
+                                        </Link>
                                         {chainId === 2 && (
                                             <>
                                                 <Link href="/referral" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
