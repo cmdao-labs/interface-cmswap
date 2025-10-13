@@ -214,8 +214,12 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
     , [mode, trademode]);
 
     const tokenSymbolDisplay = symbol ? String(symbol) : "";
-    const inputAssetSymbol = trademode ? baseAssetSymbol : tokenSymbolDisplay;
-    const outputAssetSymbol = trademode ? tokenSymbolDisplay : baseAssetSymbol;
+    const inputAssetSymbol = trademode ? 
+        baseAssetSymbol : 
+        tokenSymbolDisplay.length >= 7 ? tokenSymbolDisplay.slice(0, 6) + "..." : tokenSymbolDisplay;
+    const outputAssetSymbol = trademode ? 
+        tokenSymbolDisplay.length >= 7 ? tokenSymbolDisplay.slice(0, 6) + "..." : tokenSymbolDisplay : 
+        baseAssetSymbol;
 
     const formattedAvailableBalance = React.useMemo(() => Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short", maximumFractionDigits: 3}).format(
         mode === "pro" ? 
@@ -617,42 +621,6 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
     };
 
     React.useEffect(() => {
-        const fetchHeader = async () => {
-            try {
-                if (chain == "kubtestnet") {
-                    const t: any = await readContracts(config, {
-                        contracts: [
-                            { ...tickerContract, functionName: "name", chainId: _chainId },
-                            { ...tickerContract, functionName: "symbol", chainId: _chainId },
-                            { ...factoryContract, functionName: "pumpReserve", args: [ticker as '0xstring'], chainId: _chainId },
-                            { ...factoryContract, functionName: "virtualAmount", chainId: _chainId },
-                        ],
-                    });
-                    setName(t[0].result);
-                    setSymbol(t[1].result);
-                    const pump0 = t[2].result && Array.isArray(t[2].result) && t[2].result[0] !== undefined ? Number(formatEther(t[2].result[0])) : 0;
-                    const pump1 = t[2].result && Array.isArray(t[2].result) && t[2].result[1] !== undefined ? Number(formatEther(t[2].result[1])) : 0;
-                    const va = t[3].result !== undefined ? Number(formatEther(t[3].result)) : 0;
-                    const price = (pump0 + va) / pump1;
-                    setPrice(price);
-                    const mcap = 1000000000 * price;
-                    setMcap(mcap);
-                    const denominator = 47800;
-                    setProgress(Number(((mcap * 100) / denominator).toFixed(2)));
-
-                    const logCreateData = await publicClient.getContractEvents({...factoryContract, eventName: "Creation", fromBlock: BigInt(_blockcreated), toBlock: "latest"});
-                    const data: {creator: '0xstring', createdTime: Number, logo: string, description: string }[] = logCreateData.filter((r: any) => {return r.args.tokenAddr.toUpperCase() === ticker.toUpperCase()})
-                        .map((r: any) => {return {creator: r.args.creator, createdTime: r.args.createdTime, logo: r.args.logo, description: r.args.description }});
-                    setCreator(data[0].creator);
-                    setCreateTime(Number(data[0].createdTime));
-                    setLogo(data[0].logo);
-                    setDescription(data[0].description);
-                }
-            } catch (error) {
-                console.error("error with reason", error);
-            }
-        };
-
         const fetchBody = async () => {
             const nativeBal = account.address !== undefined ? await getBalance(config, { address: account.address as "0xstring" }) : { value: BigInt(0) };
             setEthBal(nativeBal.value);
@@ -667,159 +635,44 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
             setState(state0);
         };
 
-        const fetchLogs = async () => {
-            let result5removedup;
-            const result4 = await publicClient.getContractEvents({
-                abi: erc20Abi,
-                address: ticker as "0xstring",
-                eventName: "Transfer",
-                fromBlock: BigInt(_blockcreated),
-                toBlock: "latest",
-            });
-            const result5 = (await Promise.all(result4)).map((res) => {
-            return res.args.to;
-            });
-            result5removedup = [...new Set(result5)];
-            const result6 = result5removedup.map(async (res) => {
-                return await readContracts(config, {
-                    contracts: [
-                        {
-                            address: ticker as "0xstring",
-                            abi: erc20Abi,
-                            functionName: "balanceOf",
-                            args: [res as "0xstring"],
-                            chainId: _chainId,
-                        },
-                    ],
-                });
-            });
-            const result7 = await Promise.all(result6);
-            const result8 = result5removedup.map((res, index) => {
-                return {
-                    addr: res as string,
-                    value: Number(formatEther(result7[index][0].result as bigint)) / 10000000,
-                };
-            }).filter((res) => {
-                return res.value !== 0;
-            });
-            setHolder(result8);
-            if (chain === "kubtestnet") {
-                const swapLogs = await publicClient.getContractEvents({
-                    ...factoryContract,
-                    eventName: "Swap",
-                    fromBlock: BigInt(_blockcreated),
-                    toBlock: "latest",
-                });
-                const decoded = await Promise.all(swapLogs.map(async (log: any) => {
-                    try {
-                        const tx = await publicClient.getTransaction({hash: log.transactionHash});
-                        const decodedInput = decodeFunctionData({abi: ERC20FactoryV2ABI, data: tx.input as `0x${string}`});
-                        const fn = decodedInput.functionName;
-                        const args = decodedInput.args as any;
-                        const tokenArg = (args && args.length > 0) ? String(args[0]) : "";
-                        const isTargetToken = tokenArg.toLowerCase() === ticker.toLowerCase();
-                        if (!isTargetToken) return null;
-                        return { log, fn };
-                    } catch (e) {
-                        return null;
-                    }
-                }));
-                const filtered = decoded.filter((x) => x !== null) as { log: any; fn: string }[];
-                const _timestamparr = filtered.map(async (r: any) => {return await publicClient.getBlock({blockNumber: r.log.blockNumber})});
-                const timestamparr = await Promise.all(_timestamparr);
-                const restimestamp = timestamparr.map((res) => {return Number(res.timestamp) * 1000});
-                const theresult = filtered.map((r: any, index: any) => {
-                    return {
-                        action: r.fn === 'buy' ? 'buy' : 'sell',
-                        nativeValue: r.fn === 'buy' ? Number(formatEther(r.log.args.amountIn)) : Number(formatEther(r.log.args.amountOut)), 
-                        value: r.fn === 'buy' ? Number(formatEther(r.log.args.amountOut)) : Number(formatEther(r.log.args.amountIn)),
-                        from: r.log.args.sender,
-                        hash: r.log.transactionHash,
-                        timestamp: restimestamp[index],
-                    };
-                }).sort((a: any, b: any) => {
-                    return b.timestamp - a.timestamp;
-                });
-                setHx(theresult);
-                return;
-            }
-        };
-
-        const fetchGraph = async () => {
+        const fetchSummary = async () => {
             try {
-                if (chain === "kubtestnet") {
-                    const swapLogs = await publicClient.getContractEvents({
-                        ...factoryContract,
-                        eventName: "Swap",
-                        fromBlock: BigInt(_blockcreated),
-                        toBlock: "latest",
-                    });
-                    const decoded = await Promise.all(swapLogs.map(async (log: any) => {
-                        try {
-                            const tx = await publicClient.getTransaction({hash: log.transactionHash});
-                            const decodedInput = decodeFunctionData({abi: ERC20FactoryV2ABI, data: tx.input as `0x${string}`});
-                            const fn = decodedInput.functionName;
-                            const args = decodedInput.args as any;
-                            const tokenArg = (args && args.length > 0) ? String(args[0]) : "";
-                            const isTargetToken = tokenArg.toLowerCase() === ticker.toLowerCase();
-                            if (!isTargetToken) return null;
-                            return { log, fn };
-                        } catch (e) {
-                            return null;
-                        }
-                    }));
-                    const filtered = decoded.filter((x) => x !== null) as { log: any; fn: string }[];
-                    if (filtered.length === 0) {
-                        setGraphData([]);
-                        return;
-                    }
-
-                    const data: any = await readContracts(config, {
-                        contracts: [
-                            { ...factoryContract, functionName: "virtualAmount", chainId: _chainId },
-                        ],
-                    });
-                    const virtualAmount = data[0].result !== undefined ? Number(formatEther(data[0].result)) : 0;
-                    const blocks = await Promise.all(filtered.map((x) => publicClient.getBlock({ blockNumber: x.log.blockNumber })));
-                    const points = filtered.map((x, idx) => {
-                        const { log } = x;
-                        const isBuy = Boolean(log.args.isBuy);
-                        const amountIn = BigInt(log.args.amountIn || BigInt(0));
-                        const amountOut = BigInt(log.args.amountOut || BigInt(0));
-                        const reserveIn = BigInt(log.args.reserveIn || BigInt(0));
-                        const reserveOut = BigInt(log.args.reserveOut || BigInt(0));
-                        const price = isBuy ? (Number(formatEther(reserveIn)) + virtualAmount) / Math.max(1e-18, Number(formatEther(reserveOut))) : (Number(formatEther(reserveOut)) + virtualAmount) / Math.max(1e-18, Number(formatEther(reserveIn)));            
-                        const volume = isBuy ? Number(formatEther(amountIn)) : Number(formatEther(amountOut));
-                        const block = blocks[idx];
-                        const timeMs = Number(block.timestamp) * 1000;
-                        return {
-                            time: timeMs,
-                            price: Number.isFinite(price) ? price : 0,
-                            volume: Number.isFinite(volume) ? volume : 0,
-                        };
-                    });
-
-                    const sorted = points.filter((p) => p && p.time && p.price > 0 && p.volume > 0).sort((a, b) => a.time - b.time);
-                    setGraphData(sorted);
-                    return;
+                const res = await fetch(`/api/token/summary?token=${ticker}&graphHours=8766&activityLimit=50&holdersLimit=50&tradersLimit=50`, { cache: 'no-store' })
+                if (!res.ok) return
+                const data = await res.json()
+                if (data?.token) {
+                    setCreator(data.token.creator || null)
+                    setCreateTime(data.token.created_time ? Number(data.token.created_time) : null)
+                    setLogo(data.token.logo || null)
+                    setDescription(data.token.description || null)
+                    setName(data.token.name || null)
+                    setSymbol(data.token.symbol || null)
                 }
-            } catch (err) {
-                console.error("fetchGraph error", err);
+                if (data?.header) {
+                    setPrice(Number(data.header.price || 0))
+                    setMcap(Number(data.header.mcap || 0))
+                    setProgress(Number(data.header.progress || 0))
+                }
+                if (Array.isArray(data?.graph)) setGraphData(data.graph)
+                if (Array.isArray(data?.activity)) setHx(data.activity)
+                if (Array.isArray(data?.holders)) setHolder(data.holders)
+                // Traders are derived from activity locally; server 'traders' is optional
+            } catch (e) {
+                console.error('fetch summary error', e)
             }
-        };
-
-        if (hash === "") {
-            fetchGraph();
-            fetchLogs();
-            fetchHeader();
-            fetchBody();
-        } else {
-            setInterval(fetchHeader, 5000);
-            setInterval(fetchGraph, 5000);
-            setInterval(fetchLogs, 5000);
-            setInterval(fetchBody, 5000);
         }
-    }, [hash]);
+
+        fetchSummary();
+        fetchBody();
+
+        const summaryTimer = setInterval(fetchSummary, 5000);
+        const bodyTimer = setInterval(fetchBody, 5000);
+
+        return () => {
+            clearInterval(summaryTimer);
+            clearInterval(bodyTimer);
+        };
+    }, [ticker, chain, account.address]);
 
     const qoute = useDebouncedCallback(async (value: string) => {
         try {
@@ -836,7 +689,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                         const inputAmountWithFee = _inputAmount * 99; // Apply 99/100 multiplier for fee
                         const numerator = BigInt(Math.floor(inputAmountWithFee)) * _outputReserve;
                         const denominator = _inputReserve * BigInt(100) + BigInt(Math.floor(inputAmountWithFee));
-                        return Number(numerator / denominator);
+                        return Number(Number(numerator) / Number(denominator));
                     };
                     if (!result || !Array.isArray(result) || result.length < 3) {
                         console.error("Invalid contract result:", result);
@@ -1114,7 +967,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                     />
                                     <span className="-ml-10 text-sm uppercase tracking-wide text-white/60">{inputAssetSymbol}</span>
                                 </div>
-                                <div className="mt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-white/50">
+                                <div className="mt-2 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-2 text-xs text-white/50">
                                     <div className="flex items-center gap-2 text-white/40">
                                         <span>You get</span>
                                         <span className="font-semibold text-white">{formattedOutput} {outputAssetSymbol}</span>
@@ -1759,7 +1612,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
                                     />
                                     <span className="-ml-10 text-sm uppercase tracking-wide text-white/60">{inputAssetSymbol}</span>
                                 </div>
-                                <div className="mt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-white/50">
+                                <div className="mt-2 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-2 text-xs text-white/50">
                                     <div className="flex items-center gap-2 text-white/40">
                                         <span>You get</span>
                                         <span className="font-semibold text-white">{formattedOutput} {outputAssetSymbol}</span>
