@@ -69,7 +69,7 @@ export function useSwap96PoolData({ config, address, tokens, tokenA, tokenB, fee
         const fetchPoolData = async () => {
             const {tokenAValue: tokenAvalue, tokenBValue: tokenBvalue, isSameToken, isNativeWrappedPair, isTokenANative, isTokenBNative} = normalizeTokenPair(tokens, tokenA, tokenB)
             if (isSameToken) {
-                setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
+                setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 })
                 return
             }
             const nativeBal = address ? await getBalance(config, { address: address as '0xstring' }) : { value: BigInt(0) }

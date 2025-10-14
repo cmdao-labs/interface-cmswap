@@ -1,8 +1,8 @@
 'use client';
 import * as React from 'react'
-import { formatUnits } from 'viem'
+import { formatEther, formatUnits } from 'viem'
 import { getBalance, readContracts } from '@wagmi/core'
-import { tokens as defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI } from '@/app/lib/25925'
+import { tokens as defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI } from '@/app/lib/25925'
 import { normalizeTokenPair } from './shared'
 import { getDecimals } from '@/app/components/swap/utils'
 type Token = typeof defaultTokens[number]
@@ -33,7 +33,7 @@ export function useSwap25925PoolData({config, address, tokens, tokenA, tokenB, f
         const fetch0 = async () => {
             const {tokenAValue: tokenAvalue, tokenBValue: tokenBvalue, isSameToken, isNativeWrappedPair, isTokenANative, isTokenBNative} = normalizeTokenPair(tokens, tokenA, tokenB)
             if (isSameToken) {
-                setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
+                setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 })
                 return
             }
             const nativeBal = address !== undefined ? await getBalance(config, { address: address as '0xstring' }) : { value: BigInt(0) }

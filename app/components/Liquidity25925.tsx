@@ -21,10 +21,10 @@ export default function Liquidity25925({
 }) {
     const { address } = useAccount()
     const [txupdate, setTxupdate] = React.useState("")
-    const [tokenA, setTokenA] = React.useState<{name: string, value: '0xstring', logo: string, decimal: number}>(tokens[0])
+    const [tokenA, setTokenA] = React.useState<{name: string, value: '0xstring', logo: string}>(tokens[0])
     const [tokenABalance, setTokenABalance] = React.useState("")
     const [amountA, setAmountA] = React.useState("")
-    const [tokenB, setTokenB] = React.useState<{name: string, value: '0xstring', logo: string, decimal: number}>({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18})
+    const [tokenB, setTokenB] = React.useState<{name: string, value: '0xstring', logo: string}>({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
     const [tokenBBalance, setTokenBBalance] = React.useState("")
     const [amountB, setAmountB] = React.useState("")
     const [feeSelect, setFeeSelect] = React.useState(10000)
@@ -279,7 +279,7 @@ export default function Liquidity25925({
 
     React.useEffect(() => {
         const fetch1 = async () => {
-            tokenA.value.toUpperCase() === tokenB.value.toUpperCase() && setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18})
+            tokenA.value.toUpperCase() === tokenB.value.toUpperCase() && setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
 
             let tokenAvalue
             let tokenBvalue
@@ -312,20 +312,14 @@ export default function Liquidity25925({
                 value: tokenA.value, 
                 logo: tokens.map(obj => obj.value).indexOf(tokenA.value) !== -1 ? 
                     tokens[tokens.map(obj => obj.value).indexOf(tokenA.value)].logo : 
-                    "../favicon.ico",
-                decimal: tokens.map(obj => obj.value).indexOf(tokenA.value) !== -1 ?
-                    tokens[tokens.map(obj => obj.value).indexOf(tokenA.value)].decimal :
-                    18
+                    "../favicon.ico"
             })
             stateB[0].result !== undefined && tokenB.name === "Choose Token" && setTokenB({
                 name: stateB[0].result, 
                 value: tokenB.value, 
                 logo: tokens.map(obj => obj.value).indexOf(tokenB.value) !== -1 ? 
                     tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].logo : 
-                    "../favicon.ico",
-                decimal: tokens.map(obj => obj.value).indexOf(tokenB.value) !== -1 ?
-                    tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].decimal :
-                    18
+                    "../favicon.ico"
             })
             tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() ? 
                 setTokenABalance(formatEther(nativeBal.value)) :
@@ -438,9 +432,9 @@ export default function Liquidity25925({
                         value={tokenA.value} 
                         onChange={e => {
                             if (e.target.value !== '0x') {
-                                setTokenA({name: 'Choose Token', value: e.target.value as '0xstring', logo: '../favicon.ico', decimal: 18})
+                                setTokenA({name: 'Choose Token', value: e.target.value as '0xstring', logo: '../favicon.ico'})
                             } else {
-                                setTokenA({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18})
+                                setTokenA({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
                             }
                         }} 
                     />
@@ -511,9 +505,9 @@ export default function Liquidity25925({
                         value={tokenB.value} 
                         onChange={e => {
                             if (e.target.value !== '0x') {
-                                setTokenB({name: 'Choose Token', value: e.target.value as '0xstring', logo: '../favicon.ico', decimal: 18})
+                                setTokenB({name: 'Choose Token', value: e.target.value as '0xstring', logo: '../favicon.ico'})
                             } else {
-                                setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18})
+                                setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
                             }
                         }} 
                     />

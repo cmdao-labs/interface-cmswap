@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react'
-import { formatUnits } from 'viem'
+import { formatEther, formatUnits } from 'viem'
 import { getBalance, readContracts } from '@wagmi/core'
 import { tokens as defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI, CMswapUniSmartRouteContract } from '@/app/lib/8899'
 import { normalizeTokenPair } from './shared'
@@ -54,7 +54,7 @@ export function useSwap8899PoolData({config, address, tokens, tokenA, tokenB, fe
             try {
                 const {tokenAValue: tokenAvalue, tokenBValue: tokenBvalue, isSameToken, isTokenANative, isTokenBNative} = normalizeTokenPair(tokens, tokenA, tokenB)
                 if (isSameToken) {
-                    setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
+                    setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 })
                     setOnLoading(false)
                     return
                 }
