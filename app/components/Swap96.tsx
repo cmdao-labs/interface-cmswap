@@ -5,7 +5,7 @@ import { formatEther, parseEther } from 'viem'
 import { ArrowDown } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI, CMswapUniSmartRoute, BitkubEvmKYCContract,unwarppedNative,bkcUnwapped } from '@/app/lib/96'
+import { tokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI, CMswapUniSmartRoute, unwarppedNative, bkcUnwapped } from '@/app/lib/96'
 import { config } from '@/app/config'
 import { useSwapTokenSelection } from '@/app/components/swap/useSwapTokenSelection'
 import { useSwapQuote } from '@/app/components/swap/useSwapQuote'
@@ -14,9 +14,7 @@ import { ensureTokenAllowance, executeRouterSwap, wrapNativeToken, unwrapWrapped
 import { useSwap96PoolData } from '@/app/components/swap/hooks/useSwap96PoolData'
 import { SwapTokenPanel } from '@/app/components/swap/SwapTokenPanel'
 
-export default function Swap96({
-    setIsLoading, setErrMsg,
-}: {
+export default function Swap96({ setIsLoading, setErrMsg, }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
     setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>,
 }) {
@@ -25,12 +23,10 @@ export default function Swap96({
     const [exchangeRate, setExchangeRate] = React.useState("")
     const [fixedExchangeRate, setFixedExchangeRate] = React.useState("")
     const [altRoute, setAltRoute] = React.useState<{ a: '0xstring', b: '0xstring', c: '0xstring' }>()
-    
     const [CMswapTVL, setCMswapTVL] = React.useState<{ tvl10000: string; tvl3000: string; tvl500: string; tvl100: string; exchangeRate: string; isReverted: boolean; FixedExchangeRate: string; }>({ tvl10000: "", tvl3000: "", tvl500: "", tvl100: "", exchangeRate: "", isReverted: false, FixedExchangeRate: "" });
     const [DMswapTVL, setDMswapTVL] = React.useState<{ tvl10000: string; tvl3000: string; tvl500: string; tvl100: string; exchangeRate: string; isReverted: boolean; FixedExchangeRate: string;  }>({ tvl10000: "", tvl3000: "", tvl500: "", tvl100: "", exchangeRate: "", isReverted: false, FixedExchangeRate: "" });
     const [ponderTVL, setPonderTVL] = React.useState<{ tvl10000: string; exchangeRate: string; isReverted: boolean; FixedExchangeRate: string;  }>({ tvl10000: "", exchangeRate: "", isReverted: false, FixedExchangeRate: "" });
     const [UdonTVL, setUdonTVL] = React.useState<{ tvl10000: string; exchangeRate: string; isReverted: boolean; FixedExchangeRate: string;  }>({ tvl10000: "", exchangeRate: "", isReverted: false, FixedExchangeRate: "" });
-    
     const [reserveUdonA, setReserveUdonA] = React.useState(BigInt(0))
     const [reserveUdonB, setReserveUdonB] = React.useState(BigInt(0))
     const [bestPool, setBestPool] = React.useState("")
@@ -38,24 +34,8 @@ export default function Swap96({
     const [bestPathArray, setBestPathArray] = React.useState<string[] | null>(null)
     const [wrappedRoute, setWrappedRoute] = React.useState(false)
     const [newPrice, setNewPrice] = React.useState("")
-    const {
-        tokenA,
-        tokenB,
-        setTokenA,
-        setTokenB,
-        hasInitializedFromParams,
-        updateURLWithTokens,
-        switchTokens,
-    } = useSwapTokenSelection(tokens, {
-        defaultTokenAIndex: 0,
-        defaultTokenBIndex: 2,
-        referralAddress: address,
-    })
-    const { resolveTokenAddress, quoteExactInputSingle, quoteExactInput } = useSwapQuote({
-        config,
-        contract: qouterV2Contract,
-        tokens,
-    })
+    const {tokenA, tokenB, setTokenA, setTokenB, hasInitializedFromParams, updateURLWithTokens, switchTokens} = useSwapTokenSelection(tokens, {defaultTokenAIndex: 0, defaultTokenBIndex: 2, referralAddress: address})
+    const { resolveTokenAddress, quoteExactInputSingle, quoteExactInput } = useSwapQuote({config, contract: qouterV2Contract, tokens})
     const [tokenABalance, setTokenABalance] = React.useState("")
     const [amountA, setAmountA] = React.useState("")
     const [tokenBBalance, setTokenBBalance] = React.useState("")
@@ -64,17 +44,9 @@ export default function Swap96({
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
     const [swapDirection, setSwapDirection] = React.useState(true) // false = A->B, true = B->A
-
-    React.useEffect(() => {
-        console.log("hasInitializedFromParams : ", hasInitializedFromParams)
-    }, [hasInitializedFromParams])
- 
-    const tokenABalanceLabel = tokenA.name !== 'Choose Token'
-        ? `${Number(tokenABalance).toFixed(4)} ${tokenA.name}`
-        : '0.0000'
-    const tokenBBalanceLabel = tokenB.name !== 'Choose Token'
-        ? `${Number(tokenBBalance).toFixed(4)} ${tokenB.name}`
-        : '0.0000'
+    React.useEffect(() => {console.log("hasInitializedFromParams : ", hasInitializedFromParams)}, [hasInitializedFromParams])
+    const tokenABalanceLabel = tokenA.name !== 'Choose Token' ? `${Number(tokenABalance).toFixed(4)} ${tokenA.name}` : '0.0000'
+    const tokenBBalanceLabel = tokenB.name !== 'Choose Token' ? `${Number(tokenBBalance).toFixed(4)} ${tokenB.name}` : '0.0000'
 
     const getQoute = useDebouncedCallback(async (_amount: string) => {
         setAltRoute(undefined)
@@ -130,39 +102,30 @@ export default function Swap96({
                 } else {
                     setAmountB("")
                 }
-            } catch { }
+            } catch {}
             //**--------- DiamonSwap */
             try {
                 if (Number(_amount) !== 0) {
                     const getPairAddr = await readContracts(config, { contracts: [{ ...CMswapUniSmartRouteContractV2, functionName: 'getPairAddress', args: [BigInt(0), tokenAvalue, tokenBvalue], }] })
                     const DiamondPair = getPairAddr[0].result !== undefined ? getPairAddr[0].result as '0xstring' : '' as '0xstring'
-
                     const getBestPrice = await readContracts(config, {
                         contracts: [
                             { ...CMswapUniSmartRouteContractV2, functionName: 'findBestPathAndAmountOut', args: [BigInt(0), tokenAvalue, tokenBvalue, parseEther(_amount)] },
                             { ...UniswapPairv2PoolABI, address: DiamondPair, functionName: 'token0' }
                         ]
                     });
-
                     const result = getBestPrice[0].result;
                     const bestAmountOut = result !== undefined ? result[0] as bigint : BigInt(0);
                     const bestPath = result !== undefined ? result[1] : [];
-                    const bestPathArray: string[] = bestPath.map((addr: `0x${string}`) => addr); // แปลง readonly `0x${string}`[] เป็น string[]
-
-                    if (bestPathArray.length > 2 && poolSelect === "DiamonSwap") {
-                        console.log("DM ROUTED : ", bestPathArray)
-                        setAltRoute({ a: bestPathArray[0] as '0xstring', b: bestPathArray[1] as '0xstring', c: bestPathArray[2] as '0xstring' })
-                    }
-
+                    const bestPathArray: string[] = bestPath.map((addr: `0x${string}`) => addr);
+                    if (bestPathArray.length > 2 && poolSelect === "DiamonSwap") setAltRoute({ a: bestPathArray[0] as '0xstring', b: bestPathArray[1] as '0xstring', c: bestPathArray[2] as '0xstring' });
                     if (poolSelect === "DiamonSwap" && Number(_amount) > 0 && bestAmountOut > 0) {
                         setBestPathArray(bestPathArray)
                         const price = DMswapTVL.isReverted ? amountIn / Number(formatEther(bestAmountOut)) : Number(formatEther(bestAmountOut)) / amountIn
-
                         setNewPrice((price).toFixed(6));
                         setAmountB(formatEther(bestAmountOut))
                     }
                     DiamonSwapRate = Number(formatEther(bestAmountOut))
-
                 }
             } catch (error) {
                 console.error("Error in getting DiamondSwap quote:", error);
@@ -172,7 +135,6 @@ export default function Swap96({
                 if (Number(_amount) !== 0) {
                     const getPairAddr = await readContracts(config, { contracts: [{ ...CMswapUniSmartRouteContractV2, functionName: 'getPairAddress', args: [BigInt(1), tokenAvalue, tokenBvalue], }] })
                     const UdonPair = getPairAddr[0].result !== undefined ? getPairAddr[0].result as '0xstring' : '' as '0xstring'
-
                     const getBestPrice = await readContracts(config, {
                         contracts: [
                             { ...CMswapUniSmartRouteContractV2, functionName: 'findBestPathAndAmountOut', args: [BigInt(1), tokenAvalue, tokenBvalue, parseEther(_amount)] },
@@ -182,49 +144,37 @@ export default function Swap96({
                     const result = getBestPrice[0].result;
                     const bestAmountOut = result !== undefined ? result[0] as bigint : BigInt(0);
                     const bestPath = result !== undefined ? result[1] : [];
-                    const bestPathArray: string[] = bestPath.map((addr: `0x${string}`) => addr); // แปลง readonly `0x${string}`[] เป็น string[]
-                    if (bestPathArray.length > 2 && poolSelect === "UdonSwap") {
-                        console.log("UDON ROUTED : ", bestPathArray)
-                        setAltRoute({ a: bestPathArray[0] as '0xstring', b: bestPathArray[1] as '0xstring', c: bestPathArray[2] as '0xstring' })
-                    }
+                    const bestPathArray: string[] = bestPath.map((addr: `0x${string}`) => addr);
+                    if (bestPathArray.length > 2 && poolSelect === "UdonSwap") setAltRoute({ a: bestPathArray[0] as '0xstring', b: bestPathArray[1] as '0xstring', c: bestPathArray[2] as '0xstring' });
                     if (poolSelect === "UdonSwap" && Number(_amount) > 0 && bestAmountOut > 0) {
                         setBestPathArray(bestPathArray)
                         const newReserveA = Number(formatEther(reserveUdonA)) + Number(_amount)
                         const newReserveB = Number(formatEther(reserveUdonB)) - Number(formatEther(bestAmountOut))
                         const newprice = newReserveA/newReserveB
-                        const exrate = Number(formatEther(bestAmountOut)) / Number(_amount)
                         setNewPrice((newprice).toFixed(6));
                         setAmountB(formatEther(bestAmountOut))
                     }
-                        UdonswapRate = Number(formatEther(bestAmountOut))
+                    UdonswapRate = Number(formatEther(bestAmountOut))
                 }
             } catch (error) {
                 console.error("Error in getting UdonSwap quote:", error);
             }
-
-             //**--------- ponderFinance */
+            //**--------- ponderFinance */
             try {
                 if (Number(_amount) !== 0) {
                     const getPairAddr = await readContracts(config, { contracts: [{ ...CMswapUniSmartRouteContractV2, functionName: 'getPairAddress', args: [BigInt(2), tokenAvalue, tokenBvalue], }] })
                     const UdonPair = getPairAddr[0].result !== undefined ? getPairAddr[0].result as '0xstring' : '' as '0xstring'
-
                     const getBestPrice = await readContracts(config, {
                         contracts: [
                             { ...CMswapUniSmartRouteContractV2, functionName: 'findBestPathAndAmountOut', args: [BigInt(2), tokenAvalue, tokenBvalue, parseEther(_amount)] },
                             { ...UniswapPairv2PoolABI, address: UdonPair, functionName: 'token0' }
                         ]
                     });
-
                     const result = getBestPrice[0].result;
                     const bestAmountOut = result !== undefined ? result[0] as bigint : BigInt(0);
                     const bestPath = result !== undefined ? result[1] : [];
-                    const bestPathArray: string[] = bestPath.map((addr: `0x${string}`) => addr); // แปลง readonly `0x${string}`[] เป็น string[]
-
-                    if (bestPathArray.length > 2 && poolSelect === "ponder") {
-                        console.log("Ponder ROUTED : ", bestPathArray)
-                        setAltRoute({ a: bestPathArray[0] as '0xstring', b: bestPathArray[1] as '0xstring', c: bestPathArray[2] as '0xstring' })
-                    }
-
+                    const bestPathArray: string[] = bestPath.map((addr: `0x${string}`) => addr);
+                    if (bestPathArray.length > 2 && poolSelect === "ponder") setAltRoute({ a: bestPathArray[0] as '0xstring', b: bestPathArray[1] as '0xstring', c: bestPathArray[2] as '0xstring' });
                     if (poolSelect === "ponder" && Number(_amount) > 0 && bestAmountOut > 0) {
                         setBestPathArray(bestPathArray)
                         const price = ponderTVL.isReverted ? amountIn / Number(formatEther(bestAmountOut)) : Number(formatEther(bestAmountOut)) / amountIn
@@ -236,16 +186,11 @@ export default function Swap96({
             } catch (error) {
                 console.error("Error in getting PonderSwap quote:", error);
             }
-
-            console.log(`New RATE UPDATED\nCMswap : ${CMswapRate}\nDiamonSwap : ${DiamonSwapRate}\nUdonSwap  :${UdonswapRate}\nPonderFinance : ${ponderRate} `);
             return { CMswapRate, DiamonSwapRate, UdonswapRate,ponderRate }
         }
     }, 700)
 
-    const switchToken = () => {
-        setExchangeRate("")
-        switchTokens()
-    }
+    const switchToken = () => {setExchangeRate(""); switchTokens();}
 
     const handleSwap = async () => {
         if (wrappedRoute) {
@@ -265,11 +210,7 @@ export default function Swap96({
         setIsLoading(true)
         try {
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                const hash = await wrapNativeToken({
-                    config,
-                    wrappedTokenAddress: tokens[1].value,
-                    amount: parseEther(amountA),
-                })
+                const hash = await wrapNativeToken({config, wrappedTokenAddress: tokens[1].value, amount: parseEther(amountA)})
                 setTxupdate(hash)
             } else if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
                 await ensureTokenAllowance({
@@ -280,11 +221,7 @@ export default function Swap96({
                     requiredAmount: parseEther(amountA),
                     approveArgs: [bkcUnwapped as `0x${string}`, parseEther(amountA)],
                 })
-                const hash = await unwrapWrappedToken({
-                    config,
-                    contract: unwarppedNative,
-                    amount: parseEther(amountA),
-                })
+                const hash = await unwrapWrappedToken({config, contract: unwarppedNative, amount: parseEther(amountA)})
                 setTxupdate(hash)
             }
         } catch (e) {
@@ -296,18 +233,8 @@ export default function Swap96({
     const CMswap = async () => {
         setIsLoading(true)
         try {
-            let tokenAvalue
-            let tokenBvalue
-            if (tokenA.value === tokens[0].value) {
-                tokenAvalue = tokens[1].value
-            } else {
-                tokenAvalue = tokenA.value
-            }
-            if (tokenB.value === tokens[0].value) {
-                tokenBvalue = tokens[1].value
-            } else {
-                tokenBvalue = tokenB.value
-            }
+            let tokenAvalue = tokenA.value === tokens[0].value ? tokens[1].value : tokenA.value;
+            let tokenBvalue = tokenB.value === tokens[0].value ? tokens[1].value : tokenB.value;
             if (tokenA.value.toUpperCase() !== tokens[0].value.toUpperCase()) {
                 const isKap20 = tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()
                 await ensureTokenAllowance({
@@ -322,7 +249,6 @@ export default function Swap96({
             const parsedAmountIn = parseEther(amountA)
             const amountOutMinimum = parseEther(amountB) * BigInt(95) / BigInt(100)
             const path = altRoute ? encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect]) : undefined
-
             const { hash: h, amountOut: r } = await executeRouterSwap({
                 config,
                 router: router02Contract,
@@ -335,7 +261,6 @@ export default function Swap96({
                 path,
                 value: tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() ? parsedAmountIn : BigInt(0),
             })
-
             setTxupdate(h)
             if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
                 await ensureTokenAllowance({
@@ -346,11 +271,7 @@ export default function Swap96({
                     requiredAmount: r,
                     approveArgs: [bkcUnwapped as `0x${string}`, r],
                 })
-                let { request } = await simulateContract(config, {
-                    ...unwarppedNative,
-                    functionName: 'withdraw',
-                    args: [r as bigint]
-                })
+                let { request } = await simulateContract(config, {...unwarppedNative, functionName: 'withdraw', args: [r as bigint]})
                 let h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
@@ -364,11 +285,8 @@ export default function Swap96({
         setIsLoading(true)
         try {
             const deadline = Math.floor(Date.now() / 1000) + 60 * 10
-
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                // token a 
                 let h, r
-
                 if (tokenA.value.toUpperCase() === tokens[0].value.toLocaleUpperCase()) {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
@@ -378,32 +296,20 @@ export default function Swap96({
                     })
                     r = result
                     h = await writeContract(config, request)
-
                 } else {
                     const route = bestPathArray as readonly `0x${string}`[];
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
                         functionName: 'swapExactTokensForTokensWithFee',
-                        args: [
-                            BigInt(0),
-                            parseEther(amountA),
-                            parseEther(amountB) * BigInt(95) / BigInt(100),
-                            route,
-                            address as `0x${string}`,
-                            BigInt(deadline)
-                        ]
+                        args: [BigInt(0), parseEther(amountA), parseEther(amountB) * BigInt(95) / BigInt(100), route, address as `0x${string}`, BigInt(deadline)]
                     });
-
                     r = result;
                     h = await writeContract(config, request);
                     await waitForTransactionReceipt(config, { hash: h })
                     setTxupdate(h)
                 }
-
-
             } else if (tokenA.value.toUpperCase() !== tokens[0].value.toLocaleUpperCase()) {
-                // token A = Normal ERC20
-                let allowanceA;
+                let allowanceA, h, r
                 if (tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {
                     allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value as '0xstring', functionName: 'allowances', args: [address as '0xstring', CMswapUniSmartRoute] })
                 } else {
@@ -414,10 +320,6 @@ export default function Swap96({
                     const h = await writeContract(config, request)
                     await waitForTransactionReceipt(config, { hash: h })
                 }
-                const deadline = Math.floor(Date.now() / 1000) + 60 * 10
-
-                let h, r
-
                 if (altRoute === undefined || bestPathArray !== undefined) {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
@@ -429,9 +331,7 @@ export default function Swap96({
                     await waitForTransactionReceipt(config, { hash: h })
                     setTxupdate(h)
                 }
-
             }
-
         } catch (e) {
             setErrMsg(e as WriteContractErrorType)
         }
@@ -442,11 +342,8 @@ export default function Swap96({
         setIsLoading(true)
         try {
             const deadline = Math.floor(Date.now() / 1000) + 60 * 10
-
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                // token a 
                 let h, r
-
                 if (tokenA.value.toUpperCase() === tokens[0].value.toLocaleUpperCase()) {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
@@ -456,32 +353,20 @@ export default function Swap96({
                     })
                     r = result
                     h = await writeContract(config, request)
-
                 } else {
                     const route = bestPathArray as readonly `0x${string}`[];
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
                         functionName: 'swapExactTokensForTokensWithFee',
-                        args: [
-                            BigInt(1),
-                            parseEther(amountA),
-                            parseEther(amountB) * BigInt(95) / BigInt(100),
-                            route,
-                            address as `0x${string}`,
-                            BigInt(deadline)
-                        ]
+                        args: [BigInt(1), parseEther(amountA), parseEther(amountB) * BigInt(95) / BigInt(100), route, address as `0x${string}`, BigInt(deadline)]
                     });
-
                     r = result;
                     h = await writeContract(config, request);
                     await waitForTransactionReceipt(config, { hash: h })
                     setTxupdate(h)
                 }
-
-
             } else if (tokenA.value.toUpperCase() !== tokens[0].value.toLocaleUpperCase()) {
-                // token A = Normal ERC20
-                let allowanceA;
+                let allowanceA, h, r
                 if (tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {
                     allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value as '0xstring', functionName: 'allowances', args: [address as '0xstring', CMswapUniSmartRoute] })
                 } else {
@@ -492,10 +377,6 @@ export default function Swap96({
                     const h = await writeContract(config, request)
                     await waitForTransactionReceipt(config, { hash: h })
                 }
-                const deadline = Math.floor(Date.now() / 1000) + 60 * 10
-
-                let h, r
-
                 if (altRoute === undefined || bestPathArray !== undefined) {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
@@ -507,9 +388,7 @@ export default function Swap96({
                     await waitForTransactionReceipt(config, { hash: h })
                     setTxupdate(h)
                 }
-
             }
-
         } catch (e) {
             setErrMsg(e as WriteContractErrorType)
         }
@@ -520,11 +399,8 @@ export default function Swap96({
         setIsLoading(true)
         try {
             const deadline = Math.floor(Date.now() / 1000) + 60 * 10
-
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                // token a 
                 let h, r
-
                 if (tokenA.value.toUpperCase() === tokens[0].value.toLocaleUpperCase()) {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
@@ -534,32 +410,20 @@ export default function Swap96({
                     })
                     r = result
                     h = await writeContract(config, request)
-
                 } else {
                     const route = bestPathArray as readonly `0x${string}`[];
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
                         functionName: 'swapExactTokensForTokensWithFee',
-                        args: [
-                            BigInt(2),
-                            parseEther(amountA),
-                            parseEther(amountB) * BigInt(95) / BigInt(100),
-                            route,
-                            address as `0x${string}`,
-                            BigInt(deadline)
-                        ]
+                        args: [BigInt(2), parseEther(amountA), parseEther(amountB) * BigInt(95) / BigInt(100), route, address as `0x${string}`, BigInt(deadline)]
                     });
-
                     r = result;
                     h = await writeContract(config, request);
                     await waitForTransactionReceipt(config, { hash: h })
                     setTxupdate(h)
                 }
-
-
             } else if (tokenA.value.toUpperCase() !== tokens[0].value.toLocaleUpperCase()) {
-                // token A = Normal ERC20
-                let allowanceA;
+                let allowanceA, h, r
                 if (tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {
                     allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value as '0xstring', functionName: 'allowances', args: [address as '0xstring', CMswapUniSmartRoute] })
                 } else {
@@ -570,10 +434,6 @@ export default function Swap96({
                     const h = await writeContract(config, request)
                     await waitForTransactionReceipt(config, { hash: h })
                 }
-                const deadline = Math.floor(Date.now() / 1000) + 60 * 10
-
-                let h, r
-
                 if (altRoute === undefined || bestPathArray !== undefined) {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
@@ -585,68 +445,28 @@ export default function Swap96({
                     await waitForTransactionReceipt(config, { hash: h })
                     setTxupdate(h)
                 }
-
             }
-
         } catch (e) {
             setErrMsg(e as WriteContractErrorType)
         }
         setIsLoading(false)
     }
 
-    useSwap96PoolData({
-        config,
-        address,
-        tokens,
-        tokenA,
-        tokenB,
-        feeSelect,
-        txupdate,
-        hasInitializedFromParams,
-        setTokenA,
-        setTokenB,
-        setTokenABalance,
-        setTokenBBalance,
-        setWrappedRoute,
-        setExchangeRate,
-        setAltRoute,
-        setCMswapTVL,
-        setDMswapTVL,
-        setUdonTVL,
-        setPonderTVL,
-        setReserveUdonA,
-        setReserveUdonB,
-        setAmountA,
-        setAmountB,
-    })
+    useSwap96PoolData({config, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute, setCMswapTVL, setDMswapTVL, setUdonTVL, setPonderTVL, setReserveUdonA, setReserveUdonB, setAmountA, setAmountB,})
 
     React.useEffect(() => {
         const updateRate = async () => {
             setAltRoute(undefined);
-
-            const poolMap = {
-                CMswap: CMswapTVL,
-                DiamonSwap: DMswapTVL,
-                UdonSwap: UdonTVL,
-                ponder: ponderTVL,
-            } as const;
-
+            const poolMap = {CMswap: CMswapTVL, DiamonSwap: DMswapTVL, UdonSwap: UdonTVL, ponder: ponderTVL,} as const;
             type PoolKey = keyof typeof poolMap;
-
             if (poolSelect in poolMap) {
                 const selectedPool = poolMap[poolSelect as PoolKey];
-
                 setExchangeRate(selectedPool.exchangeRate);
-                console.log(`Quote Price ${poolSelect}`, selectedPool.exchangeRate);
-
                 setFixedExchangeRate(selectedPool.FixedExchangeRate);
-                // console.log(`Fix price set for ${poolSelect} :`, selectedPool.FixedExchangeRate);
             } else {
                 setExchangeRate("0");
-                console.log("No valid pool selected");
             }
         };
-
         if (!wrappedRoute) updateRate();
     }, [amountA, poolSelect, CMswapTVL, DMswapTVL, UdonTVL, ponderTVL, txupdate]);
 
@@ -655,58 +475,26 @@ export default function Swap96({
             if (CMswapTVL || DMswapTVL || UdonTVL) {
                 try {
                     const quote = await getQoute(amountA);
-                   /*  console.log("Fetched quote:", quote); */
-
-                    const CMRate = Number(quote?.CMswapRate) > 0
-                        ? Number(quote?.CMswapRate)
-                        : Number(CMswapTVL?.exchangeRate || 0);
-
-                    const DMRate = Number(quote?.DiamonSwapRate) > 0
-                        ? Number(quote?.DiamonSwapRate)
-                        : Number(DMswapTVL?.exchangeRate || 0);
-
-                    const UdonRate = Number(quote?.UdonswapRate) > 0
-                        ? Number(quote?.UdonswapRate)
-                        : Number(UdonTVL?.exchangeRate || 0);
-
-                    const PonderRate = Number(quote?.ponderRate) > 0
-                        ? Number(quote?.ponderRate)
-                        : Number(ponderTVL?.exchangeRate || 0);
-
-                    const rates = {
-                        CMswap: CMRate,
-                        DiamonSwap: DMRate,
-                        UdonSwap: UdonRate,
-                        ponder: PonderRate,
-                    };
-
-                    console.log("Computed rates:", rates);
-
+                    const CMRate = Number(quote?.CMswapRate) > 0 ? Number(quote?.CMswapRate) : Number(CMswapTVL?.exchangeRate || 0);
+                    const DMRate = Number(quote?.DiamonSwapRate) > 0 ? Number(quote?.DiamonSwapRate) : Number(DMswapTVL?.exchangeRate || 0);
+                    const UdonRate = Number(quote?.UdonswapRate) > 0 ? Number(quote?.UdonswapRate) : Number(UdonTVL?.exchangeRate || 0);
+                    const PonderRate = Number(quote?.ponderRate) > 0 ? Number(quote?.ponderRate) : Number(ponderTVL?.exchangeRate || 0);
+                    const rates = {CMswap: CMRate, DiamonSwap: DMRate, UdonSwap: UdonRate, ponder: PonderRate};
                     const validRates = Object.entries(rates).filter(([, rate]) => rate > 0);
-                    if (validRates.length === 0) {
-                        console.log("No valid rates available from any pool.");
-                        return;
-                    }
-
+                    if (validRates.length === 0) return;
                     const sortedEntries = validRates.sort((a, b) => b[1] - a[1]);
                     const [bestPool, bestRate] = sortedEntries[0];
-
                     setBestPool(bestPool);
-
                     if (poolSelect === "") setPoolSelect(bestPool);
                 } catch (error) {
                     console.error("Error fetching quote or processing rates:", error);
                 }
             }
         };
-
         fetchQuoteAndSetPool();
     }, [CMswapTVL, DMswapTVL, UdonTVL, amountA]);
 
-    React.useEffect(() => {
-        setPoolSelect("")
-        setFeeSelect(10000)
-    }, [tokenA, tokenB])
+    React.useEffect(() => {setPoolSelect(""); setFeeSelect(10000);}, [tokenA, tokenB])
 
     return (
         <div className='space-y-2'>
@@ -778,7 +566,6 @@ export default function Swap96({
             />
             {!wrappedRoute &&
                 <div className="mt-6">
-                    {/** LIQUIDITY SELECTION  */}
                     <div className="flex justify-between items-center my-2">
                         <span className="text-gray-400 text-xs">Liquidity Available</span>
                     </div>
@@ -787,11 +574,7 @@ export default function Swap96({
                             const tvlKeys = ['tvl10000', 'tvl3000', 'tvl500', 'tvl100'] as const;
                             const shouldShowTVL = tvlKeys.some(key => Number(CMswapTVL[key]) > 0);
                             const tvlValue = Number(CMswapTVL[`tvl${feeSelect}` as keyof typeof CMswapTVL]);
-
-                            if (!shouldShowTVL) {
-                                return ""
-                            }
-
+                            if (!shouldShowTVL) return "";
                             return (
                                 <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "CMswap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("CMswap"); getQoute(amountA);}}>
                                     <span className="flex items-center gap-1">
@@ -826,8 +609,6 @@ export default function Swap96({
                             </Button>
                         )}
                     </div>
-
-                    {/** CMswap FEE SELECTION  */}
                     {poolSelect === "CMswap" && (
                         <>
                             <div className="flex justify-between items-center my-2">
@@ -855,28 +636,13 @@ export default function Swap96({
                     )}
                 </div>
             }
-            {(tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountB) !== 0 ? (
-                <Button
-                    className="w-full py-6 px-8 mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
-                    bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
-                    hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect
-                    shadow-lg shadow-emerald-500/40
-                    active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer"
-                    onClick={handleSwap}
-                >
+            {(tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountB) !== 0 ? 
+                <Button className="w-full py-6 px-8 mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect shadow-lg shadow-emerald-500/40 active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" onClick={handleSwap}>Swap</Button> :
+                <Button disabled className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 mt-4 uppercase">
                     Swap
+                    <span className="absolute inset-0 overflow-hidden rounded-3xl"><span className="absolute left-[-100%] top-0 h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-all duration-600 group-hover:left-[100%]"></span></span>
                 </Button>
-            ) : (
-                <Button
-                    disabled
-                    className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 mt-4 uppercase"
-                >
-                    Swap
-                    <span className="absolute inset-0 overflow-hidden rounded-3xl">
-                        <span className="absolute left-[-100%] top-0 h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-all duration-600 group-hover:left-[100%]"></span>
-                    </span>
-                </Button>
-            ))}
+            )}
 
             <div className="mt-4 border-t border-[#00ff9d]/10 pt-4">
                 {altRoute !== undefined &&
@@ -889,13 +655,11 @@ export default function Swap96({
                     <>
                         <div className="flex items-center text-gray-500 text-xs my-2">
                             <span className="mr-1">price qoute</span>
-                            {exchangeRate !== '0' && !isNaN(Number(exchangeRate))
-                                ? (<span
-                                    className="text-[#00ff9d] text-xs px-2 gap-1 hover:cursor-pointer" onClick={() => setSwapDirection(!swapDirection)}>
+                            {exchangeRate !== '0' && !isNaN(Number(exchangeRate)) ?
+                                <span className="text-[#00ff9d] text-xs px-2 gap-1 hover:cursor-pointer" onClick={() => setSwapDirection(!swapDirection)}>
                                     {swapDirection ? `1 ${tokenB.name} = ${Number(exchangeRate).toFixed(4)} ${tokenA.name}` : `1 ${tokenA.name} = ${isFinite(1 / Number(exchangeRate)) ? (1 / Number(exchangeRate)).toFixed(4) : (0).toFixed(4)} ${tokenB.name}`}
-                                </span>
-                                )
-                                : <span className="text-red-500 px-2">insufficient liquidity</span>
+                                </span> :
+                                <span className="text-red-500 px-2">insufficient liquidity</span>
                             }
                             {!wrappedRoute && Number(amountB) > 0 &&
                                 <span>

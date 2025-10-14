@@ -14,9 +14,7 @@ import { useSwap10143PoolData } from '@/app/components/swap/hooks/useSwap10143Po
 import { SwapTokenPanel } from '@/app/components/swap/SwapTokenPanel'
 import { Button } from '@/components/ui/button'
 
-export default function Swap10143({
-    setIsLoading, setErrMsg,
-}: {
+export default function Swap10143({ setIsLoading, setErrMsg, }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
     setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>,
 }) {
@@ -30,19 +28,7 @@ export default function Swap10143({
     const [poolSelect, setPoolSelect] = React.useState("")
     const [wrappedRoute, setWrappedRoute] = React.useState(false)
     const [newPrice, setNewPrice] = React.useState("")
-    const {
-        tokenA,
-        tokenB,
-        setTokenA,
-        setTokenB,
-        hasInitializedFromParams,
-        updateURLWithTokens,
-        switchTokens,
-    } = useSwapTokenSelection(tokens, {
-        defaultTokenAIndex: 0,
-        defaultTokenBIndex: 2,
-        referralAddress: address,
-    })
+    const {tokenA, tokenB, setTokenA, setTokenB, hasInitializedFromParams, updateURLWithTokens, switchTokens} = useSwapTokenSelection(tokens, {defaultTokenAIndex: 0, defaultTokenBIndex: 2, referralAddress: address})
     const [tokenABalance, setTokenABalance] = React.useState("")
     const [amountA, setAmountA] = React.useState("")
     const [tokenBBalance, setTokenBBalance] = React.useState("")
@@ -51,57 +37,21 @@ export default function Swap10143({
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
     const [swapDirection, setSwapDirection] = React.useState(true) // false = A->B, true = B->A
-    const [CMswapToken0, setCMswapToken0] = React.useState("");
+    React.useEffect(() => {console.log("hasInitializedFromParams : ", hasInitializedFromParams);}, [hasInitializedFromParams])
+    const tokenABalanceLabel = tokenA.name !== 'Choose Token' ? `${Number(tokenABalance).toFixed(6)} ${tokenA.name}` : '0.000000'
+    const tokenBBalanceLabel = tokenB.name !== 'Choose Token' ? `${Number(tokenBBalance).toFixed(6)} ${tokenB.name}` : '0.000000'
 
-    useSwap10143PoolData({
-        config,
-        address,
-        tokens,
-        tokenA,
-        tokenB,
-        feeSelect,
-        txupdate,
-        hasInitializedFromParams,
-        setTokenA,
-        setTokenB,
-        setTokenABalance,
-        setTokenBBalance,
-        setWrappedRoute,
-        setExchangeRate,
-        setAltRoute,
-        setCMswapTVL,
-        setFixedExchangeRate,
-        setCMswapToken0,
-        setAmountA,
-        setAmountB,
-    })
+    useSwap10143PoolData({config, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute, setCMswapTVL, setFixedExchangeRate, setAmountA, setAmountB})
 
-    React.useEffect(() => {
-        console.log("hasInitializedFromParams : ", hasInitializedFromParams)
-    }, [hasInitializedFromParams])
-
-    const tokenABalanceLabel = tokenA.name !== 'Choose Token'
-        ? `${Number(tokenABalance).toFixed(6)} ${tokenA.name}`
-        : '0.000000'
-    const tokenBBalanceLabel = tokenB.name !== 'Choose Token'
-        ? `${Number(tokenBBalance).toFixed(6)} ${tokenB.name}`
-        : '0.000000'
-
-    const { quoteExactInputSingle, quoteExactInput } = useSwapQuote({
-        config,
-        contract: qouterV2Contract,
-        tokens,
-    })
+    const { quoteExactInputSingle, quoteExactInput } = useSwapQuote({config, contract: qouterV2Contract, tokens})
 
     const getQoute = useDebouncedCallback(async (_amount: string) => {
         let CMswapRate = 0
         const amountIn = Number(_amount)
-
         if (wrappedRoute) {
             setAmountB(amountIn.toString())
             return { CMswapRate }
         }
-
         try {
             if (Number(_amount) !== 0) {
                 if (altRoute === undefined) {
@@ -115,9 +65,7 @@ export default function Swap10143({
                     })
 
                     if (quoteOutput) {
-                        if (poolSelect === "CMswap") {
-                            setAmountB(formatUnits(quoteOutput.amountOut, tokenB.decimal))
-                        }
+                        if (poolSelect === "CMswap") setAmountB(formatUnits(quoteOutput.amountOut, tokenB.decimal));
                         CMswapRate = Number(formatEther(quoteOutput.amountOut))
                         if (quoteOutput.sqrtPriceX96 !== undefined) {
                             const newPrice = 1 / ((Number(quoteOutput.sqrtPriceX96) / (2 ** 96)) ** 2)
@@ -135,9 +83,7 @@ export default function Swap10143({
                     })
 
                     if (quoteOutput) {
-                        if (poolSelect === "CMswap") {
-                            setAmountB(formatUnits(quoteOutput.amountOut, tokenB.decimal))
-                        }
+                        if (poolSelect === "CMswap") setAmountB(formatUnits(quoteOutput.amountOut, tokenB.decimal));
                         CMswapRate = Number(formatEther(quoteOutput.amountOut))
                         if (quoteOutput.sqrtPriceX96 !== undefined) {
                             const newPrice = 1 / ((Number(quoteOutput.sqrtPriceX96) / (2 ** 96)) ** 2)
@@ -148,15 +94,11 @@ export default function Swap10143({
             } else {
                 setAmountB("")
             }
-        } catch { }
-
+        } catch {}
         return { CMswapRate }
     }, 700)
 
-    const switchToken = () => {
-        setExchangeRate("")
-        switchTokens()
-    }
+    const switchToken = () => {setExchangeRate(""); switchTokens();}
 
     const handleSwap = async () => {
         if (wrappedRoute) {
@@ -170,18 +112,10 @@ export default function Swap10143({
         setIsLoading(true)
         try {
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                const hash = await wrapNativeToken({
-                    config,
-                    wrappedTokenAddress: tokens[1].value,
-                    amount: parseEther(amountA),
-                })
+                const hash = await wrapNativeToken({config, wrappedTokenAddress: tokens[1].value, amount: parseEther(amountA)})
                 setTxupdate(hash)
             } else if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                const hash = await unwrapWrappedToken({
-                    config,
-                    contract: wrappedNative,
-                    amount: parseEther(amountA),
-                })
+                const hash = await unwrapWrappedToken({config, contract: wrappedNative, amount: parseEther(amountA)})
                 setTxupdate(hash)
             }
         } catch (e) {
@@ -193,18 +127,8 @@ export default function Swap10143({
     const CMswap = async () => {
         setIsLoading(true)
         try {
-            let tokenAvalue
-            let tokenBvalue
-            if (tokenA.value === tokens[0].value) {
-                tokenAvalue = tokens[1].value
-            } else {
-                tokenAvalue = tokenA.value
-            }
-            if (tokenB.value === tokens[0].value) {
-                tokenBvalue = tokens[1].value
-            } else {
-                tokenBvalue = tokenB.value
-            }
+            let tokenAvalue = tokenA.value === tokens[0].value ? tokens[1].value : tokenA.value;
+            let tokenBvalue = tokenB.value === tokens[0].value ? tokens[1].value : tokenB.value;
             if (tokenA.value.toUpperCase() !== tokens[0].value.toUpperCase()) {
                 await ensureTokenAllowance({
                     config,
@@ -217,7 +141,6 @@ export default function Swap10143({
             const parsedAmountIn = parseUnits(amountA, tokenA.decimal)
             const amountOutMinimum = parseUnits(amountB, tokenB.decimal) * BigInt(95) / BigInt(100)
             const path = altRoute ? encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect]) : undefined
-
             const { hash: h, amountOut: r } = await executeRouterSwap({
                 config,
                 router: router02Contract,
@@ -230,14 +153,9 @@ export default function Swap10143({
                 path,
                 value: tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() ? parseEther(amountA) : BigInt(0),
             })
-
             setTxupdate(h)
             if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                let { request } = await simulateContract(config, {
-                    ...wrappedNative,
-                    functionName: 'withdraw',
-                    args: [r as bigint]
-                })
+                let { request } = await simulateContract(config, {...wrappedNative, functionName: 'withdraw', args: [r as bigint]})
                 let h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
@@ -248,15 +166,10 @@ export default function Swap10143({
     }
 
     // Pool data loading handled by useSwap10143PoolData hook
-
     React.useEffect(() => {
         const updateRate = async () => {
-            if (poolSelect === "CMswap") {
-                setExchangeRate(CMswapTVL.exchangeRate);
-                console.log('Fallback Quote Price CMswap', CMswapTVL.exchangeRate);
-            }
+            if (poolSelect === "CMswap") setExchangeRate(CMswapTVL.exchangeRate);
         };
-
         !wrappedRoute && updateRate();
     }, [amountA, poolSelect, CMswapTVL]);
 
@@ -265,48 +178,23 @@ export default function Swap10143({
             if (CMswapTVL) {
                 try {
                     const quote = await getQoute(amountA);
-                    console.log("Fetched quote:", quote);
-
-                    const CMRate = Number(quote?.CMswapRate) > 0
-                        ? Number(quote?.CMswapRate)
-                        : Number(CMswapTVL?.exchangeRate || 0);
-
-                    const rates = {
-                        CMswap: CMRate,
-                    };
-
-                    console.log("Computed rates:", rates);
-
+                    const CMRate = Number(quote?.CMswapRate) > 0 ? Number(quote?.CMswapRate) : Number(CMswapTVL?.exchangeRate || 0);
+                    const rates = { CMswap: CMRate, };
                     const validRates = Object.entries(rates).filter(([, rate]) => rate > 0);
-                    if (validRates.length === 0) {
-                        console.log("No valid rates available from any pool.");
-                        return;
-                    }
-
+                    if (validRates.length === 0) return;
                     const sortedEntries = validRates.sort((a, b) => b[1] - a[1]);
                     const [bestPool, bestRate] = sortedEntries[0];
-
-                    console.log("Best pool selected:", bestPool, "with rate:", bestRate);
                     setBestPool(bestPool);
-
-                    if (poolSelect === "") {
-                        setPoolSelect(bestPool);
-                        console.log("Pool selected automatically:", bestPool);
-                    }
-
+                    if (poolSelect === "") setPoolSelect(bestPool);
                 } catch (error) {
                     console.error("Error fetching quote or processing rates:", error);
                 }
             }
         };
-
         fetchQuoteAndSetPool();
     }, [CMswapTVL, amountA]);
 
-    React.useEffect(() => {
-        setPoolSelect("")
-        setFeeSelect(10000)
-    }, [tokenA, tokenB])
+    React.useEffect(() => {setPoolSelect(""); setFeeSelect(10000);}, [tokenA, tokenB])
 
     return (
         <div className='space-y-2'>
@@ -386,11 +274,7 @@ export default function Swap10143({
                             const tvlKeys = ['tvl10000', 'tvl3000', 'tvl500', 'tvl100'] as const;
                             const shouldShowTVL = tvlKeys.some(key => Number(CMswapTVL[key]) > 0);
                             const tvlValue = Number(CMswapTVL[`tvl${feeSelect}` as keyof typeof CMswapTVL]);
-
-                            if (!shouldShowTVL) {
-                                return ""
-                            }
-
+                            if (!shouldShowTVL) return "";
                             return (
                                 <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "CMswap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("CMswap"); getQoute(amountA);}}>
                                     <span className="flex items-center gap-1">
@@ -401,7 +285,6 @@ export default function Swap10143({
                             );
                         })()}
                     </div>
-
                     {poolSelect === "CMswap" && (
                         <>
                             <div className="flex justify-between items-center my-2">
@@ -429,26 +312,10 @@ export default function Swap10143({
                     )}
                 </div>
             }
-            {(tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountB) !== 0 ? (
-                <Button 
-                    className="w-full py-6 px-8 mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
-                    bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
-                    hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect
-                    shadow-lg shadow-emerald-500/40
-                    active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" 
-                    onClick={handleSwap}
-                >
-                    Swap
-                </Button>
-            ) : (
-                <Button
-                    disabled
-                    className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 mt-4"
-                >
-                    Swap
-                </Button>
-            ))}
-
+            {(tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountB) !== 0 ?
+                <Button className="w-full py-6 px-8 mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect shadow-lg shadow-emerald-500/40 active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" onClick={handleSwap}>Swap</Button> :
+                <Button disabled className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 mt-4">Swap</Button>
+            )}
             <div className="mt-4 border-t border-[#00ff9d]/10 pt-4">
                 {altRoute !== undefined &&
                     <div className="flex items-center text-gray-500 text-xs my-2">
@@ -460,13 +327,11 @@ export default function Swap10143({
                     <>
                         <div className="flex items-center text-gray-500 text-xs my-2">
                             <span className="mr-1">price qoute</span>
-                            {exchangeRate !== '0' && !isNaN(Number(exchangeRate))
-                                ? (<span
-                                    className="text-[#00ff9d] text-xs px-2 gap-1 hover:cursor-pointer" onClick={() => setSwapDirection(!swapDirection)}>
+                            {exchangeRate !== '0' && !isNaN(Number(exchangeRate)) ? 
+                                <span className="text-[#00ff9d] text-xs px-2 gap-1 hover:cursor-pointer" onClick={() => setSwapDirection(!swapDirection)}>
                                     {swapDirection ? `1 ${tokenB.name} = ${Number(exchangeRate).toFixed(6)} ${tokenA.name}` : `1 ${tokenA.name} = ${isFinite(1 / Number(exchangeRate)) ? (1 / Number(exchangeRate)).toFixed(4) : (0).toFixed(4)} ${tokenB.name}`}
-                                </span>
-                                )
-                                : <span className="text-red-500 px-2">insufficient liquidity</span>
+                                </span> : 
+                                <span className="text-red-500 px-2">insufficient liquidity</span>
                             }
                             {!wrappedRoute && Number(amountB) > 0 &&
                                 <span>[PI: {

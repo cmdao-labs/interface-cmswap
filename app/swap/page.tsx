@@ -27,7 +27,6 @@ export default function Page() {
     const { chainId } = useAccount()
     const searchParams = useSearchParams();
     const tabValue = searchParams.get("tab") ?? "swap"; 
-
     return (
         <div className="min-h-screen w-full flex flex-col items-center justify-start text-xs bg-gradient-to-br from-slate-700 via-black to-emerald-900">
             <ReferralTracker/>
@@ -48,10 +47,8 @@ export default function Page() {
                             {chainId === 10143 && <Swap10143 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
                             {chainId === 25925 && <Swap25925 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
                         </TabsContent>
-
-                          <TabsContent value="send">
+                        <TabsContent value="send">
                             <SendTokenComponent chainConfig={Number(chainId)} setIsLoading={setIsLoading} setErrMsg={setErrMsg} />
-
                         </TabsContent>
                         <TabsContent value="liquidity">
                             {chainId === 8899 && <Liquidity8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}

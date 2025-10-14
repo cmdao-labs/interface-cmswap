@@ -1,5 +1,4 @@
-'use client'
-
+'use client';
 /**
  * Encodes a Uniswap-style multi-hop path.
  *
@@ -8,14 +7,8 @@
  * @returns Hex encoded path string.
  */
 export function encodePath(tokens: readonly string[], fees: readonly number[]): `0x${string}` {
-    if (tokens.length === 0) {
-        throw new Error('encodePath requires at least one token address')
-    }
-
-    if (tokens.length !== fees.length + 1) {
-        throw new Error('encodePath expects fees length to be tokens length minus one')
-    }
-
+    if (tokens.length === 0) throw new Error('encodePath requires at least one token address');
+    if (tokens.length !== fees.length + 1) throw new Error('encodePath expects fees length to be tokens length minus one');
     let path = '0x'
     for (let i = 0; i < fees.length; i++) {
         path += tokens[i].slice(2)
@@ -33,10 +26,6 @@ export function encodePath(tokens: readonly string[], fees: readonly number[]): 
  * @returns Hex encoded path string.
  */
 export function encodeTerminalToken(tokens: readonly string[]): `0x${string}` {
-    if (tokens.length === 0) {
-        throw new Error('encodeTerminalToken requires at least one token address')
-    }
-
+    if (tokens.length === 0) throw new Error('encodeTerminalToken requires at least one token address');
     return `0x${tokens[tokens.length - 1].slice(2)}` as `0x${string}`
 }
-

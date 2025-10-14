@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
+import { simulateContract, waitForTransactionReceipt, writeContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, parseEther, erc20Abi } from 'viem'
 import { config } from '@/app/config'
 import ErrorModal from '@/app/components/error-modal'
@@ -19,15 +19,9 @@ const chains: { name: string, id: number, logo: string }[] = [
 ]
 
 const tokens: { name: string, value: '0xstring', logo: string }[][] = [
-    [
-        { name: 'JUSDT', value: '0x24599b658b57f91E7643f4F154B16bcd2884f9ac' as '0xstring', logo: 'https://gateway.pinata.cloud/ipfs/bafkreif3vllg6mwswlqypqgtsh7i7wwap7zgrkvtlhdjoc63zjm7uv6vvi' },
-    ],
-    [
-        { name: 'KUSDT', value: '0x7d984C24d2499D840eB3b7016077164e15E5faA6' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreieg7yf6iwx7obygg62hz252bwnaddedanvlizonaawagk7eze4qcu' },
-    ],
-    [
-        { name: 'USDT', value: '0x55d398326f99059fF775485246999027B3197955' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreieg7yf6iwx7obygg62hz252bwnaddedanvlizonaawagk7eze4qcu' },
-    ],
+    [{ name: 'JUSDT', value: '0x24599b658b57f91E7643f4F154B16bcd2884f9ac' as '0xstring', logo: 'https://gateway.pinata.cloud/ipfs/bafkreif3vllg6mwswlqypqgtsh7i7wwap7zgrkvtlhdjoc63zjm7uv6vvi' },],
+    [{ name: 'KUSDT', value: '0x7d984C24d2499D840eB3b7016077164e15E5faA6' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreieg7yf6iwx7obygg62hz252bwnaddedanvlizonaawagk7eze4qcu' },],
+    [{ name: 'USDT', value: '0x55d398326f99059fF775485246999027B3197955' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreieg7yf6iwx7obygg62hz252bwnaddedanvlizonaawagk7eze4qcu' },],
 ]
 
 export default function BridgeInterface() {
@@ -45,14 +39,12 @@ export default function BridgeInterface() {
     const [destinationChain, setDestinationChain] = useState(chains[1])
     const [destinationTokens, setDestinationTokens] = useState(tokens[1])
     const [tokenB, setTokenB] = useState(tokens[1][0])
-
     const [reserve, setReserve] = useState('0')
     const [sourceBalance, setSourceBalance] = useState('0')
     const [destinationBalance, setDestinationBalance] = useState('0')
     const [escrowAddress, setEscrowAddress] = useState('0x' as '0xstring')
     const [bridgeFee, setBridgeFee] = useState('0')
     const [depositValue, setDepositValue] = useState('')
-
 
     useEffect(() => {
         const fetch0 = async () => {
@@ -76,27 +68,9 @@ export default function BridgeInterface() {
             }
             const data = await readContracts(config, {
                 contracts: [
-                    {
-                        address: tokenB.value,
-                        abi: erc20Abi,
-                        functionName: 'balanceOf',
-                        args: [reserveAddr],
-                        chainId: destinationChain.id,
-                    },
-                    {
-                        address: tokenA.value,
-                        abi: erc20Abi,
-                        functionName: 'balanceOf',
-                        args: [address as '0xstring'],
-                        chainId: sourceChain.id,
-                    },
-                    {
-                        address: tokenB.value,
-                        abi: erc20Abi,
-                        functionName: 'balanceOf',
-                        args: [address as '0xstring'],
-                        chainId: destinationChain.id,
-                    },
+                    { address: tokenB.value, abi: erc20Abi, functionName: 'balanceOf', args: [reserveAddr], chainId: destinationChain.id },
+                    { address: tokenA.value, abi: erc20Abi, functionName: 'balanceOf', args: [address as '0xstring'], chainId: sourceChain.id },
+                    { address: tokenB.value, abi: erc20Abi, functionName: 'balanceOf', args: [address as '0xstring'], chainId: destinationChain.id },
                 ],
             })
             data[0].result !== undefined ? setReserve(formatEther(data[0].result)) : setReserve('0')
@@ -104,20 +78,13 @@ export default function BridgeInterface() {
             data[2].result !== undefined ? setDestinationBalance(formatEther(data[2].result)) : setDestinationBalance('0')
         }
 
-
         fetch0()
     }, [config, address, txupdate, erc20Abi, sourceChain, destinationChain])
 
     const bridge = async () => {
         setIsLoading(true)
         try {
-            const { request } = await simulateContract(config, {
-                address: tokenA.value,
-                abi: erc20Abi,
-                functionName: 'transfer',
-                args: [escrowAddress, parseEther(depositValue)],
-                chainId: sourceChain.id,
-            })
+            const { request } = await simulateContract(config, {address: tokenA.value, abi: erc20Abi, functionName: 'transfer', args: [escrowAddress, parseEther(depositValue)], chainId: sourceChain.id})
             const h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
@@ -133,9 +100,7 @@ export default function BridgeInterface() {
             {isLoading && <div className="w-full h-full fixed backdrop-blur-[12px] z-999" />}
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
             <Card className="w-full max-w-xl mx-auto bg-water-950 border border-[#00ff9d]/20 rounded-lg overflow-hidden p-4 mb-8 mt-[100px]">
-                <div className="flex space-x-1">
-                    <button className="w-full text-left flex-1 py-2 text-sm roundedbg-[#162638] text-[#00ff9d]">Bridge</button>
-                </div>
+                <div className="flex space-x-1"><button className="w-full text-left flex-1 py-2 text-sm roundedbg-[#162638] text-[#00ff9d]">Bridge</button></div>
                 <div className="space-y-2 mb-4">
                     <div className="p-3 rounded bg-[#0a0b1e]/50 border border-[#00ff9d]/10">
                         <div className="text-xs text-gray-500 mb-1">From</div>
@@ -146,9 +111,7 @@ export default function BridgeInterface() {
                                     <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 flex items-center justify-between h-10 cursor-pointer">
                                         <div className='gap-2 flex flex-row items-center justify-center'>
                                             <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
-                                                <span className="text-[#00ff9d] text-xs">
-                                                    {sourceChain.logo !== '../favicon.ico' ? <img alt="" src={sourceChain.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
-                                                </span>
+                                                <span className="text-[#00ff9d] text-xs">{sourceChain.logo !== '../favicon.ico' ? <img alt="" src={sourceChain.logo} className="size-5 shrink-0 rounded-full" /> : '?'}</span>
                                             </div>
                                             <span className='truncate'>{sourceChain.name}</span>
                                         </div>
@@ -219,9 +182,7 @@ export default function BridgeInterface() {
                                     <Button variant="outline" role="combobox" aria-expanded={open2} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 flex items-center justify-between h-10 cursor-pointer">
                                         <div className='gap-2 flex flex-row items-center justify-center'>
                                             <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
-                                                <span className="text-[#00ff9d] text-xs">
-                                                    {destinationChain.logo !== '../favicon.ico' ? <img alt="" src={destinationChain.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
-                                                </span>
+                                                <span className="text-[#00ff9d] text-xs">{destinationChain.logo !== '../favicon.ico' ? <img alt="" src={destinationChain.logo} className="size-5 shrink-0 rounded-full" /> : '?'}</span>
                                             </div>
                                             <span className='truncate'>{destinationChain.name}</span>
                                         </div>
@@ -280,9 +241,7 @@ export default function BridgeInterface() {
                                     <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 flex items-center justify-between h-10 cursor-pointer">
                                         <div className='gap-2 flex flex-row items-center justify-center'>
                                             <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
-                                                <span className="text-[#00ff9d] text-xs">
-                                                    {tokenA.logo !== '../favicon.ico' ? <img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
-                                                </span>
+                                                <span className="text-[#00ff9d] text-xs">{tokenA.logo !== '../favicon.ico' ? <img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" /> : '?'}</span>
                                             </div>
                                             <span className='truncate'>{tokenA.name}</span>
                                         </div>
@@ -319,11 +278,8 @@ export default function BridgeInterface() {
                         </div>
                         <div className="flex justify-between items-center mt-2 text-xs">
                             <span />
-
                             <span className="text-gray-400">
-                                {tokenA.name !== 'Choose Token'
-                                    ? `${Number(sourceBalance).toFixed(4)} ${tokenA.name}`
-                                    : '0.0000'}
+                                {tokenA.name !== 'Choose Token' ? `${Number(sourceBalance).toFixed(4)} ${tokenA.name}` : '0.0000'}
                                 <button
                                     onClick={() => {
                                         const truncated = Math.floor(Number(sourceBalance) * 10000) / 10000;
@@ -333,12 +289,8 @@ export default function BridgeInterface() {
                                 >
                                     MAX
                                 </button>
-
                             </span>
-
-
                         </div>
-
                     </div>
 
                     <div className="p-3 rounded bg-[#0a0b1e]/50 border border-[#00ff9d]/10">
@@ -357,9 +309,7 @@ export default function BridgeInterface() {
                                     <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 flex items-center justify-between h-10 cursor-pointer">
                                         <div className='gap-2 flex flex-row items-center justify-center'>
                                             <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
-                                                <span className="text-[#00ff9d] text-xs">
-                                                    {tokenB.logo !== '../favicon.ico' ? <img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
-                                                </span>
+                                                <span className="text-[#00ff9d] text-xs">{tokenB.logo !== '../favicon.ico' ? <img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" /> : '?'}</span>
                                             </div>
                                             <span className='truncate'>{tokenB.name}</span>
                                         </div>
