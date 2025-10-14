@@ -1,8 +1,6 @@
-import { createPublicClient, erc20Abi, formatEther, http } from "viem";
 import { bitkubTestnet } from "viem/chains";
-import { readContracts } from "@wagmi/core";
-import { config } from "@/app/config";
-import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
+import { formatEther } from "viem";
+import { getServiceSupabase } from "@/lib/supabaseServer";
 import LeaderboardTabs, { LeaderboardEntry, LeaderboardTab, } from "./LeaderboardTabs";
 
 interface LeaderboardProps {
@@ -32,98 +30,68 @@ const PLACEHOLDER_ADDRESS = "0x0000000000000000000000000000000000000000" as cons
 
 export default async function Leaderboard({ mode, chain, token, }: LeaderboardProps) {
     const network = resolveNetworkConfig({ chain, mode, token });
-    const publicClient = createPublicClient({chain: network.chain, transport: http(network.rpcUrl),});
-    const { tokens, pairs } = await fetchPairs(network, publicClient);
-    if (!pairs.length && network.chainId !== 25925) return (<LeaderboardTabs explorerUrl={network.explorer} tabs={buildFallbackTabs()} />);
-    
-    let swapEvents: any;
-    if (network.chainId === 25925) {
-        const addrs = [...tokens.keys()];
-        const r1 = await publicClient.getContractEvents({
-            abi: erc20Abi,
-            eventName: 'Transfer',
-            args: { to: network.factoryAddress as '0xstring', },
-            fromBlock: BigInt(network.blockCreated),
-            toBlock: 'latest',
-        });
-        const r2 = await Promise.all(r1);
-        const r3 = await publicClient.getContractEvents({
-            address: network.factoryAddress,
-            abi: ERC20FactoryV2ABI,
-            eventName: 'Swap',
-            fromBlock: BigInt(network.blockCreated),
-            toBlock: 'latest',
-        });
-        const r4: any = await Promise.all(r3);
-        
-        const sell = r2.filter((r: any) => {
-            return addrs.indexOf(r.address.toUpperCase()) !== -1;
-        }).map((r: any) => {
-            return {
-                action: 'sell', 
-                value: Number(formatEther(r.args.value)), 
-                transactionHash: r.transactionHash, 
-                block: r.blockNumber, 
-                from: r.args.from,
-                to: r.args.to, 
-                address: tokens.get(r.address.toUpperCase())?.address, 
-                name: tokens.get(r.address.toUpperCase())?.name,
-                symbol: tokens.get(r.address.toUpperCase())?.symbol, 
-                logo: tokens.get(r.address.toUpperCase())?.logo, 
-            }
-        }).filter((r) => {
-            return r.from.toUpperCase() !== '0x0000000000000000000000000000000000000000'.toUpperCase();
-        });
-
-        const r5 = await publicClient.getContractEvents({
-            abi: erc20Abi,
-            eventName: 'Transfer',
-            args: { from: network.factoryAddress as '0xstring', },
-            fromBlock: BigInt(network.blockCreated),
-            toBlock: 'latest',
-        });
-        const r6 = await Promise.all(r5);
-        const buy = r6.filter((r) => {
-            return addrs.indexOf(r.address.toUpperCase()) !== -1;
-        }).map((r: any) => {
-            return {
-                action: 'buy', 
-                value: Number(formatEther(r.args.value)), 
-                transactionHash: r.transactionHash, 
-                block: r.blockNumber,
-                from: r.args.from,
-                to: r.args.to, 
-                address: tokens.get(r.address.toUpperCase())?.address, 
-                name: tokens.get(r.address.toUpperCase())?.name,
-                symbol: tokens.get(r.address.toUpperCase())?.symbol, 
-                logo: tokens.get(r.address.toUpperCase())?.logo, 
-            }
-        }).filter((r) => {
-            return r.to.toUpperCase() !== '0x1fE5621152A33a877f2b40a4bB7bc824eEbea1EA'.toUpperCase();
-        });
-
-        const orderMap = new Map(r4.map((obj: any, index: any) => [obj.transactionHash, index]));
-        swapEvents = sell.concat(buy).slice().sort(
-            (a: any, b: any) => Number(orderMap.get(a.transactionHash) ?? Infinity) - Number(orderMap.get(b.transactionHash) ?? Infinity)
-        ).map((r: any, index: any) => {
-            return {
-                action: r.action, 
-                value: r4[index].args.isBuy ? Number(formatEther(r4[index].args.amountIn)) : Number(formatEther(r4[index].args.amountOut)), 
-                trader: r4[index].args.sender,
-                transactionHash: r.transactionHash, 
-                block: r.block,
-                from: r.from,
-                to: r.to, 
-                address: r.address, 
-                name: r.name,
-                symbol: r.symbol,
-                logo: r.logo,
-            }
-        });
+    // For non-kubtestnet, return empty/fallback tabs as before
+    if (network.chainId !== 25925) {
+        return (<LeaderboardTabs explorerUrl={network.explorer} tabs={buildFallbackTabs()} />);
     }
 
-    // Enrich events with block timestamps for time-based filtering
-    const swapEventsWithTs = await attachBlockTimestamps(publicClient, swapEvents, network);
+    const supabase = getServiceSupabase();
+
+    // Pull recent swaps for leaderboard calculation
+    const swapsRes = await supabase
+        .from('swaps')
+        .select('token_address, sender, is_buy, volume_native, timestamp, tx_hash')
+        .order('timestamp', { ascending: false })
+        .limit(5000);
+    const swapRows = (swapsRes.data || []) as Array<{
+        token_address?: string;
+        sender?: string;
+        is_buy?: boolean | null;
+        volume_native?: number | string | null;
+        timestamp?: number | string | null;
+        tx_hash?: string | null;
+    }>;
+
+    // Gather token metadata for involved tokens
+    const addrSet = new Set<string>();
+    for (const r of swapRows) {
+        const a = String(r.token_address || '');
+        if (a) addrSet.add(a);
+    }
+    let tokenMeta = new Map<string, { symbol?: string; name?: string; logo?: string }>();
+    if (addrSet.size > 0) {
+        const addrs = Array.from(addrSet);
+        const tokensRes = await supabase
+            .from('tokens')
+            .select('address, symbol, name, logo')
+            .in('address', addrs);
+        for (const t of tokensRes.data || []) {
+            const key = String((t as any).address || '').toLowerCase();
+            tokenMeta.set(key, { symbol: (t as any).symbol, name: (t as any).name, logo: (t as any).logo });
+        }
+    }
+
+    // Build swap events compatible with existing dataset aggregator
+    const swapEventsWithTs = swapRows.map((r) => {
+        const addr = String(r.token_address || '');
+        const meta = tokenMeta.get(addr.toLowerCase()) || {};
+        const fallbackSym = addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}`.toUpperCase() : '';
+        return {
+            action: r.is_buy ? 'buy' : 'sell',
+            value: Number(r.volume_native || 0),
+            trader: String(r.sender || ''),
+            transactionHash: String(r.tx_hash || ''),
+            address: addr,
+            name: meta.name || meta.symbol || fallbackSym,
+            symbol: meta.symbol || fallbackSym,
+            logo: meta.logo || '',
+            timestampMs: Number(r.timestamp || 0),
+        };
+    });
+
+    // Dummy containers for non-kubtestnet flow
+    const tokens = new Map<string, any>();
+    const pairs: any[] = [];
 
     const { volumeTokens, volumeTraders, profitTraders, degenTraders } = buildDatasets({swapEvents: swapEventsWithTs, pairs, tokens, explorerUrl: network.explorer, network,});
     const tabs: LeaderboardTab[] = [
@@ -199,49 +167,9 @@ function resolveNetworkConfig({ chain, mode, token, }: Pick<LeaderboardProps, "c
     };
 }
 
-async function fetchPairs(network: NetworkConfig, publicClient: any) {
-    let tokens = new Map<string, TokenMetadata>();
-    let pairs: any = [];
-    if (network.chainId === 25925) {
-        const r1 = await publicClient.getContractEvents({
-            address: network.factoryAddress,
-            abi: ERC20FactoryV2ABI,
-            eventName: 'Creation',
-            fromBlock: BigInt(network.blockCreated),
-            toBlock: 'latest',
-        });
-        const r2 = await Promise.all(r1);
-        const _getticker = r2.map(async (r: any) => {
-            return await readContracts(config, {
-                contracts: [
-                    {
-                        address: r.args.tokenAddr,
-                        abi: erc20Abi,
-                        functionName: 'symbol',
-                        chainId: network.chainId,
-                    },
-                    {
-                        address: r.args.tokenAddr,
-                        abi: erc20Abi,
-                        functionName: 'name',
-                        chainId: network.chainId,
-                    },
-                ],
-            });
-        })
-        const getticker: any = await Promise.all(_getticker);
-        
-        r2.map((r: any, index) => {
-            const upperAddress = r.args.tokenAddr.toUpperCase();
-            tokens.set(upperAddress, {
-                address: r.args.tokenAddr,
-                symbol: getticker[index][0].result,
-                name: getticker[index][1].result,
-                logo: r.args.logo,
-            });
-        });
-    }
-    return { tokens, pairs };
+// Deprecated on-chain pair/token discovery is no longer used for kubtestnet leaderboard
+async function fetchPairs(network: NetworkConfig, _publicClient: any) {
+    return { tokens: new Map<string, TokenMetadata>(), pairs: [] as any[] };
 }
 
 interface TokenMetadata {
@@ -269,7 +197,7 @@ function buildDatasets({
     if (network.chainId === 25925) {
         const _volumeTokens: Record<string, LeaderboardEntry & { _latestTs?: number }> = {};
         for (const tx of swapEvents) {
-            let key: string = tx.symbol || tx.name || tx.address;
+            let key: string = String(tx.address || '').toLowerCase();
             let name: string = tx.name;
             let symbol: string = tx.symbol;
             let logo: string = tx.logo;
@@ -452,36 +380,9 @@ function buildDatasets({
     }
 }
 
-async function attachBlockTimestamps(publicClient: any, swapEvents: any[], network: any) {
-    try {
-        if (!Array.isArray(swapEvents) || swapEvents.length === 0) return swapEvents;
-        // Collect unique block numbers as bigint
-        const blockNums = new Set<string>();
-        for (const ev of swapEvents) {
-            const bn = network.chainId === 25925 ? BigInt(ev.block) : (ev.blockNumber as bigint | undefined);
-            if (bn !== undefined) blockNums.add(bn.toString());
-        }
-        if (!blockNums.size) return swapEvents;
-
-        const bnList = Array.from(blockNums).map((s) => BigInt(s));
-        const blocks = await Promise.all(
-            bnList.map((bn) => publicClient.getBlock({ blockNumber: bn }).catch(() => undefined))
-        );
-        const tsMap = new Map<string, number>();
-        blocks.forEach((b) => {
-            if (!b) return;
-            const ts = Number(b.timestamp) * 1000;
-            tsMap.set((b.number as bigint).toString(), ts);
-        });
-
-        return swapEvents.map((ev) => {
-            const bn = network.chainId === 25925 ? BigInt(ev.block) : (ev.blockNumber as bigint | undefined);
-            const ts = bn !== undefined ? tsMap.get(bn.toString()) : undefined;
-            return { ...ev, timestampMs: ts };
-        });
-    } catch {
-        return swapEvents;
-    }
+// Timestamps are supplied directly from Supabase 'swaps' rows (timestamp in ms)
+async function attachBlockTimestamps(_publicClient: any, swapEvents: any[], _network: any) {
+    return swapEvents;
 }
 
 function buildFallbackTabs(): LeaderboardTab[] {

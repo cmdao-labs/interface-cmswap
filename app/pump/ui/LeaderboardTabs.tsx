@@ -42,10 +42,11 @@ const shortAddress = (address?: string) => {
 };
 
 function resolveLogoUrl(raw: string) {
-    if (raw.startsWith('ipfs://undefined')) return "/default.ico";
+    if (!raw || raw === 'undefined' || raw.startsWith('ipfs://undefined')) return "/default.ico";
     if (raw.startsWith('ipfs://')) return `https://cmswap.mypinata.cloud/ipfs/${raw.slice(7)}`;
-    if (raw.startsWith('https://')) return raw;
-    return "/default.ico";
+    if (raw.startsWith('https://') || raw.startsWith('http://')) return raw;
+    // Plain CID fallback
+    return `https://cmswap.mypinata.cloud/ipfs/${raw}`;
 }
 
 const JazziconAvatar = ({ address, size = 48 }: { address: string; size?: number }) => {
