@@ -1,9 +1,10 @@
 'use client';
 import * as React from 'react'
-import { formatEther } from 'viem'
+import { formatEther, formatUnits } from 'viem'
 import { getBalance, readContracts } from '@wagmi/core'
 import { normalizeTokenPair } from './shared'
 import {tokens as defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI} from '@/app/lib/96'
+import { getDecimals } from '@/app/components/swap/utils'
 
 type Token = typeof defaultTokens[number]
 type CMTvlState = {
@@ -92,21 +93,21 @@ export function useSwap96PoolData({ config, address, tokens, tokenA, tokenB, fee
             if (cancelled) return
             if (stateA[0].result && tokenA.name === 'Choose Token') {
                 const existing = tokens.find(t => t.value === tokenA.value)
-                setTokenA({name: stateA[0].result, value: tokenA.value, logo: existing?.logo ?? '../favicon.ico'})
+                setTokenA({name: stateA[0].result, value: tokenA.value, logo: existing?.logo ?? '../favicon.ico', decimal: existing?.decimal ?? 18})
             }
             if (stateB[0].result && tokenB.name === 'Choose Token') {
                 const existing = tokens.find(t => t.value === tokenB.value)
-                setTokenB({name: stateB[0].result, value: tokenB.value, logo: existing?.logo ?? '../favicon.ico'})
+                setTokenB({name: stateB[0].result, value: tokenB.value, logo: existing?.logo ?? '../favicon.ico', decimal: existing?.decimal ?? 18})
             }
             if (isTokenANative) {
-                setTokenABalance(formatEther(nativeBal.value))
+                setTokenABalance(formatUnits(nativeBal.value, getDecimals(tokenA)))
             } else if (stateA[1].result !== undefined) {
-                setTokenABalance(formatEther(stateA[1].result))
+                setTokenABalance(formatUnits(stateA[1].result as bigint, getDecimals(tokenA)))
             }
             if (isTokenBNative) {
-                setTokenBBalance(formatEther(nativeBal.value))
+                setTokenBBalance(formatUnits(nativeBal.value, getDecimals(tokenB)))
             } else if (stateB[1].result !== undefined) {
-                setTokenBBalance(formatEther(stateB[1].result))
+                setTokenBBalance(formatUnits(stateB[1].result as bigint, getDecimals(tokenB)))
             }
             const pair10000 = stateB[2].result !== undefined ? (stateB[2].result as '0xstring') : ('' as '0xstring')
             const pair3000 = stateB[3].result !== undefined ? (stateB[3].result as '0xstring') : ('' as '0xstring')

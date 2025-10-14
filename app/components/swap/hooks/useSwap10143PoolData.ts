@@ -126,8 +126,9 @@ export function useSwap10143PoolData({config, address, tokens, tokenA, tokenB, f
                     const tvl_10000 = currPrice_10000 !== 0 && currPrice_10000 !== Infinity ? Number(formatEther(tokenAamount_10000)) * (1 / currPrice_10000) + Number(formatEther(tokenBamount_10000)) : 0
                     updateCMswapTvlKey('tvl10000', tvl_10000)
                     if (feeSelect === 10000) {
-                        updateExchangeRateCMswapTVL(10000, currPrice_10000 !== Infinity ? Number(currPrice_10000.toString()) : 0)
-                        setFixedExchangeRate(((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2).toString())
+                        const mid = currPrice_10000 !== Infinity ? Number(currPrice_10000.toString()) : 0
+                        updateExchangeRateCMswapTVL(10000, mid)
+                        setFixedExchangeRate(mid.toString())
                         setExchangeRate(currPrice_10000.toString())
                     }
                     const token0_3000 = poolState[4].result ?? ''
@@ -138,8 +139,9 @@ export function useSwap10143PoolData({config, address, tokens, tokenA, tokenB, f
                     const tvl_3000 = currPrice_3000 !== 0 && currPrice_3000 !== Infinity ? Number(formatEther(tokenAamount_3000)) * (1 / currPrice_3000) + Number(formatEther(tokenBamount_3000)) : 0
                     updateCMswapTvlKey('tvl3000', tvl_3000)
                     if (feeSelect === 3000) {
-                        updateExchangeRateCMswapTVL(3000, currPrice_3000 !== Infinity ? Number(currPrice_3000.toString()) : 0)
-                        setFixedExchangeRate(((Number(sqrtPriceX96_3000) / (2 ** 96)) ** 2).toString())
+                        const mid = currPrice_3000 !== Infinity ? Number(currPrice_3000.toString()) : 0
+                        updateExchangeRateCMswapTVL(3000, mid)
+                        setFixedExchangeRate(mid.toString())
                     }
                     const token0_500 = poolState[8].result ?? ''
                     const sqrtPriceX96_500 = poolState[9].result !== undefined ? poolState[9].result[0] : BigInt(0)
@@ -149,8 +151,9 @@ export function useSwap10143PoolData({config, address, tokens, tokenA, tokenB, f
                     const tvl_500 = currPrice_500 !== 0 && currPrice_500 !== Infinity ? Number(formatEther(tokenAamount_500)) * (1 / currPrice_500) + Number(formatEther(tokenBamount_500)) : 0
                     updateCMswapTvlKey('tvl500', tvl_500)
                     if (feeSelect === 500) {
-                        updateExchangeRateCMswapTVL(500, currPrice_500 !== Infinity ? Number(currPrice_500.toString()) : 0)
-                        setFixedExchangeRate(((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2).toString())
+                        const mid = currPrice_500 !== Infinity ? Number(currPrice_500.toString()) : 0
+                        updateExchangeRateCMswapTVL(500, mid)
+                        setFixedExchangeRate(mid.toString())
                     }
                     const token0_100 = poolState[12].result ?? ''
                     const sqrtPriceX96_100 = poolState[13].result !== undefined ? poolState[13].result[0] : BigInt(0)
@@ -160,8 +163,9 @@ export function useSwap10143PoolData({config, address, tokens, tokenA, tokenB, f
                     const tvl_100 = currPrice_100 !== 0 && currPrice_100 !== Infinity ? Number(formatEther(tokenAamount_100)) * (1 / currPrice_100) + Number(formatEther(tokenBamount_100)) : 0
                     updateCMswapTvlKey('tvl100', tvl_100)
                     if (feeSelect === 100) {
-                        updateExchangeRateCMswapTVL(100, currPrice_100 !== Infinity ? Number(currPrice_100.toString()) : 0)
-                        setFixedExchangeRate(((Number(currPrice_100) / (2 ** 96)) ** 2).toString())
+                        const mid = currPrice_100 !== Infinity ? Number(currPrice_100.toString()) : 0
+                        updateExchangeRateCMswapTVL(100, mid)
+                        setFixedExchangeRate(mid.toString())
                     }
                     if (feeSelect === 3000 && tvl_3000 < 1e-9) {
                         const init: { contracts: any[] } = { contracts: [] }

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useAccount } from 'wagmi'
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
-import { formatEther, parseEther } from 'viem'
+import { formatUnits, parseUnits } from 'viem'
 import { ArrowDown } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { useDebouncedCallback } from 'use-debounce'
@@ -12,6 +12,7 @@ import { useSwapQuote } from '@/app/components/swap/useSwapQuote'
 import { encodePath } from '@/app/components/swap/path'
 import { ensureTokenAllowance, executeRouterSwap, wrapNativeToken, unwrapWrappedToken } from '@/app/components/swap/swapActions'
 import { useSwap8899PoolData } from '@/app/components/swap/hooks/useSwap8899PoolData'
+import { computePriceImpact, getDecimals } from '@/app/components/swap/utils'
 import { SwapTokenPanel } from '@/app/components/swap/SwapTokenPanel'
 
 export default function Swap8899({ setIsLoading, setErrMsg, }: {
@@ -65,16 +66,15 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                             tokenOut: tokenB,
                             amount: _amount,
                             fee: feeSelect,
-                            parseAmount: (value: string) => parseEther(value),
+                            parseAmount: (value: string) => parseUnits(value, getDecimals(tokenA)),
                             suppressErrors: true,
                         })
                         if (quoteOutput) {
-                            if (poolSelect === "CMswap") setAmountB(formatEther(quoteOutput.amountOut));
-                            CMswapRate = formatEther(quoteOutput.amountOut)
-                            if (quoteOutput.sqrtPriceX96 !== undefined) {
-                                const newPrice = 1 / ((Number(quoteOutput.sqrtPriceX96) / (2 ** 96)) ** 2)
-                                setNewPrice(newPrice.toString())
-                            }
+                            const out = Number(formatUnits(quoteOutput.amountOut, getDecimals(tokenB)))
+                            if (poolSelect === "CMswap") setAmountB(out.toString());
+                            CMswapRate = out.toString()
+                            const execPriceAB = out > 0 ? amountIn / out : 0
+                            setNewPrice(execPriceAB.toFixed(6))
                         }
                     } else {
                         const route = encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect])
@@ -82,17 +82,16 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                             path: route as `0x${string}`,
                             tokenIn: tokenA,
                             amount: _amount,
-                            parseAmount: (value: string) => parseEther(value),
+                            parseAmount: (value: string) => parseUnits(value, getDecimals(tokenA)),
                             suppressErrors: true,
                         })
                         if (quoteOutput) {
-                            setAmountB(formatEther(quoteOutput.amountOut))
-                            if (poolSelect === "CMswap") setAmountB(formatEther(quoteOutput.amountOut));
-                            CMswapRate = formatEther(quoteOutput.amountOut)
-                            if (quoteOutput.sqrtPriceX96 !== undefined) {
-                                const newPrice = 1 / ((Number(quoteOutput.sqrtPriceX96) / (2 ** 96)) ** 2)
-                                setNewPrice(newPrice.toString())
-                            }
+                            const out = Number(formatUnits(quoteOutput.amountOut, getDecimals(tokenB)))
+                            setAmountB(out.toString())
+                            if (poolSelect === "CMswap") setAmountB(out.toString());
+                            CMswapRate = out.toString()
+                            const execPriceAB = out > 0 ? amountIn / out : 0
+                            setNewPrice(execPriceAB.toFixed(6))
                         }
                     }
                 } else {
@@ -113,15 +112,15 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                         if (useFunction) {
                             const quoteOutput = await readContracts(config, {
                                 contracts: [
-                                    {...CMswapPoolDualRouterContract, functionName: useFunction, args: [poolAddr, parseEther(_amount)]},
+                                    {...CMswapPoolDualRouterContract, functionName: useFunction, args: [poolAddr, parseUnits(_amount, getDecimals(tokenA))]},
                                 ]
                             });
                             const result = quoteOutput[0].result !== undefined ? quoteOutput[0].result : BigInt(0)
-                            GameswapRate = formatEther(result)
+                            GameswapRate = formatUnits(result, getDecimals(tokenB))
                             if (poolSelect === "GameSwap") {
-                                setAmountB(formatEther(result));
+                                setAmountB(formatUnits(result, getDecimals(tokenB)));
                                 const amountA = parseFloat(_amount);
-                                const amountB = parseFloat(formatEther(result));
+                                const amountB = parseFloat(formatUnits(result, getDecimals(tokenB)));
                                 if (amountA > 0 && amountB > 0) {
                                     const price = tokenAvalue.toUpperCase() === tokens[1].value.toUpperCase() ? amountB / amountA /*JBC → CMJ*/ : amountA / amountB; /*CMJ → JBC*/
                                     setNewPrice(price.toFixed(6));
@@ -138,13 +137,13 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                             useFunction = 'getExpectedJBCFromToken'; // token A is JUSDT
                         }
                         if (useFunction) {
-                            const quoteOutput = await readContracts(config, {contracts: [{...CMswapPoolDualRouterContract, functionName: useFunction, args: [poolAddr, parseEther(_amount)]}]});
+                            const quoteOutput = await readContracts(config, {contracts: [{...CMswapPoolDualRouterContract, functionName: useFunction, args: [poolAddr, parseUnits(_amount, getDecimals(tokenA))]}]});
                             const result = quoteOutput[0].result !== undefined ? quoteOutput[0].result : BigInt(0)
                             const amountA = parseFloat(_amount);
-                            const amountB = parseFloat(formatEther(result));
-                            GameswapRate = (formatEther(result))
+                            const amountB = parseFloat(formatUnits(result, getDecimals(tokenB)));
+                            GameswapRate = (formatUnits(result, getDecimals(tokenB)))
                             if (poolSelect === "GameSwap" && amountA > 0 && amountB > 0) {
-                                setAmountB(formatEther(result));
+                                setAmountB(formatUnits(result, getDecimals(tokenB)));
                                 const price = tokenAvalue.toUpperCase() === tokens[1].value.toUpperCase() ? amountB / amountA /*JBC → JUSDT*/ : amountA / amountB; /*JUSDT → JBC*/
                                 setNewPrice(price.toFixed(6));
                             }
@@ -159,7 +158,7 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                 if (Number(_amount) !== 0) {
                     let TokenA = tokenAvalue === "0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747" as '0xstring' ? "0x99999999990FC47611b74827486218f3398A4abD" as '0xstring' : tokenAvalue; // convert WJBC Meow to WJBC Jib
                     let TokenB = tokenBvalue === "0xC4B7C87510675167643e3DE6EEeD4D2c06A9e747" as '0xstring' ? "0x99999999990FC47611b74827486218f3398A4abD" as '0xstring' : tokenBvalue; // convert WJBC Meow to WJBC Jib
-                    const getBestPrice = await readContracts(config, {contracts: [{...CMswapUniSmartRouteContract, functionName: 'findBestPathAndAmountOut', args: [TokenA, TokenB, parseEther(_amount)]}]});
+                    const getBestPrice = await readContracts(config, {contracts: [{...CMswapUniSmartRouteContract, functionName: 'findBestPathAndAmountOut', args: [TokenA, TokenB, parseUnits(_amount, getDecimals(tokenA))]}]});
                     const result = getBestPrice[0].result;
                     const bestAmountOut = result !== undefined ? result[0] as bigint : BigInt(0);
                     const bestPath = result !== undefined ? result[1] : [];
@@ -167,11 +166,12 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                     bestPathArray.length > 2 ? setAltRoute({ a: bestPathArray[0] as '0xstring', b: bestPathArray[1] as '0xstring', c: bestPathArray[2] as '0xstring' }) : setAltRoute(undefined)
                     setBestPathArray(bestPathArray)
                     if (poolSelect === "JibSwap" && Number(_amount) > 0 && bestAmountOut > 0) {
-                        const price = tokenAvalue.toUpperCase() === tokens[0].value.toUpperCase() ? Number(_amount) / Number(formatEther(bestAmountOut)) : Number(formatEther(bestAmountOut)) / Number(_amount);
+                        const outNum = Number(formatUnits(bestAmountOut, getDecimals(tokenB)))
+                        const price = tokenAvalue.toUpperCase() === tokens[0].value.toUpperCase() ? Number(_amount) / outNum : outNum / Number(_amount);
                         setNewPrice((1 / price).toFixed(6));
-                        setAmountB(formatEther(bestAmountOut))
+                        setAmountB(formatUnits(bestAmountOut, getDecimals(tokenB)))
                     }
-                    JibswapRate = formatEther(bestAmountOut)
+                    JibswapRate = formatUnits(bestAmountOut, getDecimals(tokenB))
                 }
             } catch (error) {
                 console.error("Error in getting JibSwap quote:", error);
@@ -198,10 +198,10 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
         setIsLoading(true)
         try {
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                const hash = await wrapNativeToken({config, wrappedTokenAddress: tokens[1].value, amount: parseEther(amountA)})
+                const hash = await wrapNativeToken({config, wrappedTokenAddress: tokens[1].value, amount: parseUnits(amountA || '0', getDecimals(tokenA))})
                 setTxupdate(hash)
             } else if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                const hash = await unwrapWrappedToken({config, contract: wrappedNative, amount: parseEther(amountA)})
+                const hash = await unwrapWrappedToken({config, contract: wrappedNative, amount: parseUnits(amountA || '0', getDecimals(tokenA))})
                 setTxupdate(hash)
             }
         } catch (e) {
@@ -221,11 +221,11 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                     token: { ...erc20ABI, address: tokenA.value },
                     owner: address as `0x${string}`,
                     spender: ROUTER02,
-                    requiredAmount: parseEther(amountA),
+                    requiredAmount: parseUnits(amountA || '0', getDecimals(tokenA)),
                 })
             }
-            const parsedAmountIn = parseEther(amountA)
-            const amountOutMinimum = parseEther(amountB) * BigInt(95) / BigInt(100)
+            const parsedAmountIn = parseUnits(amountA || '0', getDecimals(tokenA))
+            const amountOutMinimum = parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100)
             const path = altRoute ? encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect]) : undefined
             const { hash: h, amountOut: r } = await executeRouterSwap({
                 config,
@@ -256,7 +256,7 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
         try {
             const tokenAAddr = tokenA.value.toUpperCase();
             const tokenBAddr = tokenB.value.toUpperCase();
-            const parsedAmountA = parseEther(amountA);
+            const parsedAmountA = parseUnits(amountA || '0', getDecimals(tokenA));
             const slippagePercent = 5;
             if (tokenAAddr !== tokens[1].value.toUpperCase()) {
                 const allowanceA = await readContract(config, {...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', CMswapPoolDualRouter]});
@@ -317,8 +317,8 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContract,
                         functionName: 'swapExactETHForTokensWithFee',
-                        value: parseEther(amountA),
-                        args: [parseEther(amountB) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
+                        value: parseUnits(amountA || '0', getDecimals(tokenA)),
+                        args: [parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
                     })
                     r = result
                     h = await writeContract(config, request)
@@ -327,7 +327,7 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContract,
                         functionName: 'swapExactTokensForTokensWithFee',
-                        args: [parseEther(amountA), parseEther(amountB) * BigInt(95) / BigInt(100), route, address as `0x${string}`, BigInt(deadline)]
+                        args: [parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), route, address as `0x${string}`, BigInt(deadline)]
                     });
                     r = result;
                     h = await writeContract(config, request);
@@ -336,8 +336,8 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                 }
             } else if (tokenA.value.toUpperCase() !== tokens[1].value.toLocaleUpperCase()) {
                 const allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', CMswapUniSmartRoute] })
-                if (allowanceA < parseEther(amountA)) {
-                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [CMswapUniSmartRoute, parseEther(amountA)] })
+                if (allowanceA < parseUnits(amountA || '0', getDecimals(tokenA))) {
+                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [CMswapUniSmartRoute, parseUnits(amountA || '0', getDecimals(tokenA))] })
                     const h = await writeContract(config, request)
                     await waitForTransactionReceipt(config, { hash: h })
                 }
@@ -347,7 +347,7 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContract,
                         functionName: 'swapExactTokensForTokensWithFee',
-                        args: [parseEther(amountA), parseEther(amountB) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
+                        args: [parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
                     })
                     r = result
                     h = await writeContract(config, request)
@@ -401,9 +401,9 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                 tokenAddress={tokenA.value}
                 onTokenAddressChange={value => {
                     if (value !== '0x') {
-                        setTokenA({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico' })
+                        setTokenA({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico', decimal: 18 })
                     } else {
-                        setTokenA({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
+                        setTokenA({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 })
                     }
                 }}
                 amount={amountA}
@@ -445,9 +445,9 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                 tokenAddress={tokenB.value}
                 onTokenAddressChange={value => {
                     if (value !== '0x') {
-                        setTokenB({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico' })
+                        setTokenB({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico', decimal: 18 })
                     } else {
-                        setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
+                        setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 })
                     }
                 }}
                 amount={amountB}
@@ -547,16 +547,9 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                                 </span> :
                                 <span className="text-red-500 px-2">insufficient liquidity</span>
                             }
-                            {!wrappedRoute && Number(amountB) > 0 &&
-                                <span>[PI: {
-                                    ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 <= 100 ?
-                                        ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 > 0 ?
-                                            ((100 - ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate)))) * -1).toFixed(4) :
-                                            (100 - ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate)))).toFixed(4)
-                                        :
-                                        ">100"
-                                }%]</span>
-                            }
+                            {!wrappedRoute && Number(amountB) > 0 && (
+                                <span>[PI: {computePriceImpact(Number(newPrice || '0'), Number(fixedExchangeRate || '0'))}%]</span>
+                            )}
                         </div>
                         {(tokenA.name === 'JUSDT' || tokenB.name === 'JUSDT') &&
                             <div className="flex items-center text-gray-500 text-xs my-2">

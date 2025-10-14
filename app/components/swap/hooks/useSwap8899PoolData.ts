@@ -1,9 +1,10 @@
 'use client';
 import * as React from 'react'
-import { formatEther } from 'viem'
+import { formatUnits } from 'viem'
 import { getBalance, readContracts } from '@wagmi/core'
 import { tokens as defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI, CMswapUniSmartRouteContract } from '@/app/lib/8899'
 import { normalizeTokenPair } from './shared'
+import { getDecimals } from '@/app/components/swap/utils'
 type Token = typeof defaultTokens[number]
 type CMTvlState = { tvl10000: string; tvl3000: string; tvl500: string; tvl100: string; exchangeRate: string; t0: string }
 type GameSwapState = { tvl10000: string; tvl3000: string; tvl500: string; tvl100: string; exchangeRate: string; t0: string }
@@ -77,21 +78,21 @@ export function useSwap8899PoolData({config, address, tokens, tokenA, tokenB, fe
                 })
                 if (stateA[0].result && tokenA.name === 'Choose Token') {
                     const existing = tokens.find(t => t.value === tokenA.value)
-                    setTokenA({name: stateA[0].result, value: tokenA.value, logo: existing?.logo ?? '../favicon.ico'})
+                    setTokenA({name: stateA[0].result, value: tokenA.value, logo: existing?.logo ?? '../favicon.ico', decimal: existing?.decimal ?? 18})
                 }
                 if (stateB[0].result && tokenB.name === 'Choose Token') {
                     const existing = tokens.find(t => t.value === tokenB.value)
-                    setTokenB({name: stateB[0].result, value: tokenB.value, logo: existing?.logo ?? '../favicon.ico'})
+                    setTokenB({name: stateB[0].result, value: tokenB.value, logo: existing?.logo ?? '../favicon.ico', decimal: existing?.decimal ?? 18})
                 }
                 if (isTokenANative) {
-                    setTokenABalance(formatEther(nativeBal.value))
+                    setTokenABalance(formatUnits(nativeBal.value, getDecimals(tokenA)))
                 } else if (stateA[1].result !== undefined) {
-                    setTokenABalance(formatEther(stateA[1].result))
+                    setTokenABalance(formatUnits(stateA[1].result as bigint, getDecimals(tokenA)))
                 }
                 if (isTokenBNative) {
-                    setTokenBBalance(formatEther(nativeBal.value))
+                    setTokenBBalance(formatUnits(nativeBal.value, getDecimals(tokenB)))
                 } else if (stateB[1].result !== undefined) {
-                    setTokenBBalance(formatEther(stateB[1].result))
+                    setTokenBBalance(formatUnits(stateB[1].result as bigint, getDecimals(tokenB)))
                 }
                 const pair10000 = stateB[2].result !== undefined ? stateB[2].result as '0xstring' : '' as '0xstring'
                 const pair3000 = stateB[3].result !== undefined ? stateB[3].result as '0xstring' : '' as '0xstring'
@@ -129,8 +130,9 @@ export function useSwap8899PoolData({config, address, tokens, tokenA, tokenB, fe
                 const tvl_10000 = currPrice_10000 !== 0 && currPrice_10000 !== Infinity ? Number(formatEther(tokenAamount_10000)) * (1 / currPrice_10000) + Number(formatEther(tokenBamount_10000)) : 0
                 updateCmswapTvlKey('tvl10000', tvl_10000)
                 if (feeSelect === 10000) {
-                    updateCmswapExchangeRate(10000, currPrice_10000 !== Infinity ? Number(currPrice_10000.toString()) : 0)
-                    setFixedExchangeRate(((Number(sqrtPriceX96_10000) / (2 ** 96)) ** 2).toString())
+                    const mid = currPrice_10000 !== Infinity ? Number(currPrice_10000.toString()) : 0
+                    updateCmswapExchangeRate(10000, mid)
+                    setFixedExchangeRate(mid.toString())
                     updateCmswapToken0(loadPoolState[0].result ?? '')
                     setExchangeRate(currPrice_10000.toString())
                 }
@@ -148,8 +150,9 @@ export function useSwap8899PoolData({config, address, tokens, tokenA, tokenB, fe
                 const tvl_500 = currPrice_500 !== 0 && currPrice_500 !== Infinity ? Number(formatEther(tokenAamount_500)) * (1 / currPrice_500) + Number(formatEther(tokenBamount_500)) : 0
                 updateCmswapTvlKey('tvl500', tvl_500)
                 if (feeSelect === 500) {
-                    updateCmswapExchangeRate(500, currPrice_500 !== Infinity ? Number(currPrice_500.toString()) : 0)
-                    setFixedExchangeRate(((Number(sqrtPriceX96_500) / (2 ** 96)) ** 2).toString())
+                    const mid = currPrice_500 !== Infinity ? Number(currPrice_500.toString()) : 0
+                    updateCmswapExchangeRate(500, mid)
+                    setFixedExchangeRate(mid.toString())
                     updateCmswapToken0(loadPoolState[8].result ?? '')
                 }
                 const sqrtPriceX96_100 = loadPoolState[13].result !== undefined ? loadPoolState[13].result[0] : BigInt(0)
@@ -159,8 +162,9 @@ export function useSwap8899PoolData({config, address, tokens, tokenA, tokenB, fe
                 const tvl_100 = currPrice_100 !== 0 && currPrice_100 !== Infinity ? Number(formatEther(tokenAamount_100)) * (1 / currPrice_100) + Number(formatEther(tokenBamount_100)) : 0
                 updateCmswapTvlKey('tvl100', tvl_100)
                 if (feeSelect === 100) {
-                    updateCmswapExchangeRate(100, currPrice_100 !== Infinity ? Number(currPrice_100.toString()) : 0)
-                    setFixedExchangeRate(((Number(sqrtPriceX96_100) / (2 ** 96)) ** 2).toString())
+                    const mid = currPrice_100 !== Infinity ? Number(currPrice_100.toString()) : 0
+                    updateCmswapExchangeRate(100, mid)
+                    setFixedExchangeRate(mid.toString())
                     updateCmswapToken0(loadPoolState[12].result ?? '')
                 }
                 const ensureAltRoute = async (factoryFee: number) => {

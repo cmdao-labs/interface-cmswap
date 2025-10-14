@@ -1,7 +1,7 @@
 import React from 'react'
 import { useAccount } from 'wagmi'
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
-import { formatEther, parseEther } from 'viem'
+import { formatEther, formatUnits, parseUnits } from 'viem'
 import { ArrowDown } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { useDebouncedCallback } from 'use-debounce'
@@ -12,6 +12,7 @@ import { useSwapQuote } from '@/app/components/swap/useSwapQuote'
 import { encodePath } from '@/app/components/swap/path'
 import { ensureTokenAllowance, executeRouterSwap, wrapNativeToken, unwrapWrappedToken } from '@/app/components/swap/swapActions'
 import { useSwap96PoolData } from '@/app/components/swap/hooks/useSwap96PoolData'
+import { getDecimals, computePriceImpact } from '@/app/components/swap/utils'
 import { SwapTokenPanel } from '@/app/components/swap/SwapTokenPanel'
 
 export default function Swap96({ setIsLoading, setErrMsg, }: {
@@ -48,6 +49,8 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
     const tokenABalanceLabel = tokenA.name !== 'Choose Token' ? `${Number(tokenABalance).toFixed(4)} ${tokenA.name}` : '0.0000'
     const tokenBBalanceLabel = tokenB.name !== 'Choose Token' ? `${Number(tokenBBalance).toFixed(4)} ${tokenB.name}` : '0.0000'
 
+    
+
     const getQoute = useDebouncedCallback(async (_amount: string) => {
         setAltRoute(undefined)
         let CMswapRate = 0; let DiamonSwapRate = 0; let UdonswapRate = 0; let ponderRate = 0;
@@ -66,18 +69,17 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                             tokenOut: tokenB,
                             amount: _amount,
                             fee: feeSelect,
-                            parseAmount: (value: string) => parseEther(value),
+                            parseAmount: (value: string) => parseUnits(value, getDecimals(tokenA)),
                             suppressErrors: true,
                         })
                         if (quoteOutput) {
                             if (poolSelect === "CMswap") {
-                                setAmountB(formatEther(quoteOutput.amountOut))
-                                if (quoteOutput.sqrtPriceX96 !== undefined) {
-                                    const newPrice = CMswapTVL.isReverted ? 1 / ((Number(quoteOutput.sqrtPriceX96) / (2 ** 96)) ** 2) : Number(quoteOutput.sqrtPriceX96) / (2 ** 96)
-                                    setNewPrice(newPrice.toString())
-                                }
+                                const out = Number(formatUnits(quoteOutput.amountOut, getDecimals(tokenB)))
+                                setAmountB(out.toString())
+                                const execPriceAB = out > 0 ? amountIn / out : 0
+                                setNewPrice(execPriceAB.toFixed(6))
                             }
-                            CMswapRate = Number(formatEther(quoteOutput.amountOut))
+                            CMswapRate = Number(formatUnits(quoteOutput.amountOut, getDecimals(tokenB)))
                         }
                     } else {
                         const route = encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect])
@@ -85,18 +87,17 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                             path: route as `0x${string}`,
                             tokenIn: tokenA,
                             amount: _amount,
-                            parseAmount: (value: string) => parseEther(value),
+                            parseAmount: (value: string) => parseUnits(value, getDecimals(tokenA)),
                             suppressErrors: true,
                         })
                         if (quoteOutput) {
                             if (poolSelect === "CMswap") {
-                                setAmountB(formatEther(quoteOutput.amountOut))
-                                if (quoteOutput.sqrtPriceX96 !== undefined) {
-                                    const newPrice = CMswapTVL.isReverted ? 1 / ((Number(quoteOutput.sqrtPriceX96) / (2 ** 96)) ** 2) : Number(quoteOutput.sqrtPriceX96) / (2 ** 96)
-                                    setNewPrice(newPrice.toString())
-                                }
+                                const out = Number(formatUnits(quoteOutput.amountOut, getDecimals(tokenB)))
+                                setAmountB(out.toString())
+                                const execPriceAB = out > 0 ? amountIn / out : 0
+                                setNewPrice(execPriceAB.toFixed(6))
                             }
-                            CMswapRate = Number(formatEther(quoteOutput.amountOut))
+                            CMswapRate = Number(formatUnits(quoteOutput.amountOut, getDecimals(tokenB)))
                         }
                     }
                 } else {
@@ -110,7 +111,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     const DiamondPair = getPairAddr[0].result !== undefined ? getPairAddr[0].result as '0xstring' : '' as '0xstring'
                     const getBestPrice = await readContracts(config, {
                         contracts: [
-                            { ...CMswapUniSmartRouteContractV2, functionName: 'findBestPathAndAmountOut', args: [BigInt(0), tokenAvalue, tokenBvalue, parseEther(_amount)] },
+                            { ...CMswapUniSmartRouteContractV2, functionName: 'findBestPathAndAmountOut', args: [BigInt(0), tokenAvalue, tokenBvalue, parseUnits(_amount, getDecimals(tokenA))] },
                             { ...UniswapPairv2PoolABI, address: DiamondPair, functionName: 'token0' }
                         ]
                     });
@@ -121,11 +122,11 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     if (bestPathArray.length > 2 && poolSelect === "DiamonSwap") setAltRoute({ a: bestPathArray[0] as '0xstring', b: bestPathArray[1] as '0xstring', c: bestPathArray[2] as '0xstring' });
                     if (poolSelect === "DiamonSwap" && Number(_amount) > 0 && bestAmountOut > 0) {
                         setBestPathArray(bestPathArray)
-                        const price = DMswapTVL.isReverted ? amountIn / Number(formatEther(bestAmountOut)) : Number(formatEther(bestAmountOut)) / amountIn
+                        const price = DMswapTVL.isReverted ? amountIn / Number(formatUnits(bestAmountOut, getDecimals(tokenB))) : Number(formatUnits(bestAmountOut, getDecimals(tokenB))) / amountIn
                         setNewPrice((price).toFixed(6));
-                        setAmountB(formatEther(bestAmountOut))
+                        setAmountB(formatUnits(bestAmountOut, getDecimals(tokenB)))
                     }
-                    DiamonSwapRate = Number(formatEther(bestAmountOut))
+                    DiamonSwapRate = Number(formatUnits(bestAmountOut, getDecimals(tokenB)))
                 }
             } catch (error) {
                 console.error("Error in getting DiamondSwap quote:", error);
@@ -137,7 +138,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     const UdonPair = getPairAddr[0].result !== undefined ? getPairAddr[0].result as '0xstring' : '' as '0xstring'
                     const getBestPrice = await readContracts(config, {
                         contracts: [
-                            { ...CMswapUniSmartRouteContractV2, functionName: 'findBestPathAndAmountOut', args: [BigInt(1), tokenAvalue, tokenBvalue, parseEther(_amount)] },
+                            { ...CMswapUniSmartRouteContractV2, functionName: 'findBestPathAndAmountOut', args: [BigInt(1), tokenAvalue, tokenBvalue, parseUnits(_amount, getDecimals(tokenA))] },
                             { ...UniswapPairv2PoolABI, address: UdonPair, functionName: 'token0' }
                         ]
                     });
@@ -149,12 +150,12 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     if (poolSelect === "UdonSwap" && Number(_amount) > 0 && bestAmountOut > 0) {
                         setBestPathArray(bestPathArray)
                         const newReserveA = Number(formatEther(reserveUdonA)) + Number(_amount)
-                        const newReserveB = Number(formatEther(reserveUdonB)) - Number(formatEther(bestAmountOut))
+                        const newReserveB = Number(formatEther(reserveUdonB)) - Number(formatUnits(bestAmountOut, getDecimals(tokenB)))
                         const newprice = newReserveA/newReserveB
                         setNewPrice((newprice).toFixed(6));
-                        setAmountB(formatEther(bestAmountOut))
+                        setAmountB(formatUnits(bestAmountOut, getDecimals(tokenB)))
                     }
-                    UdonswapRate = Number(formatEther(bestAmountOut))
+                    UdonswapRate = Number(formatUnits(bestAmountOut, getDecimals(tokenB)))
                 }
             } catch (error) {
                 console.error("Error in getting UdonSwap quote:", error);
@@ -166,7 +167,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     const UdonPair = getPairAddr[0].result !== undefined ? getPairAddr[0].result as '0xstring' : '' as '0xstring'
                     const getBestPrice = await readContracts(config, {
                         contracts: [
-                            { ...CMswapUniSmartRouteContractV2, functionName: 'findBestPathAndAmountOut', args: [BigInt(2), tokenAvalue, tokenBvalue, parseEther(_amount)] },
+                            { ...CMswapUniSmartRouteContractV2, functionName: 'findBestPathAndAmountOut', args: [BigInt(2), tokenAvalue, tokenBvalue, parseUnits(_amount, getDecimals(tokenA))] },
                             { ...UniswapPairv2PoolABI, address: UdonPair, functionName: 'token0' }
                         ]
                     });
@@ -177,11 +178,11 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     if (bestPathArray.length > 2 && poolSelect === "ponder") setAltRoute({ a: bestPathArray[0] as '0xstring', b: bestPathArray[1] as '0xstring', c: bestPathArray[2] as '0xstring' });
                     if (poolSelect === "ponder" && Number(_amount) > 0 && bestAmountOut > 0) {
                         setBestPathArray(bestPathArray)
-                        const price = ponderTVL.isReverted ? amountIn / Number(formatEther(bestAmountOut)) : Number(formatEther(bestAmountOut)) / amountIn
+                        const price = ponderTVL.isReverted ? amountIn / Number(formatUnits(bestAmountOut, getDecimals(tokenB))) : Number(formatUnits(bestAmountOut, getDecimals(tokenB))) / amountIn
                         setNewPrice((price).toFixed(6));
-                        setAmountB(formatEther(bestAmountOut))
+                        setAmountB(formatUnits(bestAmountOut, getDecimals(tokenB)))
                     }
-                    ponderRate = Number(formatEther(bestAmountOut))
+                    ponderRate = Number(formatUnits(bestAmountOut, getDecimals(tokenB)))
                 }
             } catch (error) {
                 console.error("Error in getting PonderSwap quote:", error);
@@ -210,7 +211,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
         setIsLoading(true)
         try {
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                const hash = await wrapNativeToken({config, wrappedTokenAddress: tokens[1].value, amount: parseEther(amountA)})
+                const hash = await wrapNativeToken({config, wrappedTokenAddress: tokens[1].value, amount: parseUnits(amountA || '0', getDecimals(tokenA))})
                 setTxupdate(hash)
             } else if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
                 await ensureTokenAllowance({
@@ -218,10 +219,10 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     token: { ...erc20ABI, address: tokenA.value },
                     owner: address as `0x${string}`,
                     spender: bkcUnwapped as `0x${string}`,
-                    requiredAmount: parseEther(amountA),
-                    approveArgs: [bkcUnwapped as `0x${string}`, parseEther(amountA)],
+                    requiredAmount: parseUnits(amountA || '0', getDecimals(tokenA)),
+                    approveArgs: [bkcUnwapped as `0x${string}`, parseUnits(amountA || '0', getDecimals(tokenA))],
                 })
-                const hash = await unwrapWrappedToken({config, contract: unwarppedNative, amount: parseEther(amountA)})
+                const hash = await unwrapWrappedToken({config, contract: unwarppedNative, amount: parseUnits(amountA || '0', getDecimals(tokenA))})
                 setTxupdate(hash)
             }
         } catch (e) {
@@ -242,12 +243,12 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     token: { ...(isKap20 ? kap20ABI : erc20ABI), address: tokenA.value },
                     owner: address as `0x${string}`,
                     spender: ROUTER02,
-                    requiredAmount: parseEther(amountA),
+                    requiredAmount: parseUnits(amountA || '0', getDecimals(tokenA)),
                     allowanceFunctionName: isKap20 ? 'allowances' : 'allowance',
                 })
             }
-            const parsedAmountIn = parseEther(amountA)
-            const amountOutMinimum = parseEther(amountB) * BigInt(95) / BigInt(100)
+            const parsedAmountIn = parseUnits(amountA || '0', getDecimals(tokenA))
+            const amountOutMinimum = parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100)
             const path = altRoute ? encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect]) : undefined
             const { hash: h, amountOut: r } = await executeRouterSwap({
                 config,
@@ -291,8 +292,8 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
                         functionName: 'swapExactETHForTokensWithFee',
-                        value: parseEther(amountA),
-                        args: [BigInt(0), parseEther(amountB) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
+                        value: parseUnits(amountA || '0', getDecimals(tokenA)),
+                        args: [BigInt(0), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
                     })
                     r = result
                     h = await writeContract(config, request)
@@ -301,7 +302,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
                         functionName: 'swapExactTokensForTokensWithFee',
-                        args: [BigInt(0), parseEther(amountA), parseEther(amountB) * BigInt(95) / BigInt(100), route, address as `0x${string}`, BigInt(deadline)]
+                        args: [BigInt(0), parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), route, address as `0x${string}`, BigInt(deadline)]
                     });
                     r = result;
                     h = await writeContract(config, request);
@@ -315,8 +316,8 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                 } else {
                     allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', CMswapUniSmartRoute] })
                 }
-                if (allowanceA < parseEther(amountA)) {
-                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [CMswapUniSmartRoute, parseEther(amountA)] })
+                if (allowanceA < parseUnits(amountA || '0', getDecimals(tokenA))) {
+                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [CMswapUniSmartRoute, parseUnits(amountA || '0', getDecimals(tokenA))] })
                     const h = await writeContract(config, request)
                     await waitForTransactionReceipt(config, { hash: h })
                 }
@@ -324,7 +325,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
                         functionName: 'swapExactTokensForTokensWithFee',
-                        args: [BigInt(0), parseEther(amountA), parseEther(amountB) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
+                        args: [BigInt(0), parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
                     })
                     r = result
                     h = await writeContract(config, request)
@@ -348,8 +349,8 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
                         functionName: 'swapExactETHForTokensWithFee',
-                        value: parseEther(amountA),
-                        args: [BigInt(1), parseEther(amountB) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
+                        value: parseUnits(amountA || '0', getDecimals(tokenA)),
+                        args: [BigInt(1), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
                     })
                     r = result
                     h = await writeContract(config, request)
@@ -358,7 +359,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
                         functionName: 'swapExactTokensForTokensWithFee',
-                        args: [BigInt(1), parseEther(amountA), parseEther(amountB) * BigInt(95) / BigInt(100), route, address as `0x${string}`, BigInt(deadline)]
+                        args: [BigInt(1), parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), route, address as `0x${string}`, BigInt(deadline)]
                     });
                     r = result;
                     h = await writeContract(config, request);
@@ -372,8 +373,8 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                 } else {
                     allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', CMswapUniSmartRoute] })
                 }
-                if (allowanceA < parseEther(amountA)) {
-                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [CMswapUniSmartRoute, parseEther(amountA)] })
+                if (allowanceA < parseUnits(amountA || '0', getDecimals(tokenA))) {
+                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [CMswapUniSmartRoute, parseUnits(amountA || '0', getDecimals(tokenA))] })
                     const h = await writeContract(config, request)
                     await waitForTransactionReceipt(config, { hash: h })
                 }
@@ -381,7 +382,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
                         functionName: 'swapExactTokensForTokensWithFee',
-                        args: [BigInt(1), parseEther(amountA), parseEther(amountB) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
+                        args: [BigInt(1), parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
                     })
                     r = result
                     h = await writeContract(config, request)
@@ -405,8 +406,8 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
                         functionName: 'swapExactETHForTokensWithFee',
-                        value: parseEther(amountA),
-                        args: [BigInt(2), parseEther(amountB) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
+                        value: parseUnits(amountA || '0', getDecimals(tokenA)),
+                        args: [BigInt(2), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
                     })
                     r = result
                     h = await writeContract(config, request)
@@ -415,7 +416,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
                         functionName: 'swapExactTokensForTokensWithFee',
-                        args: [BigInt(2), parseEther(amountA), parseEther(amountB) * BigInt(95) / BigInt(100), route, address as `0x${string}`, BigInt(deadline)]
+                        args: [BigInt(2), parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), route, address as `0x${string}`, BigInt(deadline)]
                     });
                     r = result;
                     h = await writeContract(config, request);
@@ -429,8 +430,8 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                 } else {
                     allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', CMswapUniSmartRoute] })
                 }
-                if (allowanceA < parseEther(amountA)) {
-                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [CMswapUniSmartRoute, parseEther(amountA)] })
+                if (allowanceA < parseUnits(amountA || '0', getDecimals(tokenA))) {
+                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [CMswapUniSmartRoute, parseUnits(amountA || '0', getDecimals(tokenA))] })
                     const h = await writeContract(config, request)
                     await waitForTransactionReceipt(config, { hash: h })
                 }
@@ -438,7 +439,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                     const { result, request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContractV2,
                         functionName: 'swapExactTokensForTokensWithFee',
-                        args: [BigInt(2), parseEther(amountA), parseEther(amountB) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
+                        args: [BigInt(2), parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
                     })
                     r = result
                     h = await writeContract(config, request)
@@ -503,9 +504,9 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                 tokenAddress={tokenA.value}
                 onTokenAddressChange={value => {
                     if (value !== '0x') {
-                        setTokenA({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico' })
+                        setTokenA({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico', decimal: 18 })
                     } else {
-                        setTokenA({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
+                        setTokenA({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 })
                     }
                 }}
                 amount={amountA}
@@ -547,9 +548,9 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                 tokenAddress={tokenB.value}
                 onTokenAddressChange={value => {
                     if (value !== '0x') {
-                        setTokenB({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico' })
+                        setTokenB({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico', decimal: 18 })
                     } else {
-                        setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
+                        setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 })
                     }
                 }}
                 amount={amountB}
@@ -661,26 +662,11 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                                 </span> :
                                 <span className="text-red-500 px-2">insufficient liquidity</span>
                             }
-                            {!wrappedRoute && Number(amountB) > 0 &&
+                            {!wrappedRoute && Number(amountB) > 0 && (
                                 <span>
-                                    [PI: {
-                                        poolSelect === 'CMswap' ?
-                                            ((Number(newPrice) * 100) / Number(Number(fixedExchangeRate))) - 100 <= 100 ?
-                                                ((Number(newPrice) * 100) / Number(Number(fixedExchangeRate))) - 100 > 0 ?
-                                                    ((100 - ((Number(newPrice) * 100) / Number(Number(fixedExchangeRate)))) * -1).toFixed(4) :
-                                                    (100 - ((Number(newPrice) * 100) / Number(Number(fixedExchangeRate)))).toFixed(4)
-                                                :
-                                                ">100"
-                                            :
-                                            ((Number(newPrice) * 100) / Number(fixedExchangeRate)) - 100 <= 100 ?
-                                                ((Number(newPrice) * 100) / Number(fixedExchangeRate)) - 100 > 0 ?
-                                                    ((((Number(fixedExchangeRate) - Number(newPrice)) * 100) / Number(fixedExchangeRate)) * -1).toFixed(4) :
-                                                    (((Number(fixedExchangeRate) - Number(newPrice)) * 100) / Number(fixedExchangeRate)).toFixed(4)
-                                                :
-                                                ">100"
-                                    }%]
+                                    [PI: {computePriceImpact(Number(newPrice || '0'), Number(fixedExchangeRate || '0'))}%]
                                 </span>
-                            }
+                            )}
                         </div>
                         {(tokenA.name === 'KUSDT' || tokenB.name === 'KUSDT') &&
                             <div className="flex items-center text-gray-500 text-xs my-2">

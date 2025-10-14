@@ -2,16 +2,16 @@ import { createPublicClient, http, erc20Abi } from 'viem'
 import { bitkub } from 'viem/chains'
 import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3staker, WrappedNative, kap20abi,CMswapUniSmartRouteABIV2,UniswapPair,BitkubEvmKYCABI,CMswapP2PMarketplaceABI,bkcUnwappedKKUB,cmSwapRefProgramABI } from '@/app/lib/abi'
 
-export const tokens: {name: string, value: '0xstring', logo: string}[] = [
-    { name: 'KUB', value: '0xnative' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u' },
-    { name: 'KKUB', value: '0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u' },
-    { name: 'KUSDT', value: '0x7d984C24d2499D840eB3b7016077164e15E5faA6' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreieg7yf6iwx7obygg62hz252bwnaddedanvlizonaawagk7eze4qcu' },
-    { name: 'CMM', value: '0x9B005000A10Ac871947D99001345b01C1cEf2790' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreiavqn4meapmjfpe756wrg4fsdnd33brbrsi55mb27tmttoctbyzme' },
-    { name: 'LUMI', value: '0x95013Dcb6A561e6C003AED9C43Fb8B64008aA361' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreif336hux427usw7cdeyxgfuls7xkstal6yphat2fdxwvvb4icnkcq' },
-    { name: 'ISOLA', value: '0xC8925E89bE4Ce76218a3e52B995C5Ae02662A94F' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreiggs47xpvrutabszgn73mwchzambqbv4dspreoglqqioazof4k2sa' }, 
-    { name: 'KSOLA', value: '0x9cf6dF95b918307Ff81feF70E616a094e9977a28' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreie7n4loanq3vbji47ijr6xhsf47xsbf4fybrjwzkerwd2aonnr6xq' },
-    { name: 'KJFIN', value: '0x9BEc198c43B0714aEEd3c1bF21498ecBeFEB19F8' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreicsaxloa43u6xq2pscenskkmqwyb2w5gwauik735opgoc2qzpmob4' }, 
-    { name: "SHK", value: "0xF27DF35ead39E2aed24cc05C52db303Ef4C4aA83" as "0xstring", logo: "https://cmswap.mypinata.cloud/ipfs/bafybeictpc76cigf42dly6c3qtnbu5cbtons4qvsqr4juxcs7g7k4nbche" },
+export const tokens: {name: string, value: '0xstring', logo: string, decimal: number}[] = [
+    { name: 'KUB', value: '0xnative' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u', decimal: 18 },
+    { name: 'KKUB', value: '0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u', decimal: 18 },
+    { name: 'KUSDT', value: '0x7d984C24d2499D840eB3b7016077164e15E5faA6' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreieg7yf6iwx7obygg62hz252bwnaddedanvlizonaawagk7eze4qcu', decimal: 18 },
+    { name: 'CMM', value: '0x9B005000A10Ac871947D99001345b01C1cEf2790' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreiavqn4meapmjfpe756wrg4fsdnd33brbrsi55mb27tmttoctbyzme', decimal: 18 },
+    { name: 'LUMI', value: '0x95013Dcb6A561e6C003AED9C43Fb8B64008aA361' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreif336hux427usw7cdeyxgfuls7xkstal6yphat2fdxwvvb4icnkcq', decimal: 18 },
+    { name: 'ISOLA', value: '0xC8925E89bE4Ce76218a3e52B995C5Ae02662A94F' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreiggs47xpvrutabszgn73mwchzambqbv4dspreoglqqioazof4k2sa', decimal: 18 }, 
+    { name: 'KSOLA', value: '0x9cf6dF95b918307Ff81feF70E616a094e9977a28' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreie7n4loanq3vbji47ijr6xhsf47xsbf4fybrjwzkerwd2aonnr6xq', decimal: 18 },
+    { name: 'KJFIN', value: '0x9BEc198c43B0714aEEd3c1bF21498ecBeFEB19F8' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreicsaxloa43u6xq2pscenskkmqwyb2w5gwauik735opgoc2qzpmob4', decimal: 18 }, 
+    { name: 'SHK', value: '0xF27DF35ead39E2aed24cc05C52db303Ef4C4aA83' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafybeictpc76cigf42dly6c3qtnbu5cbtons4qvsqr4juxcs7g7k4nbche', decimal: 18 },
     // can PR listing here
 ]
 

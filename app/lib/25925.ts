@@ -3,11 +3,11 @@ import { bitkubTestnet } from 'viem/chains'
 import { kap20abi,CMswapP2PMarketplaceABI,cmSwapRefProgramABI,testnetTokenFaucetTradeABI, stakingV2FactoryABI,stakingV3FactoryABI, stakingV2ABI,stakingV3ABI } from '@/app/lib/abi'
 import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3staker, WrappedNative,CMswapUniSmartRouteABIV2,UniswapPair,BitkubEvmKYCABI } from '@/app/lib/abi'
 
-export const tokens: {name: string, value: '0xstring', logo: string}[] = [
-    { name: 'KUB', value: '0xnative' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u' },
-    { name: 'tKKUB', value: '0x700D3ba307E1256e509eD3E45D6f9dff441d6907' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u' },
-    { name: 'testKUB', value: '0xE7f64C5fEFC61F85A8b851d8B16C4E21F91e60c0' as '0xstring', logo: '' },
-    { name: 'testToken', value: '0x23352915164527e0AB53Ca5519aec5188aa224A2' as '0xstring', logo: '' },
+export const tokens: {name: string, value: '0xstring', logo: string, decimal: number}[] = [
+    { name: 'KUB', value: '0xnative' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u', decimal: 18 },
+    { name: 'tKKUB', value: '0x700D3ba307E1256e509eD3E45D6f9dff441d6907' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u', decimal: 18 },
+    { name: 'testKUB', value: '0xE7f64C5fEFC61F85A8b851d8B16C4E21F91e60c0' as '0xstring', logo: '', decimal: 18 },
+    { name: 'testToken', value: '0x23352915164527e0AB53Ca5519aec5188aa224A2' as '0xstring', logo: '', decimal: 18 },
     // can PR listing here
 ]
 

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useAccount } from 'wagmi'
 import { simulateContract, waitForTransactionReceipt, writeContract, type WriteContractErrorType } from '@wagmi/core'
-import { formatEther, parseEther } from 'viem'
+import { formatUnits, parseUnits } from 'viem'
 import { ArrowDown } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { useDebouncedCallback } from 'use-debounce'
@@ -11,6 +11,7 @@ import { useSwapTokenSelection } from '@/app/components/swap/useSwapTokenSelecti
 import { useSwapQuote } from '@/app/components/swap/useSwapQuote'
 import { encodePath } from '@/app/components/swap/path'
 import { ensureTokenAllowance, executeRouterSwap, wrapNativeToken, unwrapWrappedToken } from '@/app/components/swap/swapActions'
+import { computePriceImpact, getDecimals } from '@/app/components/swap/utils'
 import { useSwap25925PoolData } from '@/app/components/swap/hooks/useSwap25925PoolData'
 import { SwapTokenPanel } from '@/app/components/swap/SwapTokenPanel'
 
@@ -82,18 +83,17 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
                             tokenOut: tokenB,
                             amount: _amount,
                             fee: feeSelect,
-                            parseAmount: (value: string) => parseEther(value),
+                            parseAmount: (value: string) => parseUnits(value, getDecimals(tokenA)),
                             suppressErrors: true,
                         })
                         if (quoteOutput) {
+                            const out = Number(formatUnits(quoteOutput.amountOut, getDecimals(tokenB)))
                             if (poolSelect === "CMswap") {
-                                setAmountB(formatEther(quoteOutput.amountOut))
-                                if (quoteOutput.sqrtPriceX96 !== undefined) {
-                                    const newPrice = CMswapTVL.isReverted ? 1 / ((Number(quoteOutput.sqrtPriceX96) / (2 ** 96)) ** 2) : Number(quoteOutput.sqrtPriceX96) / (2 ** 96)
-                                    setNewPrice(newPrice.toString())
-                                }
+                                setAmountB(out.toString())
+                                const execPriceAB = out > 0 ? amountIn / out : 0
+                                setNewPrice(execPriceAB.toFixed(6))
                             }
-                            CMswapRate = Number(formatEther(quoteOutput.amountOut))
+                            CMswapRate = out
                         }
                     } else {
                         const route = encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect])
@@ -101,18 +101,17 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
                             path: route as `0x${string}`,
                             tokenIn: tokenA,
                             amount: _amount,
-                            parseAmount: (value: string) => parseEther(value),
+                            parseAmount: (value: string) => parseUnits(value, getDecimals(tokenA)),
                             suppressErrors: true,
                         })
                         if (quoteOutput) {
+                            const out = Number(formatUnits(quoteOutput.amountOut, getDecimals(tokenB)))
                             if (poolSelect === "CMswap") {
-                                setAmountB(formatEther(quoteOutput.amountOut))
-                                if (quoteOutput.sqrtPriceX96 !== undefined) {
-                                    const newPrice = CMswapTVL.isReverted ? 1 / ((Number(quoteOutput.sqrtPriceX96) / (2 ** 96)) ** 2) : Number(quoteOutput.sqrtPriceX96) / (2 ** 96)
-                                    setNewPrice(newPrice.toString())
-                                }
+                                setAmountB(out.toString())
+                                const execPriceAB = out > 0 ? amountIn / out : 0
+                                setNewPrice(execPriceAB.toFixed(6))
                             }
-                            CMswapRate = Number(formatEther(quoteOutput.amountOut))
+                            CMswapRate = out
                         }
                     }
                 } else {
@@ -137,7 +136,7 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
         setIsLoading(true)
         try {
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                const hash = await wrapNativeToken({config, wrappedTokenAddress: tokens[1].value, amount: parseEther(amountA)})
+                const hash = await wrapNativeToken({config, wrappedTokenAddress: tokens[1].value, amount: parseUnits(amountA || '0', getDecimals(tokenA))})
                 setTxupdate(hash)
             } else if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
                 await ensureTokenAllowance({
@@ -145,10 +144,10 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
                     token: { ...erc20ABI, address: tokenA.value },
                     owner: address as `0x${string}`,
                     spender: tokenA.value as `0x${string}`,
-                    requiredAmount: parseEther(amountA),
-                    approveArgs: [tokenA.value as `0x${string}`, parseEther(amountA)],
+                    requiredAmount: parseUnits(amountA || '0', getDecimals(tokenA)),
+                    approveArgs: [tokenA.value as `0x${string}`, parseUnits(amountA || '0', getDecimals(tokenA))],
                 })
-                const hash = await unwrapWrappedToken({config, contract: unwarppedNative, amount: parseEther(amountA)})
+                const hash = await unwrapWrappedToken({config, contract: unwarppedNative, amount: parseUnits(amountA || '0', getDecimals(tokenA))})
                 setTxupdate(hash)
             }
         } catch (e) {
@@ -171,12 +170,12 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
                     token: { ...(isKap20 ? kap20ABI : erc20ABI), address: tokenA.value },
                     owner: address as `0x${string}`,
                     spender: ROUTER02,
-                    requiredAmount: parseEther(amountA),
+                    requiredAmount: parseUnits(amountA || '0', getDecimals(tokenA)),
                     allowanceFunctionName: isKap20 ? 'allowances' : 'allowance',
                 })
             }
-            const parsedAmountIn = parseEther(amountA)
-            const amountOutMinimum = parseEther(amountB) * BigInt(95) / BigInt(100)
+            const parsedAmountIn = parseUnits(amountA || '0', getDecimals(tokenA))
+            const amountOutMinimum = parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100)
             const path = altRoute ? encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect]) : undefined
             const { hash: h, amountOut: r } = await executeRouterSwap({
                 config,
@@ -220,9 +219,9 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
                 tokenAddress={tokenA.value}
                 onTokenAddressChange={value => {
                     if (value !== '0x') {
-                        setTokenA({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico' })
+                        setTokenA({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico', decimal: 18 })
                     } else {
-                        setTokenA({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
+                        setTokenA({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 })
                     }
                 }}
                 amount={amountA}
@@ -264,9 +263,9 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
                 tokenAddress={tokenB.value}
                 onTokenAddressChange={value => {
                     if (value !== '0x') {
-                        setTokenB({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico' })
+                        setTokenB({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico', decimal: 18 })
                     } else {
-                        setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico' })
+                        setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 })
                     }
                 }}
                 amount={amountB}
@@ -357,24 +356,9 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
                                 </span> :
                                 <span className="text-red-500 px-2">insufficient liquidity</span>
                             }
-                            {!wrappedRoute && Number(amountB) > 0 &&
-                                <span>[PI: {
-                                    poolSelect === 'CMswap' ?
-                                        ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 <= 100 ?
-                                            ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate))) - 100 > 0 ?
-                                                ((100 - ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate)))) * -1).toFixed(4) :
-                                                (100 - ((Number(newPrice) * 100) / Number(1 / Number(fixedExchangeRate)))).toFixed(4)
-                                            :
-                                            ">100"
-                                        :
-                                        ((Number(newPrice) * 100) / Number(fixedExchangeRate)) - 100 <= 100 ?
-                                            ((Number(newPrice) * 100) / Number(fixedExchangeRate)) - 100 > 0 ?
-                                                ((((Number(fixedExchangeRate) - Number(newPrice)) * 100) / Number(fixedExchangeRate)) * -1).toFixed(4) :
-                                                (((Number(fixedExchangeRate) - Number(newPrice)) * 100) / Number(fixedExchangeRate)).toFixed(4)
-                                            :
-                                            ">100"
-                                }%]</span>
-                            }
+                            {!wrappedRoute && Number(amountB) > 0 && (
+                                <span>[PI: {computePriceImpact(Number(newPrice || '0'), Number(exchangeRate || '0'))}%]</span>
+                            )}
                         </div>
                         {(tokenA.name === 'KUSDT' || tokenB.name === 'KUSDT') &&
                             <div className="flex items-center text-gray-500 text-xs my-2">
