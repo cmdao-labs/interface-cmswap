@@ -637,7 +637,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: {
 
         const fetchSummary = async () => {
             try {
-                const res = await fetch(`/api/token/summary?token=${ticker}&graphHours=8766&activityLimit=50&holdersLimit=50&tradersLimit=50`, { cache: 'no-store' })
+                const res = await fetch(`/api/token/summary?token=${ticker}&graphHours=8766&holdersLimit=50&tradersLimit=50`, { cache: 'no-store' })
                 if (!res.ok) return
                 const data = await res.json()
                 if (data?.token) {

@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const token = searchParams.get('token')
   const hours = Number(searchParams.get('graphHours') || '24')
-  const activityLimit = Number(searchParams.get('activityLimit') || '50')
+  const activityLimit = Number(searchParams.get('activityLimit') || '20000')
   const holdersLimit = Number(searchParams.get('holdersLimit') || '50')
   const tradersLimit = Number(searchParams.get('tradersLimit') || '50')
   if (!token) return NextResponse.json({ error: 'token required' }, { status: 400 })

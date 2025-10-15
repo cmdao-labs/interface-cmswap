@@ -1,6 +1,6 @@
+import { headers } from "next/headers";
 import { bitkubTestnet } from "viem/chains";
 import { formatEther } from "viem";
-import { getServiceSupabase } from "@/lib/supabaseServer";
 import LeaderboardTabs, { LeaderboardEntry, LeaderboardTab, } from "./LeaderboardTabs";
 
 interface LeaderboardProps {
@@ -30,20 +30,18 @@ const PLACEHOLDER_ADDRESS = "0x0000000000000000000000000000000000000000" as cons
 
 export default async function Leaderboard({ mode, chain, token, }: LeaderboardProps) {
     const network = resolveNetworkConfig({ chain, mode, token });
-    // For non-kubtestnet, return empty/fallback tabs as before
-    if (network.chainId !== 25925) {
-        return (<LeaderboardTabs explorerUrl={network.explorer} tabs={buildFallbackTabs()} />);
-    }
-
-    const supabase = getServiceSupabase();
-
-    // Pull recent swaps for leaderboard calculation
-    const swapsRes = await supabase
-        .from('swaps')
-        .select('token_address, sender, is_buy, volume_native, timestamp, tx_hash')
-        .order('timestamp', { ascending: false })
-        .limit(5000);
-    const swapRows = (swapsRes.data || []) as Array<{
+    if (network.chainId !== 25925) return (<LeaderboardTabs explorerUrl={network.explorer} tabs={buildFallbackTabs()} />);
+    const headersList = await headers();
+    const host = headersList.get("host");
+    const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+    const baseUrl = host ? `${protocol}://${host}` : process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const limit = 5000;
+    const pageSize = 1000;
+    const swapsRes = await fetch(`${baseUrl}/api/swaps/recent?limit=${limit}&pageSize=${pageSize}`, {
+        cache: "no-store",
+    });
+    const swapPayload = swapsRes.ok ? await swapsRes.json() : { swaps: [], tokens: {} };
+    const swapRows = (Array.isArray(swapPayload?.swaps) ? swapPayload.swaps : []) as Array<{
         token_address?: string;
         sender?: string;
         is_buy?: boolean | null;
@@ -51,8 +49,8 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
         timestamp?: number | string | null;
         tx_hash?: string | null;
     }>;
+    const rawTokenMeta = (swapPayload?.tokens ?? {}) as Record<string, { symbol?: string; name?: string; logo?: string }>;
 
-    // Gather token metadata for involved tokens
     const addrSet = new Set<string>();
     for (const r of swapRows) {
         const a = String(r.token_address || '');
@@ -60,18 +58,17 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
     }
     let tokenMeta = new Map<string, { symbol?: string; name?: string; logo?: string }>();
     if (addrSet.size > 0) {
-        const addrs = Array.from(addrSet);
-        const tokensRes = await supabase
-            .from('tokens')
-            .select('address, symbol, name, logo')
-            .in('address', addrs);
-        for (const t of tokensRes.data || []) {
-            const key = String((t as any).address || '').toLowerCase();
-            tokenMeta.set(key, { symbol: (t as any).symbol, name: (t as any).name, logo: (t as any).logo });
+        for (const key of Object.keys(rawTokenMeta)) {
+            const lowerKey = key.toLowerCase();
+            const value = rawTokenMeta[key];
+            tokenMeta.set(lowerKey, {
+                symbol: value?.symbol,
+                name: value?.name,
+                logo: value?.logo,
+            });
         }
     }
 
-    // Build swap events compatible with existing dataset aggregator
     const swapEventsWithTs = swapRows.map((r) => {
         const addr = String(r.token_address || '');
         const meta = tokenMeta.get(addr.toLowerCase()) || {};
@@ -89,7 +86,6 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
         };
     });
 
-    // Dummy containers for non-kubtestnet flow
     const tokens = new Map<string, any>();
     const pairs: any[] = [];
 
