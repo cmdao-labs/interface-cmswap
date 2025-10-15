@@ -164,39 +164,94 @@ export default async function Activity({
     }).sort((a: any, b: any) => {return b.timestamp - a.timestamp});
 
     return (
-        <main className="row-start-2 w-full h-full flex flex-col items-center sm:items-start" style={{zIndex: 1}}>
-            <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
+        <main className="row-start-2 w-full h-full flex flex-col items-center sm:items-start gap-4 sm:gap-0" style={{ zIndex: 1 }}>
+            <div className="w-full h-[50px] flex items-center py-6 flex text-lg lg:text-3xl">
+                <span>{addr.slice(0, 5) + '...' + addr.slice(37)}</span>
+            </div>
+            <div className="hidden sm:flex w-full h-[50px] flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
                 <div className="w-1/5 sm:w-1/3">Timestamp</div>
                 <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-end gap-10">
-                    <span className="text-right w-[100px] sm:w-[600px]">Asset</span>
+                    <span className="text-right w-[100px] sm:w-[200px]">Asset</span>
                     <span className="text-right w-[50px] sm:w-[200px]">Amount</span>
                     <span className="text-right w-[50px] sm:w-[200px]">Txn</span>
                 </div>
             </div>
-            {theresult.map((res: any, index: any) =>
-                <div className="w-full h-[50px] flex flex-row items-center justify-around text-xs md:text-sm py-10 border-t border-gray-800" key={index}>
-                    <span className="w-1/5 sm:w-1/3 text-gray-500 text-xs">{new Intl.DateTimeFormat('en-GB', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Bangkok', }).format(new Date(res.timestamp))}</span>
-                    <div className="w-5/6 sm:w-3/4 flex flex-row items-center justify-end gap-10 text-xs sm:text-sm">
-                        <div className="text-right w-[100px] sm:w-[600px] flex flex-row gap-2 items-center justify-end overflow-hidden">
-                            {res.action === 'buy' && <span className="text-green-500 font-bold">{res.action.toUpperCase()}</span>}
-                            {res.action === 'sell' && <span className="text-red-500 font-bold">{res.action.toUpperCase()}</span>}
-                            {res.action === 'launch' && <span className="text-emerald-300 font-bold">🚀 {res.action.toUpperCase()} & BUY</span>}
-                            <div className="w-[15px] h-[15px] sm:w-[30px] sm:h-[30px] rounded-full overflow-hidden relative">
-                                <Image src={res.logo.slice(0, 7) === 'ipfs://' ? "https://cmswap.mypinata.cloud/ipfs/" + res.logo.slice(7) : "https://cmswap.mypinata.cloud/ipfs/" + res.logo} alt="" fill />
-                            </div>
-                            <Link
-                                href={`/pump/launchpad/token?chain=${chain}&mode=${mode}${token ? `&token=${token}` : ''}&ticker=${res.tickerAddr}${res.lpAddr ? `&lp=${res.lpAddr}` : ''}`}
-                                prefetch={false}
-                                className="truncate underline decoration-dotted underline-offset-4"
-                            >
-                                {res.ticker}
-                            </Link>
+            {theresult.map((res: any, index: any) => {
+                const dateLabel = new Intl.DateTimeFormat("en-GB", {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                    timeZone: "Asia/Bangkok",
+                }).format(new Date(res.timestamp));
+
+                return (
+                    <article
+                        className="w-full border-t border-gray-800 px-4 py-5 text-sm shadow-sm sm:flex sm:h-[50px] sm:items-center sm:justify-between sm:rounded-none sm:border-t sm:border-gray-800 sm:bg-transparent sm:px-0 sm:py-10"
+                        key={index}
+                    >
+                        <div className="flex flex-col gap-1 text-gray-300 sm:w-1/3 sm:flex-row sm:items-center sm:gap-0">
+                            <span className="text-[11px] uppercase tracking-wide text-gray-500 sm:hidden">Timestamp</span>
+                            <span className="sm:text-xs">{dateLabel}</span>
                         </div>
-                        <span className="text-right w-[50px] sm:w-[200px]">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res.value)}</span>
-                        <Link href={_explorer + "tx/" + res.hash} rel="noopener noreferrer" target="_blank" prefetch={false} className="font-bold text-right w-[50px] sm:w-[200px] underline truncate">{res.hash.slice(0, 5) + '...' + res.hash.slice(61)}</Link>
-                    </div>
-                </div>
-            )}
+                        <div className="mt-4 flex flex-col gap-4 text-sm sm:mt-0 sm:w-3/4 sm:flex-row sm:items-center sm:justify-end sm:gap-10">
+                            <div className="flex items-center justify-between gap-3 sm:w-[600px] sm:justify-end sm:gap-2">
+                                <div className="flex items-center gap-3 sm:hidden">
+                                    {res.action === "buy" && <span className="text-green-500 font-semibold uppercase">Buy</span>}
+                                    {res.action === "sell" && <span className="text-red-500 font-semibold uppercase">Sell</span>}
+                                    {res.action === "launch" && <span className="text-emerald-300 font-semibold">🚀 Launch & Buy</span>}
+                                </div>
+                                <div className="hidden sm:flex sm:items-center sm:gap-2">
+                                    {res.action === "buy" && <span className="text-green-500 font-bold">{res.action.toUpperCase()}</span>}
+                                    {res.action === "sell" && <span className="text-red-500 font-bold">{res.action.toUpperCase()}</span>}
+                                    {res.action === "launch" && <span className="text-emerald-300 font-bold">🚀 {res.action.toUpperCase()} & BUY</span>}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="relative h-6 w-6 overflow-hidden rounded-full sm:h-[30px] sm:w-[30px]">
+                                        <Image src={res.logo.slice(0, 7) === "ipfs://" ? "https://cmswap.mypinata.cloud/ipfs/" + res.logo.slice(7) : "https://cmswap.mypinata.cloud/ipfs/" + res.logo} alt="" fill />
+                                    </div>
+                                    <div className="flex flex-col items-start sm:items-end">
+                                        <span className="text-[11px] uppercase tracking-wide text-gray-500 sm:hidden text-left w-full">Asset</span>
+                                        <Link
+                                            href={`/pump/launchpad/token?chain=${chain}&mode=${mode}${token ? `&token=${token}` : ""}&ticker=${res.tickerAddr}${res.lpAddr ? `&lp=${res.lpAddr}` : ""}`}
+                                            prefetch={false}
+                                            className="truncate text-sm underline decoration-dotted underline-offset-4 sm:text-right"
+                                        >
+                                            {(res.ticker).length >= 7 ? (res.ticker).slice(0, 6) + '...' : res.ticker}
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-y-2 gap-x-6 text-sm sm:hidden">
+                                <span className="text-[11px] uppercase tracking-wide text-gray-500">Amount</span>
+                                <span className="text-right text-sm font-medium">{Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(res.value)}</span>
+                                <span className="text-[11px] uppercase tracking-wide text-gray-500">Txn</span>
+                                <Link
+                                    href={_explorer + "tx/" + res.hash}
+                                    rel="noopener noreferrer"
+                                    target="_blank"
+                                    prefetch={false}
+                                    className="text-right text-sm font-medium underline"
+                                >
+                                    {res.hash.slice(0, 5) + "..." + res.hash.slice(61)}
+                                </Link>
+                            </div>
+                            <div className="hidden w-full flex-row items-center justify-end gap-10 sm:flex sm:w-auto">
+                                <span className="text-right w-[50px] sm:w-[200px]">
+                                    {Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }).format(res.value)}
+                                </span>
+                                <Link
+                                    href={_explorer + "tx/" + res.hash}
+                                    rel="noopener noreferrer"
+                                    target="_blank"
+                                    prefetch={false}
+                                    className="font-bold text-right w-[50px] sm:w-[200px] underline truncate"
+                                >
+                                    {res.hash.slice(0, 5) + "..." + res.hash.slice(61)}
+                                </Link>
+                            </div>
+                        </div>
+                    </article>
+                );
+            })}
         </main>
     );
 }

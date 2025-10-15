@@ -169,14 +169,14 @@ export default function Dashboard({
     }, [addr, chain, mode, token, _chainId, factoryAddr, currencyAddr, _blockcreated, _rpc]);
 
     return (
-        <main className="row-start-2 w-full h-full flex flex-col items-center sm:items-start">
+        <main className="row-start-2 w-full h-full flex flex-col items-center sm:items-start gap-4 sm:gap-0">
             <div className="w-full h-[50px] py-6 flex flex-row items-center justify-between sm:gap-2 text-lg lg:text-3xl">
                 <div className="flex flex-row gap-2 items-center">
                     <span>{addr.slice(0, 5) + '...' + addr.slice(37)}</span>
                 </div>
                 <span className="font-bold">{(chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kubtestnet' && mode === 'pro' ? 'tKUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(allvalue)}</span>
             </div>
-            <div className="w-full h-[50px] flex flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
+            <div className="hidden sm:flex w-full h-[50px] flex-row items-center justify-start sm:gap-2 text-xs sm:text-lg text-gray-500">
                 <div className="w-1/2">
                     <span>Asset</span>
                 </div>
@@ -191,44 +191,65 @@ export default function Dashboard({
             ).sort(
                 (a: any, b: any) => {return b[3].result - a[3].result}
             ).map((res: any, index: any) =>
-                <div className="w-full h-[50px] flex flex-row items-center justify-around text-xs lg:text-lg py-10 border-t border-gray-800" key={index}>
-                    <div className="w-1/2 flex flex-row items-center justify-start gap-6 overflow-hidden">
-                        <div className="w-[25px] h-[25px] sm:w-[40px] sm:h-[40px] rounded-full overflow-hidden relative">
+                <article
+                    className="w-full border-t border-gray-800 px-4 py-5 text-sm shadow-sm sm:flex sm:h-[50px] sm:items-center sm:justify-between sm:rounded-none sm:border-t sm:border-gray-800 sm:bg-transparent sm:px-0 sm:py-10"
+                    key={index}
+                >
+                    <div className="flex items-center justify-start gap-4 overflow-hidden sm:w-1/2">
+                        <div className="relative h-10 w-10 overflow-hidden rounded-full sm:h-[40px] sm:w-[40px]">
                             <Image src={res[1].result!.slice(0, 7) === 'ipfs://' ? "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!.slice(7) : "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!} alt="token_waiting_for_approve" fill />
                         </div>
-                        <Link
-                            href={`/pump/launchpad/token?chain=${chain}&mode=${mode}${token ? `&token=${token}` : ''}&ticker=${res[4].result}${res[5]?.result ? `&lp=${res[5].result}` : ''}`}
-                            prefetch={false}
-                            className="font-bold truncate underline decoration-dotted underline-offset-4"
-                        >
-                            {res[0].result}
-                        </Link>
-                        <button 
-                            className="flex items-center gap-1 bg-water-300 hover:bg-neutral-700 px-2 py-2 rounded-md transition-colors text-sm cursor-pointer"
-                            onClick={async () => {
-                                await ethereum.request({
-                                    method: 'wallet_watchAsset',
-                                    params: {
-                                        type: 'ERC20',
-                                        options: {
-                                            address: res[4].result,
-                                            symbol: (res[0].result).length >= 7 ? (res[0].result).slice(0, 6) : res[0].result,
-                                            decimals: 18,
-                                            image: res[1].result!.slice(0, 7) === 'ipfs://' ? "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!.slice(7) : "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                            <Link
+                                href={`/pump/launchpad/token?chain=${chain}&mode=${mode}${token ? `&token=${token}` : ''}&ticker=${res[4].result}${res[5]?.result ? `&lp=${res[5].result}` : ''}`}
+                                prefetch={false}
+                                className="font-semibold text-base sm:text-lg truncate underline decoration-dotted underline-offset-4"
+                            >
+                                {(res[0].result).length >= 7 ? (res[0].result).slice(0, 6) + '...' : res[0].result}
+                            </Link>
+                            <button
+                                className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-water-300 px-2 py-2 text-sm font-medium transition-colors hover:bg-neutral-700 sm:mt-0"
+                                onClick={async () => {
+                                    await ethereum.request({
+                                        method: 'wallet_watchAsset',
+                                        params: {
+                                            type: 'ERC20',
+                                            options: {
+                                                address: res[4].result,
+                                                symbol: (res[0].result).length >= 7 ? (res[0].result).slice(0, 6) : res[0].result,
+                                                decimals: 18,
+                                                image: res[1].result!.slice(0, 7) === 'ipfs://' ? "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!.slice(7) : "https://cmswap.mypinata.cloud/ipfs/" + res[1].result!
+                                            },
                                         },
-                                    },
-                                })
-                            }}
-                        >
-                            <Plus size={16} />
-                        </button>
+                                    })
+                                }}
+                            >
+                                <Plus size={16} />
+                            </button>
+                        </div>
                     </div>
-                    <div className="w-3/5 flex flex-row items-center justify-end sm:gap-10">
+                    <div className="mt-4 grid grid-cols-2 gap-y-2 gap-x-6 sm:hidden">
+                        <span className="text-[11px] uppercase tracking-wide text-gray-500">Balance</span>
+                        <span className="text-right text-sm font-medium">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result)}</span>
+                        <span className="text-[11px] uppercase tracking-wide text-gray-500">Price</span>
+                        <span className="text-right text-sm font-medium">
+                            {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[3].result)} {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kubtestnet' && mode === 'pro' && 'tKUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}
+                        </span>
+                        <span className="text-[11px] uppercase tracking-wide text-gray-500">Value</span>
+                        <span className="text-right text-sm font-semibold">
+                            {(chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kubtestnet' && mode === 'pro' ? 'tKUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + (chain === 'monad' && mode === 'pro' ? 'MON' : '') + Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result * res[3].result)}
+                        </span>
+                    </div>
+                    <div className="hidden w-3/5 flex-row items-center justify-end sm:flex sm:gap-10">
                         <span className="text-right w-[50px] sm:w-[200px]">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result)}</span>
-                        <span className={"text-right w-[100px] sm:w-[200px] " + (mode === 'pro' ? 'text-xs' : '')}>{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[3].result)} {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kubtestnet' && mode === 'pro' && 'tKUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}</span>
-                        <span className="font-bold text-right w-[100px] sm:w-[200px]">{(chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kubtestnet' && mode === 'pro' ? 'tKUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + (chain === 'monad' && mode === 'pro' ? 'MON' : '') + Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result * res[3].result)}</span>
+                        <span className={"text-right w-[100px] sm:w-[200px] " + (mode === 'pro' ? 'text-xs' : '')}>
+                            {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[3].result)} {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kubtestnet' && mode === 'pro' && 'tKUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}
+                        </span>
+                        <span className="font-bold text-right w-[100px] sm:w-[200px]">
+                            {(chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kubtestnet' && mode === 'pro' ? 'tKUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + (chain === 'monad' && mode === 'pro' ? 'MON' : '') + Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result * res[3].result)}
+                        </span>
                     </div>
-                </div>
+                </article>
             )}
         </main>
     );

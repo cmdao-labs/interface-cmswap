@@ -65,10 +65,7 @@ export default async function Portfolio(props: {
 
     return (
         <main className="relative min-h-screen w-full overflow-hidden pt-16 pb-12 text-white">
-            <div className="pointer-events-none absolute -top-40 left-1/2 h-[560px] w-[560px] -translate-x-1/2 rounded-full bg-emerald-500/20 blur-3xl" />
-            <div className="pointer-events-none absolute bottom-[-160px] right-[-120px] h-[420px] w-[420px] rounded-full bg-sky-500/20 blur-3xl" />
-            <div className="pointer-events-none absolute top-1/3 -left-32 h-[320px] w-[320px] rounded-full bg-emerald-400/15 blur-3xl" />
-            <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-10 pt-2 pb-4">
+            <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-6 pt-2 pb-4">
                 <header className="flex flex-col gap-6">
                     <div className="flex flex-wrap items-center justify-between gap-4 text-[10px] sm:text-xs uppercase tracking-[0.2em] text-white/60">
                         <Link
