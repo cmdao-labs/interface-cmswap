@@ -13,19 +13,18 @@ export default function ErrorModal({ errorMsg, setErrMsg }: {
     setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>
 }) {
     const [detailsOpen, setDetailsOpen] = React.useState(false)
-
     return (
         <Dialog open={errorMsg !== null} onOpenChange={() => setErrMsg(null)}>
             <DialogContent className="sm:max-w-[500px] bg-background border border-border">
                 <DialogHeader className="flex flex-row items-center gap-2 text-left">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20"><AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-500" /></div>
-                <div>
-                    <DialogTitle className="text-xl">Transaction Failed</DialogTitle>
-                    <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs font-normal bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800">beta 0.1.1</Badge>
-                        {errorMsg !== null && <span className="text-xs text-muted-foreground">viem@{Object.values(errorMsg)[5]}</span>}
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20"><AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-500" /></div>
+                    <div>
+                        <DialogTitle className="text-xl">Transaction Failed</DialogTitle>
+                        <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs font-normal bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800">beta 0.1.1</Badge>
+                            {errorMsg !== null && <span className="text-xs text-muted-foreground">viem@{Object.values(errorMsg)[5]}</span>}
+                        </div>
                     </div>
-                </div>
                 </DialogHeader>
                 <div className="py-2">
                     {errorMsg !== null && <DialogDescription className="text-sm text-foreground mb-2">{Object.values(errorMsg)[1]}</DialogDescription>}
@@ -41,42 +40,32 @@ export default function ErrorModal({ errorMsg, setErrMsg }: {
                             </CollapsibleTrigger>
                             <Separator />
                             <CollapsibleContent className="space-y-3">
-  {errorMsg !== null && (
-    <>
-      <div>
-        <span className="text-xs font-medium">From</span>
-        <div className="font-mono text-xs text-muted-foreground overflow-x-auto whitespace-nowrap">
-          {Object.values(errorMsg)[12]}
-        </div>
-      </div>
-      <div>
-        <span className="text-xs font-medium">To</span>
-        <div className="font-mono text-xs text-muted-foreground overflow-x-auto whitespace-nowrap">
-          {Object.values(errorMsg)[9]}
-        </div>
-      </div>
-      <div>
-        <span className="text-xs font-medium">Function</span>
-        <div className="font-mono text-xs text-muted-foreground overflow-x-auto whitespace-nowrap">
-          {Object.values(errorMsg)[11]}
-        </div>
-      </div>
-      <div>
-        <span className="text-xs font-medium">Arguments</span>
-        <div className="font-mono text-xs text-muted-foreground overflow-x-auto text-wrap break-all">
-          {Array.isArray(Object.values(errorMsg)[8]) ? (
-            Object.values(errorMsg)[8].map((value: string, index: number) => (
-              <div key={index}>arg[{index}]: {value}</div>
-            ))
-          ) : (
-            <div>{String(Object.values(errorMsg)[8])}</div>
-          )}
-        </div>
-      </div>
-    </>
-  )}
-</CollapsibleContent>
-
+                                {errorMsg !== null && (
+                                    <>
+                                        <div>
+                                            <span className="text-xs font-medium">From</span>
+                                            <div className="font-mono text-xs text-muted-foreground overflow-x-auto whitespace-nowrap">{Object.values(errorMsg)[12]}</div>
+                                        </div>
+                                        <div>
+                                            <span className="text-xs font-medium">To</span>
+                                            <div className="font-mono text-xs text-muted-foreground overflow-x-auto whitespace-nowrap">{Object.values(errorMsg)[9]}</div>
+                                        </div>
+                                        <div>
+                                            <span className="text-xs font-medium">Function</span>
+                                            <div className="font-mono text-xs text-muted-foreground overflow-x-auto whitespace-nowrap">{Object.values(errorMsg)[11]}</div>
+                                        </div>
+                                        <div>
+                                            <span className="text-xs font-medium">Arguments</span>
+                                            <div className="font-mono text-xs text-muted-foreground overflow-x-auto text-wrap break-all">
+                                                {Array.isArray(Object.values(errorMsg)[8]) ?
+                                                    Object.values(errorMsg)[8].map((value: string, index: number) => (<div key={index}>arg[{index}]: {value}</div>)) : 
+                                                    <div>{String(Object.values(errorMsg)[8])}</div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </CollapsibleContent>
                         </Collapsible>
                     </div>
                 </div>

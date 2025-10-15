@@ -49,9 +49,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
     const tokenABalanceLabel = tokenA.name !== 'Choose Token' ? `${Number(tokenABalance).toFixed(4)} ${tokenA.name}` : '0.0000'
     const tokenBBalanceLabel = tokenB.name !== 'Choose Token' ? `${Number(tokenBBalance).toFixed(4)} ${tokenB.name}` : '0.0000'
 
-    
-
-    const getQoute = useDebouncedCallback(async (_amount: string) => {
+    const getQuote = useDebouncedCallback(async (_amount: string) => {
         setAltRoute(undefined)
         let CMswapRate = 0; let DiamonSwapRate = 0; let UdonswapRate = 0; let ponderRate = 0;
         const amountIn = Number(_amount)
@@ -475,7 +473,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
         const fetchQuoteAndSetPool = async () => {
             if (CMswapTVL || DMswapTVL || UdonTVL) {
                 try {
-                    const quote = await getQoute(amountA);
+                    const quote = await getQuote(amountA);
                     const CMRate = Number(quote?.CMswapRate) > 0 ? Number(quote?.CMswapRate) : Number(CMswapTVL?.exchangeRate || 0);
                     const DMRate = Number(quote?.DiamonSwapRate) > 0 ? Number(quote?.DiamonSwapRate) : Number(DMswapTVL?.exchangeRate || 0);
                     const UdonRate = Number(quote?.UdonswapRate) > 0 ? Number(quote?.UdonswapRate) : Number(UdonTVL?.exchangeRate || 0);
@@ -512,7 +510,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                 amount={amountA}
                 onAmountChange={value => {
                     setAmountA(value)
-                    getQoute(value)
+                    getQuote(value)
                 }}
                 amountAutoFocus
                 selectedToken={tokenA}
@@ -531,7 +529,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                         className="h-6 text-[#00ff9d] text-xs px-2 cursor-pointer"
                         onClick={() => {
                             setAmountA(tokenABalance)
-                            getQoute(tokenABalance)
+                            getQuote(tokenABalance)
                         }}
                     >
                         MAX
@@ -577,7 +575,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                             const tvlValue = Number(CMswapTVL[`tvl${feeSelect}` as keyof typeof CMswapTVL]);
                             if (!shouldShowTVL) return "";
                             return (
-                                <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "CMswap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("CMswap"); getQoute(amountA);}}>
+                                <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "CMswap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("CMswap"); getQuote(amountA);}}>
                                     <span className="flex items-center gap-1">
                                         CMswap {bestPool === "CMswap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                     </span>
@@ -586,7 +584,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                             );
                         })()}
                         {Number(DMswapTVL['tvl10000']) > 0 && (
-                            <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "DiamonSwap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("DiamonSwap"); getQoute(amountA);}}>
+                            <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "DiamonSwap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("DiamonSwap"); getQuote(amountA);}}>
                                 <span className='flex items-center gap-1'>
                                     Diamon {bestPool === "DiamonSwap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                 </span>
@@ -594,7 +592,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                             </Button>
                         )}
                         {Number(UdonTVL['tvl10000']) > 0 && (
-                            <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "UdonSwap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("UdonSwap");; getQoute(amountA);}}>
+                            <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "UdonSwap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("UdonSwap"); getQuote(amountA);}}>
                                 <span className='flex items-center gap-1'>
                                     UdonSwap {bestPool === "UdonSwap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                 </span>
@@ -602,7 +600,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                             </Button>
                         )}
                         {Number(ponderTVL['tvl10000']) > 0 && (
-                            <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "ponder" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("ponder"); getQoute(amountA);}}>
+                            <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "ponder" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("ponder"); getQuote(amountA);}}>
                                 <span className='flex items-center gap-1'>
                                     Ponder {bestPool === "ponder" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                 </span>

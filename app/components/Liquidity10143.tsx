@@ -87,7 +87,6 @@ export default function Liquidity10143({
             window.history.replaceState({}, '', url.toString())
         }
 
-
     const setAlignedLowerTick = useDebouncedCallback((_lowerPrice: string) => {
         setAmountA("")
         setAmountB("")

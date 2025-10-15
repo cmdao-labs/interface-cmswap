@@ -49,7 +49,7 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
 
     useSwap8899PoolData({config, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute, setCMswapTVL, setGameSwapTvl, setJibSwapTvl, setBestPathArray, setFixedExchangeRate, setOnLoading, setAmountA, setAmountB,})
 
-    const getQoute = useDebouncedCallback(async (_amount: string) => {
+    const getQuote = useDebouncedCallback(async (_amount: string) => {
         let CMswapRate = undefined; let GameswapRate = undefined; let JibswapRate = undefined;
         const amountIn = Number(_amount)
         const tokenAvalue = resolveTokenAddress(tokenA)
@@ -364,7 +364,7 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
     // Pool data loading handled by useSwap8899PoolData hook
     React.useEffect(() => {
         const updateRate = async () => {
-            const quote = await getQoute(amountA);  
+            const quote = await getQuote(amountA);  
             if (poolSelect === "CMswap") {
                 setExchangeRate(CMswapTVL.exchangeRate);
                 setAmountB(quote?.CMswapRate || "0")
@@ -382,7 +382,7 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
     React.useEffect(() => {
         const fetchQuoteAndSetPool = async () => {
             if (!onLoading && CMswapTVL && GameSwapTvl && JibSwapTvl) {
-                const quote = await getQoute(amountA);  
+                const quote = await getQuote(amountA);  
                 const rates = {CMswap: Number(quote?.CMswapRate || CMswapTVL.exchangeRate || 0), GameSwap: Number(quote?.GameswapRate || GameSwapTvl.exchangeRate || 0), JibSwap: Number(quote?.JibswapRate || JibSwapTvl.exchangeRate || 0),};
                 const sortedEntries = Object.entries(rates).sort((a, b) => b[1] - a[1]);
                 const [bestPool] = sortedEntries[0];
@@ -409,7 +409,7 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                 amount={amountA}
                 onAmountChange={value => {
                     setAmountA(value)
-                    getQoute(value)
+                    getQuote(value)
                 }}
                 amountAutoFocus
                 selectedToken={tokenA}
@@ -428,7 +428,7 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                         className="h-6 text-[#00ff9d] text-xs px-2 cursor-pointer"
                         onClick={() => {
                             setAmountA(tokenABalance)
-                            getQoute(tokenABalance)
+                            getQuote(tokenABalance)
                         }}
                     >
                         MAX

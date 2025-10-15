@@ -11,7 +11,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useDebouncedCallback } from 'use-debounce'
 import { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, kap20ABI, v3PoolABI } from '@/app/lib/96'
 import { config } from '@/app/config'
-import { useSearchParams } from 'next/navigation'
 
 export default function Liquidity96({ 
     setIsLoading, setErrMsg, 

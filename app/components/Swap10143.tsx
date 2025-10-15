@@ -46,7 +46,7 @@ export default function Swap10143({ setIsLoading, setErrMsg, }: {
 
     const { quoteExactInputSingle, quoteExactInput } = useSwapQuote({config, contract: qouterV2Contract, tokens})
 
-    const getQoute = useDebouncedCallback(async (_amount: string) => {
+    const getQuote = useDebouncedCallback(async (_amount: string) => {
         let CMswapRate = 0
         const amountIn = Number(_amount)
         if (wrappedRoute) {
@@ -176,7 +176,7 @@ export default function Swap10143({ setIsLoading, setErrMsg, }: {
         const fetchQuoteAndSetPool = async () => {
             if (CMswapTVL) {
                 try {
-                    const quote = await getQoute(amountA);
+                    const quote = await getQuote(amountA);
                     const CMRate = Number(quote?.CMswapRate) > 0 ? Number(quote?.CMswapRate) : Number(CMswapTVL?.exchangeRate || 0);
                     const rates = { CMswap: CMRate, };
                     const validRates = Object.entries(rates).filter(([, rate]) => rate > 0);
@@ -210,7 +210,7 @@ export default function Swap10143({ setIsLoading, setErrMsg, }: {
                 amount={amountA}
                 onAmountChange={value => {
                     setAmountA(value)
-                    getQoute(value)
+                    getQuote(value)
                 }}
                 amountAutoFocus
                 selectedToken={tokenA}
@@ -229,7 +229,7 @@ export default function Swap10143({ setIsLoading, setErrMsg, }: {
                         className="h-6 text-[#00ff9d] text-xs px-2 cursor-pointer"
                         onClick={() => {
                             setAmountA(tokenABalance)
-                            getQoute(tokenABalance)
+                            getQuote(tokenABalance)
                         }}
                     >
                         MAX
@@ -275,7 +275,7 @@ export default function Swap10143({ setIsLoading, setErrMsg, }: {
                             const tvlValue = Number(CMswapTVL[`tvl${feeSelect}` as keyof typeof CMswapTVL]);
                             if (!shouldShowTVL) return "";
                             return (
-                                <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "CMswap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("CMswap"); getQoute(amountA);}}>
+                                <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "CMswap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => {setPoolSelect("CMswap"); getQuote(amountA);}}>
                                     <span className="flex items-center gap-1">
                                         CMswap {bestPool === "CMswap" && (<span className="bg-yellow-500/10 text-yellow-300 border border-yellow-300/20 rounded px-1.5 py-0.5 text-[10px] font-semibold">Best Price</span>)}
                                     </span>

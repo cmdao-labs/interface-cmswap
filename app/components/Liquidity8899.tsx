@@ -11,7 +11,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useDebouncedCallback } from 'use-debounce'
 import { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI } from '@/app/lib/8899'
 import { config } from '@/app/config'
-import { useSearchParams } from 'next/navigation'
 
 export default function Liquidity8899({ 
     setIsLoading, setErrMsg, 
@@ -40,9 +39,7 @@ export default function Liquidity8899({
     const [rangePercentage, setRangePercentage] = React.useState(1)
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
-    const [mode,setMode] = React.useState("Manual") // Use to declare Manual Mode ( 2 Tokens ) or Auto Mode ( 1 Token )
     const [hasInitializedFromParams, setHasInitializedFromParams] = React.useState(false)
-
 
     React.useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search)
@@ -168,7 +165,7 @@ export default function Liquidity8899({
                 amount0: String(parseEther(_amountA)) as BigintIsh,
                 useFullPrecision: true
             })
-            mode !== "Auto" ?  setAmountB(formatEther(singleSidePositionToken0.mintAmounts.amount1 as unknown as bigint)) : null
+            setAmountB(formatEther(singleSidePositionToken0.mintAmounts.amount1 as unknown as bigint))
         } else {
             const singleSidePositionToken1 = Position.fromAmount1({
                 pool, 
@@ -176,7 +173,7 @@ export default function Liquidity8899({
                 tickUpper: Number(upperTick), 
                 amount1: String(parseEther(_amountA)) as BigintIsh,
             })
-            mode !== "Auto" ? setAmountB(formatEther(singleSidePositionToken1.mintAmounts.amount0 as unknown as bigint)) : null
+            setAmountB(formatEther(singleSidePositionToken1.mintAmounts.amount0 as unknown as bigint))
         }
     }, 700)
 
@@ -416,12 +413,7 @@ export default function Liquidity8899({
         setAmountA("")
         setAmountB("")
         address !== undefined && rangePercentage !== 999 && fetch1()
-    }, [config, address, tokenA, tokenB, feeSelect, rangePercentage, txupdate,mode])
-    console.log({lowerTick, upperTick}) // for fetch monitoring
-
-    React.useEffect(() =>{
-        setMode("Manual")
-    },[feeSelect,tokenA,tokenB])
+    }, [config, address, tokenA, tokenB, feeSelect, rangePercentage, txupdate])
 
     return (
         <div className='space-y-2'>
@@ -520,7 +512,7 @@ export default function Liquidity8899({
                 </div>
                 <div className="flex items-center justify-between">
                     {currPrice === "" || (upperPrice !== '' && Number(upperPrice) > Number(currPrice)) ?
-                        <input placeholder={mode === "Auto" ? "-" : "0.00"} disabled={mode === "Auto"} className="w-[140px] sm:w-[200px] bg-transparent border-none text-white text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountB} onChange={(e) => setAmountB(e.target.value)} /> :
+                        <input placeholder="0.00" className="w-[140px] sm:w-[200px] bg-transparent border-none text-white text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto" value={amountB} onChange={(e) => setAmountB(e.target.value)} /> :
                         <div />
                     }
                     <Popover open={open2} onOpenChange={setOpen2}>
@@ -609,31 +601,6 @@ export default function Liquidity8899({
                     <span className="ttext-[10px] mt-1 opacity-60">[-2%, +2%]</span>
                 </Button>
             </div>
-
-
-            { tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && false && pairDetect !== '0x0000000000000000000000000000000000000000' &&
-            <>
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-
-                <Button variant="outline" className={"h-auto rounded text-xs w-full flex flex-col " + (mode === "Manual" ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setMode("Manual")}>
-                    <span>Manual Pairing</span>
-                </Button>
-                
-                <Button variant="outline" className={"h-auto rounded text-xs w-full flex flex-col " + (mode === "Auto" ? "bg-[#162638] text-[#00ff9d] border border-[#00ff9d]/20" : "bg-[#0a0b1e]/50 text-gray-400 border border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setMode("Auto")}>
-                    <span>Auto Pairing</span>
-                </Button>
-            </div>
-            {mode === "Auto" && (
-            <div className="text-gray-400 text-xs text-left">
-                Automated sale of <strong>{tokenA.name}</strong> for <strong>{tokenB.name}</strong> via CMswapV3 LP, followed by liquidity pairing. <br />
-                <span className="text-red-400">Note: Low liquidity may result in slippage or losses during the swap process.</span>
-            </div>
-            )}
-            </>
-
-            }
-          
-
             <div className="space-y-2 mt-4">
                 {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && pairDetect === '0x0000000000000000000000000000000000000000' &&
                     <div className="rounded-lg border border-[#00ff9d]/10 p-3 flex flex-row items-center justify-between">
