@@ -620,8 +620,8 @@ const CreateEarnProgram = () => {
                                     <input ref={searchRef} value={selectToken} onChange={(e) => {setSelectToken(e.target.value); if (e.target.value.length === 42) fetchTokenData(e.target.value, setSelectTokenInfo);}} placeholder="Stake Token Address" className={`w-full pl-10 pr-4 py-3  border  ${currentTheme.border} ${currentTheme.hover} rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-gray-500`} />
                                 </div>
                                 <div className="space-y-3">
-                                    {tokens.filter((token) => token.value.length === 42)
-                                        .map((token) => (
+                                    {tokens.filter((token: any) => token.value.length === 42)
+                                        .map((token: any) => (
                                             <div key={token.value} onClick={() => {setSelectToken(token.value); fetchTokenData(token.value, setSelectTokenInfo);}} className={`p-4 border rounded-lg cursor-pointer transition-all ${selectToken === token.value ? `${currentTheme.accent} ${currentTheme.bg}` : `${currentTheme.border} ${currentTheme.hover}`}`}>
                                                 <div className="flex items-center gap-3">
                                                     <img src={token.logo || '/default2.png'} alt={token.name} className="w-8 h-8 rounded-full" />
@@ -714,8 +714,8 @@ const CreateEarnProgram = () => {
                                                 <PopoverTrigger asChild>
                                                     <Button variant="outline" role="combobox" aria-expanded={openReward} className={`w-full text-white border ${currentTheme.border} ${currentTheme.hover} h-10 justify-between`}>
                                                         <div className="gap-2 flex items-center">
-                                                            {rewardToken ? <img alt="" src={tokens.find((t) => t.value === rewardToken)?.logo || '/default2.png'} className="w-5 h-5 rounded-full" /> : <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center text-xs text-gray-300">?</div>}
-                                                            <span className="truncate">{tokens.find((t) => t.value === rewardToken)?.name || 'Select reward token'}</span>
+                                                            {rewardToken ? <img alt="" src={tokens.find((t: any) => t.value === rewardToken)?.logo || '/default2.png'} className="w-5 h-5 rounded-full" /> : <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center text-xs text-gray-300">?</div>}
+                                                            <span className="truncate">{tokens.find((t: any) => t.value === rewardToken)?.name || 'Select reward token'}</span>
                                                         </div>
                                                         <ChevronDown className="h-4 w-4 text-gray-400" />
                                                     </Button>
@@ -744,8 +744,8 @@ const CreateEarnProgram = () => {
                                                                 </div>
                                                             </CommandEmpty>
                                                             <CommandGroup>
-                                                                {tokens.filter((token) => token.value?.length === 42)
-                                                                    .map((token) => (
+                                                                {tokens.filter((token: any) => token.value?.length === 42)
+                                                                    .map((token: any) => (
                                                                         <CommandItem key={token.value} value={token.name} onSelect={() => {setRewardToken(token.value); fetchTokenData(token.value, setRewardTokenInfo); setOpenReward(false);}} className="cursor-pointer">
                                                                             <div className="flex items-center">
                                                                                 <img alt="" src={token.logo} className="w-5 h-5 rounded-full" />
@@ -944,8 +944,8 @@ const CreateEarnProgram = () => {
                                                         <PopoverTrigger asChild>
                                                             <Button variant="outline" role="combobox" aria-expanded={openReward} className="w-full text-white border border-gray-600 h-10 justify-between">
                                                                 <div className="gap-2 flex flex-row items-center justify-start">
-                                                                    {rewardToken ? <img alt="" src={tokens.find((t) => t.value === rewardToken)?.logo || '/default2.png'} className="w-5 h-5 rounded-full" /> : <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center text-xs text-gray-300">?</div>}
-                                                                    <span className="truncate">{tokens.find((t) => t.value === rewardToken)?.name || 'Select reward token'}</span>
+                                                                    {rewardToken ? <img alt="" src={tokens.find((t: any) => t.value === rewardToken)?.logo || '/default2.png'} className="w-5 h-5 rounded-full" /> : <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center text-xs text-gray-300">?</div>}
+                                                                    <span className="truncate">{tokens.find((t: any) => t.value === rewardToken)?.name || 'Select reward token'}</span>
                                                                 </div>
                                                                 <ChevronDown className="h-4 w-4 text-gray-400" />
                                                             </Button>
@@ -974,8 +974,8 @@ const CreateEarnProgram = () => {
                                                                         </div>
                                                                     </CommandEmpty>
                                                                     <CommandGroup>
-                                                                        {tokens.filter((token) => token.value?.length === 42)
-                                                                            .map((token) => (
+                                                                        {tokens.filter((token: any) => token.value?.length === 42)
+                                                                            .map((token: any) => (
                                                                                 <CommandItem
                                                                                     key={token.value}
                                                                                     value={token.name}
