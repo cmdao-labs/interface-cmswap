@@ -4,7 +4,7 @@ import { formatEther, formatUnits } from 'viem'
 import { getBalance, readContracts } from '@wagmi/core'
 import { chains } from '@/lib/chains'
 import { normalizeTokenPair } from './shared'
-import { getDecimals } from '@/app/components/swap/utils'
+import { getDecimals } from '@/components/cmswap/swap/utils'
 const { tokens: defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI, } = chains[25925]
 type UIToken = { name: string; value: '0xstring'; logo: string; decimal: number }
 interface UseSwap25925PoolDataParams<TToken extends UIToken> {

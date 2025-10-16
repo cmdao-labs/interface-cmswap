@@ -6,14 +6,14 @@ import { ArrowDown } from "lucide-react"
 import { useDebouncedCallback } from 'use-debounce'
 import { chains } from '@/lib/chains'
 import { config } from '@/config/reown'
-import { useSwapTokenSelection } from '@/app/components/swap/useSwapTokenSelection'
-import { useSwapQuote } from '@/app/components/swap/useSwapQuote'
-import { encodePath } from '@/app/components/swap/path'
-import { ensureTokenAllowance, executeRouterSwap, wrapNativeToken, unwrapWrappedToken } from '@/app/components/swap/swapActions'
-import { useSwap10143PoolData } from '@/app/components/swap/hooks/useSwap10143PoolData'
-import { SwapTokenPanel } from '@/app/components/swap/SwapTokenPanel'
+import { useSwapTokenSelection } from '@/components/cmswap/swap/useSwapTokenSelection'
+import { useSwapQuote } from '@/components/cmswap/swap/useSwapQuote'
+import { encodePath } from '@/components/cmswap/swap/path'
+import { ensureTokenAllowance, executeRouterSwap, wrapNativeToken, unwrapWrappedToken } from '@/components/cmswap/swap/swapActions'
+import { useSwap10143PoolData } from '@/components/cmswap/swap/hooks/useSwap10143PoolData'
+import { SwapTokenPanel } from '@/components/cmswap/swap/SwapTokenPanel'
 import { Button } from '@/components/ui/button'
-import { computePriceImpact, getDecimals } from '@/app/components/swap/utils'
+import { computePriceImpact, getDecimals } from '@/components/cmswap/swap/utils'
 const { tokens: chainTokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, wrappedNative, } = chains[10143]
 type UIToken = { name: string; value: '0xstring'; logo: string; decimal: number }
 const tokens = chainTokens as readonly UIToken[]

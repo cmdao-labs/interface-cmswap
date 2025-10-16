@@ -1,6 +1,7 @@
 'use client';
 import { useSearchParams } from "next/navigation";
 import React from "react";
+
 export const experimental_ppr = true;
 export default function BlogLayout({ children }: { children: React.ReactNode }) {
     const searchParams = useSearchParams();

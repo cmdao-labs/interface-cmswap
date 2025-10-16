@@ -9,8 +9,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { simulateContract, waitForTransactionReceipt, writeContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, parseEther, erc20Abi } from 'viem'
 import { config } from '@/config/reown'
-import ErrorModal from '@/app/components/error-modal'
-import ReferralTracker from '../components/Refferal'
+import ErrorModal from '@/components/cmswap/error-modal'
+import ReferralTracker from '@/components/cmswap/Refferal'
 
 const chains: { name: string, id: number, logo: string }[] = [
     { name: 'JB chain', id: 8899, logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreiguxm4at5dehn6s7v2qniim7edqsntdmukwjmgyqkr4rv4aujvbdy' },

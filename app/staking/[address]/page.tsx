@@ -5,7 +5,7 @@ import { useAccount } from 'wagmi'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { config } from '@/config/reown'
-import ErrorModal from '@/app/components/error-modal'
+import ErrorModal from '@/components/cmswap/error-modal'
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther } from "viem"
 import { chains } from '@/lib/chains'

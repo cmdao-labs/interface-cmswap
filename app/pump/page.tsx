@@ -17,7 +17,6 @@ export default function Home() {
         else if (chainId === 10143) window.location.href = 'https://www.cmswap.fun/pump/launchpad?chain=monad&mode=pro';
     };
     const handleCancel = () => {router.push('/pump/launchpad?chain=kubtestnet&mode=pro')};
-
     return (
         <>
             {showPopup && (

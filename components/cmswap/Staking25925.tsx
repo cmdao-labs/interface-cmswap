@@ -6,7 +6,7 @@ import { config } from '@/config/reown'
 import { readContracts, type WriteContractErrorType } from '@wagmi/core'
 import { ADDRESS_ZERO } from "@uniswap/v3-sdk";
 import { useAccount } from 'wagmi'
-import { formatEther, parseEther } from 'viem'
+import { formatEther } from 'viem'
 import Link from "next/link"
 import { redirect } from 'next/navigation';
 import { chains } from '@/lib/chains'

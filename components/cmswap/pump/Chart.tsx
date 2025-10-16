@@ -1,14 +1,12 @@
 'use client';
 import React, {useCallback, useEffect, useMemo, useRef, useState,} from 'react';
-import {CandlestickData, BarData, CrosshairMode, HistogramData, IChartApi, ISeriesApi, LineData, LineStyle, MouseEventParams, Time, createChart, LineSeries, HistogramSeries, CandlestickSeries,} from 'lightweight-charts';
-import {Maximize2, Minimize2,} from 'lucide-react';
+import {CandlestickData, BarData, CrosshairMode, HistogramData, IChartApi, ISeriesApi, LineStyle, MouseEventParams, Time, createChart, HistogramSeries, CandlestickSeries,} from 'lightweight-charts';
 
 type RawPoint = {
     time: number; // milliseconds (epoch)
     price: number;
     volume: number;
 };
-
 type Candle = {
     time: number; // seconds (epoch)
     open: number;
@@ -17,7 +15,6 @@ type Candle = {
     close: number;
     volume: number;
 };
-
 const TIMEFRAMES = [
     { label: '1m', value: 1 * 60 * 1000 },
     { label: '5m', value: 5 * 60 * 1000 },
@@ -28,7 +25,6 @@ const TIMEFRAMES = [
     { label: '1W', value: 7 * 24 * 60 * 60 * 1000 },
     { label: '1M', value: 30 * 24 * 60 * 60 * 1000 },
 ] as const;
-
 type ChartProps = {data: RawPoint[];};
 
 function aggregateCandlesWithFill(points: RawPoint[], intervalMs: number): Candle[] {
@@ -375,12 +371,6 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
         });
     }, [metric]);
 
-    // useEffect(() => {
-    //     const volumeSeries = volumeSeriesRef.current;
-    //     if (!volumeSeries) return;
-    //     volumeSeries.setData(volumeSeriesData);
-    // }, [volumeSeriesData]);
-
     useEffect(() => {
         if (!chartRef.current) return;
 
@@ -421,15 +411,6 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
                 <div className="absolute top-4 left-4 right-24 z-3 overflow-hidden">
                     <div ref={infoRef} className="flex flex-wrap items-center gap-3 font-mono text-[4px] sm:text-[10px] text-emerald-200 truncate" />
                 </div>
-
-                {/* <button
-                    type="button"
-                    onClick={() => setIsFullscreen((prev) => !prev)}
-                    className="absolute right-4 top-4 rounded-md border border-emerald-400/40 bg-[#08080c]/80 p-2 text-white/70 transition hover:border-emerald-200 hover:text-white"
-                >
-                    {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-                </button> */}
-
                 <div
                     ref={tooltipRef}
                     className="pointer-events-none absolute hidden max-w-[220px] rounded-md border border-emerald-400/40 bg-[#050509]/95 p-3 text-xs text-white shadow-[0_0_20px_rgba(0,255,170,0.25)]"

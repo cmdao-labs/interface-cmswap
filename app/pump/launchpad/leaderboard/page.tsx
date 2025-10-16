@@ -2,24 +2,15 @@ import Link from "next/link";
 import { Suspense } from 'react';
 import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
-import Leaderboard from "@/app/components/pump/Leaderboard";
+import Leaderboard from "@/components/cmswap/pump/Leaderboard";
 
 export const metadata: Metadata = { title: "Leaderboard | CMswap - PUMP", description: "hello pump.",};
-
-export default async function LeaderboardPage(props: {
-    searchParams?: Promise<{
-        rankby?: string;
-        mode?: string;
-        chain?: string;
-        token?: string;
-    }>;
-}) {
+export default async function LeaderboardPage(props: {searchParams?: Promise<{ rankby?: string; mode?: string; chain?: string; token?: string; }>;}) {
     const searchParams = await props.searchParams;
     const rankby = searchParams?.rankby || '';
     const mode = searchParams?.mode || '';
     const chain = searchParams?.chain || '';
     const token = searchParams?.token || '';
-
     return (
         <main className="row-start-2 md:w-6/7 w-full self-center h-full flex flex-col gap-4 items-center sm:items-start mt-18 sm:mt-24">
             <Link href={"/pump/launchpad?chain=" + chain + (mode === 'pro' ? "&mode=pro" : "&mode=lite")} prefetch={false} className="w-full text-sm underline hover:font-bold px-4"><ArrowLeft className="h-8 w-8 p-1 rounded-full bg-white/5" aria-hidden="true" /></Link>

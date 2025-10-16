@@ -8,7 +8,7 @@ import { useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import { config } from "@/config/reown";
 import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
 import { useRouter } from "next/navigation";
-import CustomPopup from "@/app/components/popup-modal";
+import CustomPopup from "@/components/cmswap/popup-modal";
 
 export default function Create({ mode, chain, token, }: {
     mode: string;

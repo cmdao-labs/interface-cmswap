@@ -1,7 +1,7 @@
 'use client'
 import React from "react"
 import { Globe, Palette, HeartHandshake } from "lucide-react"
-import ReferralTracker from './components/Refferal'
+import ReferralTracker from '@/components/cmswap/Refferal'
 
 export default function Page() {
     const canvasRef = React.useRef<HTMLCanvasElement>(null)

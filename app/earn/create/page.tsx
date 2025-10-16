@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Search, Check } from 'lucide-react';
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction } from '@wagmi/core';
+import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts } from '@wagmi/core';
 import { config } from '@/config/reown';
 import { formatEther, parseEther, createPublicClient, http, erc20Abi } from 'viem';
 import { usePrice } from '@/context/getPrice';
@@ -13,8 +13,8 @@ import { Button } from '@/components/ui/button';
 import { useAccount } from 'wagmi';
 import { UniswapV2PairABI } from '@/app/earn/abi/UniswapV2Pair';
 import { intervalToDuration } from 'date-fns';
-import DateTimePicker from '@/app/components/DateSelector';
-import { Copy, CopyCheck, Plus, Minus } from "lucide-react";
+import DateTimePicker from '@/components/cmswap/DateSelector';
+import { Copy, CopyCheck } from "lucide-react";
 type Pool = {
     id: string;
     name: string;

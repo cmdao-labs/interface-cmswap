@@ -1,5 +1,5 @@
 'use client'
-import LiquidityPool from '../components/LiquidityPool_Combined';
+import LiquidityPool from '@/components/cmswap/LiquidityPool_Combined';
 import { bitkub, jbc, bitkubTestnet } from 'viem/chains';
 import { chains } from '@/lib/chains'
 import { useAccount } from 'wagmi'

@@ -4,7 +4,7 @@ import { useAccount } from "wagmi";
 import { simulateContract, waitForTransactionReceipt, writeContract, getBalance, sendTransaction, type WriteContractErrorType } from "@wagmi/core";
 import { Button } from "@/components/ui/button";
 import { createPublicClient, http, erc20Abi } from "viem";
-import { jbc, bitkub, monadTestnet, bitkubTestnet, mainnet } from "viem/chains";
+import { jbc, bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
 import { Copy, CopyCheck,ScanQrCode,ChevronDown } from "lucide-react";
 import { config } from "../../config/reown";
 import { chains } from '@/lib/chains'

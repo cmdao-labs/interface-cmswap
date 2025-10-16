@@ -4,7 +4,7 @@ import { formatEther, formatUnits } from 'viem'
 import { getBalance, readContracts } from '@wagmi/core'
 import { normalizeTokenPair } from './shared'
 import { chains } from '@/lib/chains'
-import { getDecimals } from '@/app/components/swap/utils'
+import { getDecimals } from '@/components/cmswap/swap/utils'
 const { tokens: defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI, } = chains[96]
 type UIToken = { name: string; value: '0xstring'; logo: string; decimal: number }
 type CMTvlState = {

@@ -11,7 +11,7 @@ import { bitkubTestnet } from "viem/chains";
 import { config } from "@/config/reown";
 import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
 import { SocialsABI } from "@/app/pump/abi/Socials";
-import Chart from "@/app/components/pump/Chart";
+import Chart from "@/components/cmswap/pump/Chart";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });

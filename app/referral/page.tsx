@@ -2,11 +2,11 @@
 import React from 'react'
 import { useAccount } from 'wagmi'
 import { type WriteContractErrorType } from '@wagmi/core'
-import ErrorModal from '@/app/components/error-modal'
-import Ref96 from '../components/Ref96'
-import Ref25925 from '../components/Ref25925'
-import RefError from '../components/RefError'
-import ReferralTracker from '../components/Refferal'
+import ErrorModal from '@/components/cmswap/error-modal'
+// import Ref96 from '@/components/cmswap/Ref96'
+import Ref25925 from '@/components/cmswap/Ref25925'
+import RefError from '@/components/cmswap/RefError'
+import ReferralTracker from '@/components/cmswap/Refferal'
 
 export default function Page() {
     const [isLoading, setIsLoading] = React.useState(false)
