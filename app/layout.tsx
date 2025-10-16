@@ -45,7 +45,7 @@ export default async function RootLayout({ children, }: { children: React.ReactN
                     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
                         <PriceProvider>
                             <Headbar />
-                            {children}
+                                {children}
                             <Footer />
                         </PriceProvider>
                     </ThemeProvider>

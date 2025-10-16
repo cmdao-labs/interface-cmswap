@@ -480,35 +480,24 @@ export default function Page() {
                 <div className="relative h-50 w-full overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black" />
                 </div>
-<div className="absolute bottom-0 left-0 right-0 transform translate-y-1/2 z-20">
-  <div className="container mx-auto px-4">
-    <div className="flex flex-col items-center text-center">
-      {/* Title */}
-      <h1 className="text-3xl md:text-5xl lg:text-6xl font-light tracking-wider text-white drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]">
-        <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-green-200">
-          Staking (tK-tKKUB) earn Points
-        </span>
-      </h1>
-
-      {/* Subtitle */}
-      <p className="mt-3 text-sm md:text-lg text-gray-300 leading-relaxed max-w-2xl">
-        Stake your tokens to earn <span className="text-green-400 font-semibold">reward points</span> 
-        and participate in <span className="text-green-300 font-semibold">Node Revenue Distribution</span>.  
-        <br className="hidden sm:block" />
-        If you <span className="text-red-400 font-semibold">withdraw</span> before distribution, 
-        you <span className="text-red-400 font-semibold">forfeit your eligibility</span>.
-         
-      </p>
-      <p>
-        <span className="text-red-400 font-semibold">kubtestnet no real distribution</span>
-      </p>
-
-      {/* Divider line (optional aesthetic) */}
-      <div className="mt-5 h-[2px] w-32 bg-gradient-to-r from-green-400/70 to-green-100/20 rounded-full" />
-    </div>
-  </div>
-</div>
-
+                <div className="absolute bottom-0 left-0 right-0 transform translate-y-1/2 z-20">
+                    <div className="container mx-auto px-4">
+                        <div className="flex flex-col items-center text-center">
+                            <h1 className="text-3xl md:text-5xl lg:text-6xl font-light tracking-wider text-white drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]">
+                                <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-green-200">Staking (tK-tKKUB) earn Points</span>
+                            </h1>
+                            <p className="mt-3 text-sm md:text-lg text-gray-300 leading-relaxed max-w-2xl">
+                                Stake your tokens to earn <span className="text-green-400 font-semibold">reward points</span> 
+                                and participate in <span className="text-green-300 font-semibold">Node Revenue Distribution</span>.  
+                                <br className="hidden sm:block" />
+                                If you <span className="text-red-400 font-semibold">withdraw</span> before distribution, 
+                                you <span className="text-red-400 font-semibold">forfeit your eligibility</span>.
+                            </p>
+                            <p><span className="text-red-400 font-semibold">kubtestnet no real distribution</span></p>
+                            <div className="mt-5 h-[2px] w-32 bg-gradient-to-r from-green-400/70 to-green-100/20 rounded-full" />
+                        </div>
+                    </div>
+                </div>
             </header>
             <main className="container mx-auto p-4 md:p-6 mt-16 relative z-10">
                 <div className="mb-8">
@@ -593,5 +582,3 @@ export default function Page() {
     )
 }
     
-
-

@@ -172,45 +172,6 @@ body::-webkit-scrollbar { display: none; }
     50% { transform: translateY(-20px) rotate(5deg); }
 }
   
-.terminal-window {
-    background-color: rgba(0, 0, 0, 0.5);
-    border: 1px solid #00ff41;
-    border-radius: 0;
-    overflow: hidden;
-    margin-top: 1.5rem;
-    text-align: left;
-}
-  
-.terminal-header {
-    background-color: rgba(0, 255, 65, 0.1);
-    padding: 0.5rem 1rem;
-    border-bottom: 1px solid #00ff41;
-}
-  
-.terminal-body {
-    padding: 1rem;
-}
-  
-.terminal-line {
-    margin-bottom: 0.5rem;
-    line-height: 1.5;
-}
-  
-.glitch-text {
-    position: relative;
-    animation: glitch 3s infinite;
-}
-  
-@keyframes glitch {
-    0% { text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75), -0.05em -0.025em 0 rgba(0, 255, 0, 0.75), 0.025em 0.05em 0 rgba(0, 0, 255, 0.75); }
-    14% { text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75), -0.05em -0.025em 0 rgba(0, 255, 0, 0.75), 0.025em 0.05em 0 rgba(0, 0, 255, 0.75); }
-    15% { text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75), 0.025em 0.025em 0 rgba(0, 255, 0, 0.75), -0.05em -0.05em 0 rgba(0, 0, 255, 0.75); }
-    49% { text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75), 0.025em 0.025em 0 rgba(0, 255, 0, 0.75), -0.05em -0.05em 0 rgba(0, 0, 255, 0.75); }
-    50% { text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75), 0.05em 0 0 rgba(0, 255, 0, 0.75), 0 -0.05em 0 rgba(0, 0, 255, 0.75); }
-    99% { text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75), 0.05em 0 0 rgba(0, 255, 0, 0.75), 0 -0.05em 0 rgba(0, 0, 255, 0.75); }
-    100% { text-shadow: -0.025em 0 0 rgba(255, 0, 0, 0.75), -0.025em -0.025em 0 rgba(0, 255, 0, 0.75), -0.025em -0.05em 0 rgba(0, 0, 255, 0.75); }
-}
-  
 .glitch-heading {
     position: relative;
 }
@@ -268,49 +229,6 @@ body::-webkit-scrollbar { display: none; }
     90% { clip: rect(13px, 9999px, 75px, 0); }
     100% { clip: rect(42px, 9999px, 69px, 0); }
 }
-  
-@keyframes blink-caret {
-    from,
-    to { border-color: transparent; }
-    50% { border-color: #32ffa7; }
-}
-  
-.loading-bar {
-    position: relative;
-    overflow: hidden;
-}
-  
-.loading-bar::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    animation: loading 1.5s infinite;
-}
-  
- @keyframes loading {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-.pixelated {
-    image-rendering: pixelated;
-    image-rendering: -moz-crisp-edges;
-    image-rendering: crisp-edges;
-}
-  
-@keyframes float2 {
-    0%,
-    100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-}
-  
-.floating {
-    animation: float2 3s ease-in-out infinite;
-}
 
 .scrollbar-hide {
     -ms-overflow-style: none;
@@ -322,12 +240,8 @@ body::-webkit-scrollbar { display: none; }
 }
 
 .hover-effect:hover {
-  background-image: radial-gradient(circle 1292px at -13.6% 51.7%, rgba(0,56,68,1) 0%, rgba(163,217,185,1) 51.5%, rgba(255,252,247,1) 88.6%);
-  text-shadow: 0px 0px 12px rgba(0,255,209,.7);
-}
-.hover-effect-monad:hover {
-  background-image: radial-gradient(circle 1292px at -13.6% 51.7%, rgba(112, 41, 99) 0%, rgba(163,217,185,1) 51.5%, rgba(255,252,247,1) 88.6%);
-  text-shadow: 0px 0px 12px rgba(224,176,255,.7);
+    background-image: radial-gradient(circle 1292px at -13.6% 51.7%, rgba(0,56,68,1) 0%, rgba(163,217,185,1) 51.5%, rgba(255,252,247,1) 88.6%);
+    text-shadow: 0px 0px 12px rgba(0,255,209,.7);
 }
 
 @media (min-width: 640px) {
@@ -336,16 +250,15 @@ body::-webkit-scrollbar { display: none; }
     }
 }
 
-/* Shake once animation for head notifications */
 @keyframes shake {
-  0% { transform: translateX(0); }
-  20% { transform: translateX(-6px); }
-  40% { transform: translateX(6px); }
-  60% { transform: translateX(-4px); }
-  80% { transform: translateX(4px); }
-  100% { transform: translateX(0); }
+    0% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+    100% { transform: translateX(0); }
 }
 
 .animate-shake-once {
-  animation: shake 0.35s ease;
+    animation: shake 0.35s ease;
 }

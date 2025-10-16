@@ -275,7 +275,7 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                                                                 {secondaryText ? <span className="text-xs text-slate-500">{secondaryText}</span> : null}
                                                             </div>
                                                         </div>
-                                                        <span className="text-right text-lg font-semibold text-emerald-200 drop-shadow-[0_0_8px_rgba(16,185,129,0.55)]">{entry.type === 'degen' ? Number(formatValue(entry.value)).toFixed(0) + ' txn' : formatValue(entry.value) + ' tKub'}</span>
+                                                        <span className="text-right text-lg font-semibold text-emerald-200 drop-shadow-[0_0_8px_rgba(16,185,129,0.55)]">{formatValue(entry.value) + (entry.type === 'degen' ?  ' txn' : ' tKub')}</span>
                                                     </div>
                                                 </a>
                                             </td>

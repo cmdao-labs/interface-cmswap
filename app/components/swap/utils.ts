@@ -18,7 +18,6 @@ export function formatAmount(amount: bigint, token: any): string {
 
 // Compute price impact as percentage string (capped at +/-cap)
 export function computePriceImpact(executionPrice: number, midPrice: number, cap = 100): string {
-  console.log(executionPrice, midPrice)
   if (!isFinite(executionPrice) || !isFinite(midPrice) || midPrice <= 0) return '0'
   const pi = ((executionPrice - midPrice) / midPrice) * 100
   if (!isFinite(pi)) return '0'
