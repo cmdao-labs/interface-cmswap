@@ -3,9 +3,9 @@ import Link from "next/link";
 import { Menu, X, Rocket } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useAccount } from 'wagmi';
-import Search from "@/app/pump/ui/Search";
+import Search from "@/app/components/pump/Search";
 import { useState } from "react";
-import Sort4 from "@/app/pump/ui/Sort4";
+import Sort4 from "@/app/components/pump/Sort4";
 
 type LaunchpadHeaderProps = {
     activeRoute?: "Markets" | "Portfolio" | "Leaderboard";

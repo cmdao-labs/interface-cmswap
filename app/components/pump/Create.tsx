@@ -5,7 +5,7 @@ import { useConnections, useAccount } from "wagmi";
 import { parseEther } from "viem";
 import { writeContract } from "@wagmi/core";
 import { useMemo, useState, type ChangeEvent, type ReactNode } from "react";
-import { config } from "@/app/config";
+import { config } from "@/config/reown";
 import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
 import { useRouter } from "next/navigation";
 import CustomPopup from "@/app/components/popup-modal";

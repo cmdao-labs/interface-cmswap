@@ -1,32 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { Copy, Plus, ChevronDown, ChevronUp, CopyCheck, ExternalLink } from "lucide-react";
+import React, { useState } from "react";
+import { Copy, Plus, CopyCheck, ExternalLink } from "lucide-react";
 import { Button } from '@/components/ui/button'
-import { bitkubTestnet } from "viem/chains";
-import { stakingV2ABI, stakingV3ABI } from "@/app/lib/abi";
-import { config } from '@/app/config'
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core'
+import { stakingV2ABI } from "@/lib/abi";
+import { config } from '@/config/reown'
+import { readContracts, type WriteContractErrorType } from '@wagmi/core'
 import { ADDRESS_ZERO } from "@uniswap/v3-sdk";
 import { useAccount } from 'wagmi'
-import { createPublicClient, http, erc20Abi } from 'viem'
 import { formatEther, parseEther } from 'viem'
 import Link from "next/link"
 import { redirect } from 'next/navigation';
-import { 
-    tokens as tokens25925, 
-    StakingFactoryV2 as StakingFactoryV2_25925, 
-    StakingFactoryV2Contract as StakingFactoryV2Contract_25925, 
-    StakingFactoryV3 as StakingFactoryV3_25925, 
-    StakingFactoryV3Contract as StakingFactoryV3Contract_25925, 
-    v3FactoryContract as v3FactoryContract25925, 
-    erc20ABI as erc20ABI25925, 
-    v3PoolABI as v3PoolABI25925, 
-    V3_FACTORY as V3_FACTORY25925,
-    V3_FACTORYCreatedAt as V3_FACTORYCreatedAt25925,
-    POSITION_MANAGER as POSITION_MANAGER_25925,
-    StakingV2ABI as StakingV2ABI_25925,
-    StakingV3ABI as StakingV3ABI_25925,
-    positionManagerContract as positionManagerContract25925
-} from '@/app/lib/25925';
+import { chains } from '@/lib/chains'
 
 type ChainConfig = {
     chain: any;
@@ -34,27 +17,29 @@ type ChainConfig = {
     explorer: string;
     rpc: string;
     blocktime: number;
-    tokens: { name: string; value: string; logo: string }[];
+    tokens: any;
     lib: any;
 };
 
+const chain25925 = chains[25925]
+
 const chainConfigs: Record<number, ChainConfig> = {
     25925: {
-        chain: bitkubTestnet,
+        chain: chain25925.chain,
         chainId: 25925,
         explorer: 'https://testnet.kubscan.com/',
         rpc: 'https://rpc-testnet.bitkubchain.io',
         blocktime: 5,
-        tokens: tokens25925,
+        tokens: chain25925.tokens,
         lib: {
-            erc20ABI: erc20ABI25925,
-            positionManagerContract: positionManagerContract25925,
-            positionManagerAddr: POSITION_MANAGER_25925,
-            v3FactoryContract: v3FactoryContract25925,
-            StakingFactoryV2Contract: StakingFactoryV2Contract_25925,
-            StakingFactoryV3Contract: StakingFactoryV3Contract_25925,
-            StakingV2: StakingV2ABI_25925,
-            StakingV3: StakingV3ABI_25925,
+            erc20ABI: chain25925.erc20ABI,
+            positionManagerContract: chain25925.positionManagerContract,
+            positionManagerAddr: chain25925.POSITION_MANAGER,
+            v3FactoryContract: chain25925.v3FactoryContract,
+            StakingFactoryV2Contract: chain25925.StakingFactoryV2Contract,
+            StakingFactoryV3Contract: chain25925.StakingFactoryV3Contract,
+            StakingV2: chain25925.StakingV2ABI,
+            StakingV3: chain25925.StakingV3ABI,
         },
     },
 };
@@ -363,10 +348,10 @@ const StakingList = ({ setIsLoading, setErrMsg }: {
                         (filteredPrograms.map((item, index) => {
                             const theme = getTheme(Number(chainId));
                             const programInfo = stakingInfos[index];
-                            const stakeInfo = tokens.find(t => t.value.toLowerCase() === item.stakedToken.toLowerCase()) ;
-                            const tokenAInfo = tokens.find(t => t.value.toLowerCase() === item.tokenA.toLowerCase());
-                            const tokenBInfo = item.tokenB ? tokens.find(t => t.value.toLowerCase() === item.tokenB.toLowerCase()) : null;
-                            const rewardInfo = item.rewardToken ? tokens.find(t => t.value.toLowerCase() === item.rewardToken.toLowerCase()) : null;
+                            const stakeInfo = tokens.find((t: any) => t.value.toLowerCase() === item.stakedToken.toLowerCase()) ;
+                            const tokenAInfo = tokens.find((t: any) => t.value.toLowerCase() === item.tokenA.toLowerCase());
+                            const tokenBInfo = item.tokenB ? tokens.find((t: any) => t.value.toLowerCase() === item.tokenB.toLowerCase()) : null;
+                            const rewardInfo = item.rewardToken ? tokens.find((t: any) => t.value.toLowerCase() === item.rewardToken.toLowerCase()) : null;
                             const isExpanded = false
 
                             return (

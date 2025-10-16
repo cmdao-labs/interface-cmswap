@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { readContracts } from '@wagmi/core';
 import { erc20Abi } from 'viem';
-import Trade from "@/app/pump/ui/Trade";
-import { config } from '@/app/config'
+import Trade from "@/app/components/pump/Trade";
+import { config } from '@/config/reown'
 
 export async function generateMetadata(
     props: {

@@ -2,9 +2,10 @@
 import * as React from 'react'
 import { formatEther, formatUnits } from 'viem'
 import { getBalance, readContracts } from '@wagmi/core'
-import { tokens as defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI } from '@/app/lib/10143'
+import { chains } from '@/lib/chains'
 import { normalizeTokenPair } from './shared'
-type Token = typeof defaultTokens[number]
+const { tokens: defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI } = chains[10143]
+type UIToken = { name: string; value: '0xstring'; logo: string; decimal: number }
 type CMswapTVL = {
     tvl10000: string
     tvl3000: string
@@ -12,17 +13,17 @@ type CMswapTVL = {
     tvl100: string
     exchangeRate: string
 }
-interface UseSwap10143PoolDataParams {
+interface UseSwap10143PoolDataParams<TToken extends UIToken> {
     config: Parameters<typeof getBalance>[0]
     address?: string
-    tokens: Token[]
-    tokenA: Token
-    tokenB: Token
+    tokens: readonly TToken[]
+    tokenA: TToken
+    tokenB: TToken
     feeSelect: number
     txupdate: string
     hasInitializedFromParams: boolean
-    setTokenA: React.Dispatch<React.SetStateAction<Token>>
-    setTokenB: React.Dispatch<React.SetStateAction<Token>>
+    setTokenA: React.Dispatch<React.SetStateAction<TToken>>
+    setTokenB: React.Dispatch<React.SetStateAction<TToken>>
     setTokenABalance: React.Dispatch<React.SetStateAction<string>>
     setTokenBBalance: React.Dispatch<React.SetStateAction<string>>
     setWrappedRoute: React.Dispatch<React.SetStateAction<boolean>>
@@ -34,12 +35,12 @@ interface UseSwap10143PoolDataParams {
     setAmountB: React.Dispatch<React.SetStateAction<string>>
 }
 
-export function useSwap10143PoolData({config, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute, setCMswapTVL, setFixedExchangeRate, setAmountA, setAmountB}: UseSwap10143PoolDataParams) {
+export function useSwap10143PoolData<TToken extends UIToken>({config, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute, setCMswapTVL, setFixedExchangeRate, setAmountA, setAmountB}: UseSwap10143PoolDataParams<TToken>) {
     React.useEffect(() => {
         const fetchPoolData = async () => {
             const {tokenAValue: tokenAvalue, tokenBValue: tokenBvalue, isSameToken, isNativeWrappedPair, isTokenANative, isTokenBNative} = normalizeTokenPair(tokens, tokenA, tokenB)
             if (isSameToken) {
-                setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 })
+                setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 } as TToken)
                 return
             }
             const nativeBal = address ? await getBalance(config, { address: address as '0xstring' }) : { value: BigInt(0) }
@@ -61,11 +62,11 @@ export function useSwap10143PoolData({config, address, tokens, tokenA, tokenB, f
             })
             if (stateA[0].result && tokenA.name === 'Choose Token') {
                 const existing = tokens.find(t => t.value === tokenA.value)
-                setTokenA({name: stateA[0].result, value: tokenA.value, logo: existing?.logo ?? '../favicon.ico', decimal: existing?.decimal ?? 18})
+                setTokenA({name: stateA[0].result, value: tokenA.value, logo: existing?.logo ?? '../favicon.ico', decimal: existing?.decimal ?? 18} as TToken)
             }
             if (stateB[0].result && tokenB.name === 'Choose Token') {
                 const existing = tokens.find(t => t.value === tokenB.value)
-                setTokenB({name: stateB[0].result, value: tokenB.value, logo: existing?.logo ?? '../favicon.ico', decimal: existing?.decimal ?? 18})
+                setTokenB({name: stateB[0].result, value: tokenB.value, logo: existing?.logo ?? '../favicon.ico', decimal: existing?.decimal ?? 18} as TToken)
             }
             if (isTokenANative) {
                 setTokenABalance(formatEther(nativeBal.value))

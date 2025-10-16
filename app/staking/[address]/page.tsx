@@ -4,11 +4,12 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useAccount } from 'wagmi'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
-import { config } from '@/app/config'
+import { config } from '@/config/reown'
 import ErrorModal from '@/app/components/error-modal'
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther } from "viem"
-import { v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, publicClient, erc721ABI, POSITION_MANAGER, positionManagerCreatedAt, V3_STAKER, v3StakerContract } from '@/app/lib/25925'
+import { chains } from '@/lib/chains'
+const { v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, publicClient, erc721ABI, POSITION_MANAGER, positionManagerCreatedAt, V3_STAKER, v3StakerContract } = chains[25925]
 
 type MyPosition = {
     Id: number;

@@ -1,15 +1,16 @@
 'use client'
 import React, { useState } from 'react';
 import { ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core';
-import { config } from '@/app/config';
+import { readContract, readContracts} from '@wagmi/core';
+import { config } from '@/config/reown';
 import { useAccount } from 'wagmi';
 import { jbc, bitkub, monadTestnet, bitkubTestnet } from 'viem/chains';
-import { formatEther, parseEther, erc20Abi, createPublicClient, http, } from 'viem';
+import { formatEther, erc20Abi, createPublicClient, http, } from 'viem';
 import { Button } from '@/components/ui/button';
-import { usePrice } from '@/app/context/getPrice';
-import { v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, publicClient, erc721ABI, POSITION_MANAGER, positionManagerCreatedAt, V3_STAKER, v3StakerContract } from '@/app/lib/25925'
+import { usePrice } from '@/context/getPrice';
+import { chains } from '@/lib/chains'
 import { useRouter } from 'next/navigation';
+const { erc721ABI, POSITION_MANAGER, positionManagerCreatedAt, V3_STAKER, v3StakerContract, } = chains[25925]
 type ThemeId = 96 | 8899 | 56 | 3501 | 10143 | 25925;
 type Theme = {
     primary: string;

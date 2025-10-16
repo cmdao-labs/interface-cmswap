@@ -6,7 +6,7 @@ import { readContracts } from "@wagmi/core";
 import { createPublicClient, erc20Abi, formatEther, formatUnits, http } from "viem";
 import { bitkubTestnet } from "viem/chains";
 import { Plus } from "lucide-react";
-import { config } from "@/app/config";
+import { config } from "@/config/reown";
 import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
 const { ethereum } = window as any;
 

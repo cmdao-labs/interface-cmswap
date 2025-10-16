@@ -4,7 +4,7 @@ import { connection } from 'next/server';
 import { readContracts } from '@wagmi/core';
 import { createPublicClient, http, formatEther, erc20Abi } from 'viem'
 import { bitkubTestnet } from 'viem/chains';
-import { config } from '@/app/config';
+import { config } from '@/config/reown';
 import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
 
 export default async function Activity({

@@ -1,8 +1,6 @@
-// Env required: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-// Optional: KUBTESTNET_RPC (default https://rpc-testnet.bitkubchain.io) / INDEXER_INTERVAL_MS (default 3000) / INDEXER_MAX_RANGE (default 2000) / INDEXER_MODE (all|creation|swap|transfer, default all)
-import { createPublicClient, decodeFunctionData, http, formatEther } from 'viem'
+// Env required: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY // Optional: KUBTESTNET_RPC (default https://rpc-testnet.bitkubchain.io) / INDEXER_INTERVAL_MS (default 3000) / INDEXER_MAX_RANGE (default 2000) / INDEXER_MODE (all|creation|swap|transfer, default all)
+import { createPublicClient, decodeFunctionData, http, formatEther, erc20Abi } from 'viem'
 import { bitkubTestnet } from 'viem/chains'
-import { erc20Abi } from 'viem'
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 

@@ -8,8 +8,9 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative } from '@/app/lib/25925'
-import { config } from '@/app/config'
+import { chains } from '@/lib/chains'
+import { config } from '@/config/reown'
+const { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative, } = chains[25925]
 
 type MyPosition = {
     Id: number;

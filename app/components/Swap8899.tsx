@@ -5,8 +5,8 @@ import { formatUnits, parseUnits } from 'viem'
 import { ArrowDown } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, wrappedNative, CMswapPoolDualRouterContract, CMswapPoolDualRouter, CMswapUniSmartRoute, CMswapUniSmartRouteContract } from '@/app/lib/8899'
-import { config } from '@/app/config'
+import { chains } from '@/lib/chains'
+import { config } from '@/config/reown'
 import { useSwapTokenSelection } from '@/app/components/swap/useSwapTokenSelection'
 import { useSwapQuote } from '@/app/components/swap/useSwapQuote'
 import { encodePath } from '@/app/components/swap/path'
@@ -14,6 +14,9 @@ import { ensureTokenAllowance, executeRouterSwap, wrapNativeToken, unwrapWrapped
 import { useSwap8899PoolData } from '@/app/components/swap/hooks/useSwap8899PoolData'
 import { computePriceImpact, getDecimals } from '@/app/components/swap/utils'
 import { SwapTokenPanel } from '@/app/components/swap/SwapTokenPanel'
+const { tokens: chainTokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, wrappedNative, CMswapPoolDualRouterContract, CMswapPoolDualRouter, CMswapUniSmartRoute, CMswapUniSmartRouteContract, } = chains[8899]
+type UIToken = { name: string; value: '0xstring'; logo: string; decimal: number }
+const tokens = chainTokens as readonly UIToken[]
 
 export default function Swap8899({ setIsLoading, setErrMsg, }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,

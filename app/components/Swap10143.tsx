@@ -4,8 +4,8 @@ import { simulateContract, waitForTransactionReceipt, writeContract, type WriteC
 import { formatUnits, parseUnits } from 'viem'
 import { ArrowDown } from "lucide-react"
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, wrappedNative } from '@/app/lib/10143'
-import { config } from '@/app/config'
+import { chains } from '@/lib/chains'
+import { config } from '@/config/reown'
 import { useSwapTokenSelection } from '@/app/components/swap/useSwapTokenSelection'
 import { useSwapQuote } from '@/app/components/swap/useSwapQuote'
 import { encodePath } from '@/app/components/swap/path'
@@ -14,6 +14,9 @@ import { useSwap10143PoolData } from '@/app/components/swap/hooks/useSwap10143Po
 import { SwapTokenPanel } from '@/app/components/swap/SwapTokenPanel'
 import { Button } from '@/components/ui/button'
 import { computePriceImpact, getDecimals } from '@/app/components/swap/utils'
+const { tokens: chainTokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, wrappedNative, } = chains[10143]
+type UIToken = { name: string; value: '0xstring'; logo: string; decimal: number }
+const tokens = chainTokens as readonly UIToken[]
 
 export default function Swap10143({ setIsLoading, setErrMsg, }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,

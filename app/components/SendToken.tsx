@@ -6,11 +6,8 @@ import { Button } from "@/components/ui/button";
 import { createPublicClient, http, erc20Abi } from "viem";
 import { jbc, bitkub, monadTestnet, bitkubTestnet, mainnet } from "viem/chains";
 import { Copy, CopyCheck,ScanQrCode,ChevronDown } from "lucide-react";
-import { config } from "../config";
-import { tokens as tokens96 } from "@/app/lib/96";
-import { tokens as tokens8899 } from "@/app/lib/8899";
-import { tokens as tokens10143 } from "@/app/lib/10143";
-import { tokens as tokens25925 } from "@/app/lib/25925";
+import { config } from "../../config/reown";
+import { chains } from '@/lib/chains'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import QRScannerModal from "./QRScannerModal";
@@ -32,7 +29,7 @@ const chainConfigs: Record<number, ChainConfig> = {
         explorer: "https://testnet.kubscan.com/",
         rpc: "https://rpc-testnet.bitkubchain.io",
         blocktime: 5,
-        lib: { tokens: tokens25925 },
+        lib: { tokens: chains[25925].tokens },
     },
     96: {
         chain: bitkub,
@@ -41,7 +38,7 @@ const chainConfigs: Record<number, ChainConfig> = {
         rpc: "https://rpc.bitkubchain.io",
         blocktime: 5,
         nameService: "KNS",
-        lib: { tokens: tokens96 },
+        lib: { tokens: chains[96].tokens },
     },
     8899: {
         chain: jbc,
@@ -49,7 +46,7 @@ const chainConfigs: Record<number, ChainConfig> = {
         explorer: "https://exp.jbcha.in/",
         rpc: "https://rpc2-l1.jbc.xpool.pw",
         blocktime: 5,
-        lib: { tokens: tokens8899 },
+        lib: { tokens: chains[8899].tokens },
     },
     10143: {
         chain: monadTestnet,
@@ -57,7 +54,7 @@ const chainConfigs: Record<number, ChainConfig> = {
         explorer: "https://testnet.monadexplorer.com/",
         rpc: "https://testnet-rpc.monad.xyz",
         blocktime: 5,
-        lib: { tokens: tokens10143 },
+        lib: { tokens: chains[10143].tokens },
     },
 };
 

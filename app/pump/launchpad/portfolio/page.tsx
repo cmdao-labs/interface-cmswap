@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ArrowLeft, Sparkles } from "lucide-react";
-import Dashboard from "@/app/pump/ui/Dashboard";
-import Activity from "@/app/pump/ui/Activity";
-import Sort3 from "@/app/pump/ui/Sort3";
+import Dashboard from "@/app/components/pump/Dashboard";
+import Activity from "@/app/components/pump/Activity";
+import Sort3 from "@/app/components/pump/Sort3";
 
 export const metadata: Metadata = {
     title: "Portfolio | CMswap - PUMP",

@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, kap20ABI, v3PoolABI } from '@/app/lib/25925'
-import { config } from '@/app/config'
+import { chains } from '@/lib/chains'
+import { config } from '@/config/reown'
+const { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, } = chains[25925]
 
 export default function Liquidity25925({ 
     setIsLoading, setErrMsg, 

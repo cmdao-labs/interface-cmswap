@@ -3,10 +3,10 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { headers } from 'next/headers'
 import { ThemeProvider } from './components/theme-provider'
-import ContextProvider from '@/app/context'
+import ContextProvider from '@/context/reown'
 import Headbar from './components/Headbar'
 import Footer from './components/Footer'
-import { PriceProvider } from './context/getPrice'
+import { PriceProvider } from '@/context/getPrice'
 
 const inter = Inter({subsets: ['latin'], display: 'swap'})
 

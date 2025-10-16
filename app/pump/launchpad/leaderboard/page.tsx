@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from 'react';
 import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
-import Leaderboard from "@/app/pump/ui/Leaderboard";
+import Leaderboard from "@/app/components/pump/Leaderboard";
 
 export const metadata: Metadata = { title: "Leaderboard | CMswap - PUMP", description: "hello pump.",};
 

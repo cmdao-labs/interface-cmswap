@@ -1,4 +1,4 @@
-import Create from "@/app/pump/ui/Create";
+import Create from "@/app/components/pump/Create";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

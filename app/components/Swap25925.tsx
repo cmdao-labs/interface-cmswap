@@ -5,8 +5,8 @@ import { formatUnits, parseUnits } from 'viem'
 import { ArrowDown } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, unwarppedNative } from '@/app/lib/25925'
-import { config } from '@/app/config'
+import { chains } from '@/lib/chains'
+import { config } from '@/config/reown'
 import { useSwapTokenSelection } from '@/app/components/swap/useSwapTokenSelection'
 import { useSwapQuote } from '@/app/components/swap/useSwapQuote'
 import { encodePath } from '@/app/components/swap/path'
@@ -14,6 +14,9 @@ import { ensureTokenAllowance, executeRouterSwap, wrapNativeToken, unwrapWrapped
 import { computePriceImpact, getDecimals } from '@/app/components/swap/utils'
 import { useSwap25925PoolData } from '@/app/components/swap/hooks/useSwap25925PoolData'
 import { SwapTokenPanel } from '@/app/components/swap/SwapTokenPanel'
+const { tokens: chainTokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, unwarppedNative, } = chains[25925]
+type UIToken = { name: string; value: '0xstring'; logo: string; decimal: number }
+const tokens = chainTokens as readonly UIToken[]
 
 export default function Swap25925({ setIsLoading, setErrMsg, }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,

@@ -3,10 +3,10 @@ import * as React from 'react'
 import { formatEther, formatUnits } from 'viem'
 import { getBalance, readContracts } from '@wagmi/core'
 import { normalizeTokenPair } from './shared'
-import {tokens as defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI} from '@/app/lib/96'
+import { chains } from '@/lib/chains'
 import { getDecimals } from '@/app/components/swap/utils'
-
-type Token = typeof defaultTokens[number]
+const { tokens: defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI, } = chains[96]
+type UIToken = { name: string; value: '0xstring'; logo: string; decimal: number }
 type CMTvlState = {
     tvl10000: string
     tvl3000: string
@@ -37,17 +37,17 @@ type UdonState = {
     isReverted: boolean
     FixedExchangeRate: string
 }
-interface UseSwap96PoolDataParams {
+interface UseSwap96PoolDataParams<TToken extends UIToken> {
     config: Parameters<typeof getBalance>[0]
     address?: string
-    tokens: Token[]
-    tokenA: Token
-    tokenB: Token
+    tokens: readonly TToken[]
+    tokenA: TToken
+    tokenB: TToken
     feeSelect: number
     txupdate: string
     hasInitializedFromParams: boolean
-    setTokenA: React.Dispatch<React.SetStateAction<Token>>
-    setTokenB: React.Dispatch<React.SetStateAction<Token>>
+    setTokenA: React.Dispatch<React.SetStateAction<TToken>>
+    setTokenB: React.Dispatch<React.SetStateAction<TToken>>
     setTokenABalance: React.Dispatch<React.SetStateAction<string>>
     setTokenBBalance: React.Dispatch<React.SetStateAction<string>>
     setWrappedRoute: React.Dispatch<React.SetStateAction<boolean>>
@@ -63,13 +63,13 @@ interface UseSwap96PoolDataParams {
     setAmountB: React.Dispatch<React.SetStateAction<string>>
 }
 
-export function useSwap96PoolData({ config, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute, setCMswapTVL, setDMswapTVL, setUdonTVL, setPonderTVL, setReserveUdonA, setReserveUdonB, setAmountA, setAmountB, }: UseSwap96PoolDataParams) {
+export function useSwap96PoolData<TToken extends UIToken>({ config, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute, setCMswapTVL, setDMswapTVL, setUdonTVL, setPonderTVL, setReserveUdonA, setReserveUdonB, setAmountA, setAmountB, }: UseSwap96PoolDataParams<TToken>) {
     React.useEffect(() => {
         let cancelled = false
         const fetchPoolData = async () => {
             const {tokenAValue: tokenAvalue, tokenBValue: tokenBvalue, isSameToken, isNativeWrappedPair, isTokenANative, isTokenBNative} = normalizeTokenPair(tokens, tokenA, tokenB)
             if (isSameToken) {
-                setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 })
+                setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 } as TToken)
                 return
             }
             const nativeBal = address ? await getBalance(config, { address: address as '0xstring' }) : { value: BigInt(0) }
@@ -93,11 +93,11 @@ export function useSwap96PoolData({ config, address, tokens, tokenA, tokenB, fee
             if (cancelled) return
             if (stateA[0].result && tokenA.name === 'Choose Token') {
                 const existing = tokens.find(t => t.value === tokenA.value)
-                setTokenA({name: stateA[0].result, value: tokenA.value, logo: existing?.logo ?? '../favicon.ico', decimal: existing?.decimal ?? 18})
+                setTokenA({name: stateA[0].result as unknown as string, value: tokenA.value, logo: (existing as any)?.logo ?? '../favicon.ico', decimal: (existing as any)?.decimal ?? 18} as TToken)
             }
             if (stateB[0].result && tokenB.name === 'Choose Token') {
                 const existing = tokens.find(t => t.value === tokenB.value)
-                setTokenB({name: stateB[0].result, value: tokenB.value, logo: existing?.logo ?? '../favicon.ico', decimal: existing?.decimal ?? 18})
+                setTokenB({name: stateB[0].result as unknown as string, value: tokenB.value, logo: (existing as any)?.logo ?? '../favicon.ico', decimal: (existing as any)?.decimal ?? 18} as TToken)
             }
             if (isTokenANative) {
                 setTokenABalance(formatUnits(nativeBal.value, getDecimals(tokenA)))
@@ -199,7 +199,7 @@ export function useSwap96PoolData({ config, address, tokens, tokenA, tokenB, fee
                                 init.contracts.push({...v3FactoryContract, functionName: 'getPool', args: [tokens[i].value, tokenBvalue, 10000]})
                             }
                             const findAltRoute = await readContracts(config, init)
-                            let altIntermediate: Token | undefined
+                            let altIntermediate: TToken | undefined
                             let altPair0: unknown
                             let altPair1: unknown
                             for (let i = 0; i <= findAltRoute.length - 1; i += 2) {
@@ -252,7 +252,7 @@ export function useSwap96PoolData({ config, address, tokens, tokenA, tokenB, fee
                                 init.contracts.push({...v3FactoryContract, functionName: 'getPool', args: [tokens[i].value, tokenBvalue, 3000]})
                             }
                             const findAltRoute = await readContracts(config, init)
-                            let altIntermediate: Token | undefined
+                            let altIntermediate: TToken | undefined
                             let altPair0: unknown
                             let altPair1: unknown
                             for (let i = 0; i <= findAltRoute.length - 1; i += 2) {
@@ -305,7 +305,7 @@ export function useSwap96PoolData({ config, address, tokens, tokenA, tokenB, fee
                                 init.contracts.push({...v3FactoryContract, functionName: 'getPool', args: [tokens[i].value, tokenBvalue, 500]})
                             }
                             const findAltRoute = await readContracts(config, init)
-                            let altIntermediate: Token | undefined
+                            let altIntermediate: TToken | undefined
                             let altPair0: unknown
                             let altPair1: unknown
                             for (let i = 0; i <= findAltRoute.length - 1; i += 2) {
@@ -358,7 +358,7 @@ export function useSwap96PoolData({ config, address, tokens, tokenA, tokenB, fee
                                 init.contracts.push({...v3FactoryContract, functionName: 'getPool', args: [tokens[i].value, tokenBvalue, 100]})
                             }
                             const findAltRoute = await readContracts(config, init)
-                            let altIntermediate: Token | undefined
+                            let altIntermediate: TToken | undefined
                             let altPair0: unknown
                             let altPair1: unknown
                             for (let i = 0; i <= findAltRoute.length - 1; i += 2) {

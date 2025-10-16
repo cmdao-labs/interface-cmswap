@@ -2,10 +2,11 @@
 import React from "react";
 import { Copy,Check, Users, Gift, TrendingUp, Zap } from "lucide-react";
 import { useAccount } from "wagmi";
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from "@wagmi/core";
-import { tokens, erc20ABI, kap20ABI, wrappedNative, unwarppedNative, bkcUnwapped, cmSwapRefProgram, cmSwapRefProgramContract } from "@/app/lib/96";
-import { config } from "@/app/config";
-import { formatEther, parseEther } from "viem";
+import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts } from "@wagmi/core";
+import { chains } from '@/lib/chains'
+import { config } from "@/config/reown";
+import { formatEther } from "viem";
+const { tokens, erc20ABI, cmSwapRefProgramContract, } = chains[96]
 interface Theme {
     primary: string;
     secondary: string;

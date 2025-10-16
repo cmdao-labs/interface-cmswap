@@ -2,24 +2,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Search, Check } from 'lucide-react';
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction } from '@wagmi/core';
-import { config } from '@/app/config';
+import { config } from '@/config/reown';
 import { formatEther, parseEther, createPublicClient, http, erc20Abi } from 'viem';
-import { usePrice } from '@/app/context/getPrice';
+import { usePrice } from '@/context/getPrice';
 import { bitkub, jbc, bitkubTestnet } from 'viem/chains';
-import { tokens as tokens96, v3FactoryContract as v3FactoryContract96, erc20ABI as erc20ABI96, v3PoolABI as v3PoolABI96, V3_FACTORY as V3_FACTORY96, V3_FACTORYCreatedAt as V3_FACTORYCreatedAt96, positionManagerContract as positionManagerContract96 } from '@/app/lib/96';
-import { tokens as tokens8899, v3FactoryContract as v3FactoryContract8899, erc20ABI as erc20ABI8899, v3PoolABI as v3PoolABI8899, V3_FACTORY as V3_FACTORY8899, V3_FACTORYCreatedAt as V3_FACTORYCreatedAt8899, positionManagerContract as positionManagerContract8899 } from '@/app/lib/8899';
-import { tokens as tokens25925, 
-    StakingFactoryV2 as StakingFactoryV2_25925,
-    StakingFactoryV2Contract as StakingFactoryV2Contract_25925, 
-    StakingFactoryV3 as StakingFactoryV3_25925,
-    StakingFactoryV3Contract as StakingFactoryV3Contract_25925, 
-    v3FactoryContract as v3FactoryContract25925,
-    erc20ABI as erc20ABI25925,
-    v3PoolABI as v3PoolABI25925,
-    V3_FACTORY as V3_FACTORY25925,
-    V3_FACTORYCreatedAt as V3_FACTORYCreatedAt25925,
-    POSITION_MANAGER as POSITION_MANAGER_25925,
-    positionManagerContract as positionManagerContract25925} from '@/app/lib/25925';
+import { chains as chainLibrary } from '@/lib/chains'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Button } from '@/components/ui/button';
@@ -40,7 +27,7 @@ type Pool = {
     poolAddress: string;
     listed: boolean;
 };
-type ChainKey = keyof typeof chains;
+type ChainKey = keyof typeof chainThemes;
 type ChainConfig = {
     chain: typeof bitkub | typeof jbc | typeof bitkubTestnet;
     chainId: number;
@@ -51,7 +38,7 @@ type ChainConfig = {
     lib: any;
 };
 
-const chains = {
+const chainThemes = {
     kubtestnet: {
         name: 'KUB Testnet',
         color: 'rgb(20, 184, 166)',
@@ -63,58 +50,62 @@ const chains = {
     },
 };
 
+const chain96 = chainLibrary[96]
+const chain8899 = chainLibrary[8899]
+const chain25925 = chainLibrary[25925]
+
 const chainConfigs: Record<number, ChainConfig> = {
     96: {
-        chain: bitkub,
+        chain: chain96.chain,
         chainId: 96,
         explorer: 'https://www.kubscan.com/',
         rpc: '',
         blocktime: 5,
-        tokens: tokens96,
+        tokens: chain96.tokens,
         lib: {
-            v3FactoryContract: v3FactoryContract96,
-            erc20ABI: erc20ABI96,
-            v3PoolABI: v3PoolABI96,
-            V3_FACTORY: V3_FACTORY96,
-            V3_FACTORYCreatedAt: V3_FACTORYCreatedAt96,
-            positionManagerContract: positionManagerContract96,
+            v3FactoryContract: chain96.v3FactoryContract,
+            erc20ABI: chain96.erc20ABI,
+            v3PoolABI: chain96.v3PoolABI,
+            V3_FACTORY: chain96.V3_FACTORY,
+            V3_FACTORYCreatedAt: chain96.V3_FACTORYCreatedAt,
+            positionManagerContract: chain96.positionManagerContract,
         },
     },
     8899: {
-        chain: jbc,
+        chain: chain8899.chain,
         chainId: 8899,
         explorer: 'https://exp.jibchain.net/',
         rpc: 'https://rpc-l1.jbc.xpool.pw',
         blocktime: 12,
-        tokens: tokens8899,
+        tokens: chain8899.tokens,
         lib: {
-            v3FactoryContract: v3FactoryContract8899,
-            erc20ABI: erc20ABI8899,
-            v3PoolABI: v3PoolABI8899,
-            V3_FACTORY: V3_FACTORY8899,
-            V3_FACTORYCreatedAt: V3_FACTORYCreatedAt8899,
-            positionManagerContract: positionManagerContract8899,
+            v3FactoryContract: chain8899.v3FactoryContract,
+            erc20ABI: chain8899.erc20ABI,
+            v3PoolABI: chain8899.v3PoolABI,
+            V3_FACTORY: chain8899.V3_FACTORY,
+            V3_FACTORYCreatedAt: chain8899.V3_FACTORYCreatedAt,
+            positionManagerContract: chain8899.positionManagerContract,
         },
     },
     25925: {
-        chain: bitkubTestnet,
+        chain: chain25925.chain,
         chainId: 25925,
         explorer: 'https://testnet.kubscan.com/',
         rpc: 'https://rpc-testnet.bitkubchain.io',
         blocktime: 5,
-        tokens: tokens25925,
+        tokens: chain25925.tokens,
         lib: {
-            erc20ABI: erc20ABI25925,
-            v3PoolABI: v3PoolABI25925,
-            V3_FACTORY: V3_FACTORY25925,
-            V3_FACTORYCreatedAt: V3_FACTORYCreatedAt25925,
-            positionManagerContract: positionManagerContract25925,
-            positionManagerAddr: POSITION_MANAGER_25925,
-            v3FactoryContract: v3FactoryContract25925,
-            StakingFactoryV2Contract: StakingFactoryV2Contract_25925,
-            StakingFactoryV2_Addr: StakingFactoryV2_25925 as '0xstring',
-            StakingFactoryV3Contract: StakingFactoryV3Contract_25925,
-            StakingFactoryV3_Addr: StakingFactoryV3_25925 as '0xstring'
+            erc20ABI: chain25925.erc20ABI,
+            v3PoolABI: chain25925.v3PoolABI,
+            V3_FACTORY: chain25925.V3_FACTORY,
+            V3_FACTORYCreatedAt: chain25925.V3_FACTORYCreatedAt,
+            positionManagerContract: chain25925.positionManagerContract,
+            positionManagerAddr: chain25925.POSITION_MANAGER,
+            v3FactoryContract: chain25925.v3FactoryContract,
+            StakingFactoryV2Contract: chain25925.StakingFactoryV2Contract,
+            StakingFactoryV2_Addr: chain25925.StakingFactoryV2 as '0xstring',
+            StakingFactoryV3Contract: chain25925.StakingFactoryV3Contract,
+            StakingFactoryV3_Addr: chain25925.StakingFactoryV3 as '0xstring'
         },
     },
 };
@@ -160,7 +151,7 @@ const CreateEarnProgram = () => {
     const { chain, rpc, blocktime, tokens, lib } = selectedChainConfig;
     const publicClient = createPublicClient({chain: selectedChainConfig.chain, transport: http(selectedChainConfig.rpc)});
 
-    const currentTheme = chains[selectedChain];
+    const currentTheme = chainThemes[selectedChain];
     const stakingTypes = [
         { name: 'Token Staking', description: 'Stake Tokens or LP Tokens to earn rewards. Suitable for users seeking flexibility in staking options. Supports multiple staking modes: No Lock (withdraw anytime), Fixed Lock (lock tokens for a set period), and Multiple Lock (choose custom lock periods with reward multipliers based on lock duration). Ideal for users who want to maximize returns with tailored lock-in strategies.', },
         { name: 'Concentrate Liquidity Staking', description: 'Stake NFT-based Concentrated Liquidity V3 positions to earn rewards. Supports only No Lock staking, allowing withdrawal at any time. Users can specify token pairs and fee tiers for farming. Perfect for advanced users leveraging concentrated liquidity pools to optimize capital efficiency.', },
@@ -582,7 +573,7 @@ const CreateEarnProgram = () => {
 
     const renderChainSelector = () => (
         <div className="flex gap-2 mb-6">
-            {Object.entries(chains).map(([key, chain]) => (
+            {Object.entries(chainThemes).map(([key, chain]) => (
                 <button key={key} onClick={() => setSelectedChain(key as ChainKey)} className={`px-4 py-2 rounded-lg border transition-all ${selectedChain === key ? `${chain.accent} ${chain.bg} ${chain.text}` : ` ${currentTheme.border} ${currentTheme.hover}`}`}>{chain.name}</button>
             ))}
         </div>

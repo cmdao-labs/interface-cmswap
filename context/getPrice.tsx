@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { readContracts } from '@wagmi/core';
-import { config } from '@/app/config';
-import { v3FactoryContract as v3FactoryContract_96, v3PoolABI as v3PoolABI_96 } from '@/app/lib/96';
-import { v3FactoryContract as v3FactoryContract_8899, v3PoolABI as v3PoolABI_8899 } from '@/app/lib/8899';
+import { config } from '@/config/reown';
+import { chains } from '@/lib/chains'
+
+const { v3FactoryContract: v3FactoryContract_96, v3PoolABI: v3PoolABI_96 } = chains[96]
+const { v3FactoryContract: v3FactoryContract_8899, v3PoolABI: v3PoolABI_8899 } = chains[8899]
 
 type PriceContextType = {
   priceList: { token: string; priceUSDT: number; priceNative: number }[];

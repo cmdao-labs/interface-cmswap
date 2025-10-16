@@ -5,8 +5,8 @@ import { formatEther, formatUnits, parseUnits } from 'viem'
 import { ArrowDown } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { useDebouncedCallback } from 'use-debounce'
-import { tokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI, CMswapUniSmartRoute, unwarppedNative, bkcUnwapped } from '@/app/lib/96'
-import { config } from '@/app/config'
+import { chains } from '@/lib/chains'
+import { config } from '@/config/reown'
 import { useSwapTokenSelection } from '@/app/components/swap/useSwapTokenSelection'
 import { useSwapQuote } from '@/app/components/swap/useSwapQuote'
 import { encodePath } from '@/app/components/swap/path'
@@ -14,6 +14,9 @@ import { ensureTokenAllowance, executeRouterSwap, wrapNativeToken, unwrapWrapped
 import { useSwap96PoolData } from '@/app/components/swap/hooks/useSwap96PoolData'
 import { getDecimals, computePriceImpact } from '@/app/components/swap/utils'
 import { SwapTokenPanel } from '@/app/components/swap/SwapTokenPanel'
+const { tokens: chainTokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI, CMswapUniSmartRoute, unwarppedNative, bkcUnwapped, } = chains[96]
+type UIToken = { name: string; value: '0xstring'; logo: string; decimal: number }
+const tokens = chainTokens as readonly UIToken[]
 
 export default function Swap96({ setIsLoading, setErrMsg, }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
@@ -46,8 +49,8 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
     const [open2, setOpen2] = React.useState(false)
     const [swapDirection, setSwapDirection] = React.useState(true) // false = A->B, true = B->A
     React.useEffect(() => {console.log("hasInitializedFromParams : ", hasInitializedFromParams)}, [hasInitializedFromParams])
-    const tokenABalanceLabel = tokenA.name !== 'Choose Token' ? `${Number(tokenABalance).toFixed(4)} ${tokenA.name}` : '0.0000'
-    const tokenBBalanceLabel = tokenB.name !== 'Choose Token' ? `${Number(tokenBBalance).toFixed(4)} ${tokenB.name}` : '0.0000'
+    const tokenABalanceLabel = String(tokenA.name) !== 'Choose Token' ? `${Number(tokenABalance).toFixed(4)} ${String(tokenA.name)}` : '0.0000'
+    const tokenBBalanceLabel = String(tokenB.name) !== 'Choose Token' ? `${Number(tokenBBalance).toFixed(4)} ${String(tokenB.name)}` : '0.0000'
 
     const getQuote = useDebouncedCallback(async (_amount: string) => {
         setAltRoute(undefined)
@@ -650,7 +653,7 @@ export default function Swap96({ setIsLoading, setErrMsg, }: {
                         <span className="text-white text-xs px-2 gap-1">{tokens.map(obj => obj.value).indexOf(altRoute.a) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.a)].name}  → {tokens.map(obj => obj.value).indexOf(altRoute.b) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.b)].name} → {tokens.map(obj => obj.value).indexOf(altRoute.c) !== -1 && tokens[tokens.map(obj => obj.value).indexOf(altRoute.c)].name}</span>
                     </div>
                 }
-                {tokenA.name !== 'Choose Token' && tokenB.name !== 'Choose Token' && tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' &&
+                {String(tokenA.name) !== 'Choose Token' && String(tokenB.name) !== 'Choose Token' && tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' &&
                     <>
                         <div className="flex items-center text-gray-500 text-xs my-2">
                             <span className="mr-1">price qoute</span>

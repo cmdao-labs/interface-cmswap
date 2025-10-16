@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { simulateContract, waitForTransactionReceipt, writeContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, parseEther, erc20Abi } from 'viem'
-import { config } from '@/app/config'
+import { config } from '@/config/reown'
 import ErrorModal from '@/app/components/error-modal'
 import ReferralTracker from '../components/Refferal'
 

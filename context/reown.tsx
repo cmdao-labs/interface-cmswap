@@ -1,5 +1,5 @@
 'use client'
-import { wagmiAdapter, projectId } from '@/app/config'
+import { wagmiAdapter, projectId } from '@/config/reown'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createAppKit } from '@reown/appkit/react'
 import { jbc, bsc, bitkub, monadTestnet, bitkubTestnet } from '@reown/appkit/networks'

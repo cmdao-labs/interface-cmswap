@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import LaunchpadHeader from "../ui/Header";
-import GridSkeleton from "../ui/GridSkeleton";
-import Event from "@/app/pump/ui/Event";
-import Sort from "@/app/pump/ui/Sort";
-import Sort4 from "@/app/pump/ui/Sort4";
-import TokenGrid from "@/app/pump/ui/Table";
+import LaunchpadHeader from "@/app/components/pump/Header";
+import GridSkeleton from "@/app/components/pump/GridSkeleton";
+import Event from "@/app/components/pump/Event";
+import Sort from "@/app/components/pump/Sort";
+import Sort4 from "@/app/components/pump/Sort4";
+import TokenGrid from "@/app/components/pump/Table";
 export const metadata: Metadata = { title: "CMswap - PUMP", description: "hello pump.", };
 
 export default async function Launchpad(props: {

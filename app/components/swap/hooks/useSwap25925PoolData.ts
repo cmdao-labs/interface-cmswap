@@ -2,21 +2,22 @@
 import * as React from 'react'
 import { formatEther, formatUnits } from 'viem'
 import { getBalance, readContracts } from '@wagmi/core'
-import { tokens as defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI } from '@/app/lib/25925'
+import { chains } from '@/lib/chains'
 import { normalizeTokenPair } from './shared'
 import { getDecimals } from '@/app/components/swap/utils'
-type Token = typeof defaultTokens[number]
-interface UseSwap25925PoolDataParams {
+const { tokens: defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI, } = chains[25925]
+type UIToken = { name: string; value: '0xstring'; logo: string; decimal: number }
+interface UseSwap25925PoolDataParams<TToken extends UIToken> {
     config: Parameters<typeof getBalance>[0]
     address?: string
-    tokens: Token[]
-    tokenA: Token
-    tokenB: Token
+    tokens: readonly TToken[]
+    tokenA: TToken
+    tokenB: TToken
     feeSelect: number
     txupdate: string
     hasInitializedFromParams: boolean
-    setTokenA: React.Dispatch<React.SetStateAction<Token>>
-    setTokenB: React.Dispatch<React.SetStateAction<Token>>
+    setTokenA: React.Dispatch<React.SetStateAction<TToken>>
+    setTokenB: React.Dispatch<React.SetStateAction<TToken>>
     setTokenABalance: React.Dispatch<React.SetStateAction<string>>
     setTokenBBalance: React.Dispatch<React.SetStateAction<string>>
     setWrappedRoute: React.Dispatch<React.SetStateAction<boolean>>
@@ -28,12 +29,12 @@ interface UseSwap25925PoolDataParams {
     setNewPrice: React.Dispatch<React.SetStateAction<string>>
 }
 
-export function useSwap25925PoolData({config, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute, setCMswapTVL, setAmountA, setAmountB, setNewPrice}: UseSwap25925PoolDataParams) {
+export function useSwap25925PoolData<TToken extends UIToken>({config, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute, setCMswapTVL, setAmountA, setAmountB, setNewPrice}: UseSwap25925PoolDataParams<TToken>) {
     React.useEffect(() => {
         const fetch0 = async () => {
             const {tokenAValue: tokenAvalue, tokenBValue: tokenBvalue, isSameToken, isNativeWrappedPair, isTokenANative, isTokenBNative} = normalizeTokenPair(tokens, tokenA, tokenB)
             if (isSameToken) {
-                setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 })
+                setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 } as TToken)
                 return
             }
             const nativeBal = address !== undefined ? await getBalance(config, { address: address as '0xstring' }) : { value: BigInt(0) }
@@ -53,8 +54,8 @@ export function useSwap25925PoolData({config, address, tokens, tokenA, tokenB, f
                     { ...v3FactoryContract, functionName: 'getPool', args: [tokenAvalue, tokenBvalue, 100] },
                 ]
             })
-            if (stateA[0].result && tokenA.name === 'Choose Token') setTokenA({name: stateA[0].result, value: tokenA.value, logo: tokens.find(t => t.value === tokenA.value)?.logo ?? '../favicon.ico', decimal: tokens.find(t => t.value === tokenA.value)?.decimal ?? 18});
-            if (stateB[0].result && tokenB.name === 'Choose Token') setTokenB({name: stateB[0].result, value: tokenB.value, logo: tokens.find(t => t.value === tokenB.value)?.logo ?? '../favicon.ico', decimal: tokens.find(t => t.value === tokenB.value)?.decimal ?? 18});
+            if (stateA[0].result && tokenA.name === 'Choose Token') setTokenA({name: stateA[0].result, value: tokenA.value, logo: tokens.find(t => t.value === tokenA.value)?.logo ?? '../favicon.ico', decimal: tokens.find(t => t.value === tokenA.value)?.decimal ?? 18} as TToken);
+            if (stateB[0].result && tokenB.name === 'Choose Token') setTokenB({name: stateB[0].result, value: tokenB.value, logo: tokens.find(t => t.value === tokenB.value)?.logo ?? '../favicon.ico', decimal: tokens.find(t => t.value === tokenB.value)?.decimal ?? 18} as TToken);
             if (isTokenANative) {
                 setTokenABalance(formatUnits(nativeBal.value, getDecimals(tokenA)))
             } else if (stateA[1].result !== undefined) {

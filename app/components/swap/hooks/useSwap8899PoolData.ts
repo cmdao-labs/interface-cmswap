@@ -2,24 +2,25 @@
 import * as React from 'react'
 import { formatEther, formatUnits } from 'viem'
 import { getBalance, readContracts } from '@wagmi/core'
-import { tokens as defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI, CMswapUniSmartRouteContract } from '@/app/lib/8899'
+import { chains } from '@/lib/chains'
 import { normalizeTokenPair } from './shared'
 import { getDecimals } from '@/app/components/swap/utils'
-type Token = typeof defaultTokens[number]
+const { tokens: defaultTokens, v3FactoryContract, v3PoolABI, erc20ABI, CMswapUniSmartRouteContract, } = chains[8899]
+type UIToken = { name: string; value: '0xstring'; logo: string; decimal: number }
 type CMTvlState = { tvl10000: string; tvl3000: string; tvl500: string; tvl100: string; exchangeRate: string; t0: string }
 type GameSwapState = { tvl10000: string; tvl3000: string; tvl500: string; tvl100: string; exchangeRate: string; t0: string }
 type JibSwapState = { tvl10000: string; exchangeRate: string; t0: string }
-interface UseSwap8899PoolDataParams {
+interface UseSwap8899PoolDataParams<TToken extends UIToken> {
     config: Parameters<typeof getBalance>[0]
     address?: string
-    tokens: Token[]
-    tokenA: Token
-    tokenB: Token
+    tokens: readonly TToken[]
+    tokenA: TToken
+    tokenB: TToken
     feeSelect: number
     txupdate: string
     hasInitializedFromParams: boolean
-    setTokenA: React.Dispatch<React.SetStateAction<Token>>
-    setTokenB: React.Dispatch<React.SetStateAction<Token>>
+    setTokenA: React.Dispatch<React.SetStateAction<TToken>>
+    setTokenB: React.Dispatch<React.SetStateAction<TToken>>
     setTokenABalance: React.Dispatch<React.SetStateAction<string>>
     setTokenBBalance: React.Dispatch<React.SetStateAction<string>>
     setWrappedRoute: React.Dispatch<React.SetStateAction<boolean>>
@@ -35,26 +36,26 @@ interface UseSwap8899PoolDataParams {
     setAmountB: React.Dispatch<React.SetStateAction<string>>
 }
 
-export function useSwap8899PoolData({config, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute, setCMswapTVL, setGameSwapTvl, setJibSwapTvl, setBestPathArray, setFixedExchangeRate, setOnLoading, setAmountA, setAmountB}: UseSwap8899PoolDataParams) {
+export function useSwap8899PoolData<TToken extends UIToken>({config, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute, setCMswapTVL, setGameSwapTvl, setJibSwapTvl, setBestPathArray, setFixedExchangeRate, setOnLoading, setAmountA, setAmountB}: UseSwap8899PoolDataParams<TToken>) {
     React.useEffect(() => {
         if (!hasInitializedFromParams) return
         const JCLP = '0x472d0e2E9839c140786D38110b3251d5ED08DF41' as '0xstring'
         const JULP = '0x280608DD7712a5675041b95d0000B9089903B569' as '0xstring'
         const updateCmswapTvlKey = (key: keyof CMTvlState, value: number) => {
-            setCMswapTVL(prev => ({ ...prev, [key]: value >= 1e-9 ? value.toString() : '0' }))
+            setCMswapTVL((prev: any) => ({ ...prev, [key]: value >= 1e-9 ? value.toString() : '0' }))
         }
         const updateCmswapExchangeRate = (feeAmount: number, exchangeRate: number) => {
-            setCMswapTVL(prev => ({ ...prev, exchangeRate: feeSelect === feeAmount ? exchangeRate.toString() : prev.exchangeRate }))
+            setCMswapTVL((prev: any) => ({ ...prev, exchangeRate: feeSelect === feeAmount ? exchangeRate.toString() : prev.exchangeRate }))
         }
         const updateCmswapToken0 = (value: string) => {
-            setCMswapTVL(prev => ({ ...prev, t0: value as '0xstring' }))
+            setCMswapTVL((prev: any) => ({ ...prev, t0: value as '0xstring' }))
         }
         const fetchData = async () => {
             setOnLoading(true)
             try {
                 const {tokenAValue: tokenAvalue, tokenBValue: tokenBvalue, isSameToken, isTokenANative, isTokenBNative} = normalizeTokenPair(tokens, tokenA, tokenB)
                 if (isSameToken) {
-                    setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 })
+                    setTokenB({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 } as TToken)
                     setOnLoading(false)
                     return
                 }
@@ -77,12 +78,12 @@ export function useSwap8899PoolData({config, address, tokens, tokenA, tokenB, fe
                     ],
                 })
                 if (stateA[0].result && tokenA.name === 'Choose Token') {
-                    const existing = tokens.find(t => t.value === tokenA.value)
-                    setTokenA({name: stateA[0].result, value: tokenA.value, logo: existing?.logo ?? '../favicon.ico', decimal: existing?.decimal ?? 18})
+                    const existing = tokens.find((t: any) => t.value === tokenA.value)
+                    setTokenA({name: stateA[0].result, value: tokenA.value, logo: existing?.logo ?? '../favicon.ico', decimal: existing?.decimal ?? 18} as TToken)
                 }
                 if (stateB[0].result && tokenB.name === 'Choose Token') {
-                    const existing = tokens.find(t => t.value === tokenB.value)
-                    setTokenB({name: stateB[0].result, value: tokenB.value, logo: existing?.logo ?? '../favicon.ico', decimal: existing?.decimal ?? 18})
+                    const existing = tokens.find((t: any) => t.value === tokenB.value)
+                    setTokenB({name: stateB[0].result, value: tokenB.value, logo: existing?.logo ?? '../favicon.ico', decimal: existing?.decimal ?? 18} as TToken)
                 }
                 if (isTokenANative) {
                     setTokenABalance(formatUnits(nativeBal.value, getDecimals(tokenA)))
