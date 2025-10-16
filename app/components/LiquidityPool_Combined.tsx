@@ -27,7 +27,7 @@ type ChainConfig = {
     explorer: string;
     rpc: string;
     blocktime: number;
-    tokens: { name: string; value: string; logo: string }[];
+    tokens: any;
     lib: {
         v3FactoryContract: any;
         erc20ABI: any;
@@ -180,8 +180,8 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
             let isListed = true;
             for (const item of CreateData) {
                 isListed = true;
-                let tokenA = tokens.find(t => t.value.toLowerCase() === item.token0.toLowerCase());
-                let tokenB = tokens.find(t => t.value.toLowerCase() === item.token1.toLowerCase());
+                let tokenA = tokens.find((t: any) => t.value.toLowerCase() === item.token0.toLowerCase());
+                let tokenB = tokens.find((t: any) => t.value.toLowerCase() === item.token1.toLowerCase());
                 if (!tokenA) {
                     isListed = false;
                     const [symbolA] = await readContracts(config, {contracts: [{abi: erc20Abi, address: item.token0, functionName: 'symbol'}]});

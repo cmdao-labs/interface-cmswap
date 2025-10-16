@@ -34,7 +34,7 @@ type ChainConfig = {
     explorer: string;
     rpc: string;
     blocktime: number;
-    tokens: { name: string; value: string; logo: string }[];
+    tokens: any;
     lib: any;
 };
 
@@ -235,8 +235,8 @@ const CreateEarnProgram = () => {
                 const currencyTokens = [tokens[2].value, tokens[1].value, tokens[3].value];
                 for (const item of createData) {
                     let isListed = true;
-                    let tokenA = tokens.find((t) => t.value.toLowerCase() === item.token0.toLowerCase());
-                    let tokenB = tokens.find((t) => t.value.toLowerCase() === item.token1.toLowerCase());
+                    let tokenA = tokens.find((t: any) => t.value.toLowerCase() === item.token0.toLowerCase());
+                    let tokenB = tokens.find((t: any) => t.value.toLowerCase() === item.token1.toLowerCase());
                     if (!tokenA) {
                         isListed = false;
                         const [symbolA] = await readContracts(config, {contracts: [{ abi: erc20Abi, address: item.token0, functionName: 'symbol' }]});
