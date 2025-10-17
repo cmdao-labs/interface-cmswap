@@ -1,6 +1,6 @@
 import React from "react"
 import { useAccount } from "wagmi"
-import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core'
+import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, parseEther } from "viem"
 import { Token, BigintIsh } from "@uniswap/sdk-core"
 import { TickMath, encodeSqrtRatioX96, Pool, Position } from "@uniswap/v3-sdk"
@@ -11,11 +11,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useDebouncedCallback } from 'use-debounce'
 import { chains } from '@/lib/chains'
 import { config } from '@/config/reown'
+
 const { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, kap20ABI, v3PoolABI, } = chains[96]
 
-export default function Liquidity96({ 
-    setIsLoading, setErrMsg, 
-}: {
+export default function Liquidity96({ setIsLoading, setErrMsg, }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
     setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>,
 }) {
@@ -40,55 +39,39 @@ export default function Liquidity96({
     const [rangePercentage, setRangePercentage] = React.useState(1)
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
-    const [hasInitializedFromParams, setHasInitializedFromParams] = React.useState(false)
-
     React.useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search)
         const tokenAAddress = searchParams.get('input')?.toLowerCase()
         const tokenBAddress = searchParams.get('output')?.toLowerCase()
-
         const foundTokenA = tokenAAddress ? tokens.find(t => t.value.toLowerCase() === tokenAAddress) : null
         const foundTokenB = tokenBAddress ? tokens.find(t => t.value.toLowerCase() === tokenBAddress) : null
-
-        if (foundTokenA) setTokenA(foundTokenA)
-        if (foundTokenB) setTokenB(foundTokenB)
-
+        if (foundTokenA) setTokenA(foundTokenA);
+        if (foundTokenB) setTokenB(foundTokenB);
         if (!tokenAAddress || !tokenBAddress) {
-            if (tokenA?.value && tokenB?.value) {updateURLWithTokens(tokenA.value, tokenB.value, address)}
+            if (tokenA?.value && tokenB?.value) updateURLWithTokens(tokenA.value, tokenB.value, address);
         } else {
             updateURLWithTokens(tokenAAddress, tokenBAddress, address)
         }
-
-        setHasInitializedFromParams(true)
-        }, [])
-
-        React.useEffect(() => {
-            console.log("hasInitializedFromParams : ", hasInitializedFromParams)
-            }, [hasInitializedFromParams])
-
-            const updateURLWithTokens = (
-            tokenAValue?: string,
-            tokenBValue?: string,
-            referralCode?: string
-            ) => {
-            const url = new URL(window.location.href)
-
-            if (tokenAValue) url.searchParams.set('input', tokenAValue)
-            else url.searchParams.delete('tokenA')
-
-            if (tokenBValue) url.searchParams.set('output', tokenBValue)
-            else url.searchParams.delete('tokenB')
-
-            if (referralCode && referralCode.startsWith('0x')) {
-                url.searchParams.set('ref', referralCode)
-            } else {
-                url.searchParams.delete('ref')
-            }
-
-            window.history.replaceState({}, '', url.toString())
+    }, [])
+    const updateURLWithTokens = (tokenAValue?: string, tokenBValue?: string, referralCode?: string) => {
+        const url = new URL(window.location.href)
+        if (tokenAValue) {
+            url.searchParams.set('input', tokenAValue)
+        } else {
+            url.searchParams.delete('tokenA')
         }
-
-
+        if (tokenBValue) {
+            url.searchParams.set('output', tokenBValue)
+        } else {
+            url.searchParams.delete('tokenB')
+        }
+        if (referralCode && referralCode.startsWith('0x')) {
+            url.searchParams.set('ref', referralCode)
+        } else {
+            url.searchParams.delete('ref')
+        }
+        window.history.replaceState({}, '', url.toString())
+    }
     const setAlignedLowerTick = useDebouncedCallback((_lowerPrice: string) => {
         setAmountA("")
         setAmountB("")
@@ -103,7 +86,6 @@ export default function Liquidity96({
         setLowerPercentage((((Math.pow(1.0001, alignedLowerTick) / Number(currPrice)) - 1) * 100).toString())
         setLowerTick(alignedLowerTick.toString())
     }, 700)
-
     const setAlignedUpperTick = useDebouncedCallback((_upperPrice: string) => {
         setAmountA("")
         setAmountB("")
@@ -124,20 +106,9 @@ export default function Liquidity96({
             setUpperTick(alignedUpperTick.toString())
         }
     }, 700)
-
     const setAlignedAmountB = useDebouncedCallback(async (_amountA: string) => {
-        let tokenAvalue
-        let tokenBvalue
-        if (tokenA.value === tokens[0].value) {
-            tokenAvalue = tokens[1].value
-        } else {
-            tokenAvalue = tokenA.value
-        }
-        if (tokenB.value === tokens[0].value) {
-            tokenBvalue = tokens[1].value
-        } else {
-            tokenBvalue = tokenB.value
-        }
+        const tokenAvalue = tokenA.value === tokens[0].value ? tokens[1].value : tokenA.value
+        const tokenBvalue = tokenB.value === tokens[0].value ? tokens[1].value : tokenB.value
         const poolState = await readContracts(config, {
             contracts: [
                 { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'token0' },
@@ -151,52 +122,21 @@ export default function Liquidity96({
         const liquidity = poolState[2].result !== undefined ? poolState[2].result : BigInt(0)
         const Token0 = new Token(96, token0, 18)
         const Token1 = String(token0).toUpperCase() === tokenAvalue.toUpperCase() ? new Token(96, tokenBvalue, 18) : new Token(96, tokenAvalue, 18)
-        const pool = new Pool(
-            Token0,
-            Token1,
-            Number(feeSelect),
-            sqrtPriceX96.toString(),
-            liquidity.toString(),
-            tick
-        )
+        const pool = new Pool(Token0, Token1, Number(feeSelect), sqrtPriceX96.toString(), liquidity.toString(), tick)
         if (String(token0).toUpperCase() === tokenAvalue.toUpperCase()) {
-            const singleSidePositionToken0 = Position.fromAmount0({
-                pool, 
-                tickLower: Number(lowerTick), 
-                tickUpper: Number(upperTick), 
-                amount0: String(parseEther(_amountA)) as BigintIsh,
-                useFullPrecision: true
-            })
+            const singleSidePositionToken0 = Position.fromAmount0({pool, tickLower: Number(lowerTick), tickUpper: Number(upperTick), amount0: String(parseEther(_amountA)) as BigintIsh, useFullPrecision: true})
             setAmountB(formatEther(singleSidePositionToken0.mintAmounts.amount1 as unknown as bigint))
         } else {
-            const singleSidePositionToken1 = Position.fromAmount1({
-                pool, 
-                tickLower: Number(lowerTick), 
-                tickUpper: Number(upperTick), 
-                amount1: String(parseEther(_amountA)) as BigintIsh,
-            })
+            const singleSidePositionToken1 = Position.fromAmount1({pool, tickLower: Number(lowerTick), tickUpper: Number(upperTick), amount1: String(parseEther(_amountA)) as BigintIsh})
             setAmountB(formatEther(singleSidePositionToken1.mintAmounts.amount0 as unknown as bigint))
         }
     }, 700)
-
     const placeLiquidity = async () => {
         setIsLoading(true)
         try {
-            let tokenAvalue
-            let tokenBvalue
-            if (tokenA.value === tokens[0].value) {
-                tokenAvalue = tokens[1].value
-            } else {
-                tokenAvalue = tokenA.value
-            }
-            if (tokenB.value === tokens[0].value) {
-                tokenBvalue = tokens[1].value
-            } else {
-                tokenBvalue = tokenB.value
-            }
-            let getToken0 = pairDetect !== '0x0000000000000000000000000000000000000000' ? 
-                await readContract(config, { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'token0' }) :
-                ''
+            const tokenAvalue = tokenA.value === tokens[0].value ? tokens[1].value : tokenA.value
+            const tokenBvalue = tokenB.value === tokens[0].value ? tokens[1].value : tokenB.value
+            let getToken0 = pairDetect !== '0x0000000000000000000000000000000000000000' ? await readContract(config, { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'token0' }) : ''
             if (pairDetect === '0x0000000000000000000000000000000000000000') {
                 const { request: request0 } = await simulateContract(config, {
                     ...v3FactoryContract,
@@ -205,7 +145,6 @@ export default function Liquidity96({
                 })
                 let h = await writeContract(config, request0)
                 await waitForTransactionReceipt(config, { hash: h })
-
                 const newPair = await readContract(config, {...v3FactoryContract, functionName: 'getPool', args: [tokenAvalue, tokenBvalue, feeSelect] })
                 getToken0 = await readContract(config, { ...v3PoolABI, address: newPair as '0xstring', functionName: 'token0'})
                 const amount0 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? amountA : amountB
@@ -220,14 +159,10 @@ export default function Liquidity96({
                 await waitForTransactionReceipt(config, { hash: h })
                 setTxupdate(h)
             }
-            
             if (tokenA.value.toUpperCase() !== tokens[0].value.toUpperCase()) {
-                let allowanceA
-                if (tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {
-                    allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
-                } else {
-                    allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
-                }
+                const allowanceA = tokenA.value.toUpperCase() === tokens[2].value.toUpperCase() ?
+                    await readContract(config, { ...kap20ABI, address: tokenA.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] }) :
+                    await readContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
                 if (allowanceA < parseEther(amountA)) {
                     const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountA)] })
                     const h = await writeContract(config, request)
@@ -235,19 +170,15 @@ export default function Liquidity96({
                 }
             }
             if (tokenB.value.toUpperCase() !== tokens[0].value.toUpperCase()) {
-                let allowanceB
-                if (tokenB.value.toUpperCase() === tokens[2].value.toUpperCase()) {
-                    allowanceB = await readContract(config, { ...kap20ABI, address: tokenB.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
-                } else {
-                    allowanceB = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
-                }
+                const allowanceB = tokenB.value.toUpperCase() === tokens[2].value.toUpperCase() ?
+                    await readContract(config, { ...kap20ABI, address: tokenB.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] }) :
+                    await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
                 if (allowanceB < parseEther(amountB)) {
                     const { request } = await simulateContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountB)] })
                     const h = await writeContract(config, request)
                     await waitForTransactionReceipt(config, { hash: h })
                 }
             }
-            
             const token0check = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenA.value : tokenB.value
             const token1check = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenB.value : tokenA.value
             const token0 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenAvalue : tokenBvalue
@@ -270,35 +201,19 @@ export default function Liquidity96({
                     recipient: address as '0xstring',
                     deadline: BigInt(Math.floor(Date.now() / 1000) + 60 * 10),
                 }],
-                value: token0check.toUpperCase() === tokens[0].value.toUpperCase() ? 
-                    parseEther(amount0) : 
-                    (token1check.toUpperCase() === tokens[0].value.toUpperCase() ? parseEther(amount1) : BigInt(0))
+                value: token0check.toUpperCase() === tokens[0].value.toUpperCase() ? parseEther(amount0) : (token1check.toUpperCase() === tokens[0].value.toUpperCase() ? parseEther(amount1) : BigInt(0))
             })
             const h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
-        } catch (e) {
-            setErrMsg(e as WriteContractErrorType)
-        }
+        } catch (e) {setErrMsg(e as WriteContractErrorType)}
         setIsLoading(false)
     }
-
     React.useEffect(() => {
         const fetch1 = async () => {
             tokenA.value.toUpperCase() === tokenB.value.toUpperCase() && setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico'})
-
-            let tokenAvalue
-            let tokenBvalue
-            if (tokenA.value === tokens[0].value) {
-                tokenAvalue = tokens[1].value
-            } else {
-                tokenAvalue = tokenA.value
-            }
-            if (tokenB.value === tokens[0].value) {
-                tokenBvalue = tokens[1].value
-            } else {
-                tokenBvalue = tokenB.value
-            }
+            const tokenAvalue = tokenA.value === tokens[0].value ? tokens[1].value : tokenA.value
+            const tokenBvalue = tokenB.value === tokens[0].value ? tokens[1].value : tokenB.value
             const nativeBal = await getBalance(config, {address: address as '0xstring'})
             const stateA = await readContracts(config, {
                 contracts: [
@@ -316,16 +231,12 @@ export default function Liquidity96({
             stateA[0].result !== undefined && tokenA.name === "Choose Token" && setTokenA({
                 name: stateA[0].result,
                 value: tokenA.value, 
-                logo: tokens.map(obj => obj.value).indexOf(tokenA.value) !== -1 ? 
-                    tokens[tokens.map(obj => obj.value).indexOf(tokenA.value)].logo : 
-                    "../favicon.ico"
+                logo: tokens.map(obj => obj.value).indexOf(tokenA.value) !== -1 ? tokens[tokens.map(obj => obj.value).indexOf(tokenA.value)].logo : "../favicon.ico"
             })
             stateB[0].result !== undefined && tokenB.name === "Choose Token" && setTokenB({
                 name: stateB[0].result, 
                 value: tokenB.value, 
-                logo: tokens.map(obj => obj.value).indexOf(tokenB.value) !== -1 ? 
-                    tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].logo : 
-                    "../favicon.ico"
+                logo: tokens.map(obj => obj.value).indexOf(tokenB.value) !== -1 ? tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].logo : "../favicon.ico"
             })
             tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() ? 
                 setTokenABalance(formatEther(nativeBal.value)) :
@@ -334,7 +245,6 @@ export default function Liquidity96({
                 setTokenBBalance(formatEther(nativeBal.value)) :
                 stateB[1].result !== undefined && setTokenBBalance(formatEther(stateB[1].result))
             stateB[2].result !== undefined && setPairDetect(stateB[2].result)
-            
             if (stateB[2].result !== undefined && stateB[2].result !== '0x0000000000000000000000000000000000000000') {
                 const poolState = await readContracts(config, {
                     contracts: [
@@ -345,12 +255,9 @@ export default function Liquidity96({
                 })
                 const token0 = poolState[0].result !== undefined ? poolState[0].result : "" as '0xstring'
                 const sqrtPriceX96 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
-                const _currPrice = token0.toUpperCase() === tokenBvalue.toUpperCase() ? 
-                    (Number(sqrtPriceX96) / (2 ** 96)) ** 2 : 
-                    (1 / ((Number(sqrtPriceX96) / (2 ** 96)) ** 2));
+                const _currPrice = token0.toUpperCase() === tokenBvalue.toUpperCase() ? (Number(sqrtPriceX96) / (2 ** 96)) ** 2 : (1 / ((Number(sqrtPriceX96) / (2 ** 96)) ** 2));
                 poolState[1].result !== undefined && setCurrPrice(_currPrice.toString())
                 poolState[2].result !== undefined && setCurrTickSpacing(poolState[2].result.toString())
-                
                 let _lowerPrice = 0
                 let _upperPrice = Infinity
                 let alignedLowerTick = 0
@@ -366,12 +273,8 @@ export default function Liquidity96({
                     alignedLowerTick = poolState[2].result !== undefined ? Math.ceil(TickMath.MIN_TICK / poolState[2].result) * poolState[2].result : 0
                     alignedUpperTick = poolState[2].result !== undefined ? Math.floor(TickMath.MAX_TICK / poolState[2].result) * poolState[2].result : 0
                 }
-                const _lowerPriceShow = token0.toUpperCase() === tokenBvalue.toUpperCase() ? 
-                    Math.pow(1.0001, alignedLowerTick) : 
-                    1 / Math.pow(1.0001, alignedUpperTick);
-                const _upperPriceShow = token0.toUpperCase() === tokenBvalue.toUpperCase() ? 
-                    Math.pow(1.0001, alignedUpperTick) : 
-                    1 / Math.pow(1.0001, alignedLowerTick);
+                const _lowerPriceShow = token0.toUpperCase() === tokenBvalue.toUpperCase() ? Math.pow(1.0001, alignedLowerTick) : 1 / Math.pow(1.0001, alignedUpperTick);
+                const _upperPriceShow = token0.toUpperCase() === tokenBvalue.toUpperCase() ? Math.pow(1.0001, alignedUpperTick) : 1 / Math.pow(1.0001, alignedLowerTick);
                 setLowerTick(alignedLowerTick.toString())
                 setUpperTick(alignedUpperTick.toString())
                 rangePercentage !== 1 ? setLowerPrice(_lowerPriceShow.toString()) : setLowerPrice(_lowerPrice.toString())
@@ -421,12 +324,10 @@ export default function Liquidity96({
                 }
             }
         }
-
         setAmountA("")
         setAmountB("")
         address !== undefined && rangePercentage !== 999 && fetch1()
     }, [config, address, tokenA, tokenB, feeSelect, rangePercentage, txupdate])
-    console.log({lowerTick, upperTick}) // for fetch monitoring
 
     return (
         <div className='space-y-2'>
@@ -497,9 +398,7 @@ export default function Liquidity96({
                     <span />
                     <div>
                         <span className="text-gray-400 text-xs">{tokenA.name !== 'Choose Token' ? Number(tokenABalance).toFixed(4) + ' ' + tokenA.name : '0.0000'}</span>
-                        {(lowerPrice !== '' && Number(lowerPrice) < Number(currPrice)) &&
-                            <Button variant="ghost" size="sm" className="h-6 text-[#00ff9d] text-xs px-2 cursor-pointer" onClick={() => {setAmountA(tokenABalance); Number(upperPrice) > Number(currPrice) && setAlignedAmountB(tokenABalance);}}>MAX</Button>
-                        }
+                        {(lowerPrice !== '' && Number(lowerPrice) < Number(currPrice)) && <Button variant="ghost" size="sm" className="h-6 text-[#00ff9d] text-xs px-2 cursor-pointer" onClick={() => {setAmountA(tokenABalance); Number(upperPrice) > Number(currPrice) && setAlignedAmountB(tokenABalance);}}>MAX</Button>}
                     </div>
                 </div>
             </div>
@@ -568,9 +467,7 @@ export default function Liquidity96({
                 </div>
                 <div className="flex justify-between items-center mt-2">
                     <span />
-                    {(upperPrice !== '' || Number(upperPrice) > Number(currPrice)) &&
-                        <span className="text-gray-400 text-xs" onClick={() => setAmountB(tokenBBalance)}>{tokenB.name !== 'Choose Token' ? Number(tokenBBalance).toFixed(4) + ' ' + tokenB.name : '0.0000'}</span>
-                    }
+                    {(upperPrice !== '' || Number(upperPrice) > Number(currPrice)) && <span className="text-gray-400 text-xs" onClick={() => setAmountB(tokenBBalance)}>{tokenB.name !== 'Choose Token' ? Number(tokenBBalance).toFixed(4) + ' ' + tokenB.name : '0.0000'}</span>}
                 </div>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
@@ -626,16 +523,7 @@ export default function Liquidity96({
                 </div>
             </div>
             {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) > 0 && Number(amountB) > 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) <= Number(tokenBBalance) ?
-                <Button 
-                    className="w-full py-6 px-8 mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
-                    bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
-                    hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect
-                    shadow-lg shadow-emerald-500/40
-                    active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer"
-                    onClick={placeLiquidity}
-                >
-                    Add Liquidity
-                </Button> :
+                <Button className="w-full py-6 px-8 mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect shadow-lg shadow-emerald-500/40 active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" onClick={placeLiquidity}>Add Liquidity</Button> :
                 <Button disabled className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 mt-4 uppercase">Add Liquidity</Button>
             }
             <div className="mt-4 border-t border-[#00ff9d]/10 pt-4">

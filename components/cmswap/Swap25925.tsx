@@ -14,8 +14,9 @@ import { ensureTokenAllowance, executeRouterSwap, wrapNativeToken, unwrapWrapped
 import { computePriceImpact, getDecimals } from '@/components/cmswap/swap/utils'
 import { useSwap25925PoolData } from '@/components/cmswap/swap/hooks/useSwap25925PoolData'
 import { SwapTokenPanel } from '@/components/cmswap/swap/SwapTokenPanel'
-const { tokens: chainTokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, unwarppedNative, } = chains[25925]
+
 type UIToken = { name: string; value: '0xstring'; logo: string; decimal: number }
+const { tokens: chainTokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, unwarppedNative, } = chains[25925]
 const tokens = chainTokens as readonly UIToken[]
 
 export default function Swap25925({ setIsLoading, setErrMsg, }: {
@@ -32,7 +33,7 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
     const [wrappedRoute, setWrappedRoute] = React.useState(false)
     const [newPrice, setNewPrice] = React.useState("")
     const {tokenA, tokenB, setTokenA, setTokenB, hasInitializedFromParams, updateURLWithTokens, switchTokens} = useSwapTokenSelection(tokens, {defaultTokenAIndex: 0, defaultTokenBIndex: 2, referralAddress: address})
-    const { resolveTokenAddress, quoteExactInputSingle, quoteExactInput } = useSwapQuote({config, contract: qouterV2Contract, tokens})
+    const { quoteExactInputSingle, quoteExactInput } = useSwapQuote({config, contract: qouterV2Contract, tokens})
     const [tokenABalance, setTokenABalance] = React.useState("")
     const [amountA, setAmountA] = React.useState("")
     const [tokenBBalance, setTokenBBalance] = React.useState("")
@@ -40,11 +41,10 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
     const [feeSelect, setFeeSelect] = React.useState(10000)
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
-    const [swapDirection, setSwapDirection] = React.useState(true) // false = A->B, true = B->A
+    const [swapDirection, setSwapDirection] = React.useState(true)
     React.useEffect(() => {console.log("hasInitializedFromParams : ", hasInitializedFromParams);}, [hasInitializedFromParams])
     const tokenABalanceLabel = tokenA.name !== 'Choose Token' ? `${Number(tokenABalance).toFixed(4)} ${tokenA.name}` : '0.0000'
     const tokenBBalanceLabel = tokenB.name !== 'Choose Token' ? `${Number(tokenBBalance).toFixed(4)} ${tokenB.name}` : '0.0000'
-
     React.useEffect(() => {
         if (!hasInitializedFromParams) return
         const quoteBestRate = async () => {
@@ -60,15 +60,11 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
                 const [pool, rate] = validRates.sort((a, b) => b[1] - a[1])[0]
                 setBestPool(pool)
                 if (poolSelect === "") setPoolSelect(pool);
-            } catch (error) {
-                console.error('Error computing best rate', error)
-            }
+            } catch (error) {console.error('Error computing best rate', error)}
         }
         quoteBestRate()
     }, [amountA, CMswapTVL, hasInitializedFromParams])
-
     useSwap25925PoolData({config, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute, setCMswapTVL, setAmountA, setAmountB, setNewPrice})
-
     const getQuote = useDebouncedCallback(async (_amount: string) => {
         setAltRoute(undefined)
         let CMswapRate = 0;
@@ -123,17 +119,11 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
             return { CMswapRate }
         }
     }, 700)
-
     const switchToken = () => {setExchangeRate(""); switchTokens();}
-
     const handleSwap = async () => {
-        if (wrappedRoute) {
-            wrap()
-        } else if (poolSelect === "CMswap") {
-            CMswap()
-        }
+        if (wrappedRoute) wrap();
+        else if (poolSelect === "CMswap") CMswap();
     }
-
     const wrap = async () => {
         setIsLoading(true)
         try {
@@ -157,7 +147,6 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
         }
         setIsLoading(false)
     }
-
     const CMswap = async () => {
         setIsLoading(true)
         try {
@@ -203,13 +192,9 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
                 let h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
-        } catch (e) {
-            setErrMsg(e as WriteContractErrorType)
-        }
+        } catch (e) {setErrMsg(e as WriteContractErrorType)}
         setIsLoading(false)
     }
-
-    // Pool data loading handled by useSwap25925PoolData hook
     React.useEffect(() => {setPoolSelect(""); setFeeSelect(10000);}, [tokenA, tokenB])
 
     return (
@@ -239,19 +224,7 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
                 popoverOpen={open}
                 onPopoverOpenChange={setOpen}
                 balanceLabel={tokenABalanceLabel}
-                footerContent={
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 text-[#00ff9d] text-xs px-2 cursor-pointer"
-                        onClick={() => {
-                            setAmountA(tokenABalance)
-                            getQuote(tokenABalance)
-                        }}
-                    >
-                        MAX
-                    </Button>
-                }
+                footerContent={<Button variant="ghost" size="sm" className="h-6 text-[#00ff9d] text-xs px-2 cursor-pointer" onClick={() => {setAmountA(tokenABalance); getQuote(tokenABalance);}}>MAX</Button>}
             />
             <div className="flex justify-center">
                 <Button variant="outline" size="icon" className="bg-[#0a0b1e] border border-[#00ff9d]/30 rounded-md h-10 w-10 shadow-md cursor-pointer" onClick={switchToken}>
@@ -328,7 +301,6 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
                     )}
                 </div>
             }
-
             {(tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) !== 0 && Number(amountB) !== 0 ?
                 <Button className="w-full py-6 px-8 mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect shadow-lg shadow-emerald-500/40 active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" onClick={handleSwap}>Swap</Button> :
                 <Button disabled className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 mt-4 uppercase">
@@ -338,7 +310,6 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
                     </span>
                 </Button>
             )}
-
             <div className="mt-4 border-t border-[#00ff9d]/10 pt-4">
                 {altRoute !== undefined &&
                     <div className="flex items-center text-gray-500 text-xs my-2">
@@ -356,9 +327,7 @@ export default function Swap25925({ setIsLoading, setErrMsg, }: {
                                 </span> :
                                 <span className="text-red-500 px-2">insufficient liquidity</span>
                             }
-                            {!wrappedRoute && Number(amountB) > 0 && (
-                                <span>[PI: {computePriceImpact(Number(newPrice || '0'), Number(exchangeRate || '0'))}%]</span>
-                            )}
+                            {!wrappedRoute && Number(amountB) > 0 && (<span>[PI: {computePriceImpact(Number(newPrice || '0'), Number(exchangeRate || '0'))}%]</span>)}
                         </div>
                         {(tokenA.name === 'KUSDT' || tokenB.name === 'KUSDT') &&
                             <div className="flex items-center text-gray-500 text-xs my-2">

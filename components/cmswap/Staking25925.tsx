@@ -113,7 +113,6 @@ const StakingList = ({ setIsLoading, setErrMsg }: {
                         ]
                     })
                     if (poolStatus !== undefined) {
-                        console.log("V2poolStatus", poolStatus);
                         poolInfoList.push({
                         name: poolStatus?.[0]?.result?.name ?? "Unknown Pool",
                         rewardToken: poolStatus?.[0]?.result?.rewardToken ?? ADDRESS_ZERO,

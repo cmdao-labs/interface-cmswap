@@ -157,7 +157,7 @@ export default function Create({ mode, chain, token, }: {
             setFile(null);
             router.replace(`/pump/launchpad?chain=${chain}&mode=${mode}`);
         } catch (e) {
-            console.log(e);
+            console.warn(e);
             setPopupState({
                 isOpen: true,
                 header: "Launch Failed",

@@ -41,7 +41,6 @@ export default function Swap10143({ setIsLoading, setErrMsg, }: {
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
     const [swapDirection, setSwapDirection] = React.useState(true) // false = A->B, true = B->A
-    React.useEffect(() => {console.log("hasInitializedFromParams : ", hasInitializedFromParams);}, [hasInitializedFromParams])
     const tokenABalanceLabel = tokenA.name !== 'Choose Token' ? `${Number(tokenABalance).toFixed(6)} ${tokenA.name}` : '0.000000'
     const tokenBBalanceLabel = tokenB.name !== 'Choose Token' ? `${Number(tokenBBalance).toFixed(6)} ${tokenB.name}` : '0.000000'
 

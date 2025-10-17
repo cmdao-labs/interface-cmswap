@@ -14,8 +14,9 @@ import { ensureTokenAllowance, executeRouterSwap, wrapNativeToken, unwrapWrapped
 import { useSwap8899PoolData } from '@/components/cmswap/swap/hooks/useSwap8899PoolData'
 import { computePriceImpact, getDecimals } from '@/components/cmswap/swap/utils'
 import { SwapTokenPanel } from '@/components/cmswap/swap/SwapTokenPanel'
-const { tokens: chainTokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, wrappedNative, CMswapPoolDualRouterContract, CMswapPoolDualRouter, CMswapUniSmartRoute, CMswapUniSmartRouteContract, } = chains[8899]
+
 type UIToken = { name: string; value: '0xstring'; logo: string; decimal: number }
+const { tokens: chainTokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, wrappedNative, CMswapPoolDualRouterContract, CMswapPoolDualRouter, CMswapUniSmartRoute, CMswapUniSmartRouteContract, } = chains[8899]
 const tokens = chainTokens as readonly UIToken[]
 
 export default function Swap8899({ setIsLoading, setErrMsg, }: {
@@ -43,15 +44,12 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
     const [open2, setOpen2] = React.useState(false)
     const [poolSelect, setPoolSelect] = React.useState("")
     const [bestPool, setBestPool] = React.useState("")
-    const [swapDirection, setSwapDirection] = React.useState(true) // false = A->B, true = B->A
+    const [swapDirection, setSwapDirection] = React.useState(true)
     const [onLoading, setOnLoading] = React.useState(false)
     const [wrappedRoute, setWrappedRoute] = React.useState(false)
-    React.useEffect(() => {console.log("hasInitializedFromParams : ", hasInitializedFromParams)}, [hasInitializedFromParams])
     const tokenABalanceLabel = tokenA.name !== 'Choose Token' ? `${Number(tokenABalance).toFixed(4)} ${tokenA.name}` : '0.0000'
     const tokenBBalanceLabel = tokenB.name !== 'Choose Token' ? `${Number(tokenBBalance).toFixed(4)} ${tokenB.name}` : '0.0000'
-
     useSwap8899PoolData({config, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute, setCMswapTVL, setGameSwapTvl, setJibSwapTvl, setBestPathArray, setFixedExchangeRate, setOnLoading, setAmountA, setAmountB,})
-
     const getQuote = useDebouncedCallback(async (_amount: string) => {
         let CMswapRate = undefined; let GameswapRate = undefined; let JibswapRate = undefined;
         const amountIn = Number(_amount)
@@ -113,11 +111,7 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                             useFunction = 'getExpectedJBCFromToken'; // token A is CMJ
                         }
                         if (useFunction) {
-                            const quoteOutput = await readContracts(config, {
-                                contracts: [
-                                    {...CMswapPoolDualRouterContract, functionName: useFunction, args: [poolAddr, parseUnits(_amount, getDecimals(tokenA))]},
-                                ]
-                            });
+                            const quoteOutput = await readContracts(config, {contracts: [{...CMswapPoolDualRouterContract, functionName: useFunction, args: [poolAddr, parseUnits(_amount, getDecimals(tokenA))]}]});
                             const result = quoteOutput[0].result !== undefined ? quoteOutput[0].result : BigInt(0)
                             GameswapRate = formatUnits(result, getDecimals(tokenB))
                             if (poolSelect === "GameSwap") {
@@ -125,7 +119,7 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                                 const amountA = parseFloat(_amount);
                                 const amountB = parseFloat(formatUnits(result, getDecimals(tokenB)));
                                 if (amountA > 0 && amountB > 0) {
-                                    const price = tokenAvalue.toUpperCase() === tokens[1].value.toUpperCase() ? amountB / amountA /*JBC → CMJ*/ : amountA / amountB; /*CMJ → JBC*/
+                                    const price = tokenAvalue.toUpperCase() === tokens[1].value.toUpperCase() ? amountB / amountA : amountA / amountB;
                                     setNewPrice(price.toFixed(6));
                                 }
                             }
@@ -135,9 +129,9 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                         let useFunction: "getExpectedJBCFromToken" | "getExpectedTokenFromJBC" | undefined;
                         let poolAddr = '0x280608DD7712a5675041b95d0000B9089903B569' as '0xstring';
                         if (tokenAvalue.toUpperCase() === tokens[1].value.toUpperCase()) {
-                            useFunction = 'getExpectedTokenFromJBC'; // token A is JBC
+                            useFunction = 'getExpectedTokenFromJBC';
                         } else if (tokenAvalue.toUpperCase() === tokens[2].value.toUpperCase()) {
-                            useFunction = 'getExpectedJBCFromToken'; // token A is JUSDT
+                            useFunction = 'getExpectedJBCFromToken';
                         }
                         if (useFunction) {
                             const quoteOutput = await readContracts(config, {contracts: [{...CMswapPoolDualRouterContract, functionName: useFunction, args: [poolAddr, parseUnits(_amount, getDecimals(tokenA))]}]});
@@ -153,9 +147,7 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                         }
                     }
                 }
-            } catch (error) {
-                console.error("Error in getting GameSwap quote:", error);
-            }
+            } catch (error) {console.error("Error in getting GameSwap quote:", error)}
             //**---------- Jibswap */
             try {
                 if (Number(_amount) !== 0) {
@@ -176,27 +168,17 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                     }
                     JibswapRate = formatUnits(bestAmountOut, getDecimals(tokenB))
                 }
-            } catch (error) {
-                console.error("Error in getting JibSwap quote:", error);
-            }
+            } catch (error) {console.error("Error in getting JibSwap quote:", error)}
         }
         return { CMswapRate, GameswapRate, JibswapRate }
     }, 700)
-
     const switchToken = () => {setExchangeRate(""); switchTokens();}
-
     const handleSwap = async () => {
-        if (wrappedRoute) {
-            wrap()
-        } else if (poolSelect === "CMswap") {
-            cmsswap();
-        } else if (poolSelect === "GameSwap") {
-            gameswap();
-        } else if (poolSelect === "JibSwap") {
-            jibswap();
-        }
+        if (wrappedRoute) wrap();
+        else if (poolSelect === "CMswap") cmswap();
+        else if (poolSelect === "GameSwap") gameswap();
+        else if (poolSelect === "JibSwap") jibswap();
     }
-
     const wrap = async () => {
         setIsLoading(true)
         try {
@@ -207,13 +189,10 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                 const hash = await unwrapWrappedToken({config, contract: wrappedNative, amount: parseUnits(amountA || '0', getDecimals(tokenA))})
                 setTxupdate(hash)
             }
-        } catch (e) {
-            setErrMsg(e as WriteContractErrorType)
-        }
+        } catch (e) {setErrMsg(e as WriteContractErrorType)}
         setIsLoading(false)
     }
-
-    const cmsswap = async () => {
+    const cmswap = async () => {
         setIsLoading(true)
         try {
             let tokenAvalue = tokenA.value === tokens[0].value ? tokens[1].value : tokenA.value;
@@ -248,12 +227,9 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                 let h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
-        } catch (e) {
-            setErrMsg(e as WriteContractErrorType)
-        }
+        } catch (e) {setErrMsg(e as WriteContractErrorType)}
         setIsLoading(false)
     }
-
     const gameswap = async () => {
         setIsLoading(true);
         try {
@@ -304,35 +280,30 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                 await waitForTransactionReceipt(config, { hash: tx });
                 setTxupdate(tx)
             }
-        } catch (e) {
-            setErrMsg(e as WriteContractErrorType);
-        }
+        } catch (e) {setErrMsg(e as WriteContractErrorType)}
         setIsLoading(false);
     };
-
     const jibswap = async () => {
         setIsLoading(true)
         try {
             const deadline = Math.floor(Date.now() / 1000) + 60 * 10
+            let h;
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                let h, r
                 if (tokenA.value.toUpperCase() === tokens[1].value.toLocaleUpperCase()) {
-                    const { result, request } = await simulateContract(config, {
+                    const { request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContract,
                         functionName: 'swapExactETHForTokensWithFee',
                         value: parseUnits(amountA || '0', getDecimals(tokenA)),
                         args: [parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
                     })
-                    r = result
                     h = await writeContract(config, request)
                 } else {
                     const route = bestPathArray as readonly `0x${string}`[];
-                    const { result, request } = await simulateContract(config, {
+                    const { request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContract,
                         functionName: 'swapExactTokensForTokensWithFee',
                         args: [parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), route, address as `0x${string}`, BigInt(deadline)]
                     });
-                    r = result;
                     h = await writeContract(config, request);
                     await waitForTransactionReceipt(config, { hash: h })
                     setTxupdate(h)
@@ -345,26 +316,20 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                     await waitForTransactionReceipt(config, { hash: h })
                 }
                 const deadline = Math.floor(Date.now() / 1000) + 60 * 10
-                let h, r
                 if (altRoute === undefined && bestPathArray !== undefined) {
-                    const { result, request } = await simulateContract(config, {
+                    const { request } = await simulateContract(config, {
                         ...CMswapUniSmartRouteContract,
                         functionName: 'swapExactTokensForTokensWithFee',
                         args: [parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error("Address is required") })(), BigInt(deadline)]
                     })
-                    r = result
                     h = await writeContract(config, request)
                     await waitForTransactionReceipt(config, { hash: h })
                     setTxupdate(h)
                 }
             }
-        } catch (e) {
-            setErrMsg(e as WriteContractErrorType)
-        }
+        } catch (e) {setErrMsg(e as WriteContractErrorType)}
         setIsLoading(false)
     }
-
-    // Pool data loading handled by useSwap8899PoolData hook
     React.useEffect(() => {
         const updateRate = async () => {
             const quote = await getQuote(amountA);  
@@ -381,7 +346,6 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
         };
         !wrappedRoute && updateRate();
     }, [amountA, poolSelect, CMswapTVL, GameSwapTvl, JibSwapTvl]);
-
     React.useEffect(() => {
         const fetchQuoteAndSetPool = async () => {
             if (!onLoading && CMswapTVL && GameSwapTvl && JibSwapTvl) {
@@ -394,7 +358,6 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
         };
         fetchQuoteAndSetPool();
     }, [onLoading, CMswapTVL, GameSwapTvl, JibSwapTvl, amountA ]);
-
     React.useEffect(() => {if (poolSelect === "" && bestPool) setPoolSelect(bestPool);}, [bestPool]);
 
     return (
@@ -424,19 +387,7 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                 popoverOpen={open}
                 onPopoverOpenChange={setOpen}
                 balanceLabel={tokenABalanceLabel}
-                footerContent={
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 text-[#00ff9d] text-xs px-2 cursor-pointer"
-                        onClick={() => {
-                            setAmountA(tokenABalance)
-                            getQuote(tokenABalance)
-                        }}
-                    >
-                        MAX
-                    </Button>
-                }
+                footerContent={<Button variant="ghost" size="sm" className="h-6 text-[#00ff9d] text-xs px-2 cursor-pointer" onClick={() => {setAmountA(tokenABalance); getQuote(tokenABalance);}}>MAX</Button>}
             />
             <div className="flex justify-center">
                 <Button variant="outline" size="icon" className="bg-[#0a0b1e] border border-[#00ff9d]/30 rounded-md h-10 w-10 shadow-md cursor-pointer" onClick={switchToken}>
@@ -485,7 +436,6 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                                 </Button>
                             );
                         })()}
-
                         {Number(GameSwapTvl['tvl10000']) > 0 && (
                             <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col items-start text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (poolSelect === "GameSwap" ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setPoolSelect("GameSwap")}>
                                 <span className='flex items-center gap-1'>
@@ -550,9 +500,7 @@ export default function Swap8899({ setIsLoading, setErrMsg, }: {
                                 </span> :
                                 <span className="text-red-500 px-2">insufficient liquidity</span>
                             }
-                            {!wrappedRoute && Number(amountB) > 0 && (
-                                <span>[PI: {computePriceImpact(Number(newPrice || '0'), Number(fixedExchangeRate || '0'))}%]</span>
-                            )}
+                            {!wrappedRoute && Number(amountB) > 0 && (<span>[PI: {computePriceImpact(Number(newPrice || '0'), Number(fixedExchangeRate || '0'))}%]</span>)}
                         </div>
                         {(tokenA.name === 'JUSDT' || tokenB.name === 'JUSDT') &&
                             <div className="flex items-center text-gray-500 text-xs my-2">

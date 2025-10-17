@@ -11,11 +11,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useDebouncedCallback } from 'use-debounce'
 import { chains } from '@/lib/chains'
 import { config } from '@/config/reown'
+
 const { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, } = chains[10143]
 
-export default function Liquidity10143({ 
-    setIsLoading, setErrMsg, 
-}: {
+export default function Liquidity10143({ setIsLoading, setErrMsg, }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
     setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>,
 }) {
@@ -40,54 +39,39 @@ export default function Liquidity10143({
     const [rangePercentage, setRangePercentage] = React.useState(1)
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
-    const [hasInitializedFromParams, setHasInitializedFromParams] = React.useState(false)
-
     React.useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search)
         const tokenAAddress = searchParams.get('input')?.toLowerCase()
         const tokenBAddress = searchParams.get('output')?.toLowerCase()
-
         const foundTokenA = tokenAAddress ? tokens.find(t => t.value.toLowerCase() === tokenAAddress) : null
         const foundTokenB = tokenBAddress ? tokens.find(t => t.value.toLowerCase() === tokenBAddress) : null
-
-        if (foundTokenA) setTokenA(foundTokenA)
-        if (foundTokenB) setTokenB(foundTokenB)
-
+        if (foundTokenA) setTokenA(foundTokenA);
+        if (foundTokenB) setTokenB(foundTokenB);
         if (!tokenAAddress || !tokenBAddress) {
-            if (tokenA?.value && tokenB?.value) {updateURLWithTokens(tokenA.value, tokenB.value, address)}
+            if (tokenA?.value && tokenB?.value) updateURLWithTokens(tokenA.value, tokenB.value, address);
         } else {
             updateURLWithTokens(tokenAAddress, tokenBAddress, address)
         }
-
-        setHasInitializedFromParams(true)
-        }, [])
-
-        React.useEffect(() => {
-            console.log("hasInitializedFromParams : ", hasInitializedFromParams)
-            }, [hasInitializedFromParams])
-
-            const updateURLWithTokens = (
-            tokenAValue?: string,
-            tokenBValue?: string,
-            referralCode?: string
-            ) => {
-            const url = new URL(window.location.href)
-
-            if (tokenAValue) url.searchParams.set('input', tokenAValue)
-            else url.searchParams.delete('tokenA')
-
-            if (tokenBValue) url.searchParams.set('output', tokenBValue)
-            else url.searchParams.delete('tokenB')
-
-            if (referralCode && referralCode.startsWith('0x')) {
-                url.searchParams.set('ref', referralCode)
-            } else {
-                url.searchParams.delete('ref')
-            }
-
-            window.history.replaceState({}, '', url.toString())
+    }, [])
+    const updateURLWithTokens = (tokenAValue?: string, tokenBValue?: string, referralCode?: string) => {
+        const url = new URL(window.location.href)
+        if (tokenAValue) {
+            url.searchParams.set('input', tokenAValue)
+        } else {
+            url.searchParams.delete('tokenA')
         }
-
+        if (tokenBValue) {
+            url.searchParams.set('output', tokenBValue)
+        } else {
+            url.searchParams.delete('tokenB')
+        }
+        if (referralCode && referralCode.startsWith('0x')) {
+            url.searchParams.set('ref', referralCode)
+        } else {
+            url.searchParams.delete('ref')
+        }
+        window.history.replaceState({}, '', url.toString())
+    }
     const setAlignedLowerTick = useDebouncedCallback((_lowerPrice: string) => {
         setAmountA("")
         setAmountB("")
@@ -102,7 +86,6 @@ export default function Liquidity10143({
         setLowerPercentage((((Math.pow(1.0001, alignedLowerTick) / Number(currPrice)) - 1) * 100).toString())
         setLowerTick(alignedLowerTick.toString())
     }, 700)
-
     const setAlignedUpperTick = useDebouncedCallback((_upperPrice: string) => {
         setAmountA("")
         setAmountB("")
@@ -123,20 +106,9 @@ export default function Liquidity10143({
             setUpperTick(alignedUpperTick.toString())
         }
     }, 700)
-
     const setAlignedAmountB = useDebouncedCallback(async (_amountA: string) => {
-        let tokenAvalue
-        let tokenBvalue
-        if (tokenA.value === tokens[0].value) {
-            tokenAvalue = tokens[1].value
-        } else {
-            tokenAvalue = tokenA.value
-        }
-        if (tokenB.value === tokens[0].value) {
-            tokenBvalue = tokens[1].value
-        } else {
-            tokenBvalue = tokenB.value
-        }
+        const tokenAvalue = tokenA.value === tokens[0].value ? tokens[1].value : tokenA.value
+        const tokenBvalue = tokenB.value === tokens[0].value ? tokens[1].value : tokenB.value
         const poolState = await readContracts(config, {
             contracts: [
                 { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'token0' },
@@ -145,63 +117,28 @@ export default function Liquidity10143({
             ]
         })
         const token0 = poolState[0].result !== undefined ? poolState[0].result : "" as '0xstring'
-        const gettokendecimal = await readContracts(config, {
-            contracts: [
-                { ...erc20ABI, address: token0, functionName: 'decimals' },
-            ]
-        })
+        const gettokendecimal = await readContracts(config, {contracts: [{ ...erc20ABI, address: token0, functionName: 'decimals' }]})
         const tokendecimal = gettokendecimal[0].result !== undefined ? Number(gettokendecimal[0].result) : 18
         const sqrtPriceX96 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
         const tick = poolState[1].result !== undefined ? poolState[1].result[1] : 0
         const liquidity = poolState[2].result !== undefined ? poolState[2].result : BigInt(0)
         const Token0 = new Token(10143, token0, tokendecimal)
         const Token1 = String(token0).toUpperCase() === tokenAvalue.toUpperCase() ? new Token(10143, tokenBvalue, tokenB.decimal) : new Token(10143, tokenAvalue, tokenA.decimal)
-        const pool = new Pool(
-            Token0,
-            Token1,
-            Number(feeSelect),
-            sqrtPriceX96.toString(),
-            liquidity.toString(),
-            tick
-        )
+        const pool = new Pool(Token0, Token1, Number(feeSelect), sqrtPriceX96.toString(), liquidity.toString(), tick)
         if (String(token0).toUpperCase() === tokenAvalue.toUpperCase()) {
-            const singleSidePositionToken0 = Position.fromAmount0({
-                pool, 
-                tickLower: Number(lowerTick), 
-                tickUpper: Number(upperTick), 
-                amount0: String(parseUnits(_amountA, tokenA.decimal)) as BigintIsh,
-                useFullPrecision: true
-            })
+            const singleSidePositionToken0 = Position.fromAmount0({pool, tickLower: Number(lowerTick), tickUpper: Number(upperTick), amount0: String(parseUnits(_amountA, tokenA.decimal)) as BigintIsh, useFullPrecision: true})
             setAmountB(formatUnits(singleSidePositionToken0.mintAmounts.amount1 as unknown as bigint, tokenB.decimal))
         } else {
-            const singleSidePositionToken1 = Position.fromAmount1({
-                pool, 
-                tickLower: Number(lowerTick), 
-                tickUpper: Number(upperTick), 
-                amount1: String(parseUnits(_amountA, tokenA.decimal)) as BigintIsh,
-            })
+            const singleSidePositionToken1 = Position.fromAmount1({pool, tickLower: Number(lowerTick), tickUpper: Number(upperTick), amount1: String(parseUnits(_amountA, tokenA.decimal)) as BigintIsh})
             setAmountB(formatUnits(singleSidePositionToken1.mintAmounts.amount0 as unknown as bigint, tokenB.decimal))
         }
     }, 700)
-
     const placeLiquidity = async () => {
         setIsLoading(true)
         try {
-            let tokenAvalue
-            let tokenBvalue
-            if (tokenA.value === tokens[0].value) {
-                tokenAvalue = tokens[1].value
-            } else {
-                tokenAvalue = tokenA.value
-            }
-            if (tokenB.value === tokens[0].value) {
-                tokenBvalue = tokens[1].value
-            } else {
-                tokenBvalue = tokenB.value
-            }
-            let getToken0 = pairDetect !== '0x0000000000000000000000000000000000000000' ? 
-                await readContract(config, { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'token0' }) :
-                ''
+            const tokenAvalue = tokenA.value === tokens[0].value ? tokens[1].value : tokenA.value
+            const tokenBvalue = tokenB.value === tokens[0].value ? tokens[1].value : tokenB.value
+            let getToken0 = pairDetect !== '0x0000000000000000000000000000000000000000' ? await readContract(config, { ...v3PoolABI, address: pairDetect as '0xstring', functionName: 'token0' }) : ''
             if (pairDetect === '0x0000000000000000000000000000000000000000') {
                 const { request: request0 } = await simulateContract(config, {
                     ...v3FactoryContract,
@@ -210,7 +147,6 @@ export default function Liquidity10143({
                 })
                 let h = await writeContract(config, request0)
                 await waitForTransactionReceipt(config, { hash: h })
-
                 const newPair = await readContract(config, {...v3FactoryContract, functionName: 'getPool', args: [tokenAvalue, tokenBvalue, feeSelect] })
                 getToken0 = await readContract(config, { ...v3PoolABI, address: newPair as '0xstring', functionName: 'token0'})
                 const amount0 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? amountA : amountB
@@ -227,7 +163,6 @@ export default function Liquidity10143({
                 await waitForTransactionReceipt(config, { hash: h })
                 setTxupdate(h)
             }
-            
             if (tokenA.value.toUpperCase() !== tokens[0].value.toUpperCase()) {
                 let allowanceA = await readContract(config, { ...erc20ABI, address: tokenAvalue, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
                 if (allowanceA < parseUnits(amountA, tokenA.decimal)) {
@@ -244,7 +179,6 @@ export default function Liquidity10143({
                     await waitForTransactionReceipt(config, { hash: h })
                 }
             }
-            
             const token0check = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenA.value : tokenB.value
             const token1check = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenB.value : tokenA.value
             const token0 = getToken0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenAvalue : tokenBvalue
@@ -269,35 +203,19 @@ export default function Liquidity10143({
                     recipient: address as '0xstring',
                     deadline: BigInt(Math.floor(Date.now() / 1000) + 60 * 10),
                 }],
-                value: token0check.toUpperCase() === tokens[0].value.toUpperCase() ? 
-                    parseUnits(amount0, decimal0) : 
-                    (token1check.toUpperCase() === tokens[0].value.toUpperCase() ? parseUnits(amount1, decimal1) : BigInt(0))
+                value: token0check.toUpperCase() === tokens[0].value.toUpperCase() ? parseUnits(amount0, decimal0) : (token1check.toUpperCase() === tokens[0].value.toUpperCase() ? parseUnits(amount1, decimal1) : BigInt(0))
             })
             const h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
-        } catch (e) {
-            setErrMsg(e as WriteContractErrorType)
-        }
+        } catch (e) {setErrMsg(e as WriteContractErrorType)}
         setIsLoading(false)
     }
-
     React.useEffect(() => {
         const fetch1 = async () => {
             tokenA.value.toUpperCase() === tokenB.value.toUpperCase() && setTokenB({name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18})
-
-            let tokenAvalue
-            let tokenBvalue
-            if (tokenA.value === tokens[0].value) {
-                tokenAvalue = tokens[1].value
-            } else {
-                tokenAvalue = tokenA.value
-            }
-            if (tokenB.value === tokens[0].value) {
-                tokenBvalue = tokens[1].value
-            } else {
-                tokenBvalue = tokenB.value
-            }
+            const tokenAvalue = tokenA.value === tokens[0].value ? tokens[1].value : tokenA.value
+            const tokenBvalue = tokenB.value === tokens[0].value ? tokens[1].value : tokenB.value
             const nativeBal = await getBalance(config, {address: address as '0xstring'})
             const stateA = await readContracts(config, {
                 contracts: [
@@ -315,22 +233,14 @@ export default function Liquidity10143({
             stateA[0].result !== undefined && tokenA.name === "Choose Token" && setTokenA({
                 name: stateA[0].result,
                 value: tokenA.value, 
-                logo: tokens.map(obj => obj.value).indexOf(tokenA.value) !== -1 ? 
-                    tokens[tokens.map(obj => obj.value).indexOf(tokenA.value)].logo : 
-                    "../favicon.ico",
-                decimal: tokens.map(obj => obj.value).indexOf(tokenA.value) !== -1 ?
-                    tokens[tokens.map(obj => obj.value).indexOf(tokenA.value)].decimal :
-                    18
+                logo: tokens.map(obj => obj.value).indexOf(tokenA.value) !== -1 ? tokens[tokens.map(obj => obj.value).indexOf(tokenA.value)].logo : "../favicon.ico",
+                decimal: tokens.map(obj => obj.value).indexOf(tokenA.value) !== -1 ? tokens[tokens.map(obj => obj.value).indexOf(tokenA.value)].decimal : 18
             })
             stateB[0].result !== undefined && tokenB.name === "Choose Token" && setTokenB({
                 name: stateB[0].result, 
                 value: tokenB.value, 
-                logo: tokens.map(obj => obj.value).indexOf(tokenB.value) !== -1 ? 
-                    tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].logo : 
-                    "../favicon.ico",
-                decimal: tokens.map(obj => obj.value).indexOf(tokenB.value) !== -1 ?
-                    tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].decimal :
-                    18
+                logo: tokens.map(obj => obj.value).indexOf(tokenB.value) !== -1 ? tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].logo : "../favicon.ico",
+                decimal: tokens.map(obj => obj.value).indexOf(tokenB.value) !== -1 ? tokens[tokens.map(obj => obj.value).indexOf(tokenB.value)].decimal : 18
             })
             tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() ? 
                 setTokenABalance(formatEther(nativeBal.value)) :
@@ -351,12 +261,9 @@ export default function Liquidity10143({
                 const decimal0 = token0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenA.decimal : tokenB.decimal
                 const decimal1 = token0.toUpperCase() === tokenAvalue.toUpperCase() ? tokenB.decimal : tokenA.decimal
                 const sqrtPriceX96 = poolState[1].result !== undefined ? poolState[1].result[0] : BigInt(0)
-                const _currPrice = token0.toUpperCase() === tokenBvalue.toUpperCase() ? 
-                    ((Number(sqrtPriceX96) / (2 ** 96)) ** 2) * (10 ** (decimal0 - decimal1)) : 
-                    (1 / (((Number(sqrtPriceX96) / (2 ** 96)) ** 2) * (10 ** (decimal0 - decimal1))));
+                const _currPrice = token0.toUpperCase() === tokenBvalue.toUpperCase() ? ((Number(sqrtPriceX96) / (2 ** 96)) ** 2) * (10 ** (decimal0 - decimal1)) : (1 / (((Number(sqrtPriceX96) / (2 ** 96)) ** 2) * (10 ** (decimal0 - decimal1))));
                 poolState[1].result !== undefined && setCurrPrice(_currPrice.toString())
                 poolState[2].result !== undefined && setCurrTickSpacing(poolState[2].result.toString())
-                
                 let _lowerPrice = 0
                 let _upperPrice = Infinity
                 let alignedLowerTick = 0
@@ -372,12 +279,8 @@ export default function Liquidity10143({
                     alignedLowerTick = poolState[2].result !== undefined ? Math.ceil(TickMath.MIN_TICK / poolState[2].result) * poolState[2].result : 0
                     alignedUpperTick = poolState[2].result !== undefined ? Math.floor(TickMath.MAX_TICK / poolState[2].result) * poolState[2].result : 0
                 }
-                const _lowerPriceShow = token0.toUpperCase() === tokenBvalue.toUpperCase() ? 
-                    Math.pow(1.0001, alignedLowerTick) : 
-                    1 / Math.pow(1.0001, alignedUpperTick);
-                const _upperPriceShow = token0.toUpperCase() === tokenBvalue.toUpperCase() ? 
-                    Math.pow(1.0001, alignedUpperTick) : 
-                    1 / Math.pow(1.0001, alignedLowerTick);
+                const _lowerPriceShow = token0.toUpperCase() === tokenBvalue.toUpperCase() ? Math.pow(1.0001, alignedLowerTick) : 1 / Math.pow(1.0001, alignedUpperTick);
+                const _upperPriceShow = token0.toUpperCase() === tokenBvalue.toUpperCase() ? Math.pow(1.0001, alignedUpperTick) : 1 / Math.pow(1.0001, alignedLowerTick);
                 setLowerTick(alignedLowerTick.toString())
                 setUpperTick(alignedUpperTick.toString())
                 rangePercentage !== 1 ? setLowerPrice(_lowerPriceShow.toString()) : setLowerPrice(_lowerPrice.toString())
@@ -427,12 +330,10 @@ export default function Liquidity10143({
                 }
             }
         }
-
         setAmountA("")
         setAmountB("")
         address !== undefined && rangePercentage !== 999 && fetch1()
     }, [config, address, tokenA, tokenB, feeSelect, rangePercentage, txupdate])
-    console.log({lowerTick, upperTick}) // for fetch monitoring
 
     return (
         <div className='space-y-2'>
@@ -503,9 +404,7 @@ export default function Liquidity10143({
                     <span />
                     <div>
                         <span className="text-gray-400 text-xs">{tokenA.name !== 'Choose Token' ? Number(tokenABalance).toFixed(6) + ' ' + tokenA.name : '0.000000'}</span>
-                        {(lowerPrice !== '' && Number(lowerPrice) < Number(currPrice)) &&
-                            <Button variant="ghost" size="sm" className="h-6 text-[#00ff9d] text-xs px-2 cursor-pointer" onClick={() => {setAmountA(tokenABalance); Number(upperPrice) > Number(currPrice) && setAlignedAmountB(tokenABalance);}}>MAX</Button>
-                        }
+                        {(lowerPrice !== '' && Number(lowerPrice) < Number(currPrice)) && <Button variant="ghost" size="sm" className="h-6 text-[#00ff9d] text-xs px-2 cursor-pointer" onClick={() => {setAmountA(tokenABalance); Number(upperPrice) > Number(currPrice) && setAlignedAmountB(tokenABalance);}}>MAX</Button>}
                     </div>
                 </div>
             </div>
@@ -574,9 +473,7 @@ export default function Liquidity10143({
                 </div>
                 <div className="flex justify-between items-center mt-2">
                     <span />
-                    {(upperPrice !== '' || Number(upperPrice) > Number(currPrice)) &&
-                        <span className="text-gray-400 text-xs" onClick={() => setAmountB(tokenBBalance)}>{tokenB.name !== 'Choose Token' ? Number(tokenBBalance).toFixed(6) + ' ' + tokenB.name : '0.000000'}</span>
-                    }
+                    {(upperPrice !== '' || Number(upperPrice) > Number(currPrice)) && <span className="text-gray-400 text-xs" onClick={() => setAmountB(tokenBBalance)}>{tokenB.name !== 'Choose Token' ? Number(tokenBBalance).toFixed(6) + ' ' + tokenB.name : '0.000000'}</span>}
                 </div>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
@@ -632,16 +529,7 @@ export default function Liquidity10143({
                 </div>
             </div>
             {tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring' && Number(amountA) > 0 && Number(amountB) > 0 && Number(amountA) <= Number(tokenABalance) && Number(amountB) <= Number(tokenBBalance) ?
-                <Button 
-                    className="w-full py-6 px-8 mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300
-                    bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800
-                    hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect
-                    shadow-lg shadow-emerald-500/40
-                    active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" 
-                    onClick={placeLiquidity}
-                >
-                    Add Liquidity
-                </Button> :
+                <Button className="w-full py-6 px-8 mt-4 font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect shadow-lg shadow-emerald-500/40 active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" onClick={placeLiquidity}>Add Liquidity</Button> :
                 <Button disabled className="w-full bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 rounded-md py-6 mt-4">Add Liquidity</Button>
             }
             <div className="mt-4 border-t border-[#00ff9d]/10 pt-4">

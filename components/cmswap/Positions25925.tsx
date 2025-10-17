@@ -10,33 +10,11 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, D
 import { useDebouncedCallback } from 'use-debounce'
 import { chains } from '@/lib/chains'
 import { config } from '@/config/reown'
+
 const { tokens, POSITION_MANAGER, v3FactoryContract, positionManagerContract, erc20ABI, kap20ABI, v3PoolABI, wrappedNative, } = chains[25925]
+type MyPosition = {Id: number; Name: string; Image: string; FeeTier: number; Pair: string; Token0Addr: string; Token1Addr: string; Token0: string; Token1: string; Amount0: number; Amount1: number; MinPrice: number; MaxPrice: number; CurrPrice: number; LowerTick: number; UpperTick: number; Liquidity: string; Fee0: number; Fee1: number; }
 
-type MyPosition = {
-    Id: number;
-    Name: string;
-    Image: string;
-    FeeTier: number;
-    Pair: string;
-    Token0Addr: string;
-    Token1Addr: string;
-    Token0: string;
-    Token1: string;
-    Amount0: number;
-    Amount1: number;
-    MinPrice: number;
-    MaxPrice: number;
-    CurrPrice: number;
-    LowerTick: number;
-    UpperTick: number;
-    Liquidity: string;
-    Fee0: number;
-    Fee1: number;
-}
-
-export default function Positions25925({ 
-    setIsLoading, setErrMsg, 
-}: {
+export default function Positions25925({ setIsLoading, setErrMsg, }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
     setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>,
 }) {
@@ -60,53 +38,24 @@ export default function Positions25925({
     const [isAddPositionModal, setIsAddPositionModal] = React.useState(false)
     const [isRemPositionModal, setIsRemPositionModal] = React.useState(false)
     const [amountRemove, setAmountRemove] = React.useState("")
-
-    const calcAmount0 = (
-        liquidity: number,
-        currentPrice: number,
-        priceLower: number,
-        priceUpper: number,
-        token0Decimals: number,
-        token1Decimals: number
-    ) => {
+    const calcAmount0 = (liquidity: number, currentPrice: number, priceLower: number, priceUpper: number, token0Decimals: number, token1Decimals: number) => {
         const decimalAdjustment = 10 ** (token0Decimals - token1Decimals)
         const mathCurrentPrice = Math.sqrt(currentPrice / decimalAdjustment)
         const mathPriceUpper = Math.sqrt(priceUpper / decimalAdjustment)
         const mathPriceLower = Math.sqrt(priceLower / decimalAdjustment)
-        
-        let math
-        if (mathCurrentPrice <= mathPriceLower) {
-            math = liquidity * ((mathPriceUpper - mathPriceLower) / (mathPriceLower * mathPriceUpper))
-        } else {
-            math = liquidity * ((mathPriceUpper - mathCurrentPrice) / (mathCurrentPrice * mathPriceUpper))
-        }
+        const math = mathCurrentPrice <= mathPriceLower ? liquidity * ((mathPriceUpper - mathPriceLower) / (mathPriceLower * mathPriceUpper)) : liquidity * ((mathPriceUpper - mathCurrentPrice) / (mathCurrentPrice * mathPriceUpper))
         const adjustedMath = math > 0 ? math : 0
         return adjustedMath
     }
-      
-    const calcAmount1 = (
-        liquidity: number,
-        currentPrice: number,
-        priceLower: number,
-        priceUpper: number,
-        token0Decimals: number,
-        token1Decimals: number
-    ) => {
+    const calcAmount1 = (liquidity: number, currentPrice: number, priceLower: number, priceUpper: number, token0Decimals: number, token1Decimals: number) => {
         const decimalAdjustment = 10 ** (token0Decimals - token1Decimals)
         const mathCurrentPrice = Math.sqrt(currentPrice / decimalAdjustment)
         const mathPriceUpper = Math.sqrt(priceUpper / decimalAdjustment)
         const mathPriceLower = Math.sqrt(priceLower / decimalAdjustment)
-        
-        let math
-        if (mathCurrentPrice >= mathPriceUpper) {
-            math = liquidity * (mathPriceUpper - mathPriceLower)
-        } else {
-            math = liquidity * (mathCurrentPrice - mathPriceLower)
-        }
+        const math = mathCurrentPrice >= mathPriceUpper ? liquidity * (mathPriceUpper - mathPriceLower) : liquidity * (mathCurrentPrice - mathPriceLower)
         const adjustedMath = math > 0 ? math : 0
         return adjustedMath
     }
-
     const setAlignedAmountB = useDebouncedCallback(async (_amountA: string) => {
         const poolState = await readContracts(config, {
             contracts: [
@@ -121,34 +70,15 @@ export default function Positions25925({
         const liquidity = poolState[2].result !== undefined ? poolState[2].result : BigInt(0)
         const Token0 = new Token(96, token0, 18)
         const Token1 = String(token0).toUpperCase() === tokenA.value.toUpperCase() ? new Token(96, tokenB.value, 18) : new Token(96, tokenA.value, 18)
-        const pool = new Pool(
-            Token0,
-            Token1,
-            Number(feeSelect),
-            sqrtPriceX96.toString(),
-            liquidity.toString(),
-            tick
-        )
+        const pool = new Pool(Token0, Token1, Number(feeSelect), sqrtPriceX96.toString(), liquidity.toString(), tick)
         if (String(token0).toUpperCase() === tokenA.value.toUpperCase()) {
-            const singleSidePositionToken1 = Position.fromAmount1({
-                pool, 
-                tickLower: Number(lowerTick), 
-                tickUpper: Number(upperTick), 
-                amount1: String(parseEther(_amountA)) as BigintIsh,
-            })
+            const singleSidePositionToken1 = Position.fromAmount1({pool, tickLower: Number(lowerTick), tickUpper: Number(upperTick), amount1: String(parseEther(_amountA)) as BigintIsh})
             setAmountB(formatEther(singleSidePositionToken1.mintAmounts.amount0 as unknown as bigint))
         } else {
-            const singleSidePositionToken0 = Position.fromAmount0({
-                pool, 
-                tickLower: Number(lowerTick), 
-                tickUpper: Number(upperTick), 
-                amount0: String(parseEther(_amountA)) as BigintIsh,
-                useFullPrecision: true
-            })
+            const singleSidePositionToken0 = Position.fromAmount0({pool, tickLower: Number(lowerTick), tickUpper: Number(upperTick), amount0: String(parseEther(_amountA)) as BigintIsh, useFullPrecision: true})
             setAmountB(formatEther(singleSidePositionToken0.mintAmounts.amount1 as unknown as bigint))
         }
     }, 700)
-
     const setAlignedAmountA = useDebouncedCallback(async (_amountB: string) => {
         const poolState = await readContracts(config, {
             contracts: [
@@ -163,34 +93,15 @@ export default function Positions25925({
         const liquidity = poolState[2].result !== undefined ? poolState[2].result : BigInt(0)
         const Token0 = new Token(96, token0, 18)
         const Token1 = String(token0).toUpperCase() === tokenA.value.toUpperCase() ? new Token(96, tokenB.value, 18) : new Token(96, tokenA.value, 18)
-        const pool = new Pool(
-            Token0,
-            Token1,
-            Number(feeSelect),
-            sqrtPriceX96.toString(),
-            liquidity.toString(),
-            tick
-        )
+        const pool = new Pool(Token0, Token1, Number(feeSelect), sqrtPriceX96.toString(), liquidity.toString(), tick)
         if (String(token0).toUpperCase() === tokenA.value.toUpperCase()) {
-            const singleSidePositionToken0 = Position.fromAmount0({
-                pool, 
-                tickLower: Number(lowerTick), 
-                tickUpper: Number(upperTick), 
-                amount0: String(parseEther(_amountB)) as BigintIsh,
-                useFullPrecision: true
-            })
+            const singleSidePositionToken0 = Position.fromAmount0({pool, tickLower: Number(lowerTick), tickUpper: Number(upperTick), amount0: String(parseEther(_amountB)) as BigintIsh, useFullPrecision: true})
             setAmountA(formatEther(singleSidePositionToken0.mintAmounts.amount1 as unknown as bigint))
         } else {
-            const singleSidePositionToken1 = Position.fromAmount1({
-                pool, 
-                tickLower: Number(lowerTick), 
-                tickUpper: Number(upperTick), 
-                amount1: String(parseEther(_amountB)) as BigintIsh,
-            })
+            const singleSidePositionToken1 = Position.fromAmount1({pool, tickLower: Number(lowerTick), tickUpper: Number(upperTick), amount1: String(parseEther(_amountB)) as BigintIsh})
             setAmountA(formatEther(singleSidePositionToken1.mintAmounts.amount0 as unknown as bigint))
         }
     }, 700)
-
     const getBalanceOfAB = async (_tokenAvalue: '0xstring', _tokenBvalue: '0xstring') => {
         const nativeBal = await getBalance(config, {address: address as '0xstring'})
         const bal = await readContracts(config, {
@@ -206,7 +117,6 @@ export default function Positions25925({
             setTokenBBalance(formatEther(nativeBal.value)) :
             bal[1].result !== undefined && setTokenBBalance(formatEther(bal[1].result))
     }
-
     const increaseLiquidity = async (_tokenId: bigint) => {
         setIsLoading(true)
         try {
@@ -217,23 +127,17 @@ export default function Positions25925({
                 const h = await sendTransaction(config, {to: tokens[0].value, value: parseEther(amountA)})
                 await waitForTransactionReceipt(config, { hash: h })
             }
-            let allowanceA
-            if (tokenA.value.toUpperCase() === tokens[2].value.toUpperCase()) {
-                allowanceA = await readContract(config, { ...kap20ABI, address: tokenA.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
-            } else {
-                allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
-            }
+            const allowanceA = tokenA.value.toUpperCase() === tokens[2].value.toUpperCase() ? 
+                await readContract(config, { ...kap20ABI, address: tokenA.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] }) :
+                await readContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
             if (allowanceA < parseEther(amountA)) {
                 const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountA)] })
                 const h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
-            let allowanceB
-            if (tokenB.value.toUpperCase() === tokens[2].value.toUpperCase()) {
-                allowanceB = await readContract(config, { ...kap20ABI, address: tokenB.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] })
-            } else {
-                allowanceB = await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
-            }
+            const allowanceB = tokenB.value.toUpperCase() === tokens[2].value.toUpperCase() ?
+                await readContract(config, { ...kap20ABI, address: tokenB.value, functionName: 'allowances', args: [address as '0xstring', POSITION_MANAGER] }) :
+                await readContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'allowance', args: [address as '0xstring', POSITION_MANAGER] })
             if (allowanceB < parseEther(amountB)) {
                 const { request } = await simulateContract(config, { ...erc20ABI, address: tokenB.value, functionName: 'approve', args: [POSITION_MANAGER, parseEther(amountB)] })
                 const h = await writeContract(config, request)
@@ -254,14 +158,11 @@ export default function Positions25925({
             const h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
-        } catch (e) {
-            setErrMsg(e as WriteContractErrorType)
-        }
+        } catch (e) {setErrMsg(e as WriteContractErrorType)}
         clearState()
         setIsAddPositionModal(false)
         setIsLoading(false)
     }
-
     const decreaseLiquidity = async (_tokenId: bigint, _liquidity: bigint) => {
         setIsLoading(true)
         try {
@@ -292,30 +193,19 @@ export default function Positions25925({
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                let { request } = await simulateContract(config, {
-                    ...wrappedNative,
-                    functionName: 'withdraw',
-                    args: [result[1] as bigint]
-                })
+                let { request } = await simulateContract(config, {...wrappedNative, functionName: 'withdraw', args: [result[1] as bigint]})
                 let h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             } else if (tokenB.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                let { request } = await simulateContract(config, {
-                    ...wrappedNative,
-                    functionName: 'withdraw',
-                    args: [result[0] as bigint]
-                })
+                let { request } = await simulateContract(config, {...wrappedNative, functionName: 'withdraw', args: [result[0] as bigint]})
                 let h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
-        } catch (e) {
-            setErrMsg(e as WriteContractErrorType)
-        }
+        } catch (e) {setErrMsg(e as WriteContractErrorType)}
         setAmountRemove('')
         setIsRemPositionModal(false)
         setIsLoading(false)
     }
-
     const collectFee = async (_tokenId: bigint) => {
         setIsLoading(true)
         try {
@@ -332,40 +222,25 @@ export default function Positions25925({
             let h = await writeContract(config, request)
             await waitForTransactionReceipt(config, { hash: h })
             setTxupdate(h)
-        } catch (e) {
-            setErrMsg(e as WriteContractErrorType)
-        }
+        } catch (e) {setErrMsg(e as WriteContractErrorType)}
         setAmountRemove('')
         setIsRemPositionModal(false)
         setIsLoading(false)
     }
-
     React.useEffect(() => {
         const fetch2 = async () => {
             const balanceOfMyPosition = await readContract(config, { ...positionManagerContract, functionName: 'balanceOf', args: [address as '0xstring'] })
             const init: any = {contracts: []}
             for (let i = 0; i <= Number(balanceOfMyPosition) - 1; i++) {
-                init.contracts.push(
-                    { ...positionManagerContract, functionName: 'tokenOfOwnerByIndex', args: [address as '0xstring', i] }
-                )
+                init.contracts.push({ ...positionManagerContract, functionName: 'tokenOfOwnerByIndex', args: [address as '0xstring', i] })
             }
             const tokenIdMyPosition = await readContracts(config, init)
-            const tokenUriMyPosition = await readContracts(config, {
-                contracts: tokenIdMyPosition.map((obj) => (
-                    { ...positionManagerContract, functionName: 'tokenURI', args: [obj.result] }
-                ))
-            })
-            const posMyPosition = await readContracts(config, {
-                contracts: tokenIdMyPosition.map((obj) => (
-                    { ...positionManagerContract, functionName: 'positions', args: [obj.result] }
-                ))
-            })
-
+            const tokenUriMyPosition = await readContracts(config, {contracts: tokenIdMyPosition.map((obj) => ({ ...positionManagerContract, functionName: 'tokenURI', args: [obj.result] }))})
+            const posMyPosition = await readContracts(config, {contracts: tokenIdMyPosition.map((obj) => ({ ...positionManagerContract, functionName: 'positions', args: [obj.result] }))})
             const myPosition : MyPosition[] = (await Promise.all(tokenIdMyPosition.map(async (obj, index) => {
                 const metadataFetch = await fetch(tokenUriMyPosition[index].result as string)
                 const metadata = await metadataFetch.json()
                 const pos = posMyPosition[index].result !== undefined ? posMyPosition[index].result as unknown as (bigint | string)[] : []
-
                 const pairAddr = await readContract(config, { ...v3FactoryContract, functionName: 'getPool', args: [pos[2] as '0xstring', pos[3] as '0xstring', Number(pos[4])] })
                 const slot0 = await readContract(config, { ...v3PoolABI, address: pairAddr, functionName: 'slot0' })
                 const tokenName = await readContracts(config, {
@@ -396,56 +271,17 @@ export default function Positions25925({
                 const _token1name = tokenName[1].status === 'success' ? String(tokenName[1].result) : ''
                 const _fee0 = qouteFee.result[0]
                 const _fee1 = qouteFee.result[1]
-                let token0addr
-                let token1addr
-                let token0name
-                let token1name
-                let amount0
-                let amount1
-                let lowerPrice
-                let upperPrice
-                let currPrice
-                let fee0
-                let fee1
-
-                if (_token1name === 'WJBC') {
-                    token0addr = pos[3]
-                    token1addr = pos[2]
-                    token0name = _token0name
-                    token1name = _token1name
-                    amount0 = _amount0 / 1e18
-                    amount1 = _amount1 / 1e18
-                    lowerPrice = 1 / _upperPrice
-                    upperPrice = 1 / _lowerPrice
-                    currPrice = 1 / _currPrice
-                    fee0 = _fee0
-                    fee1 = _fee1
-                } else if (_token1name === 'CMJ' && _token0name !== 'WJBC') {
-                    token0addr = pos[3]
-                    token1addr = pos[2]
-                    token0name = _token0name
-                    token1name = _token1name
-                    amount0 = _amount0 / 1e18
-                    amount1 = _amount1 / 1e18
-                    lowerPrice = 1 / _upperPrice
-                    upperPrice = 1 / _lowerPrice
-                    currPrice = 1 / _currPrice
-                    fee0 = _fee0
-                    fee1 = _fee1
-                } else {
-                    token0addr = pos[2]
-                    token1addr = pos[3]
-                    token0name = _token1name
-                    token1name = _token0name
-                    amount0 = _amount1 / 1e18
-                    amount1 = _amount0 / 1e18
-                    lowerPrice = _lowerPrice
-                    upperPrice = _upperPrice
-                    currPrice = _currPrice
-                    fee0 = _fee1
-                    fee1 = _fee0
-                }
-
+                const token0addr = pos[2]
+                const token1addr = pos[3]
+                const token0name = _token1name
+                const token1name = _token0name
+                const amount0 = _amount1 / 1e18
+                const amount1 = _amount0 / 1e18
+                const lowerPrice = _lowerPrice
+                const upperPrice = _upperPrice
+                const currPrice = _currPrice
+                const fee0 = _fee1
+                const fee1 = _fee0
                 return {
                     Id: Number(obj.result),
                     Name: String(metadata.name),
@@ -467,27 +303,15 @@ export default function Positions25925({
                     Fee0: Number(fee0) / 1e18,
                     Fee1: Number(fee1) / 1e18
                 }
-            }))).filter((obj) => {
-                return Number(obj.Liquidity) !== 0
+            }))).filter((obj) => {return Number(obj.Liquidity) !== 0
             }).reverse()
-
             setPosition(myPosition)
         }
-
         setAmountA("")
         setAmountB("")
         address !== undefined && fetch2()
     }, [config, address, tokenA, tokenB, feeSelect, txupdate])
-    const clearState = () => {
-        setTokenA(tokens[0])
-        setTokenB({name: 'Choose Token', value: '' as '0xstring', logo: '../favicon.ico'})
-        setFeeSelect(10000)
-        setLowerTick("") 
-        setUpperTick("")
-        setLowerPrice("") 
-        setUpperPrice("")
-    }
-    console.log({lowerTick, upperTick}) // for fetch monitoring
+    const clearState = () => {setTokenA(tokens[0]); setTokenB({name: 'Choose Token', value: '' as '0xstring', logo: '../favicon.ico'}); setFeeSelect(10000); setLowerTick(""); setUpperTick(""); setLowerPrice(""); setUpperPrice("");}
 
     return (
         <>
@@ -577,21 +401,7 @@ export default function Positions25925({
                                                     <button className={"w-1/4 h-full p-3 rounded-lg border-2 border-gray-800 " + (amountRemove === '100' ? "bg-neutral-800" : "cursor-pointer")} onClick={() => setAmountRemove('100')}>100%</button>
                                                 </div>
                                                 <DrawerFooter>
-                                                    <Button 
-                                                        variant="destructive"
-                                                        className="cursor-pointer"
-                                                        onClick={() => 
-                                                            positionSelected !== undefined && 
-                                                                decreaseLiquidity(
-                                                                    BigInt(positionSelected.Id), 
-                                                                    amountRemove === '100' ? 
-                                                                        BigInt(positionSelected.Liquidity) :
-                                                                        BigInt(Number(positionSelected.Liquidity) * (Number(amountRemove)) / 100)
-                                                                )
-                                                        }
-                                                    >
-                                                        Remove Liquidity
-                                                    </Button>
+                                                    <Button variant="destructive" className="cursor-pointer" onClick={() => positionSelected !== undefined && decreaseLiquidity(BigInt(positionSelected.Id), amountRemove === '100' ? BigInt(positionSelected.Liquidity) : BigInt(Number(positionSelected.Liquidity) * (Number(amountRemove)) / 100))}>Remove Liquidity</Button>
                                                 </DrawerFooter>
                                             </div>
                                         </DrawerContent>

@@ -210,7 +210,6 @@ export function useSwap96PoolData<TToken extends UIToken>({ config, address, tok
                                     break
                                 }
                             }
-                            console.log({ altIntermediate, altPair0, altPair1 })
                             if (altIntermediate !== undefined) {
                                 setAltRoute({a: tokenAvalue, b: altIntermediate.value, c: tokenBvalue})
                                 const altPoolState = await readContracts(config, {
