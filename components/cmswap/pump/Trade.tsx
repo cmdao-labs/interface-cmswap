@@ -24,9 +24,11 @@ type Holder = { addr: string; value: number };
 const createFiltersState = (): FiltersState => ({time: "all", from: "", actions: { buy: true, sell: true }, nativeMin: "", nativeMax: "", tokenMin: "", tokenMax: "", hash: ""});
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 const ethereum = typeof window !== "undefined" ? (window as any).ethereum : null;
-interface TradeActionCardProps { className?: string; trademode: boolean; onModeChange: (mode: boolean) => void; gradientButtonStyle: (active: boolean, variant: "buy" | "sell") => React.CSSProperties | undefined; formattedAvailableBalance: string; inputAssetSymbol: string; inputBalance: string; onInputChange: (value: string) => void; outputAssetSymbol: string; formattedOutput: string; onReset: () => void; presetButtons: PresetButton[]; onPresetClick: (preset: PresetButton) => void; onMaxClick: () => void; onTrade: () => void | Promise<void>; isWalletReady: boolean; tradeButtonLabel: string; chainLabel: string; }
-function TradeActionCard({className, trademode, onModeChange, gradientButtonStyle, formattedAvailableBalance, inputAssetSymbol, inputBalance, onInputChange, outputAssetSymbol, formattedOutput, onReset, presetButtons, onPresetClick, onMaxClick, onTrade, isWalletReady, tradeButtonLabel, chainLabel }: TradeActionCardProps) {
+interface TradeActionCardProps { className?: string; trademode: boolean; onModeChange: (mode: boolean) => void; gradientButtonStyle: (active: boolean, variant: "buy" | "sell") => React.CSSProperties | undefined; formattedAvailableBalance: string; inputAssetSymbol: string; inputBalance: string; onInputChange: (value: string) => void; outputAssetSymbol: string; formattedOutput: string; onReset: () => void; presetButtons: PresetButton[]; onPresetClick: (preset: PresetButton) => void; onMaxClick: () => void; onTrade: () => void | Promise<void>; isWalletReady: boolean; tradeButtonLabel: string; chainLabel: string; slippagePct: number; slippageTolerance: number; onSlippageToleranceChange: (v: number) => void; }
+function TradeActionCard({className, trademode, onModeChange, gradientButtonStyle, formattedAvailableBalance, inputAssetSymbol, inputBalance, onInputChange, outputAssetSymbol, formattedOutput, onReset, presetButtons, onPresetClick, onMaxClick, onTrade, isWalletReady, tradeButtonLabel, chainLabel, slippagePct, slippageTolerance, onSlippageToleranceChange }: TradeActionCardProps) {
     const containerClasses = ["rounded-2xl border border-white/10 bg-black/50 p-4 text-xs text-white/60", className].filter(Boolean).join(" ");
+    const isSlippageTooLow = Number.isFinite(slippagePct) && Number.isFinite(slippageTolerance) && slippagePct > slippageTolerance;
+    const isTradeEnabled = isWalletReady && !isSlippageTooLow;
     return (
         <div className={containerClasses}>
             <div className="grid grid-cols-2 rounded-3xl border border-white/10 bg-white/10 p-2 text-md font-semibold shadow-2xl backdrop-blur">
@@ -45,7 +47,7 @@ function TradeActionCard({className, trademode, onModeChange, gradientButtonStyl
                     Sell
                 </button>
             </div>
-            <div className="mt-6 space-y-6">
+            <div className="mt-6">
                 <div>
                     <div className="flex items-center justify-between text-xs text-white/50">
                         <span>You pay</span>
@@ -60,22 +62,50 @@ function TradeActionCard({className, trademode, onModeChange, gradientButtonStyl
                             <span>You get</span>
                             <span className="font-semibold text-white">{formattedOutput} {outputAssetSymbol}</span>
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             <button onClick={onReset} className="rounded-full border border-white/10 px-2 py-1 transition hover:border-white/30 hover:text-white">Reset</button>
                             {presetButtons.map((preset) => (<button key={preset.label} onClick={() => onPresetClick(preset)} className="rounded-full border border-white/10 px-2 py-1 transition hover:border-white/30 hover:text-white">{preset.label}</button>))}
                             <button onClick={onMaxClick} className="rounded-full border border-emerald-400/40 px-3 py-2 text-emerald-200 transition hover:border-emerald-200 hover:text-emerald-100">Max</button>
                         </div>
                     </div>
                 </div>
+                <div className="flex flex-row items-center gap-4 mt-2 mb-4">
+                    <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-white/60">Slippage: {Number.isFinite(slippagePct) ? slippagePct.toFixed(2) : "0.00"}%</span>
+                    <div className="ml-2 flex items-center gap-2 text-white/40">
+                        <span>Tolerance</span>
+                        <input
+                            type="number"
+                            min={0}
+                            max={100}
+                            step={0.1}
+                            value={Number.isFinite(slippageTolerance) ? slippageTolerance : 0}
+                            onChange={(e) => {
+                                const v = Number(e.target.value);
+                                const clamped = Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 0;
+                                onSlippageToleranceChange(clamped);
+                            }}
+                            className="w-16 rounded-md border border-white/10 bg-black/60 px-2 py-1 text-xs text-white outline-none hover:border-white/20"
+                        />
+                        <span>%</span>
+                        {isSlippageTooLow && (
+                            <span className="ml-1 rounded-full border border-rose-400/40 bg-rose-500/10 px-2 py-0.5 text-[10px] text-rose-300">Price impact exceeds tolerance</span>
+                        )}
+                    </div>
+                </div>
                 <button
                     onClick={onTrade}
-                    disabled={!isWalletReady}
-                    className={`w-full rounded-lg px-4 py-3 text-md font-semibold transition ${isWalletReady ? "bg-gradient-to-r from-emerald-400 to-sky-500 text-black shadow-[0_20px_60px_rgba(16,185,129,0.35)] hover:brightness-110" : "cursor-not-allowed border border-white/10 bg-white/5 text-white/40"}`}
-                    style={!trademode && isWalletReady ? gradientButtonStyle(!trademode, "sell") : undefined}
+                    disabled={!isTradeEnabled}
+                    className={`w-full rounded-lg px-4 py-3 text-md font-semibold transition ${isTradeEnabled ? "bg-gradient-to-r from-emerald-400 to-sky-500 text-black shadow-[0_20px_60px_rgba(16,185,129,0.35)] hover:brightness-110" : "cursor-not-allowed border border-white/10 bg-white/5 text-white/40"}`}
+                    style={!trademode && isTradeEnabled ? gradientButtonStyle(!trademode, "sell") : undefined}
                 >
                     {tradeButtonLabel}
                 </button>
                 {!isWalletReady && (<p className="text-center text-xs text-white/40">Connect your wallet on {chainLabel} to trade.</p>)}
+                {isWalletReady && isSlippageTooLow && (
+                    <p className="mt-2 text-center text-xs text-rose-300">
+                        Price impact {Number.isFinite(slippagePct) ? slippagePct.toFixed(2) : "0.00"}% exceeds tolerance {Number.isFinite(slippageTolerance) ? slippageTolerance.toFixed(2) : "0.00"}%. Increase tolerance or reduce trade size.
+                    </p>
+                )}
             </div>
         </div>
     );
@@ -262,6 +292,8 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
     const tickerContract = {address: ticker as "0xstring", abi: erc20Abi, chainId: _chainId} as const;
     const [inputBalance, setInputBalance] = useState("");
     const [outputBalance, setOutputBalance] = useState("0");
+    const [slippagePct, setSlippagePct] = useState(0);
+    const [slippageTolerance, setSlippageTolerance] = useState<number>(5);
     const [hash, setHash] = useState("");
     const [headnoti, setHeadnoti] = useState(false);
     const [headnotiShaken, setHeadnotiShaken] = useState(false);
@@ -375,7 +407,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
                 trademode ? Number(formatEther(state[0].result as bigint)) : Number(formatEther(state[1].result as bigint))
         )
     , [mode, trademode, ethBal, state]);
-    const formattedOutput = React.useMemo(() => Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short", maximumFractionDigits: 6}).format(Number(outputBalance || 0)), [outputBalance]);
+    const formattedOutput = React.useMemo(() => Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short", maximumFractionDigits: 4}).format(Number(outputBalance || 0)), [outputBalance]);
     const truncatedTicker = React.useMemo(() => {
         if (!ticker) return ""; 
         if (ticker.length <= 12) return ticker; 
@@ -701,6 +733,21 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
                     const amountInAfterFee = inputAmount - feeAmount;
                     const amountOut = trademode ? getAmountOut(amountInAfterFee, virtualAmount + pumpReserve[0], pumpReserve[1]) : getAmountOut(amountInAfterFee, pumpReserve[1], pumpReserve[0] + virtualAmount);
                     setOutputBalance(amountOut.toFixed(18));
+                    try {
+                        // Price impact (slippage) for constant-product: impact = dx / (R_in + dx)
+                        // Use consistent units by converting reserves from wei to float via formatEther.
+                        const inputReserveWei = trademode ? (virtualAmount + pumpReserve[0]) : pumpReserve[1];
+                        const rin = Number(formatEther(inputReserveWei));
+                        const dx = Number(value);
+                        if (rin > 0 && dx > 0 && Number.isFinite(rin) && Number.isFinite(dx)) {
+                            const slipPct = Math.max(0, Math.min(100, (dx / (rin + dx)) * 100));
+                            setSlippagePct(slipPct);
+                        } else {
+                            setSlippagePct(0);
+                        }
+                    } catch {
+                        setSlippagePct(0);
+                    }
                 }
             } else {
                 setOutputBalance("");
@@ -716,10 +763,12 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
             let result: any = "";
             if (chain === "kubtestnet") {
                 if (trademode) {
+                    const bps = Math.max(0, Math.min(10000, Math.round(slippageTolerance * 100)));
+                    const minOut = (parseEther(outputBalance) * BigInt(10000 - bps)) / BigInt(10000);
                     result = await writeContract(config, {
                         ...factoryContract,
                         functionName: "buy",
-                        args: [ticker as "0xstring", (parseEther(outputBalance) * BigInt(95)) / BigInt(100)],
+                        args: [ticker as "0xstring", minOut],
                         value: parseEther(inputBalance),
                         chainId: _chainId,
                     });
@@ -730,10 +779,12 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
                         const h = await writeContract(config, request);
                         await waitForTransactionReceipt(config, { hash: h });
                     }
+                    const bps = Math.max(0, Math.min(10000, Math.round(slippageTolerance * 100)));
+                    const minOut = (parseEther(outputBalance) * BigInt(10000 - bps)) / BigInt(10000);
                     result = await writeContract(config, {
                         ...factoryContract,
                         functionName: "sell",
-                        args: [ticker as "0xstring", parseEther(inputBalance), (parseEther(outputBalance) * BigInt(90)) / BigInt(100)],
+                        args: [ticker as "0xstring", parseEther(inputBalance), minOut],
                         chainId: _chainId,
                     });
                 }
@@ -849,7 +900,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
                         <div className="mt-4 h-[520px] w-full overflow-hidden rounded-2xl border border-white/5 bg-black/40"><Chart data={graphData} /></div>
                     </div>
                     <BondingStatusCard className="block md:hidden" isGraduated={isGraduated} progressPercent={progressPercent} bondingTooltip={bondingTooltip} graduationLink={graduationLink} />
-                    <TradeActionCard className="block md:hidden" trademode={trademode} onModeChange={handleModeChange} gradientButtonStyle={gradientButtonStyle} formattedAvailableBalance={formattedAvailableBalance} inputAssetSymbol={inputAssetSymbol} inputBalance={inputBalance} onInputChange={handleInputChange} outputAssetSymbol={outputAssetSymbol} formattedOutput={formattedOutput} onReset={handleReset} presetButtons={presetButtons} onPresetClick={handlePresetClick} onMaxClick={handleMaxClick} onTrade={trade} isWalletReady={isWalletReady} tradeButtonLabel={tradeButtonLabel} chainLabel={chainLabel} />
+                    <TradeActionCard className="block md:hidden" trademode={trademode} onModeChange={handleModeChange} gradientButtonStyle={gradientButtonStyle} formattedAvailableBalance={formattedAvailableBalance} inputAssetSymbol={inputAssetSymbol} inputBalance={inputBalance} onInputChange={handleInputChange} outputAssetSymbol={outputAssetSymbol} formattedOutput={formattedOutput} onReset={handleReset} presetButtons={presetButtons} onPresetClick={handlePresetClick} onMaxClick={handleMaxClick} onTrade={trade} isWalletReady={isWalletReady} tradeButtonLabel={tradeButtonLabel} chainLabel={chainLabel} slippagePct={slippagePct} slippageTolerance={slippageTolerance} onSlippageToleranceChange={(v) => setSlippageTolerance(v)} />
                     <div className="sm:hidden rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl backdrop-blur">
                         <Tabs defaultValue="info" className="w-full">
                             <TabsList className="!w-full grid grid-cols-4 rounded-md !p-0 mb-2 overflow-hidden bg-transparent">
@@ -1067,7 +1118,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
                     </div>
                 </div>
                 <div className="space-y-6">
-                    <TradeActionCard className="hidden md:block" trademode={trademode}onModeChange={handleModeChange} gradientButtonStyle={gradientButtonStyle} formattedAvailableBalance={formattedAvailableBalance} inputAssetSymbol={inputAssetSymbol} inputBalance={inputBalance} onInputChange={handleInputChange} outputAssetSymbol={outputAssetSymbol} formattedOutput={formattedOutput} onReset={handleReset} presetButtons={presetButtons} onPresetClick={handlePresetClick} onMaxClick={handleMaxClick} onTrade={trade} isWalletReady={isWalletReady} tradeButtonLabel={tradeButtonLabel} chainLabel={chainLabel} />
+                    <TradeActionCard className="hidden md:block" trademode={trademode}onModeChange={handleModeChange} gradientButtonStyle={gradientButtonStyle} formattedAvailableBalance={formattedAvailableBalance} inputAssetSymbol={inputAssetSymbol} inputBalance={inputBalance} onInputChange={handleInputChange} outputAssetSymbol={outputAssetSymbol} formattedOutput={formattedOutput} onReset={handleReset} presetButtons={presetButtons} onPresetClick={handlePresetClick} onMaxClick={handleMaxClick} onTrade={trade} isWalletReady={isWalletReady} tradeButtonLabel={tradeButtonLabel} chainLabel={chainLabel} slippagePct={slippagePct} slippageTolerance={slippageTolerance} onSlippageToleranceChange={(v) => setSlippageTolerance(v)} />
                     <BondingStatusCard className="hidden md:block" isGraduated={isGraduated} progressPercent={progressPercent} bondingTooltip={bondingTooltip} graduationLink={graduationLink} />
                     <div className="hidden sm:block rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl backdrop-blur">
                         <ProjectInfoSection canEditSocials={creator === account.address} onEditSocials={() => setShowSocials(true)} description={description} socialItems={socialItems} socials={socials} ticker={ticker} onCopyAddress={copyToClipboard} copiedAddress={copiedAddress} explorerUrl={_explorer} />
