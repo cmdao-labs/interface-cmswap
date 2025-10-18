@@ -64,6 +64,7 @@ interface UseSwap96PoolDataParams<TToken extends UIToken> {
 }
 
 export function useSwap96PoolData<TToken extends UIToken>({ config, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute, setCMswapTVL, setDMswapTVL, setUdonTVL, setPonderTVL, setReserveUdonA, setReserveUdonB, setAmountA, setAmountB, }: UseSwap96PoolDataParams<TToken>) {
+    const prevTokensRef = React.useRef<{ a: string; b: string }>({ a: tokenA.value, b: tokenB.value })
     React.useEffect(() => {
         let cancelled = false
         const fetchPoolData = async () => {
@@ -477,8 +478,15 @@ export function useSwap96PoolData<TToken extends UIToken>({ config, address, tok
                 }
             }
         }
-        setAmountA('')
-        setAmountB('')
+        const prev = prevTokensRef.current
+        const currA = tokenA.value
+        const currB = tokenB.value
+        const tokensChanged = prev.a.toUpperCase() !== currA.toUpperCase() || prev.b.toUpperCase() !== currB.toUpperCase()
+        prevTokensRef.current = { a: currA, b: currB }
+        if (tokensChanged) {
+            setAmountA('')
+            setAmountB('')
+        }
         if (!hasInitializedFromParams) return;
         (async () => {
             try {

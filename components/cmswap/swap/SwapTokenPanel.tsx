@@ -36,42 +36,42 @@ export function SwapTokenPanel<TToken extends SwapTokenOption>({ label, tokenAdd
         [onSelectToken, onPopoverOpenChange]
     )
     return (
-        <div className="rounded-lg border border-[#00ff9d]/10 p-4">
-            <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-400 text-sm">{label}</span>
-                <input className="py-2 w-[340px] focus:outline-none text-gray-400 text-xs text-right" value={tokenAddress} onChange={event => onTokenAddressChange?.(event.target.value)} />
+        <div className="rounded-2xl border border-white/5 bg-slate-950/60 p-4 backdrop-blur-sm transition-colors">
+            <div className="mb-3 flex items-center justify-between text-[11px] uppercase tracking-wide text-slate-400">
+                <span>{label}</span>
+                <input className="w-[260px] truncate rounded-md bg-transparent p-1 text-right text-[11px] text-slate-500 outline-none focus:text-slate-300 focus:ring-0" value={tokenAddress} onChange={event => onTokenAddressChange?.(event.target.value)} />
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-end justify-between gap-4">
                 <input
                     placeholder={amountPlaceholder}
                     autoFocus={amountAutoFocus}
-                    className="w-[140px] sm:w-[200px] bg-transparent border-none text-white text-xl text-white focus:border-0 focus:outline focus:outline-0 p-0 h-auto"
+                    className="w-full bg-transparent text-3xl font-semibold text-white outline-none placeholder:text-slate-500 focus-visible:outline-none"
                     value={amount}
                     onChange={event => onAmountChange?.(event.target.value)}
                     readOnly={amountReadOnly || !onAmountChange}
                 />
                 <Popover open={popoverOpen} onOpenChange={onPopoverOpenChange}>
                     <PopoverTrigger asChild>
-                        <Button variant="outline" role="combobox" aria-expanded={popoverOpen} className="w-[180px] bg-[#162638] hover:bg-[#1e3048] text-white border-[#00ff9d]/20 flex items-center justify-between h-10 cursor-pointer">
-                            <div className="gap-2 flex flex-row items-center justify-center">
-                                <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
-                                    <span className="text-[#00ff9d] text-xs">{selectedToken.logo && selectedToken.logo !== '../favicon.ico' ? <img alt="" src={selectedToken.logo} className="size-5 shrink-0 rounded-full" /> : '?'}</span>
+                        <Button variant="outline" role="combobox" aria-expanded={popoverOpen} className="flex h-12 min-w-[170px] items-center justify-between gap-3 rounded-full border-white/10 bg-slate-900/60 px-4 text-base font-medium text-white transition-colors hover:bg-slate-900/80">
+                            <div className="flex items-center gap-3">
+                                <div className="flex size-8 items-center justify-center overflow-hidden rounded-full bg-slate-800/80">
+                                    {selectedToken.logo && selectedToken.logo !== '../favicon.ico' ? <img alt="" src={selectedToken.logo} className="size-8 rounded-full" /> : <span className="text-sm text-slate-300">?</span>}
                                 </div>
-                                <span className="truncate">{selectedToken.name}</span>
+                                <span className="max-w-[110px] truncate text-left">{selectedToken.name}</span>
                             </div>
-                            <ChevronDown className="h-4 w-4 text-[#00ff9d]" />
+                            <ChevronDown className="h-4 w-4 text-slate-300" />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[200px] p-0 z-100">
-                        <Command>
-                            <CommandInput placeholder="Search tokens..." />
+                    <PopoverContent className="z-[100] w-[240px] rounded-2xl border border-white/10 bg-slate-950/90 p-0 backdrop-blur-xl">
+                        <Command className="bg-transparent">
+                            <CommandInput placeholder="Search tokens" className="border-b border-white/5 bg-transparent text-slate-200" />
                             <CommandList>
                                 <CommandEmpty>No tokens found.</CommandEmpty>
-                                <CommandGroup>
+                                <CommandGroup className="max-h-[260px] overflow-y-auto">
                                     {tokens.map(token => (
-                                        <CommandItem key={token.value} value={token.name} onSelect={() => handleSelectToken(token)} className="cursor-pointer">
+                                        <CommandItem key={token.value} value={token.name} onSelect={() => handleSelectToken(token)} className="cursor-pointer text-slate-200 hover:bg-slate-900/70">
                                             <div className="flex items-center">
-                                                <img alt="" src={token.logo} className="size-5 shrink-0 rounded-full" />
+                                                <img alt="" src={token.logo} className="size-6 shrink-0 rounded-full" />
                                                 <span className="ml-3 truncate">{token.name}</span>
                                             </div>
                                         </CommandItem>
@@ -82,10 +82,10 @@ export function SwapTokenPanel<TToken extends SwapTokenOption>({ label, tokenAdd
                     </PopoverContent>
                 </Popover>
             </div>
-            <div className="flex justify-between items-center mt-2">
+            <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
                 <span />
-                <div className="flex items-center gap-2">
-                    {balanceLabel && <span className="text-gray-400 text-xs">{balanceLabel}</span>}
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                    {balanceLabel && <span>{balanceLabel}</span>}
                     {footerContent}
                 </div>
             </div>

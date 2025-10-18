@@ -37,6 +37,7 @@ interface UseSwap8899PoolDataParams<TToken extends UIToken> {
 }
 
 export function useSwap8899PoolData<TToken extends UIToken>({config, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute, setCMswapTVL, setGameSwapTvl, setJibSwapTvl, setBestPathArray, setFixedExchangeRate, setOnLoading, setAmountA, setAmountB}: UseSwap8899PoolDataParams<TToken>) {
+    const prevTokensRef = React.useRef<{ a: string; b: string }>({ a: tokenA.value, b: tokenB.value })
     React.useEffect(() => {
         if (!hasInitializedFromParams) return
         const JCLP = '0x472d0e2E9839c140786D38110b3251d5ED08DF41' as '0xstring'
@@ -242,8 +243,15 @@ export function useSwap8899PoolData<TToken extends UIToken>({config, address, to
                 } catch {
                     setExchangeRate('0')
                 }
-                setAmountA('')
-                setAmountB('')
+                const prev = prevTokensRef.current
+                const currA = tokenA.value
+                const currB = tokenB.value
+                const tokensChanged = prev.a.toUpperCase() !== currA.toUpperCase() || prev.b.toUpperCase() !== currB.toUpperCase()
+                prevTokensRef.current = { a: currA, b: currB }
+                if (tokensChanged) {
+                    setAmountA('')
+                    setAmountB('')
+                }
                 setBestPathArray(null)
             } finally {
                 setOnLoading(false)
