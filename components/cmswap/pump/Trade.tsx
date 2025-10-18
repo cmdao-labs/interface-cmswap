@@ -446,6 +446,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
     const [holdersPage, setHoldersPage] = useState(1);
     const [tradersPage, setTradersPage] = useState(1);
     const [hx, setHx] = useState([] as { action: string; nativeValue: number; value: number; from: any; hash: any; timestamp: number; }[]);
+    const [srvTraders, setSrvTraders] = useState([] as { addr: string; buys: number; sells: number; trades?: number; lastActive?: number; boughtNative?: number; soldNative?: number; boughtToken?: number; soldToken?: number; }[]);
     const [filters, setFilters] = useState<FiltersState>(createFiltersState);
     const [appliedFilters, setAppliedFilters] = useState<FiltersState>(createFiltersState);
     const debouncedApplyFilters = useDebouncedCallback((next: typeof filters) => {setAppliedFilters(next)}, 200);
@@ -517,11 +518,45 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
         });
     }, [hx, appliedFilters, filters.time, filters.actions]);
     const totalTraders = React.useMemo(() => {
+        if (srvTraders.length > 0) return srvTraders.length;
         const unique = new Set<string>();
         hx.forEach((res: any) => {if (res && typeof res.from === "string" && res.from) unique.add(res.from.toLowerCase())});
         return unique.size;
-    }, [hx]);
+    }, [srvTraders.length, hx]);
     const traderStats = React.useMemo(() => {
+        if (srvTraders.length > 0) {
+            const f = appliedFilters;
+            const now = Date.now();
+            const windowMs = (filters.time === "5m" ? 5 * 60 * 1000 : filters.time === "1h" ? 60 * 60 * 1000 : filters.time === "24h" ? 24 * 60 * 60 * 1000 : filters.time === "7d" ? 7 * 24 * 60 * 60 * 1000 : 0);
+            const fromQ = f.from.trim().toLowerCase();
+            const minNative = f.nativeMin.trim() === "" ? undefined : Number.parseFloat(f.nativeMin);
+            const maxNative = f.nativeMax.trim() === "" ? undefined : Number.parseFloat(f.nativeMax);
+            const minToken = f.tokenMin.trim() === "" ? undefined : Number.parseFloat(f.tokenMin);
+            const maxToken = f.tokenMax.trim() === "" ? undefined : Number.parseFloat(f.tokenMax);
+            let arr = srvTraders.slice();
+            if (windowMs > 0) arr = arr.filter((t) => Number(t.lastActive || 0) >= (now - windowMs));
+            if (filters.actions.buy && !filters.actions.sell) arr = arr.filter((t) => Number(t.buys || 0) > 0);
+            if (!filters.actions.buy && filters.actions.sell) arr = arr.filter((t) => Number(t.sells || 0) > 0);
+            if (fromQ) arr = arr.filter((t) => String(t.addr || "").toLowerCase().includes(fromQ));
+            if (minNative !== undefined && !Number.isNaN(minNative)) arr = arr.filter((t) => ((Number(t.boughtNative || 0) + Number(t.soldNative || 0)) >= minNative));
+            if (maxNative !== undefined && !Number.isNaN(maxNative)) arr = arr.filter((t) => ((Number(t.boughtNative || 0) + Number(t.soldNative || 0)) <= maxNative));
+            if (minToken !== undefined && !Number.isNaN(minToken)) arr = arr.filter((t) => ((Number(t.boughtToken || 0) + Number(t.soldToken || 0)) >= minToken));
+            if (maxToken !== undefined && !Number.isNaN(maxToken)) arr = arr.filter((t) => ((Number(t.boughtToken || 0) + Number(t.soldToken || 0)) <= maxToken));
+            return arr.map((t) => ({
+                address: String(t.addr),
+                totalBought: Number(t.boughtNative || 0),
+                totalSold: Number(t.soldNative || 0),
+                trades: Number((t.trades ?? ((t.buys || 0) + (t.sells || 0))) || 0),
+                lastActive: Number(t.lastActive || 0),
+            }))
+            .map((entry) => ({...entry, profit: entry.totalSold - entry.totalBought}))
+            .sort((a, b) => {
+                if (b.trades !== a.trades) return b.trades - a.trades;
+                if (b.totalBought !== a.totalBought) return b.totalBought - a.totalBought;
+                return b.lastActive - a.lastActive;
+            });
+        }
+        // Fallback to client-side aggregation from recent activity if server traders are not provided
         const stats = new Map<string, { address: string; totalBought: number; totalSold: number; trades: number; lastActive: number; }>();
         filteredHx.forEach((res: any) => {
             const from = typeof res?.from === "string" ? res.from : "";
@@ -547,7 +582,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
                 if (b.totalBought !== a.totalBought) return b.totalBought - a.totalBought;
                 return b.lastActive - a.lastActive;
             });
-    }, [filteredHx]);
+    }, [srvTraders, appliedFilters, filters.time, filters.actions, filteredHx]);
     const activityTotalPages = React.useMemo(() => Math.max(1, Math.ceil(filteredHx.length / ROWS_PER_PAGE)), [filteredHx.length]);
     const paginatedActivity = React.useMemo(() => {const start = (activityPage - 1) * ROWS_PER_PAGE; return filteredHx.slice(start, start + ROWS_PER_PAGE);}, [filteredHx, activityPage]);
     const holdersTotalPages = React.useMemo(() => Math.max(1, Math.ceil(sortedHolders.length / ROWS_PER_PAGE)), [sortedHolders.length]);
@@ -577,7 +612,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
         };
         const fetchSummary = async () => {
             try {
-                const res = await fetch(`/api/token/summary?token=${ticker}&graphHours=8766&holdersLimit=50&tradersLimit=50`, { cache: 'no-store' })
+                const res = await fetch(`/api/token/summary?token=${ticker}&graphHours=8766&holdersLimit=50`, { cache: 'no-store' })
                 if (!res.ok) return
                 const data = await res.json()
                 if (data?.token) {
@@ -595,6 +630,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
                 }
                 if (Array.isArray(data?.graph)) setGraphData(data.graph)
                 if (Array.isArray(data?.activity)) setHx(data.activity)
+                if (Array.isArray(data?.traders)) setSrvTraders(data.traders)
                 try {
                     const hres = await fetch(`/api/token/holders?token=${ticker}&limit=500`, { cache: 'no-store' })
                     if (hres.ok) {

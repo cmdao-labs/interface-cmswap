@@ -11,7 +11,8 @@ export async function GET(req: NextRequest) {
     const hours = Number(searchParams.get('graphHours') || '24')
     const activityLimit = Number(searchParams.get('activityLimit') || '20000')
     const holdersLimit = Number(searchParams.get('holdersLimit') || '50')
-    const tradersLimit = Number(searchParams.get('tradersLimit') || '50')
+    const tradersLimit = Number(searchParams.get('tradersLimit') || '20000')
+    const traderHours = Number(searchParams.get('traderHours') || '0')
     if (!token) return NextResponse.json({ error: 'token required' }, { status: 400 })
     try {
         const supabase = getServiceSupabase()
@@ -94,21 +95,55 @@ export async function GET(req: NextRequest) {
         }))
         const holdersRes = await supabase.rpc('holders_for_token', { token, limit_i: holdersLimit, offset_i: 0 })
         const holders = (holdersRes.data || []).map((h: any) => ({ addr: h.holder, value: Number(h.balance || 0) }))
-        const tradersRes = await supabase
-        .from('swaps')
-        .select('sender, is_buy, volume_native, volume_token')
-        .eq('token_address', token)
-        const traderMap = new Map<string, { addr: string; buys: number; sells: number; volumeNative: number; volumeToken: number }>()
-        for (const r of tradersRes.data || []) {
-            const key = r.sender || '0x0'
-            const t = traderMap.get(key) || { addr: key, buys: 0, sells: 0, volumeNative: 0, volumeToken: 0 }
-            if (r.is_buy) t.buys += 1
-            else t.sells += 1
-            t.volumeNative += Number(r.volume_native || 0)
-            t.volumeToken += Number(r.volume_token || 0)
-            traderMap.set(key, t)
+        // Aggregate traders using paged scan and Node-side reduction (compatible with supabase-js)
+        const PAGE_SIZE = 1000
+        let offset = 0
+        const tmap = new Map<string, { addr: string; buys: number; sells: number; trades: number; lastActive: number; boughtNative: number; soldNative: number; boughtToken: number; soldToken: number }>()
+        while (true) {
+            let q = supabase
+                .from('swaps')
+                .select('sender, is_buy, volume_native, volume_token, timestamp')
+                .eq('token_address', token)
+                .order('timestamp', { ascending: false })
+                .range(offset, offset + PAGE_SIZE - 1)
+            if (traderHours > 0) {
+                const traderCutoffMs = nowMs() - traderHours * 60 * 60 * 1000
+                q = q.gte('timestamp', traderCutoffMs)
+            }
+            const { data: tpage, error: terr } = await q
+            if (terr) throw terr
+            const rows = tpage || []
+            for (const r of rows as any[]) {
+                const addr = String(r?.sender || '').toLowerCase()
+                if (!addr) continue
+                const isBuy = Boolean(r?.is_buy)
+                const volN = Number(r?.volume_native || 0)
+                const volT = Number(r?.volume_token || 0)
+                const ts = Number(r?.timestamp || 0)
+                const cur = tmap.get(addr) || { addr, buys: 0, sells: 0, trades: 0, lastActive: 0, boughtNative: 0, soldNative: 0, boughtToken: 0, soldToken: 0 }
+                if (isBuy) {
+                    cur.buys += 1
+                    cur.boughtNative += isFinite(volN) ? volN : 0
+                    cur.boughtToken += isFinite(volT) ? volT : 0
+                } else {
+                    cur.sells += 1
+                    cur.soldNative += isFinite(volN) ? volN : 0
+                    cur.soldToken += isFinite(volT) ? volT : 0
+                }
+                cur.trades = cur.buys + cur.sells
+                if (isFinite(ts) && ts > cur.lastActive) cur.lastActive = ts
+                tmap.set(addr, cur)
+            }
+            offset += rows.length
+            if (rows.length < PAGE_SIZE) break
         }
-        const traders = Array.from(traderMap.values()).sort((a, b) => b.volumeNative - a.volumeNative).slice(0, tradersLimit)
+        const traders = Array.from(tmap.values())
+            .sort((a, b) => {
+                if (b.trades !== a.trades) return b.trades - a.trades
+                if (b.boughtNative !== a.boughtNative) return b.boughtNative - a.boughtNative
+                return b.lastActive - a.lastActive
+            })
+            .slice(0, tradersLimit)
         return NextResponse.json({
             token: tokenRow,
             header: {price: lastPrice, mcap, progress, athPrice, changeAbs, changePct},
