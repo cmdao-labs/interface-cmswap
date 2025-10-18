@@ -421,10 +421,33 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
         return `${_explorer}address/${address}${suffixKub}${suffixMonad}`;
     };
     const compactNumberFormatter = React.useMemo(() => new Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }), []);
-    const isValidUrl = (url: string) => {return (url === "" || url.startsWith("http://") || url.startsWith("https://"))};
+    // Platform-specific social URL validation: require https and relevant domain
+    const isValidSocial = (field: keyof typeof socials, url: string) => {
+        if (url.trim() === "") return true; // optional
+        try {
+            const u = new URL(url);
+            if (u.protocol !== "https:") return false;
+            const host = u.host.toLowerCase();
+            switch (field) {
+                case "fb":
+                    return host === "facebook.com" || host === "www.facebook.com";
+                case "x":
+                    return host === "x.com" || host === "www.x.com" || host === "twitter.com" || host === "www.twitter.com";
+                case "telegram":
+                    return host === "t.me" || host === "www.t.me";
+                case "website":
+                    // any https domain is accepted for generic website
+                    return true;
+                default:
+                    return false;
+            }
+        } catch {
+            return false;
+        }
+    };
     const handleChange = (field: keyof typeof socials) => (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value; setSocials((prev) => ({ ...prev, [field]: value })); 
-        setErrors((prev) => ({ ...prev, [field]: !isValidUrl(value) }));
+        const value = e.target.value; setSocials((prev) => ({ ...prev, [field]: value }));
+        setErrors((prev) => ({ ...prev, [field]: !isValidSocial(field, value) }));
     };
     const handleSave = async () => {
         const hasError = Object.values(errors).some((v) => v);
@@ -1067,7 +1090,14 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
                                     </div>
                                     <input type="text" placeholder={item.placeholder} value={socials[item.field]} onChange={handleChange(item.field)} maxLength={200} className={`w-full rounded-2xl border px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 ${errors[item.field] ? "border-rose-400 focus:ring-rose-400" : "border-white/10 bg-white/5 focus:ring-emerald-400"}`} />
                                     <div className="flex items-center justify-between text-[11px] text-white/40">
-                                        {errors[item.field] ? <span>Must start with http:// or https://</span> : <span>Optional</span>}
+                                        {errors[item.field] ? (
+                                            <span>
+                                                {item.field === 'fb' && 'Must start with https://facebook.com'}
+                                                {item.field === 'x' && 'Must start with https://x.com or https://twitter.com'}
+                                                {item.field === 'telegram' && 'Must start with https://t.me'}
+                                                {item.field === 'website' && 'Must start with https://'}
+                                            </span>
+                                        ) : <span>Optional</span>}
                                         <span>{socials[item.field].length}/200</span>
                                     </div>
                                 </div>

@@ -43,6 +43,65 @@ create table if not exists swaps (
 create index if not exists swaps_token_block_idx on swaps(token_address, block_number);
 create unique index if not exists swaps_uniqueness_idx on swaps(tx_hash, log_index);
 create index if not exists swaps_token_time_idx on swaps(token_address, timestamp);
+-- Helpful for aggregated queries by trader
+create index if not exists swaps_sender_idx on swaps(sender);
+create index if not exists swaps_sender_time_idx on swaps(sender, timestamp);
+
+-- All-time aggregated leaderboards
+create or replace function top_tokens(limit_i integer default 20)
+returns table(token_address text, value numeric, latest_ts bigint)
+language sql
+as $$
+  select token_address,
+         sum(coalesce(volume_native, 0)) as value,
+         max(timestamp) as latest_ts
+  from swaps
+  group by token_address
+  order by value desc
+  limit limit_i;
+$$;
+
+create or replace function top_volume_traders(limit_i integer default 20)
+returns table(sender text, value numeric, latest_ts bigint)
+language sql
+as $$
+  select sender,
+         sum(coalesce(volume_native, 0)) as value,
+         max(timestamp) as latest_ts
+  from swaps
+  where sender is not null
+  group by sender
+  order by value desc
+  limit limit_i;
+$$;
+
+create or replace function top_profit_traders(limit_i integer default 20)
+returns table(sender text, value numeric, latest_ts bigint)
+language sql
+as $$
+  select sender,
+         sum(case when coalesce(is_buy, false) then -coalesce(volume_native, 0) else coalesce(volume_native, 0) end) as value,
+         max(timestamp) as latest_ts
+  from swaps
+  where sender is not null
+  group by sender
+  order by value desc
+  limit limit_i;
+$$;
+
+create or replace function top_degen_traders(limit_i integer default 20)
+returns table(sender text, value bigint, latest_ts bigint)
+language sql
+as $$
+  select sender,
+         count(*) as value,
+         max(timestamp) as latest_ts
+  from swaps
+  where sender is not null
+  group by sender
+  order by value desc
+  limit limit_i;
+$$;
 
 -- ERC20 transfer events per token
 create table if not exists transfers (

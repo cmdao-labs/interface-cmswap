@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, UploadCloud, Info, Loader2 } from "lucide-react";
 import { useConnections, useAccount } from "wagmi";
 import { parseEther } from "viem";
-import { writeContract } from "@wagmi/core";
+import { writeContract, simulateContract, waitForTransactionReceipt } from "@wagmi/core";
 import { useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import { config } from "@/config/reown";
 import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
@@ -34,6 +34,8 @@ export default function Create({ mode, chain, token, }: {
     const [ticker, setTicker] = useState("");
     const [desp, setDesp] = useState("");
     const [isLaunching, setIsLaunching] = useState(false);
+    const [buyAfterLaunch, setBuyAfterLaunch] = useState(false);
+    const [buyAmount, setBuyAmount] = useState("");
     const [popupState, setPopupState] = useState({
         isOpen: false,
         header: "",
@@ -53,6 +55,10 @@ export default function Create({ mode, chain, token, }: {
 
     const modeLabel = mode === "pro" ? "Pro Mode" : "Lite Mode";
     const isWalletReady = Boolean(connections) && account.address !== undefined && account.chainId === _chainId;
+    const baseAssetSymbol = useMemo(() => {
+        if ((chain === "kubtestnet" || chain === "") && (mode === "pro" || mode === "") && (token === "")) return "tKUB";
+        return "NATIVE";
+    }, [chain, mode, token]);
 
     const deploymentCostCopy = useMemo(() => {
         if ((chain === "kubtestnet" || chain === "") && (mode === "pro" || mode === "") && (token === "cmm" || token === "")) return "0 tKUB (network fee not included)";
@@ -95,11 +101,31 @@ export default function Create({ mode, chain, token, }: {
     };
 
     const _launch = async () => {
+        if (name.length >= 32 || ticker.length >= 10) {
+            setPopupState({
+                isOpen: true,
+                header: "Invalid Input",
+                description: "Coin name must be less than 32 characters and ticker must be less than 10 characters.",
+                actionButton: null,
+                footer: null,
+            });
+            return;
+        }
         if (!file) {
             setPopupState({
                 isOpen: true,
                 header: "Missing Logo",
                 description: "Please attach a token logo before launching.",
+                actionButton: null,
+                footer: null,
+            });
+            return;
+        }
+        if (buyAfterLaunch && (!buyAmount || Number(buyAmount) <= 0)) {
+            setPopupState({
+                isOpen: true,
+                header: "Invalid Buy Amount",
+                description: `Enter a valid ${baseAssetSymbol} amount to buy after launch or disable the option.`,
                 actionButton: null,
                 footer: null,
             });
@@ -124,29 +150,58 @@ export default function Create({ mode, chain, token, }: {
             if (!handleIpfsUpload(upload)) return;
 
             let result = "";
+            let createdTokenAddr: string | null = null;
             if (chain === "kubtestnet" && mode === "pro") {
-                result = await writeContract(config, {
+                const { request, result: simResult } = await simulateContract(config, {
                     ...factoryContract,
                     functionName: "createToken",
                     args: [name, ticker, `ipfs://${upload.IpfsHash}`, desp, "ipfs://bafkreiexe7q5ptjflrlccf3vtqdbpwk36j3emlsulksx7ot52e3uqyqu3u", "l2", "l3"],
                     value: parseEther("0"),
                 });
+                // Predicted token address from simulation
+                createdTokenAddr = String(simResult);
+                // Execute actual create
+                result = await writeContract(config, request);
+                // Ensure creation is mined before attempting optional buy
+                await waitForTransactionReceipt(config, { hash: result });
+                // Optional immediate buy with minimal slippage protection (minToken = 0)
+                if (buyAfterLaunch && createdTokenAddr && Number(buyAmount) > 0) {
+                    await writeContract(config, {
+                        ...factoryContract,
+                        functionName: "buy",
+                        args: [createdTokenAddr as "0xstring", BigInt(0)],
+                        value: parseEther(buyAmount),
+                    });
+                }
             }
 
             setPopupState({
                 isOpen: true,
-                header: "Launch Successful",
-                description: "Your token has been launched successfully!",
+                header: buyAfterLaunch ? "Launch & Buy Successful" : "Launch Successful",
+                description: buyAfterLaunch ? "Your token has been launched and your buy order was sent successfully!" : "Your token has been launched successfully!",
                 actionButton: (
-                    <button
-                        onClick={() => {
-                        closePopup();
-                        router.replace(`/pump/launchpad?chain=${chain}&mode=${mode}`);
-                        }}
-                        className="rounded-full border border-emerald-400/40 bg-emerald-400/20 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-400/30"
-                    >
-                        Go to Launchpad
-                    </button>
+                    <div className="flex gap-2 flex-wrap">
+                        <button
+                            onClick={() => {
+                                closePopup();
+                                router.replace(`/pump/launchpad?chain=${chain}&mode=${mode}`);
+                            }}
+                            className="rounded-full border border-emerald-400/40 bg-emerald-400/20 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-400/30"
+                        >
+                            Go to Launchpad
+                        </button>
+                        {createdTokenAddr && (
+                            <button
+                                onClick={() => {
+                                    closePopup();
+                                    router.replace(`/pump/launchpad/token?chain=${chain}&mode=${mode}&ticker=${createdTokenAddr}`);
+                                }}
+                                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/10"
+                            >
+                                Open Trade Page
+                            </button>
+                        )}
+                    </div>
                 ),
                 footer: null,
             });
@@ -155,7 +210,9 @@ export default function Create({ mode, chain, token, }: {
             setTicker("");
             setDesp("");
             setFile(null);
-            router.replace(`/pump/launchpad?chain=${chain}&mode=${mode}`);
+            if (!buyAfterLaunch) {
+                router.replace(`/pump/launchpad?chain=${chain}&mode=${mode}`);
+            }
         } catch (e) {
             console.warn(e);
             setPopupState({
@@ -174,7 +231,7 @@ export default function Create({ mode, chain, token, }: {
         void _launch();
     };
 
-    const buttonDisabled = !isWalletReady || isLaunching;
+    const buttonDisabled = !isWalletReady || isLaunching || (buyAfterLaunch && (!buyAmount || Number(buyAmount) <= 0));
     const buttonLabel = isWalletReady ? (isLaunching ? "Launching..." : "Launch Meme Token") : "Connect Wallet to Launch";
 
     return (
@@ -209,8 +266,10 @@ export default function Create({ mode, chain, token, }: {
                                     placeholder="e.g. Cosmic Meme"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
+                                    maxLength={32}
                                     required
                                 />
+                                <span className="text-[10px] text-white/35">{name.length}/31</span>
                             </label>
                             <label className="flex flex-col gap-2">
                                 <span className="text-xs uppercase tracking-wide text-white/50">Ticker</span>
@@ -219,8 +278,10 @@ export default function Create({ mode, chain, token, }: {
                                     placeholder="e.g. COSMIC"
                                     value={ticker}
                                     onChange={(e) => setTicker(e.target.value)}
+                                    maxLength={10}
                                     required
                                 />
+                                <span className="text-[10px] text-white/35">{ticker.length}/9</span>
                             </label>
                         </div>
 
@@ -290,6 +351,38 @@ export default function Create({ mode, chain, token, }: {
                         </div>
 
                         <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-xs text-emerald-200">Make sure your wallet is connected to {chainLabel} and has enough balance to cover the network fee.</div>
+
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white/70">
+                            <div className="flex items-center justify-between">
+                                <label className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        className="h-4 w-4 rounded border-white/20 bg-transparent"
+                                        checked={buyAfterLaunch}
+                                        onChange={(e) => setBuyAfterLaunch(e.target.checked)}
+                                    />
+                                    <span className="font-medium text-white">Buy after launch (optional)</span>
+                                </label>
+                            </div>
+                            {buyAfterLaunch && (
+                                <div className="mt-3">
+                                    <label className="block text-xs uppercase tracking-wide text-white/50">Spend amount</label>
+                                    <div className="mt-1 flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            inputMode="decimal"
+                                            min="0"
+                                            placeholder={`0.0`}
+                                            value={buyAmount}
+                                            onChange={(e) => setBuyAmount(e.target.value)}
+                                            className="w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-white placeholder-white/40 outline-none transition focus:border-emerald-400/80 focus:bg-white/[0.08]"
+                                        />
+                                        <span className="text-xs uppercase tracking-wide text-white/60 min-w-12 text-center">{baseAssetSymbol}</span>
+                                    </div>
+                                    <p className="mt-2 text-[11px] text-white/40">A market buy will be sent immediately after your token is created.</p>
+                                </div>
+                            )}
+                        </div>
 
                         <button
                             type="submit"

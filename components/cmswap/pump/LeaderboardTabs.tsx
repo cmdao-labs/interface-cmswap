@@ -102,6 +102,9 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
     const [customStart, setCustomStart] = useState<string>("");
     const [customEnd, setCustomEnd] = useState<string>("");
     const [minValueInput, setMinValueInput] = useState<string>("0");
+    // Address filter (initializes from query string if present)
+    const addrFilterParam = (searchParams?.get("q") || searchParams?.get("addr") || searchParams?.get("address") || "").trim();
+    const [addressQuery, setAddressQuery] = useState<string>(addrFilterParam);
 
     const minValue = useMemo(() => {
         const n = Number(minValueInput);
@@ -114,6 +117,13 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
     }, [activeTabId, tabs]);
 
     const entries = activeTab?.entries ?? [];
+
+    // Preserve original rank numbers even when filtering
+    const rankById = useMemo(() => {
+        const m = new Map<string, number>();
+        entries.forEach((e, i) => m.set(e.id, i + 1));
+        return m;
+    }, [entries]);
 
     const filteredEntries = useMemo(() => {
         if (!entries.length) return entries;
@@ -137,9 +147,16 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
             if (customEnd) endTs = new Date(customEnd + "T23:59:59").getTime();
         }
 
+        const addrQuery = addressQuery.trim().toLowerCase();
         return entries.filter((e) => {
             // Minimum value filter
             if (!Number.isFinite(e.value) || e.value < minValue) return false;
+
+            // Address contains filter (matches token or trader address)
+            if (addrQuery) {
+                const entryAddr = String(e.address || "").toLowerCase();
+                if (!entryAddr.includes(addrQuery)) return false;
+            }
 
             // Time filter only applies if timestamp is provided
             if (startTs !== undefined || endTs !== undefined) {
@@ -150,7 +167,7 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
             }
             return true;
         });
-    }, [entries, timeRange, customStart, customEnd, minValue]);
+    }, [entries, timeRange, customStart, customEnd, minValue, addressQuery]);
 
     return (
         <section className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-[#080b17]/85 shadow-[0_0_28px_rgba(15,118,110,0.15)] backdrop-blur-xl">
@@ -245,6 +262,17 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                                 onBlur={() => {if (minValueInput === "" || Number(minValueInput) < 0) setMinValueInput("0")}}
                             />
                         </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[11px] font-medium tracking-wide text-slate-400">Address Contains</label>
+                            <input
+                                type="text"
+                                inputMode="text"
+                                placeholder="0x..."
+                                className="w-full rounded-md border border-white/10 bg-[#0b1020] px-3 py-2 text-sm text-slate-200 outline-none ring-emerald-400/40 focus:ring"
+                                value={addressQuery}
+                                onChange={(e) => setAddressQuery(e.target.value)}
+                            />
+                        </div>
                     </div>
                 </div>
                 {entries.length ?
@@ -265,7 +293,7 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                                                     target="_blank"
                                                 >
                                                     <div className="grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-6">
-                                                        <span className="text-lg font-semibold tracking-[0.2em] text-slate-300">{index + 1}</span>
+                                <span className="text-lg font-semibold tracking-[0.2em] text-slate-300">{rankById.get(entry.id) ?? (index + 1)}</span>
                                                         <div className="flex items-center gap-4">
                                                             <div className="h-12 w-12 overflow-hidden rounded-full border border-white/10 bg-[#0b1020]">
                                                                 {isTrader ? <JazziconAvatar address={entry.address} size={48} /> : <img src={resolveLogoUrl(entry.logo)} alt={entry.name} className="h-full w-full object-cover" />}
@@ -299,7 +327,7 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                                         target="_blank"
                                     >
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">#{index + 1}</span>
+                                            <span className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">#{rankById.get(entry.id) ?? (index + 1)}</span>
                                             <span className="text-xs uppercase tracking-[0.25em] text-slate-500">{entry.type === "token" ? "Token" : "Trader"}</span>
                                         </div>
                                         <div className="mt-4 flex items-center gap-4">

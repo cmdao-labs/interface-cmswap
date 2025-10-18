@@ -35,61 +35,79 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
     const host = headersList.get("host");
     const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
     const baseUrl = host ? `${protocol}://${host}` : process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const limit = 5000;
-    const pageSize = 1000;
-    const swapsRes = await fetch(`${baseUrl}/api/swaps/recent?limit=${limit}&pageSize=${pageSize}`, {
-        cache: "no-store",
-    });
-    const swapPayload = swapsRes.ok ? await swapsRes.json() : { swaps: [], tokens: {} };
-    const swapRows = (Array.isArray(swapPayload?.swaps) ? swapPayload.swaps : []) as Array<{
-        token_address?: string;
-        sender?: string;
-        is_buy?: boolean | null;
-        volume_native?: number | string | null;
-        timestamp?: number | string | null;
-        tx_hash?: string | null;
-    }>;
-    const rawTokenMeta = (swapPayload?.tokens ?? {}) as Record<string, { symbol?: string; name?: string; logo?: string }>;
 
-    const addrSet = new Set<string>();
-    for (const r of swapRows) {
-        const a = String(r.token_address || '');
-        if (a) addrSet.add(a);
-    }
-    let tokenMeta = new Map<string, { symbol?: string; name?: string; logo?: string }>();
-    if (addrSet.size > 0) {
-        for (const key of Object.keys(rawTokenMeta)) {
-            const lowerKey = key.toLowerCase();
-            const value = rawTokenMeta[key];
-            tokenMeta.set(lowerKey, {
-                symbol: value?.symbol,
-                name: value?.name,
-                logo: value?.logo,
-            });
-        }
+    // Use aggregated, all-time leaderboard API
+    const lbLimit = 20;
+    const res = await fetch(`${baseUrl}/api/swaps/leaderboard?limit=${lbLimit}`, { cache: "no-store" });
+    const payload = res.ok ? await res.json() : null;
+    const tokenMeta = new Map<string, { symbol?: string; name?: string; logo?: string }>();
+    const metaObj = (payload?.tokens ?? {}) as Record<string, { symbol?: string | null; name?: string | null; logo?: string | null }>;
+    for (const k of Object.keys(metaObj)) {
+        const v = metaObj[k];
+        tokenMeta.set(k.toLowerCase(), { symbol: v?.symbol ?? undefined, name: v?.name ?? undefined, logo: v?.logo ?? undefined });
     }
 
-    const swapEventsWithTs = swapRows.map((r) => {
-        const addr = String(r.token_address || '');
+    const explorerBase = network.explorer.replace(/\/$/, "");
+
+    const volumeTokens = ((payload?.volumeTokens ?? []) as Array<{ token_address: string; value: number; latest_ts?: number | null }>).map((row) => {
+        const addr = String(row.token_address || "");
         const meta = tokenMeta.get(addr.toLowerCase()) || {};
         const fallbackSym = addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}`.toUpperCase() : '';
         return {
-            action: r.is_buy ? 'buy' : 'sell',
-            value: Number(r.volume_native || 0),
-            trader: String(r.sender || ''),
-            transactionHash: String(r.tx_hash || ''),
-            address: addr,
-            name: meta.name || meta.symbol || fallbackSym,
-            symbol: meta.symbol || fallbackSym,
+            id: addr,
+            name: meta.symbol || fallbackSym,
+            subtitle: meta.name,
             logo: meta.logo || '',
-            timestampMs: Number(r.timestamp || 0),
-        };
+            value: Number(row.value || 0),
+            address: addr as `0x${string}`,
+            href: `${explorerBase}/address/${addr}`,
+            type: 'token' as const,
+            timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined,
+            chainId: network.chainId,
+        } as LeaderboardEntry;
     });
 
-    const tokens = new Map<string, any>();
-    const pairs: any[] = [];
+    const volumeTraders = ((payload?.volumeTraders ?? []) as Array<{ sender: string; value: number; latest_ts?: number | null }>).map((row) => {
+        const addr = String(row.sender || "");
+        return {
+            id: addr,
+            name: truncateAddress(addr),
+            logo: '',
+            value: Number(row.value || 0),
+            address: addr as `0x${string}`,
+            type: 'trader' as const,
+            timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined,
+            chainId: network.chainId,
+        } as LeaderboardEntry;
+    });
 
-    const { volumeTokens, volumeTraders, profitTraders, degenTraders } = buildDatasets({swapEvents: swapEventsWithTs, pairs, tokens, explorerUrl: network.explorer, network,});
+    const profitTraders = ((payload?.profitTraders ?? []) as Array<{ sender: string; value: number; latest_ts?: number | null }>).map((row) => {
+        const addr = String(row.sender || "");
+        return {
+            id: `${addr}-profit`,
+            name: truncateAddress(addr),
+            logo: '',
+            value: Number(row.value || 0),
+            address: addr as `0x${string}`,
+            type: 'trader' as const,
+            timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined,
+            chainId: network.chainId,
+        } as LeaderboardEntry;
+    });
+
+    const degenTraders = ((payload?.degenTraders ?? []) as Array<{ sender: string; value: number; latest_ts?: number | null }>).map((row) => {
+        const addr = String(row.sender || "");
+        return {
+            id: `${addr}-degen`,
+            name: truncateAddress(addr),
+            logo: '',
+            value: Number(row.value || 0),
+            address: addr as `0x${string}`,
+            type: 'degen' as const,
+            timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined,
+            chainId: network.chainId,
+        } as LeaderboardEntry;
+    });
     const tabs: LeaderboardTab[] = [
         {
             id: "volume-token",
@@ -233,7 +251,7 @@ function buildDatasets({
             if (!_profitTraders[key]) _profitTraders[key] = {id: key, name, subtitle: symbol, logo, value: 0, address: trader, type: 'trader', chainId: network.chainId,} as any;
             if (tx.action === "buy") {
                 _profitTraders[key].value += Number(tx.value);
-            } else if (tx.action === "buy") {
+            } else if (tx.action === "sell") {
                 _profitTraders[key].value -= Number(tx.value);
             }
             const ts = typeof tx.timestampMs === 'number' ? tx.timestampMs : undefined;
