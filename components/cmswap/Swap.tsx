@@ -812,7 +812,10 @@ export default function Swap({ setIsLoading, setErrMsg }: {
 
         <div>
           {amountsEntered ? (
-            <Button className="h-14 w-full rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-blue-500 text-base font-semibold text-white shadow-[0_18px_40px_-16px_rgba(99,102,241,0.7)] transition hover:shadow-[0_22px_46px_-14px_rgba(99,102,241,0.8)]" onClick={handleSwap}>
+            <Button
+              className="h-14 w-full rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-600 text-base font-semibold text-white shadow-[0_18px_40px_-16px_rgba(16,185,129,0.7)] transition hover:shadow-[0_22px_46px_-14px_rgba(16,185,129,0.8)]"
+              onClick={handleSwap}
+            >
               Swap
             </Button>
           ) : (
@@ -861,7 +864,7 @@ export default function Swap({ setIsLoading, setErrMsg }: {
                       key={route.id}
                       type="button"
                       onClick={() => handleRouteSelect(route)}
-                      className={`w-full rounded-2xl border border-white/5 p-4 text-left text-sm text-slate-300 transition hover:border-white/10 hover:bg-slate-900/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60 ${isActive ? 'border-indigo-400/70 bg-indigo-500/10 text-white bg-indigo-500/20' : ''}`}
+                      className={`w-full rounded-2xl border border-white/5 p-4 text-left text-sm text-slate-300 transition hover:border-white/10 hover:bg-slate-900/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 ${isActive ? 'border-emerald-400/70 bg-emerald-500/10 text-white bg-emerald-500/20' : ''}`}
                       aria-pressed={isActive}
                     >
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
@@ -893,11 +896,9 @@ export default function Swap({ setIsLoading, setErrMsg }: {
                               <span className={returnClass}>{returnText ?? '--'}</span>
                             </div>
                           )}
-                          <div className="flex flex-col items-start text-xs text-slate-400 sm:items-end">
-                            <span className="uppercase tracking-wide">TVL</span>
-                            <span className={`text-sm font-semibold ${route.tvl > 0 ? 'text-emerald-300' : 'text-slate-400'}`}>
-                              {formatTvl(route.tvl)} {route.tvlUnit}
-                            </span>
+                          <div className="flex flex-row items-center gap-2 text-xs text-slate-400 sm:items-end">
+                            <span className="tracking-wide">TVL:</span>
+                            <span>{formatTvl(route.tvl)} {route.tvlUnit}</span>
                           </div>
                         </div>
                       </div>
@@ -910,7 +911,7 @@ export default function Swap({ setIsLoading, setErrMsg }: {
                 <button
                   type="button"
                   onClick={() => handleRouteSelect(previewRoute)}
-                  className={`w-full rounded-2xl border border-white/5 bg-slate-900/40 p-4 text-left text-sm text-slate-300 transition hover:border-white/10 hover:bg-slate-900/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60 ${previewRoute.id === activeRouteId ? 'border-indigo-400/70 bg-indigo-500/10 text-white shadow-lg shadow-indigo-500/20' : ''}`}
+                  className={`w-full rounded-2xl border border-white/5 bg-slate-900/40 p-4 text-left text-sm text-slate-300 transition hover:border-white/10 hover:bg-slate-900/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 ${previewRoute.id === activeRouteId ? 'border-emerald-400/70 bg-emerald-500/10 text-white shadow-lg shadow-emerald-500/20' : ''}`}
                   aria-pressed={previewRoute.id === activeRouteId}
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
@@ -929,7 +930,7 @@ export default function Swap({ setIsLoading, setErrMsg }: {
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setRoutesExpanded(true) }}
-                        className="text-[11px] font-medium text-indigo-300 hover:text-indigo-200"
+                        className="text-[11px] font-medium text-emerald-300 hover:text-emerald-200"
                       >
                         Show all routes
                       </button>
@@ -949,11 +950,9 @@ export default function Swap({ setIsLoading, setErrMsg }: {
                           <span className={previewReturnClass}>{previewRouteStats?.returnText ?? '--'}</span>
                         </div>
                       )}
-                      <div className="flex flex-col items-start text-xs text-slate-400 sm:items-end">
-                        <span className="uppercase tracking-wide">TVL</span>
-                        <span className={`text-sm font-semibold ${previewRoute.tvl > 0 ? 'text-emerald-300' : 'text-slate-400'}`}>
-                          {formatTvl(previewRoute.tvl)} {previewRoute.tvlUnit}
-                        </span>
+                      <div className="flex flex-row items-center gap-2 text-xs text-slate-400 sm:items-end">
+                        <span className="tracking-wide">TVL:</span>
+                        <span>{formatTvl(previewRoute.tvl)} {previewRoute.tvlUnit}</span>
                       </div>
                     </div>
                   </div>

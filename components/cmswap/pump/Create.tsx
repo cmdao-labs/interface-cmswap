@@ -163,7 +163,7 @@ export default function Create({ mode, chain, token, }: {
                 // Execute actual create
                 result = await writeContract(config, request);
                 // Ensure creation is mined before attempting optional buy
-                await waitForTransactionReceipt(config, { hash: result });
+                await waitForTransactionReceipt(config, { hash: result as '0xstring' });
                 // Optional immediate buy with minimal slippage protection (minToken = 0)
                 if (buyAfterLaunch && createdTokenAddr && Number(buyAmount) > 0) {
                     await writeContract(config, {
