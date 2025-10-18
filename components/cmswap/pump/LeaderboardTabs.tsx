@@ -35,6 +35,14 @@ const formatValue = (value: number) => {
     return `${Intl.NumberFormat("en-US", {minimumFractionDigits: precision, maximumFractionDigits: precision,}).format(absolute)}`;
 };
 
+// For profit values, show the sign (no absolute)
+const formatValueSigned = (value: number) => {
+    if (!Number.isFinite(value)) return "-";
+    const absolute = Math.abs(value);
+    const precision = absolute >= 1000 ? 0 : absolute >= 1 ? 2 : 4;
+    return `${Intl.NumberFormat("en-US", {minimumFractionDigits: precision, maximumFractionDigits: precision,}).format(value)}`;
+};
+
 const shortAddress = (address?: string) => {
     if (!address) return "-";
     const normalized = address.toLowerCase();
@@ -79,6 +87,15 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
     const chainParam = (searchParams?.get("chain") || "kub").trim();
     const modeParam = (searchParams?.get("mode") || "lite").trim();
     const tokenParam = (searchParams?.get("token") || "cmm").trim();
+    const rankbyParam = (searchParams?.get("rankby") || "").trim();
+
+    // Sync initial tab from query param when present
+    useEffect(() => {
+        if (!rankbyParam) return;
+        const match = tabs.find(t => t.id === rankbyParam);
+        if (match && match.id !== activeTabId) setActiveTabId(match.id);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [rankbyParam, tabs]);
 
     const buildTokenHref = (entry: LeaderboardEntry) => {
         const params = new URLSearchParams();
@@ -111,17 +128,20 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
         return Number.isFinite(n) && n >= 0 ? n : 0;
     }, [minValueInput]);
 
+    // Remote data override when a time range is selected (not 'all')
+    const [remoteTabs, setRemoteTabs] = useState<LeaderboardTab[] | null>(null);
+    const effectiveTabs = remoteTabs ?? tabs;
     const activeTab = useMemo(() => {
-        if (!tabs.length) return undefined;
-        return tabs.find((tab) => tab.id === activeTabId) ?? tabs[0];
-    }, [activeTabId, tabs]);
+        if (!effectiveTabs.length) return undefined as any;
+        return effectiveTabs.find((tab) => tab.id === activeTabId) ?? effectiveTabs[0];
+    }, [activeTabId, effectiveTabs]);
 
     const entries = activeTab?.entries ?? [];
 
     // Preserve original rank numbers even when filtering
     const rankById = useMemo(() => {
         const m = new Map<string, number>();
-        entries.forEach((e, i) => m.set(e.id, i + 1));
+        entries.forEach((e: any, i: any) => m.set(e.id, i + 1));
         return m;
     }, [entries]);
 
@@ -147,10 +167,12 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
             if (customEnd) endTs = new Date(customEnd + "T23:59:59").getTime();
         }
 
+        const isProfitTab = activeTab?.id === 'top-profit-trader';
         const addrQuery = addressQuery.trim().toLowerCase();
-        return entries.filter((e) => {
-            // Minimum value filter
-            if (!Number.isFinite(e.value) || e.value < minValue) return false;
+        return entries.filter((e: any) => {
+            // Minimum value filter (for profit, use absolute value to include negatives)
+            const valForMin = isProfitTab ? Math.abs(e.value) : e.value;
+            if (!Number.isFinite(valForMin) || valForMin < minValue) return false;
 
             // Address contains filter (matches token or trader address)
             if (addrQuery) {
@@ -167,7 +189,86 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
             }
             return true;
         });
-    }, [entries, timeRange, customStart, customEnd, minValue, addressQuery]);
+    }, [entries, timeRange, customStart, customEnd, minValue, addressQuery, activeTab?.id]);
+
+    // Client fetch to get range-based aggregates so values match time filter
+    useEffect(() => {
+        // Only fetch when a specific time window is selected
+        const fetchRange = async () => {
+            let start: number | undefined;
+            let end: number | undefined;
+            const now = new Date();
+            if (timeRange === 'today') {
+                const s = new Date(now);
+                s.setHours(0, 0, 0, 0);
+                start = s.getTime();
+                end = now.getTime();
+            } else if (timeRange === '7d') {
+                start = now.getTime() - 7 * 24 * 60 * 60 * 1000;
+                end = now.getTime();
+            } else if (timeRange === '30d') {
+                start = now.getTime() - 30 * 24 * 60 * 60 * 1000;
+                end = now.getTime();
+            } else if (timeRange === 'custom') {
+                if (customStart) start = new Date(customStart + 'T00:00:00').getTime();
+                if (customEnd) end = new Date(customEnd + 'T23:59:59').getTime();
+            }
+            // If no range, reset to server-provided tabs
+            if (timeRange === 'all' || (!start && !end)) {
+                setRemoteTabs(null);
+                return;
+            }
+            const qs = new URLSearchParams();
+            qs.set('limit', '20');
+            if (start) qs.set('startTs', String(start));
+            if (end) qs.set('endTs', String(end));
+            try {
+                const res = await fetch(`/api/swaps/leaderboard?${qs.toString()}`, { cache: 'no-store' });
+                if (!res.ok) return;
+                const payload = await res.json();
+                const tokenMeta = new Map<string, { symbol?: string; name?: string; logo?: string }>();
+                const metaObj = (payload?.tokens ?? {}) as Record<string, { symbol?: string | null; name?: string | null; logo?: string | null }>;
+                for (const k of Object.keys(metaObj)) {
+                    const v = metaObj[k];
+                    tokenMeta.set(k.toLowerCase(), { symbol: v?.symbol ?? undefined, name: v?.name ?? undefined, logo: v?.logo ?? undefined });
+                }
+                const explorerBase = explorerUrl.replace(/\/$/, '');
+                const chainId = 25925; // pump env
+                const volumeTokens = ((payload?.volumeTokens ?? []) as Array<{ token_address: string; value: number; latest_ts?: number | null }>).map((row) => {
+                    const addr = String(row.token_address || '');
+                    const meta = tokenMeta.get(addr.toLowerCase()) || {};
+                    const fallbackSym = addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}`.toUpperCase() : '';
+                    return {
+                        id: addr,
+                        name: meta.symbol || fallbackSym,
+                        subtitle: meta.name,
+                        logo: meta.logo || '',
+                        value: Number(row.value || 0),
+                        address: addr as `0x${string}`,
+                        href: `${explorerBase}/address/${addr}`,
+                        type: 'token' as const,
+                        timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined,
+                        chainId,
+                    };
+                });
+                const volumeTraders = ((payload?.volumeTraders ?? []) as Array<{ sender: string; value: number; latest_ts?: number | null }>).
+                    map((row) => ({ id: String(row.sender || ''), name: shortAddress(row.sender), logo: '', value: Number(row.value || 0), address: String(row.sender || '') as `0x${string}`, type: 'trader' as const, timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined, chainId }));
+                const profitTraders = ((payload?.profitTraders ?? []) as Array<{ sender: string; value: number; latest_ts?: number | null }>).
+                    map((row) => ({ id: `${row.sender}-profit`, name: shortAddress(row.sender), logo: '', value: Number(row.value || 0), address: String(row.sender || '') as `0x${string}`, type: 'trader' as const, timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined, chainId }));
+                const degenTraders = ((payload?.degenTraders ?? []) as Array<{ sender: string; value: number; latest_ts?: number | null }>).
+                    map((row) => ({ id: `${row.sender}-degen`, name: shortAddress(row.sender), logo: '', value: Number(row.value || 0), address: String(row.sender || '') as `0x${string}`, type: 'degen' as const, timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined, chainId }));
+                setRemoteTabs([
+                    { id: 'volume-token', label: 'Top Volume Cult', entries: volumeTokens },
+                    { id: 'top-volume-trader', label: 'Top Volume Trader', entries: volumeTraders },
+                    { id: 'top-profit-trader', label: 'Top Profit Trader', entries: profitTraders },
+                    { id: 'top-degen-trader', label: 'Top Degen Trader', entries: degenTraders },
+                ]);
+            } catch {
+                // leave remoteTabs unchanged on error
+            }
+        };
+        fetchRange();
+    }, [timeRange, customStart, customEnd, explorerUrl]);
 
     return (
         <section className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-[#080b17]/85 shadow-[0_0_28px_rgba(15,118,110,0.15)] backdrop-blur-xl">
@@ -279,7 +380,7 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                     <>
                         <table className="hidden w-full border-separate border-spacing-y-4 text-sm text-slate-200 md:table">
                             <tbody>
-                                {filteredEntries.map((entry, index) => {
+                                {filteredEntries.map((entry: any, index: any) => {
                                     const isTrader = entry.type === "trader" || entry.type === "degen";
                                     const primaryText = isTrader ? shortAddress(entry.address) : entry.subtitle;
                                     const secondaryText = isTrader ? undefined : entry.name;
@@ -303,7 +404,7 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                                                                 {secondaryText ? <span className="text-xs text-slate-500">{secondaryText}</span> : null}
                                                             </div>
                                                         </div>
-                                                        <span className="text-right text-lg font-semibold text-emerald-200 drop-shadow-[0_0_8px_rgba(16,185,129,0.55)]">{formatValue(entry.value) + (entry.type === 'degen' ?  ' txn' : ' tKub')}</span>
+                                <span className="text-right text-lg font-semibold text-emerald-200 drop-shadow-[0_0_8px_rgba(16,185,129,0.55)]">{(activeTab?.id === 'top-profit-trader' ? formatValueSigned(entry.value) : formatValue(entry.value)) + (entry.type === 'degen' ?  ' txn' : ' tKub')}</span>
                                                     </div>
                                                 </a>
                                             </td>
@@ -314,7 +415,7 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                         </table>
 
                         <div className="flex flex-col gap-4 md:hidden">
-                            {filteredEntries.map((entry, index) => {
+                            {filteredEntries.map((entry: any, index: any) => {
                                 const isTrader = entry.type === "trader" || entry.type === "degen";
                                 const primaryText = isTrader ? shortAddress(entry.address) : entry.subtitle;
                                 const secondaryText = isTrader ? undefined : entry.name;
@@ -338,7 +439,7 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                                                 <span className="text-base font-semibold text-slate-100">{primaryText}</span>
                                                 {secondaryText ? <span className="text-xs text-slate-500">{secondaryText}</span> : null}
                                             </div>
-                                            <span className="text-right text-lg font-semibold text-emerald-200 drop-shadow-[0_0_8px_rgba(16,185,129,0.55)]">{formatValue(entry.value)}</span>
+                                            <span className="text-right text-lg font-semibold text-emerald-200 drop-shadow-[0_0_8px_rgba(16,185,129,0.55)]">{(activeTab?.id === 'top-profit-trader' ? formatValueSigned(entry.value) : formatValue(entry.value)) + (entry.type === 'degen' ?  ' txn' : ' tKub')}</span>
                                         </div>
                                     </a>
                                 );

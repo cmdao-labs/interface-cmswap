@@ -282,7 +282,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
         socialAddr = "0x6F17157b4EcD3734A9EA8ED4bfE78694e3695b90";
     }
     const reachData = [
-        { chain: "kubtestnet", proAmount: "47800", proSymbol: "tKUB", lite: "", liteSymbol: "" }
+        { chain: "kubtestnet", proAmount: "60600", proSymbol: "tKUB", lite: "", liteSymbol: "" }
     ];
     const factoryContract = { address: factoryAddr as "0xstring", abi: ERC20FactoryV2ABI, chainId: _chainId } as const;
     const socialContrct = { address: socialAddr as "0xstring", abi: SocialsABI, chainId: _chainId } as const;

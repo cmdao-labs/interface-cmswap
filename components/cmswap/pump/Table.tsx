@@ -56,67 +56,88 @@ type KubTestnetContext = { network: NetworkConfig };
 
 function resolveNetworkConfig(chain: string, mode: string, token: string): NetworkConfig {
     const normalizedChain = (chain || "kubtestnet").toLowerCase() as NetworkKey;
-    const normalizedMode = (mode || "lite").toLowerCase() as "lite" | "pro";
+    const normalizedMode = (mode || "pro").toLowerCase() as "lite" | "pro";
 
+    // Only kubtestnet is supported currently but keep mode passthrough
     return {
         key: "kubtestnet",
         baseSymbol: "tKUB",
         chainTag: "tKUB",
         queryChain: "kubtestnet",
-        queryMode: "pro",
+        queryMode: normalizedMode,
     };
 }
 
 async function fetchSupabaseListings({ network }: KubTestnetContext): Promise<ListingMetrics[]> {
     const supabase = getServiceSupabase();
 
-    // Fetch tokens metadata
-    const tokenRes = await supabase
-        .from('tokens')
-        .select('address, symbol, name, description, logo, created_time, creator')
-        .order('created_time', { ascending: false });
-    const tokens = (tokenRes.data || []) as Array<{
-        address?: string;
-        symbol?: string;
-        name?: string;
-        description?: string;
-        logo?: string;
-        created_time?: number | string | null;
-        creator?: string;
-    }>;
+    // Pull all tokens with pagination to avoid default row caps
+    const PAGE_SIZE = 1000;
+    let offset = 0;
+    const tokens: Array<{ address?: string; symbol?: string; name?: string; description?: string; logo?: string; created_time?: number | string | null; creator?: string; }> = [];
+    while (true) {
+        const page = await supabase
+            .from('tokens')
+            .select('address, symbol, name, description, logo, created_time, creator')
+            .order('created_time', { ascending: false })
+            .range(offset, offset + PAGE_SIZE - 1);
+        const rows = (page.data || []) as typeof tokens;
+        tokens.push(...rows);
+        if (!rows.length || rows.length < PAGE_SIZE) break;
+        offset += rows.length;
+    }
 
-    const addresses = tokens.map((t) => String(t.address || '')).filter(Boolean);
+    // Use raw addresses to match DB values exactly (case sensitive)
+    const addresses = tokens
+        .map((t) => String(t.address || ''))
+        .filter(Boolean);
 
-    // Fetch latest swap price per token in a single query, then reduce
-    let latestPriceByToken = new Map<string, { price: number; timestamp: number }>();
-    if (addresses.length > 0) {
-        const swapsRes = await supabase
-            .from('swaps')
-            .select('token_address, price, timestamp')
-            .in('token_address', addresses)
-            .order('timestamp', { ascending: false });
-        for (const r of swapsRes.data || []) {
-            const addr = String((r as any).token_address || '');
-            if (!addr || latestPriceByToken.has(addr)) continue; // first row per token (latest)
-            const p = Number((r as any).price || 0);
-            const ts = Number((r as any).timestamp || 0);
-            latestPriceByToken.set(addr, { price: Number.isFinite(p) ? p : 0, timestamp: ts });
+    // Fetch latest non-null price per token, chunked + paginated to cover all
+    const latestPriceByToken = new Map<string, { price: number; timestamp: number }>();
+    const ADDR_CHUNK = 150; // keep URL/query size reasonable
+    const SWAPS_PAGE = 1000; // PostgREST page size
+    for (let i = 0; i < addresses.length; i += ADDR_CHUNK) {
+        const chunk = addresses.slice(i, i + ADDR_CHUNK);
+        let gotForChunk = 0;
+        let start = 0;
+        while (gotForChunk < chunk.length) {
+            const { data, error } = await supabase
+                .from('swaps')
+                .select('token_address, price, timestamp')
+                .in('token_address', chunk)
+                .order('timestamp', { ascending: false })
+                .range(start, start + SWAPS_PAGE - 1);
+            if (error) break;
+            const rows = (data || []) as Array<{ token_address?: string; price?: number; timestamp?: number }>;
+            if (!rows.length) break;
+            for (const r of rows) {
+                const addr = String(r.token_address || '');
+                if (!addr || latestPriceByToken.has(addr)) continue;
+                const p = Number(r.price);
+                const ts = Number(r.timestamp || 0);
+                if (!Number.isFinite(p)) continue;
+                latestPriceByToken.set(addr, { price: p, timestamp: ts });
+                gotForChunk += 1;
+                if (gotForChunk >= chunk.length) break;
+            }
+            if (rows.length < SWAPS_PAGE) break;
+            start += rows.length;
         }
     }
 
     // Map into ListingMetrics
     const listings: ListingMetrics[] = tokens.map((t) => {
-        const addr = String(t.address || '');
+        const addrRaw = String(t.address || '');
         const sym = String(t.symbol || '');
         const nm = String(t.name || sym || '');
         const logoUrl = resolveLogoUrl(String(t.logo || ''));
         const createdAt = toSecondsMaybe(Number(t.created_time || 0));
-        const latest = latestPriceByToken.get(addr);
+        const latest = latestPriceByToken.get(addrRaw);
         const price = latest?.price || 0;
         const marketCap = Number.isFinite(price) ? price * 1_000_000_000 : 0; // assume 1e9 supply
         return {
-            id: addr,
-            address: addr as `0x${string}`,
+            id: addrRaw,
+            address: addrRaw as `0x${string}`,
             symbol: sym || 'N/A',
             name: nm || sym || 'Token',
             description: t.description || undefined,
@@ -209,7 +230,7 @@ function computeProgressPercent(
     const c = chain.toLowerCase();
     const m = mode.toLowerCase();
     const denom = (() => {
-        if (c === "kubtestnet" && m === "pro") return 47800;
+        if (c === "kubtestnet" && m === "pro") return 60600;
         return undefined;
     })();
 

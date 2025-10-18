@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
         const changeAbs = Number((lastPrice || 0) - (base24h || 0))
         const changePct = base24h ? (changeAbs / base24h) * 100 : 0
         const mcap = (lastPrice || 0) * 1_000_000_000
-        const progress = (mcap / 47800) * 100
+        const progress = (mcap / 60600) * 100
         const graphRes = await supabase
             .from('swaps')
             .select('timestamp, price, volume_native')
