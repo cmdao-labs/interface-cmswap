@@ -5,18 +5,9 @@ import { type WriteContractErrorType } from '@wagmi/core'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from "@/components/ui/card"
 import ErrorModal from '@/components/cmswap/error-modal'
-import Swap8899 from '@/components/cmswap/Swap8899'
-import Swap96 from '@/components/cmswap/Swap96'
-import Swap10143 from '@/components/cmswap/Swap10143'
-import Swap25925 from '@/components/cmswap/Swap25925'
-import Liquidity8899 from '@/components/cmswap/Liquidity8899'
-import Liquidity96 from '@/components/cmswap/Liquidity96'
-import Liquidity10143 from '@/components/cmswap/Liquidity10143'
-import Liquidity25925 from '@/components/cmswap/Liquidity25925'
-import Positions8899 from '@/components/cmswap/Positions8899'
-import Positions96 from '@/components/cmswap/Positions96'
-import Positions10143 from '@/components/cmswap/Positions10143'
-import Positions25925 from '@/components/cmswap/Positions25925'
+import Swap from '@/components/cmswap/Swap'
+import Liquidity from '@/components/cmswap/Liquidity'
+import Positions from '@/components/cmswap/Positions'
 import { useSearchParams } from 'next/navigation'
 import ReferralTracker from '@/components/cmswap/Refferal'
 import SendTokenComponent from '@/components/cmswap/SendToken'
@@ -42,25 +33,16 @@ export default function Page() {
                             <TabsTrigger value="send" className=" text-sm data-[state=active]:bg-[#162638] data-[state=active]:text-[#00ff9d] rounded cursor-pointer">Send</TabsTrigger>
                         </TabsList>
                         <TabsContent value="swap">
-                            {chainId === 8899 && <Swap8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
-                            {(chainId === 96 || chainId === undefined) && <Swap96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
-                            {chainId === 10143 && <Swap10143 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
-                            {chainId === 25925 && <Swap25925 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                            <Swap setIsLoading={setIsLoading} setErrMsg={setErrMsg} />
                         </TabsContent>
                         <TabsContent value="send">
                             <SendTokenComponent chainConfig={Number(chainId)} setIsLoading={setIsLoading} setErrMsg={setErrMsg} />
                         </TabsContent>
                         <TabsContent value="liquidity">
-                            {chainId === 8899 && <Liquidity8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
-                            {(chainId === 96 || chainId === undefined) && <Liquidity96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
-                            {chainId === 10143 && <Liquidity10143 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
-                            {chainId === 25925 && <Liquidity25925 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                            <Liquidity setIsLoading={setIsLoading} setErrMsg={setErrMsg} />
                         </TabsContent>
                         <TabsContent value="position">
-                            {chainId === 8899 && <Positions8899 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
-                            {(chainId === 96 || chainId === undefined) && <Positions96 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
-                            {chainId === 10143 && <Positions10143 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
-                            {chainId === 25925 && <Positions25925 setIsLoading={setIsLoading} setErrMsg={setErrMsg} />}
+                            <Positions setIsLoading={setIsLoading} setErrMsg={setErrMsg} />
                         </TabsContent>
                     </Tabs>
                 </div>
