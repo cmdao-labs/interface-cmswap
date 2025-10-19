@@ -161,3 +161,50 @@ as $$
 $$;
 
 -- Note: token_stats and candles_5m removed to keep schema minimal.
+
+-- Swap markets metadata (ordered tokens mapped to a market/candles)
+create table if not exists swap_markets (
+  market_id text primary key,
+  token0 text not null,
+  token1 text not null,
+  pair_address text,
+  dex text,
+  decimals0 integer,
+  decimals1 integer
+);
+
+create unique index if not exists swap_markets_token_idx on swap_markets(token0, token1);
+
+-- On-chain liquidity snapshots per market/pair
+create table if not exists swap_pair_snapshots (
+  market_id text not null,
+  pair_address text not null,
+  dex text,
+  block_number bigint not null,
+  timestamp bigint not null,
+  reserve0 numeric,
+  reserve1 numeric,
+  price numeric,
+  primary key (pair_address, block_number)
+);
+
+create index if not exists swap_pair_snapshots_market_time_idx on swap_pair_snapshots(market_id, timestamp);
+create index if not exists swap_pair_snapshots_time_idx on swap_pair_snapshots(timestamp);
+
+-- Aggregated candlesticks per market and timeframe (timeframe_seconds denotes bucket size)
+create table if not exists swap_candles (
+  market_id text not null,
+  timeframe_seconds integer not null,
+  bucket_start bigint not null,
+  open numeric,
+  high numeric,
+  low numeric,
+  close numeric,
+  volume0 numeric,
+  volume1 numeric,
+  trades integer,
+  updated_at bigint,
+  primary key (market_id, timeframe_seconds, bucket_start)
+);
+
+create index if not exists swap_candles_market_time_idx on swap_candles(market_id, timeframe_seconds, bucket_start);

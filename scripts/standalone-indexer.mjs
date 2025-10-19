@@ -78,6 +78,13 @@ const RPC_URL = process.env.KUBTESTNET_RPC || 'https://rpc-testnet.bitkubchain.i
 
 const client = createPublicClient({ chain: bitkubTestnet, transport: http(RPC_URL) })
 
+const BASE_TOKEN = (process.env.INDEXER_BASE_TOKEN || '0x700d3ba307e1256e509ed3e45d6f9dff441d6907').toLowerCase()
+const BASE_TOKEN_DECIMALS = Number(process.env.INDEXER_BASE_TOKEN_DECIMALS || '18')
+const TIMEFRAMES_SECONDS = [15, 60, 300, 900, 3600, 14400, 86400]
+const marketCache = new Set()
+const decimalsCache = new Map()
+decimalsCache.set(BASE_TOKEN, BASE_TOKEN_DECIMALS)
+
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)) }
 
 async function restGet(path, qs = '') {
@@ -104,6 +111,101 @@ async function restUpsert(table, rows, onConflictCols) {
         const text = await res.text()
         throw new Error(`UPSERT ${table} ${res.status}: ${text}`)
     }
+}
+
+function toLowerAddr(value) {
+    if (typeof value !== 'string') return ''
+    return value.trim().toLowerCase()
+}
+
+function canonicalMarket(a, b) {
+    const aLower = toLowerAddr(a)
+    const bLower = toLowerAddr(b)
+    if (!aLower || !bLower) throw new Error('invalid market addresses')
+    if (aLower === bLower) throw new Error('market tokens must differ')
+    if (aLower < bLower) return { marketId: `${aLower}-${bLower}`, token0: aLower, token1: bLower }
+    return { marketId: `${bLower}-${aLower}`, token0: bLower, token1: aLower }
+}
+
+function bucketStart(timestampMs, seconds) {
+    const sizeMs = seconds * 1000
+    return Math.floor(Number(timestampMs) / sizeMs) * sizeMs
+}
+
+function toNumber(value) {
+    if (value === null || value === undefined) return null
+    const num = Number(value)
+    return Number.isFinite(num) ? num : null
+}
+
+async function getTokenDecimals(addr) {
+    const lower = toLowerAddr(addr)
+    if (!lower) return 18
+    if (decimalsCache.has(lower)) return decimalsCache.get(lower)
+    try {
+        const decimals = await client.readContract({ address: lower, abi: erc20Abi, functionName: 'decimals' })
+        const parsed = Number(decimals)
+        const safe = Number.isFinite(parsed) ? parsed : 18
+        decimalsCache.set(lower, safe)
+        return safe
+    } catch {
+        decimalsCache.set(lower, 18)
+        return 18
+    }
+}
+
+async function ensureMarket(tokenAddress) {
+    const tokenLower = toLowerAddr(tokenAddress)
+    if (!tokenLower || tokenLower === BASE_TOKEN) return null
+    const canonical = canonicalMarket(tokenLower, BASE_TOKEN)
+    if (marketCache.has(canonical.marketId)) return canonical
+    const [tokenDecimals, baseDecimals] = await Promise.all([
+        getTokenDecimals(tokenLower),
+        getTokenDecimals(BASE_TOKEN),
+    ])
+    const row = {
+        market_id: canonical.marketId,
+        token0: canonical.token0,
+        token1: canonical.token1,
+        pair_address: tokenLower,
+        dex: 'cmswap-factory',
+        decimals0: canonical.token0 === tokenLower ? tokenDecimals : baseDecimals,
+        decimals1: canonical.token1 === tokenLower ? tokenDecimals : baseDecimals,
+    }
+    await restUpsert('swap_markets', [row], 'market_id')
+    marketCache.add(canonical.marketId)
+    return canonical
+}
+
+function updateCandleAccumulator(map, marketId, timeframeSeconds, bucketMs, price, volume0, volume1) {
+    const key = `${marketId}:${timeframeSeconds}:${bucketMs}`
+    const existing = map.get(key)
+    if (!existing) {
+        map.set(key, {
+            market_id: marketId,
+            timeframe_seconds: timeframeSeconds,
+            bucket_start: bucketMs,
+            open: price,
+            high: price,
+            low: price,
+            close: price,
+            volume0: volume0 ?? 0,
+            volume1: volume1 ?? 0,
+            trades: 1,
+            updated_at: Date.now(),
+        })
+        return
+    }
+    existing.close = price
+    if (price != null) {
+        if (existing.high == null || price > existing.high) existing.high = price
+        if (existing.low == null || price < existing.low) existing.low = price
+        if (existing.open == null) existing.open = price
+    }
+    existing.volume0 = (existing.volume0 ?? 0) + (volume0 ?? 0)
+    existing.volume1 = (existing.volume1 ?? 0) + (volume1 ?? 0)
+    existing.trades = (existing.trades ?? 0) + 1
+    existing.updated_at = Date.now()
 }
 
 async function getLastBlock(stream) {
@@ -218,6 +320,80 @@ async function indexSwaps(latest) {
                 }
             })
             await restUpsert('swaps', rows, 'tx_hash,log_index')
+            try {
+                const uniqueTokens = new Set()
+                for (const row of rows) {
+                    const tokenLower = toLowerAddr(row.token_address)
+                    if (tokenLower) uniqueTokens.add(tokenLower)
+                }
+                const marketMap = new Map()
+                for (const tokenLower of uniqueTokens) {
+                    try {
+                        const canonical = await ensureMarket(tokenLower)
+                        if (canonical) marketMap.set(tokenLower, canonical)
+                    } catch (err) {
+                        console.error('ensureMarket error', tokenLower, err)
+                    }
+                }
+                const candleAccumulator = new Map()
+                const snapshotRows = []
+                for (const row of rows) {
+                    const tokenLower = toLowerAddr(row.token_address)
+                    if (!tokenLower) continue
+                    const market = marketMap.get(tokenLower)
+                    if (!market) continue
+                    const timestampMs = Number(row.timestamp ?? 0)
+                    if (!Number.isFinite(timestampMs) || timestampMs <= 0) continue
+                    const volumeNative = toNumber(row.volume_native)
+                    const volumeToken = toNumber(row.volume_token)
+                    if (volumeNative === null || volumeToken === null || volumeNative <= 0 || volumeToken <= 0) continue
+                    let priceBasePerToken = toNumber(row.price)
+                    if (!priceBasePerToken || priceBasePerToken <= 0) {
+                        priceBasePerToken = volumeToken > 0 ? volumeNative / volumeToken : null
+                    }
+                    if (!priceBasePerToken || !Number.isFinite(priceBasePerToken) || priceBasePerToken <= 0) continue
+                    const tokenIsToken0 = market.token0 === tokenLower
+                    const priceToken0PerToken1 = tokenIsToken0 ? priceBasePerToken : (priceBasePerToken > 0 ? 1 / priceBasePerToken : null)
+                    if (!priceToken0PerToken1 || !Number.isFinite(priceToken0PerToken1) || priceToken0PerToken1 <= 0) continue
+                    const tradeVolume0 = tokenIsToken0 ? volumeToken : volumeNative
+                    const tradeVolume1 = tokenIsToken0 ? volumeNative : volumeToken
+                    for (const seconds of TIMEFRAMES_SECONDS) {
+                        const bucketMs = bucketStart(timestampMs, seconds)
+                        updateCandleAccumulator(candleAccumulator, market.marketId, seconds, bucketMs, priceToken0PerToken1, tradeVolume0, tradeVolume1)
+                    }
+                    let reserveIn = 0n
+                    let reserveOut = 0n
+                    try {
+                        reserveIn = row.reserve_in != null ? BigInt(row.reserve_in) : 0n
+                        reserveOut = row.reserve_out != null ? BigInt(row.reserve_out) : 0n
+                    } catch {}
+                    const isBuy = Boolean(row.is_buy)
+                    const baseReserveRaw = isBuy ? reserveIn : reserveOut
+                    const tokenReserveRaw = isBuy ? reserveOut : reserveIn
+                    const baseReserve = Number(formatEther(baseReserveRaw))
+                    const tokenReserve = Number(formatEther(tokenReserveRaw))
+                    const reserve0 = tokenIsToken0 ? tokenReserve : baseReserve
+                    const reserve1 = tokenIsToken0 ? baseReserve : tokenReserve
+                    snapshotRows.push({
+                        market_id: market.marketId,
+                        pair_address: tokenLower,
+                        dex: 'cmswap-factory',
+                        block_number: row.block_number,
+                        timestamp: timestampMs,
+                        reserve0: Number.isFinite(reserve0) ? reserve0 : null,
+                        reserve1: Number.isFinite(reserve1) ? reserve1 : null,
+                        price: priceToken0PerToken1,
+                    })
+                }
+                if (candleAccumulator.size) {
+                    await restUpsert('swap_candles', Array.from(candleAccumulator.values()), 'market_id,timeframe_seconds,bucket_start')
+                }
+                if (snapshotRows.length) {
+                    await restUpsert('swap_pair_snapshots', snapshotRows, 'pair_address,block_number')
+                }
+            } catch (err) {
+                console.error('aggregate swap data error:', err)
+            }
         }
         await setLastBlock('swap', to)
         from = to + 1n

@@ -3,7 +3,7 @@ import React from 'react'
 import { useAccount } from 'wagmi'
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, formatUnits, parseUnits } from 'viem'
-import { ArrowDown, Settings } from "lucide-react"
+import { ArrowDown, Settings, BarChart3 } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -20,6 +20,7 @@ import { SwapTokenPanel } from '@/components/cmswap/swap/SwapTokenPanel'
 import { useSwapChain } from '@/components/cmswap/useSwapChain'
 import { LiquidityVariant } from '@/components/cmswap/liquidityVariant'
 import { selectSwapPoolDataHook } from '@/components/cmswap/swap/hooks/selectSwapPoolData'
+// Chart is rendered at page level; Swap only exposes a toggle button
 
 type UIToken = { name: string; value: '0xstring'; logo: string; decimal: number }
 type RouteOption = { id: string; pool: string; label: string; tvl: number; tvlUnit: string; fee?: number; feeLabel?: string; description?: string; amountOut?: number; priceQuote?: number; }
@@ -43,9 +44,11 @@ const ROUTE_DESCRIPTIONS: Record<string, string> = {
     JibSwap: 'Legacy standard pool',
 }
 
-export default function Swap({ setIsLoading, setErrMsg }: {
+export default function Swap({ setIsLoading, setErrMsg, isChartOpen: isChartOpenProp, onToggleChart }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
     setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>
+    isChartOpen?: boolean
+    onToggleChart?: () => void
 }) {
     const DEFAULT_SAMPLE_AMOUNT = "500"
     const { address } = useAccount()
@@ -63,6 +66,7 @@ export default function Swap({ setIsLoading, setErrMsg }: {
     const [onLoading, setOnLoading] = React.useState(false)
     const [autoCmswapFee, setAutoCmswapFee] = React.useState(true)
     const [routeQuoteMap, setRouteQuoteMap] = React.useState<Record<string, RouteQuoteMetrics>>({})
+    const [internalChartOpen, setInternalChartOpen] = React.useState(false)
     const [CMswapTVL, setCMswapTVL] = React.useState<any>({ tvl10000: "", tvl3000: "", tvl500: "", tvl100: "", exchangeRate: "", isReverted: false, FixedExchangeRate: "", t0: '' as '0xstring' })
     const [DMswapTVL, setDMswapTVL] = React.useState<any>({ tvl10000: "", tvl3000: "", tvl500: "", tvl100: "", exchangeRate: "", isReverted: false, FixedExchangeRate: "" })
     const [UdonTVL, setUdonTVL] = React.useState<any>({ tvl10000: "", exchangeRate: "", isReverted: false, FixedExchangeRate: "" })
@@ -77,6 +81,11 @@ export default function Swap({ setIsLoading, setErrMsg }: {
     const [slippageDraftCustom, setSlippageDraftCustom] = React.useState('0.5')
     const { tokenA, tokenB, setTokenA, setTokenB, hasInitializedFromParams, updateURLWithTokens, switchTokens } = useSwapTokenSelection(tokens, { defaultTokenAIndex: 0, defaultTokenBIndex: 2, referralAddress: address })
     const { resolveTokenAddress, quoteExactInputSingle, quoteExactInput } = useSwapQuote({ config, contract: qouterV2Contract, tokens })
+    const chartOpen = (typeof isChartOpenProp === 'boolean') ? isChartOpenProp : internalChartOpen
+    const handleToggleChart = React.useCallback(() => {
+        if (onToggleChart) return onToggleChart()
+        setInternalChartOpen(v => !v)
+    }, [onToggleChart])
     const [tokenABalance, setTokenABalance] = React.useState("")
     const [amountA, setAmountA] = React.useState("")
     const [tokenBBalance, setTokenBBalance] = React.useState("")
@@ -672,6 +681,7 @@ export default function Swap({ setIsLoading, setErrMsg }: {
     }, [setPoolSelect, setFeeSelect, getQuote, amountA])
     const piValue = !wrappedRoute && Number(amountB) > 0 ? computePriceImpact(Number(newPrice || '0'), Number((fixedExchangeRate || exchangeRate || '0'))) : undefined
     const tokenPairSelected = tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring'
+    // Chart data is now handled at page level
     const amountsEntered = tokenPairSelected && Number(amountA) > 0 && Number(amountB) > 0
     const routeLabel = altRoute ? [tokenNameByAddress(altRoute.a), tokenNameByAddress(altRoute.b), tokenNameByAddress(altRoute.c)].filter(Boolean).join(' -> ') : ''
     const priceImpactValue = piValue !== undefined ? Number(piValue) : undefined
@@ -757,25 +767,39 @@ export default function Swap({ setIsLoading, setErrMsg }: {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-            <div className="w-full space-y-2">
-                <div className="flex items-center justify-end">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        className="flex h-10 items-center gap-2 rounded-full border border-white/10 bg-slate-900/60 px-4 text-xs font-semibold text-white hover:border-white/20 hover:bg-slate-900/80"
-                        onClick={openSlippageModal}
-                    >
-                        <Settings className="h-3 w-3" aria-hidden="true" />
-                        <span>Slippage {slippageDisplay}%</span>
-                    </Button>
-                </div>
-                <div className="space-y-3">
-                    <SwapTokenPanel
-                        label="From"
-                        tokenAddress={tokenA.value}
-                        onTokenAddressChange={value => {if (value !== '0x') setTokenA({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico', decimal: 18 }); else setTokenA({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 })}}
-                        amount={amountA}
-                        onAmountChange={value => { setAmountA(value); getQuote(value) }}
+            <div>
+                <div className="w-full space-y-2">
+                    <div className="flex items-center justify-end gap-2">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            className={`flex h-10 items-center gap-2 rounded-full px-4 text-xs font-semibold transition ${
+                                chartOpen
+                                    ? 'border border-emerald-400/80 bg-emerald-500/15 text-white shadow-[0_0_18px_rgba(16,185,129,0.25)]'
+                                    : 'border border-white/10 bg-slate-900/60 text-white hover:border-white/20 hover:bg-slate-900/80'
+                            }`}
+                            onClick={handleToggleChart}
+                        >
+                            <BarChart3 className="h-3 w-3" aria-hidden="true" />
+                            <span>Chart</span>
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            className="flex h-10 items-center gap-2 rounded-full border border-white/10 bg-slate-900/60 px-4 text-xs font-semibold text-white hover:border-white/20 hover:bg-slate-900/80"
+                            onClick={openSlippageModal}
+                        >
+                            <Settings className="h-3 w-3" aria-hidden="true" />
+                            <span>Slippage {slippageDisplay}%</span>
+                        </Button>
+                    </div>
+                    <div className="space-y-3">
+                        <SwapTokenPanel
+                            label="From"
+                            tokenAddress={tokenA.value}
+                            onTokenAddressChange={value => {if (value !== '0x') setTokenA({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico', decimal: 18 }); else setTokenA({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 })}}
+                            amount={amountA}
+                            onAmountChange={value => { setAmountA(value); getQuote(value) }}
                         amountAutoFocus
                         selectedToken={tokenA}
                         tokens={tokens}
@@ -809,8 +833,9 @@ export default function Swap({ setIsLoading, setErrMsg }: {
                         onPopoverOpenChange={setOpen2}
                         balanceLabel={tokenBBalanceLabel}
                     />
+                    <div>{amountsEntered ? <Button className="h-14 w-full rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-600 text-base font-semibold text-white shadow-[0_18px_40px_-16px_rgba(16,185,129,0.7)] transition hover:shadow-[0_22px_46px_-14px_rgba(16,185,129,0.8)]" onClick={handleSwap}>Swap</Button> : <Button disabled className="h-14 w-full rounded-2xl border border-white/5 bg-slate-900/60 text-base font-semibold text-slate-500">Swap</Button>}</div>
                 </div>
-                <div>{amountsEntered ? <Button className="h-14 w-full rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-600 text-base font-semibold text-white shadow-[0_18px_40px_-16px_rgba(16,185,129,0.7)] transition hover:shadow-[0_22px_46px_-14px_rgba(16,185,129,0.8)]" onClick={handleSwap}>Swap</Button> : <Button disabled className="h-14 w-full rounded-2xl border border-white/5 bg-slate-900/60 text-base font-semibold text-slate-500">Swap</Button>}</div>
+            </div>
                 {!wrappedRoute && routeOptions.length > 0 && (
                     <div className="space-y-4 rounded-2xl border border-white/5 bg-slate-950/40 p-4">
                         <div className="flex flex-col gap-2 text-xs text-slate-300 sm:flex-row sm:items-center sm:justify-between">
