@@ -3,8 +3,10 @@ import React from 'react'
 import { useAccount } from 'wagmi'
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, formatUnits, parseUnits } from 'viem'
-import { ArrowDown } from "lucide-react"
+import { ArrowDown, Settings } from "lucide-react"
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { useDebouncedCallback } from 'use-debounce'
 import { config } from '@/config/reown'
 import { useSwapTokenSelection } from '@/components/cmswap/swap/useSwapTokenSelection'
@@ -24,6 +26,14 @@ type RouteOption = { id: string; pool: string; label: string; tvl: number; tvlUn
 type RouteQuoteMetrics = { amountOut?: number; priceQuote?: number; }
 type CmswapFeeTier = { fee: 100 | 500 | 3000 | 10000; label: string; tvlKey: 'tvl100' | 'tvl500' | 'tvl3000' | 'tvl10000' }
 const CMSWAP_FEE_TIERS: readonly CmswapFeeTier[] = [{ fee: 100, label: '0.01%', tvlKey: 'tvl100' }, { fee: 500, label: '0.05%', tvlKey: 'tvl500' }, { fee: 3000, label: '0.3%', tvlKey: 'tvl3000' }, { fee: 10000, label: '1%', tvlKey: 'tvl10000' } ] as const
+const SLIPPAGE_DENOMINATOR = BigInt(10_000)
+type SlippagePresetKey = '0.1' | '0.5' | '1'
+type SlippageOptionKey = SlippagePresetKey | 'custom'
+const SLIPPAGE_PRESETS: readonly { key: SlippagePresetKey; label: string; value: number }[] = [
+    { key: '0.1', label: '0.1%', value: 0.1 },
+    { key: '0.5', label: '0.5%', value: 0.5 },
+    { key: '1', label: '1%', value: 1 },
+] as const
 const ROUTE_DESCRIPTIONS: Record<string, string> = {
     CMswap: 'Concentrated liquidity pools',
     DiamonSwap: 'Legacy standard pool',
@@ -61,6 +71,10 @@ export default function Swap({ setIsLoading, setErrMsg }: {
     const [JibSwapTvl, setJibSwapTvl] = React.useState<any>({ tvl10000: "", exchangeRate: "", t0: '' as '0xstring' })
     const [reserveUdonA, setReserveUdonA] = React.useState(BigInt(0))
     const [reserveUdonB, setReserveUdonB] = React.useState(BigInt(0))
+    const [slippageTolerance, setSlippageTolerance] = React.useState<number>(0.5)
+    const [isSlippageModalOpen, setIsSlippageModalOpen] = React.useState(false)
+    const [slippageDraftSelection, setSlippageDraftSelection] = React.useState<SlippageOptionKey>('0.5')
+    const [slippageDraftCustom, setSlippageDraftCustom] = React.useState('0.5')
     const { tokenA, tokenB, setTokenA, setTokenB, hasInitializedFromParams, updateURLWithTokens, switchTokens } = useSwapTokenSelection(tokens, { defaultTokenAIndex: 0, defaultTokenBIndex: 2, referralAddress: address })
     const { resolveTokenAddress, quoteExactInputSingle, quoteExactInput } = useSwapQuote({ config, contract: qouterV2Contract, tokens })
     const [tokenABalance, setTokenABalance] = React.useState("")
@@ -77,6 +91,51 @@ export default function Swap({ setIsLoading, setErrMsg }: {
         return token?.name ?? ''
     }, [tokens])
     const usePoolData = React.useMemo(() => selectSwapPoolDataHook(variant), [variant])
+    const slippageBps = React.useMemo(() => {
+        const numeric = Number(slippageTolerance)
+        if (!Number.isFinite(numeric) || numeric <= 0) return 0
+        const clamped = Math.max(0, Math.min(5000, Math.round(numeric * 100)))
+        return clamped
+    }, [slippageTolerance])
+    const slippageMultiplier = React.useMemo(() => SLIPPAGE_DENOMINATOR - BigInt(slippageBps), [slippageBps])
+    const openSlippageModal = React.useCallback(() => {
+        const presetMatch = SLIPPAGE_PRESETS.find(p => Math.abs(p.value - slippageTolerance) < 1e-6)
+        if (presetMatch) {
+            setSlippageDraftSelection(presetMatch.key)
+            setSlippageDraftCustom(presetMatch.value.toString())
+        } else {
+            const formatted = Number.isFinite(slippageTolerance) ? parseFloat(slippageTolerance.toFixed(3)).toString() : ''
+            setSlippageDraftSelection('custom')
+            setSlippageDraftCustom(formatted)
+        }
+        setIsSlippageModalOpen(true)
+    }, [slippageTolerance])
+    const handleSlippageSelection = React.useCallback((key: SlippageOptionKey) => {
+        setSlippageDraftSelection(key)
+        if (key !== 'custom') {
+            const preset = SLIPPAGE_PRESETS.find(p => p.key === key)
+            if (preset) setSlippageDraftCustom(preset.value.toString())
+        }
+    }, [])
+    const handleCustomInputChange = React.useCallback((value: string) => {
+        if (slippageDraftSelection !== 'custom') handleSlippageSelection('custom')
+        setSlippageDraftCustom(value)
+    }, [handleSlippageSelection, slippageDraftSelection])
+    const handleSaveSlippage = React.useCallback(() => {
+        let nextValue: number | undefined
+        if (slippageDraftSelection === 'custom') {
+            const trimmed = slippageDraftCustom.trim()
+            const parsed = Number(trimmed)
+            if (!trimmed || !Number.isFinite(parsed) || parsed <= 0 || parsed > 50) return
+            nextValue = parsed
+        } else {
+            const preset = SLIPPAGE_PRESETS.find(p => p.key === slippageDraftSelection)
+            nextValue = preset?.value ?? slippageTolerance
+        }
+        if (nextValue === undefined) return
+        setSlippageTolerance(nextValue)
+        setIsSlippageModalOpen(false)
+    }, [slippageDraftSelection, slippageDraftCustom, slippageTolerance])
     const poolParams: any = React.useMemo(() => {
         const base: any = { config, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute }
         if (variant === LiquidityVariant.BKC) return { ...base, setCMswapTVL, setDMswapTVL, setUdonTVL, setPonderTVL, setReserveUdonA, setReserveUdonB, setAmountA, setAmountB }
@@ -306,7 +365,7 @@ export default function Swap({ setIsLoading, setErrMsg }: {
                 await ensureTokenAllowance({ config, token: { ...(isKap20 ? (kap20ABI as any) : erc20ABI), address: tokenA.value }, owner: address as `0x${string}`, spender: ROUTER02 as `0x${string}`, requiredAmount: parseUnits(amountA || '0', getDecimals(tokenA)), allowanceFunctionName: isKap20 ? 'allowances' : 'allowance' })
             }
             const parsedAmountIn = parseUnits(amountA || '0', getDecimals(tokenA))
-            const amountOutMinimum = parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100)
+            const amountOutMinimum = parseUnits(amountB || '0', getDecimals(tokenB)) * slippageMultiplier / SLIPPAGE_DENOMINATOR
             const path = altRoute ? encodePath([altRoute.a, altRoute.b, altRoute.c], [feeSelect, feeSelect]) : undefined
             const { hash: h, amountOut: r } = await executeRouterSwap({ config, router: router02Contract, tokenIn: tokenAvalue as `0x${string}`, tokenOut: tokenBvalue as `0x${string}`, recipient: address as `0x${string}`, amountIn: parsedAmountIn, amountOutMinimum, fee: feeSelect, path, value: tokenA.value.toUpperCase() === tokens[0].value.toUpperCase() ? parsedAmountIn : BigInt(0) })
             setTxupdate(h)
@@ -328,11 +387,11 @@ export default function Swap({ setIsLoading, setErrMsg }: {
             const deadline = Math.floor(Date.now() / 1000) + 60 * 10
             let h: `0x${string}` | undefined
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                const { request } = await simulateContract(config, { ...CMswapUniSmartRouteContractV2, functionName: 'swapExactETHForTokensWithFee', value: parseUnits(amountA || '0', getDecimals(tokenA)), args: [BigInt(0), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error('Address required') })(), BigInt(deadline)] })
+                const { request } = await simulateContract(config, { ...CMswapUniSmartRouteContractV2, functionName: 'swapExactETHForTokensWithFee', value: parseUnits(amountA || '0', getDecimals(tokenA)), args: [BigInt(0), parseUnits(amountB || '0', getDecimals(tokenB)) * slippageMultiplier / SLIPPAGE_DENOMINATOR, bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error('Address required') })(), BigInt(deadline)] })
                 h = await writeContract(config, request)
             } else {
                 const route = bestPathArray as readonly `0x${string}`[]
-                const { request } = await simulateContract(config, { ...CMswapUniSmartRouteContractV2, functionName: 'swapExactTokensForTokensWithFee', args: [BigInt(0), parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), route, address as `0x${string}`, BigInt(deadline)] })
+                const { request } = await simulateContract(config, { ...CMswapUniSmartRouteContractV2, functionName: 'swapExactTokensForTokensWithFee', args: [BigInt(0), parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * slippageMultiplier / SLIPPAGE_DENOMINATOR, route, address as `0x${string}`, BigInt(deadline)] })
                 h = await writeContract(config, request)
                 await waitForTransactionReceipt(config, { hash: h })
             }
@@ -347,7 +406,7 @@ export default function Swap({ setIsLoading, setErrMsg }: {
             const deadline = Math.floor(Date.now() / 1000) + 60 * 10
             let h: `0x${string}` | undefined
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                const { request } = await simulateContract(config, { ...CMswapUniSmartRouteContractV2, functionName: 'swapExactETHForTokensWithFee', value: parseUnits(amountA || '0', getDecimals(tokenA)), args: [BigInt(1), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error('Address required') })(), BigInt(deadline)] })
+                const { request } = await simulateContract(config, { ...CMswapUniSmartRouteContractV2, functionName: 'swapExactETHForTokensWithFee', value: parseUnits(amountA || '0', getDecimals(tokenA)), args: [BigInt(1), parseUnits(amountB || '0', getDecimals(tokenB)) * slippageMultiplier / SLIPPAGE_DENOMINATOR, bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error('Address required') })(), BigInt(deadline)] })
                 h = await writeContract(config, request)
             } else {
                 const allowanceA = tokenA.value.toUpperCase() === tokens[2].value.toUpperCase() ? await readContract(config, { ...kap20ABI as any, address: tokenA.value as '0xstring', functionName: 'allowances', args: [address as '0xstring', CMswapUniSmartRoute] }) : await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', CMswapUniSmartRoute] })
@@ -357,7 +416,7 @@ export default function Swap({ setIsLoading, setErrMsg }: {
                     await waitForTransactionReceipt(config, { hash: h0 })
                 }
                 if (altRoute === undefined || bestPathArray !== undefined) {
-                    const { request } = await simulateContract(config, { ...CMswapUniSmartRouteContractV2, functionName: 'swapExactTokensForTokensWithFee', args: [BigInt(1), parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error('Address required') })(), BigInt(deadline)] })
+                    const { request } = await simulateContract(config, { ...CMswapUniSmartRouteContractV2, functionName: 'swapExactTokensForTokensWithFee', args: [BigInt(1), parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * slippageMultiplier / SLIPPAGE_DENOMINATOR, bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error('Address required') })(), BigInt(deadline)] })
                     h = await writeContract(config, request)
                     await waitForTransactionReceipt(config, { hash: h })
                 }
@@ -373,7 +432,7 @@ export default function Swap({ setIsLoading, setErrMsg }: {
             const deadline = Math.floor(Date.now() / 1000) + 60 * 10
             let h: `0x${string}` | undefined
             if (tokenA.value.toUpperCase() === tokens[0].value.toUpperCase()) {
-                const { request } = await simulateContract(config, { ...CMswapUniSmartRouteContractV2, functionName: 'swapExactETHForTokensWithFee', value: parseUnits(amountA || '0', getDecimals(tokenA)), args: [BigInt(2), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error('Address required') })(), BigInt(deadline)] })
+                const { request } = await simulateContract(config, { ...CMswapUniSmartRouteContractV2, functionName: 'swapExactETHForTokensWithFee', value: parseUnits(amountA || '0', getDecimals(tokenA)), args: [BigInt(2), parseUnits(amountB || '0', getDecimals(tokenB)) * slippageMultiplier / SLIPPAGE_DENOMINATOR, bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error('Address required') })(), BigInt(deadline)] })
                 h = await writeContract(config, request)
             } else {
                 const allowanceA = tokenA.value.toUpperCase() === tokens[2].value.toUpperCase() ? await readContract(config, { ...kap20ABI as any, address: tokenA.value as '0xstring', functionName: 'allowances', args: [address as '0xstring', CMswapUniSmartRoute] }) : await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', CMswapUniSmartRoute] })
@@ -383,7 +442,7 @@ export default function Swap({ setIsLoading, setErrMsg }: {
                     await waitForTransactionReceipt(config, { hash: h0 })
                 }
                 if (altRoute === undefined || bestPathArray !== undefined) {
-                    const { request } = await simulateContract(config, { ...CMswapUniSmartRouteContractV2, functionName: 'swapExactTokensForTokensWithFee', args: [BigInt(2), parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * BigInt(95) / BigInt(100), bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error('Address required') })(), BigInt(deadline)] })
+                    const { request } = await simulateContract(config, { ...CMswapUniSmartRouteContractV2, functionName: 'swapExactTokensForTokensWithFee', args: [BigInt(2), parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * slippageMultiplier / SLIPPAGE_DENOMINATOR, bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error('Address required') })(), BigInt(deadline)] })
                     h = await writeContract(config, request)
                     await waitForTransactionReceipt(config, { hash: h })
                 }
@@ -399,7 +458,6 @@ export default function Swap({ setIsLoading, setErrMsg }: {
             const tokenAAddr = tokenA.value.toUpperCase()
             const tokenBAddr = tokenB.value.toUpperCase()
             const parsedAmountA = parseUnits(amountA || '0', getDecimals(tokenA))
-            const slippagePercent = 5
             if (tokenAAddr !== tokens[1].value.toUpperCase()) {
                 const allowanceA = await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', CMswapPoolDualRouterContract.address as '0xstring'] })
                 if ((allowanceA as bigint) < parsedAmountA) {
@@ -422,7 +480,7 @@ export default function Swap({ setIsLoading, setErrMsg }: {
             }
             if (!useFunction || !poolAddr) throw new Error('Unsupported token combination')
             const expectedOut = (useFunction === 'swapCMJtoJBC' || useFunction === 'swapJUSDTtoJBC') ? await readContract(config, { ...CMswapPoolDualRouterContract, functionName: 'getExpectedJBCFromToken', args: [poolAddr, parsedAmountA] }) as bigint : await readContract(config, { ...CMswapPoolDualRouterContract, functionName: 'getExpectedTokenFromJBC', args: [poolAddr, parsedAmountA] }) as bigint
-            const minOut = expectedOut * BigInt(100 - slippagePercent) / BigInt(100)
+            const minOut = expectedOut * slippageMultiplier / SLIPPAGE_DENOMINATOR
             if (useFunction === 'swapJC' || useFunction === 'swapJU') {
                 const { request } = await simulateContract(config, { ...CMswapPoolDualRouterContract, functionName: useFunction, args: [poolAddr, parsedAmountA, minOut] })
                 const tx = await writeContract(config, request)
@@ -617,7 +675,7 @@ export default function Swap({ setIsLoading, setErrMsg }: {
     const amountsEntered = tokenPairSelected && Number(amountA) > 0 && Number(amountB) > 0
     const routeLabel = altRoute ? [tokenNameByAddress(altRoute.a), tokenNameByAddress(altRoute.b), tokenNameByAddress(altRoute.c)].filter(Boolean).join(' -> ') : ''
     const priceImpactValue = piValue !== undefined ? Number(piValue) : undefined
-    const priceImpactLabel = priceImpactValue !== undefined && Number.isFinite(priceImpactValue) ? `${priceImpactValue.toFixed(2)}%` : undefined
+    const priceImpactLabel = priceImpactValue !== undefined && Number.isFinite(priceImpactValue) ? `${priceImpactValue.toFixed(4)}%` : undefined
     const tokenNamesReady = tokenPairSelected && tokenA.name !== 'Choose Token' && tokenB.name !== 'Choose Token'
     const buildRouteStats = React.useCallback((route: RouteOption) => {
         if (!tokenNamesReady) return { priceText: undefined, returnText: undefined }
@@ -631,10 +689,86 @@ export default function Swap({ setIsLoading, setErrMsg }: {
     const previewPriceClass = `text-sm font-semibold ${previewRouteStats?.priceText ? 'text-white' : 'text-slate-500'}`
     const previewReturnClass = `text-sm font-semibold ${previewRouteStats?.returnText ? 'text-emerald-300' : 'text-slate-500'}`
     const isBestPreview = previewRoute?.id === suggestedRouteId
+    const slippageDisplay = Number.isFinite(slippageTolerance) ? parseFloat(slippageTolerance.toFixed(3)).toString() : '0.5'
+    const isCustomSelected = slippageDraftSelection === 'custom'
+    const trimmedCustom = slippageDraftCustom.trim()
+    const customValueNumber = Number(trimmedCustom)
+    const customValueValid = !isCustomSelected || (trimmedCustom.length > 0 && Number.isFinite(customValueNumber) && customValueNumber > 0 && customValueNumber <= 50)
+    const customError = isCustomSelected && !customValueValid ? 'Enter a number between 0.01 and 50.' : undefined
+    const saveDisabled = isCustomSelected && !customValueValid
 
     return (
         <div className="flex justify-center">
-            <div className="w-full space-y-6">
+            <Dialog open={isSlippageModalOpen} onOpenChange={setIsSlippageModalOpen}>
+                <DialogContent overlayClassName="bg-slate-950/70 backdrop-blur-lg" className="w-full max-w-[360px] rounded-3xl border border-white/10 bg-slate-950/95 p-6 text-white shadow-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg font-semibold text-white">Slippage tolerance</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-xs text-slate-300">Transactions will revert if the price moves beyond your tolerance.</p>
+                        <div className="grid grid-cols-3 gap-2">
+                            {SLIPPAGE_PRESETS.map(option => {
+                                const active = slippageDraftSelection === option.key
+                                return (
+                                    <button
+                                        key={option.key}
+                                        type="button"
+                                        onClick={() => handleSlippageSelection(option.key)}
+                                        className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+                                            active
+                                                ? 'border-emerald-400/80 bg-emerald-500/15 text-white shadow-[0_0_20px_rgba(16,185,129,0.35)]'
+                                                : 'border-white/10 bg-slate-900/50 text-slate-200 hover:border-white/20 hover:bg-slate-900/70'
+                                        }`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                        <div
+                            className={`rounded-2xl border p-3 transition ${
+                                isCustomSelected
+                                    ? 'border-emerald-400/80 bg-emerald-500/15 shadow-[0_0_20px_rgba(16,185,129,0.35)]'
+                                    : 'border-white/10 bg-slate-900/50 hover:border-white/20 hover:bg-slate-900/70'
+                            }`}
+                        >
+                            <div className="mb-2 flex items-center justify-between">
+                                <span className="text-sm font-semibold text-white">Custom (%)</span>
+                                {isCustomSelected && trimmedCustom && <span className="text-xs text-slate-300">{trimmedCustom}%</span>}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    value={slippageDraftCustom}
+                                    onChange={event => handleCustomInputChange(event.target.value)}
+                                    onFocus={() => handleSlippageSelection('custom')}
+                                    inputMode="decimal"
+                                    placeholder="0.50"
+                                    className="h-10 bg-slate-950/80 text-sm text-white"
+                                />
+                                <span className="text-sm text-slate-300">%</span>
+                            </div>
+                            {customError && <p className="pt-2 text-xs text-red-400">{customError}</p>}
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" className="w-full rounded-xl bg-emerald-500 text-white hover:bg-emerald-400" onClick={handleSaveSlippage} disabled={saveDisabled}>
+                            Save
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <div className="w-full space-y-2">
+                <div className="flex items-center justify-end">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        className="flex h-10 items-center gap-2 rounded-full border border-white/10 bg-slate-900/60 px-4 text-xs font-semibold text-white hover:border-white/20 hover:bg-slate-900/80"
+                        onClick={openSlippageModal}
+                    >
+                        <Settings className="h-3 w-3" aria-hidden="true" />
+                        <span>Slippage {slippageDisplay}%</span>
+                    </Button>
+                </div>
                 <div className="space-y-3">
                     <SwapTokenPanel
                         label="From"
@@ -770,32 +904,24 @@ export default function Swap({ setIsLoading, setErrMsg }: {
                                 </div>
                             )
                         )}
+                        {(tokenPairSelected && amountA !== '') &&
+                            <div className="space-y-3">
+                                {routeLabel && (
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-slate-400">Route</span>
+                                        <span className="font-medium text-white">{routeLabel}</span>
+                                    </div>
+                                )}
+                                {priceImpactLabel && (
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-slate-400">Price impact</span>
+                                        <span className="font-medium text-white">{priceImpactLabel}</span>
+                                    </div>
+                                )}
+                            </div>
+                        }
                     </div>
                 )}
-                <div className="rounded-3xl border border-white/5 bg-slate-950/40 p-5 text-sm text-slate-300">
-                    {tokenPairSelected ? (
-                        <div className="space-y-3">
-                            {routeLabel && (
-                                <div className="flex items-center justify-between">
-                                    <span className="text-slate-400">Route</span>
-                                    <span className="font-medium text-white">{routeLabel}</span>
-                                </div>
-                            )}
-                            {priceImpactLabel && (
-                                <div className="flex items-center justify-between">
-                                    <span className="text-slate-400">Price impact</span>
-                                    <span className="font-medium text-white">{priceImpactLabel}</span>
-                                </div>
-                            )}
-                            <div className="flex items-center justify-between">
-                                <span className="text-slate-400">Slippage tolerance</span>
-                                <span className="font-medium text-white">5%</span>
-                            </div>
-                        </div>
-                    ) : (
-                        <p className="text-slate-400">Select tokens and enter an amount to see route, quotes, and price impact.</p>
-                    )}
-                </div>
             </div>
         </div>
     )

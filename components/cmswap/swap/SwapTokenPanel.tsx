@@ -3,7 +3,7 @@ import * as React from 'react'
 import { ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from '@/components/ui/command'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 type SwapTokenOption = {
     name: string
     value: '0xstring'
@@ -35,11 +35,16 @@ export function SwapTokenPanel<TToken extends SwapTokenOption>({ label, tokenAdd
         },
         [onSelectToken, onPopoverOpenChange]
     )
+    const popularTokens = React.useMemo(() => tokens.slice(0, 4), [tokens])
+    const shortenAddress = React.useCallback((value: string) => {
+        if (!value || value === '0x') return value
+        return `${value.slice(0, 6)}...${value.slice(-4)}`
+    }, [])
     return (
         <div className="rounded-2xl border border-white/5 bg-slate-950/60 p-4 backdrop-blur-sm transition-colors">
             <div className="mb-3 flex items-center justify-between text-[11px] uppercase tracking-wide text-slate-400">
                 <span>{label}</span>
-                <input className="w-[260px] truncate rounded-md bg-transparent p-1 text-right text-[11px] text-slate-500 outline-none focus:text-slate-300 focus:ring-0" value={tokenAddress} onChange={event => onTokenAddressChange?.(event.target.value)} />
+                <span />
             </div>
             <div className="flex items-end justify-between gap-4">
                 <input
@@ -50,8 +55,8 @@ export function SwapTokenPanel<TToken extends SwapTokenOption>({ label, tokenAdd
                     onChange={event => onAmountChange?.(event.target.value)}
                     readOnly={amountReadOnly || !onAmountChange}
                 />
-                <Popover open={popoverOpen} onOpenChange={onPopoverOpenChange}>
-                    <PopoverTrigger asChild>
+                <Dialog open={popoverOpen} onOpenChange={onPopoverOpenChange}>
+                    <DialogTrigger asChild>
                         <Button variant="outline" role="combobox" aria-expanded={popoverOpen} className="flex h-12 min-w-[170px] items-center justify-between gap-3 rounded-full border-white/10 bg-slate-900/60 px-4 text-base font-medium text-white transition-colors hover:bg-slate-900/80">
                             <div className="flex items-center gap-3">
                                 <div className="flex size-8 items-center justify-center overflow-hidden rounded-full bg-slate-800/80">
@@ -61,26 +66,64 @@ export function SwapTokenPanel<TToken extends SwapTokenOption>({ label, tokenAdd
                             </div>
                             <ChevronDown className="h-4 w-4 text-slate-300" />
                         </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="z-[100] w-[240px] rounded-2xl border border-white/10 bg-slate-950/90 p-0 backdrop-blur-xl">
-                        <Command className="bg-transparent">
-                            <CommandInput placeholder="Search tokens" className="border-b border-white/5 bg-transparent text-slate-200" />
-                            <CommandList>
-                                <CommandEmpty>No tokens found.</CommandEmpty>
-                                <CommandGroup className="max-h-[260px] overflow-y-auto">
-                                    {tokens.map(token => (
-                                        <CommandItem key={token.value} value={token.name} onSelect={() => handleSelectToken(token)} className="cursor-pointer text-slate-200 hover:bg-slate-900/70">
-                                            <div className="flex items-center">
-                                                <img alt="" src={token.logo} className="size-6 shrink-0 rounded-full" />
-                                                <span className="ml-3 truncate">{token.name}</span>
+                    </DialogTrigger>
+                    <DialogContent overlayClassName="bg-slate-950/70 backdrop-blur-lg" className="z-[110] w-full max-w-[420px] rounded-3xl border border-white/10 bg-slate-950/95 p-0 shadow-2xl sm:max-w-[440px]">
+                        <div className="flex flex-col gap-4 p-5 sm:p-6">
+                            <div className="space-y-1"><h2 className="text-sm font-semibold text-white">Select a token</h2></div>
+                            <Command className="bg-transparent">
+                                <CommandInput placeholder="Search tokens" className="h-9 rounded-2xl border border-white/5 bg-slate-900/70 px-4 text-sm text-slate-200 placeholder:text-slate-500 focus:border-emerald-400/50 focus:ring-0" />
+                                <div className="mt-4 space-y-3">
+                                    {popularTokens.length > 0 && (
+                                        <div className="space-y-2">
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {popularTokens.map(token => (
+                                                    <button
+                                                        key={`popular-${token.value}`}
+                                                        type="button"
+                                                        onClick={() => handleSelectToken(token)}
+                                                        className="flex items-center gap-3 rounded-2xl border border-white/5 bg-slate-900/60 px-3 py-2 text-left text-sm text-slate-200 transition hover:border-emerald-400/40 hover:bg-slate-900"
+                                                    >
+                                                        <div className="flex size-9 items-center justify-center overflow-hidden rounded-full bg-slate-800/80">
+                                                            {token.logo && token.logo !== '../favicon.ico' ? <img alt="" src={token.logo} className="size-9 rounded-full" /> : <span className="text-sm text-slate-300">?</span>}
+                                                        </div>
+                                                        <div className="flex flex-1 flex-col">
+                                                            <span className="truncate font-medium text-white">{token.name}</span>
+                                                            <span className="text-[11px] text-slate-400">{shortenAddress(token.value)}</span>
+                                                        </div>
+                                                    </button>
+                                                ))}
                                             </div>
-                                        </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
-                    </PopoverContent>
-                </Popover>
+                                        </div>
+                                    )}
+                                    <CommandList className="max-h-[45vh] overflow-y-auto rounded-2xl border border-white/5 bg-slate-950/80 p-2">
+                                        <CommandEmpty className="py-6 text-center text-sm text-slate-400">No tokens found.</CommandEmpty>
+                                        <CommandGroup className="space-y-1">
+                                            {tokens.map(token => (
+                                                <CommandItem
+                                                    key={token.value}
+                                                    value={`${token.name} ${token.value}`}
+                                                    onSelect={() => handleSelectToken(token)}
+                                                    className="group flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm text-slate-200 transition aria-selected:bg-emerald-500/10 hover:bg-slate-900/80"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex size-9 items-center justify-center overflow-hidden rounded-full bg-slate-800/80">
+                                                            {token.logo && token.logo !== '../favicon.ico' ? <img alt="" src={token.logo} className="size-9 rounded-full" /> : <span className="text-sm text-slate-300">?</span>}
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="truncate font-medium text-white">{token.name}</span>
+                                                            <span className="text-[11px] text-slate-400">{shortenAddress(token.value)}</span>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500 group-aria-selected:text-emerald-300">Select</span>
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </div>
+                            </Command>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
             <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
                 <span />
