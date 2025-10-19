@@ -5,6 +5,8 @@
 //           INDEXER_CHAIN_ID (default: auto-detect via RPC)
 //           INDEXER_FACTORY_ADDR (default current Bitkub testnet factory)
 //           INDEXER_START_BLOCK (default current Bitkub testnet start block)
+//           UNISWAP_V3_FACTORY_ADDR (optional; enables Uniswap V3 indexing if set)
+//           UNISWAP_V3_START_BLOCK (default Bitkub testnet V3 factory creation block)
 //           INDEXER_BASE_TOKEN
 import { createPublicClient, decodeFunctionData, http, formatEther, erc20Abi } from 'viem'
 import { bitkubTestnet } from 'viem/chains'
@@ -13,6 +15,10 @@ dotenv.config({ path: '.env.local' });
 
 const FACTORY_ADDR = (process.env.INDEXER_FACTORY_ADDR || '0x46a4073c830031ea19d7b9825080c05f8454e530').toLowerCase()
 const START_BLOCK = BigInt(process.env.INDEXER_START_BLOCK || '23935659')
+
+// Uniswap V3 options (Bitkub testnet defaults from lib/chains.ts)
+const V3_FACTORY_ADDR = (process.env.UNISWAP_V3_FACTORY_ADDR || process.env.INDEXER_V3_FACTORY_ADDR || '').toLowerCase()
+const V3_START_BLOCK = BigInt(process.env.UNISWAP_V3_START_BLOCK || process.env.INDEXER_V3_START_BLOCK || '23935400')
 
 const FACTORY_EVENTS_ABI = [
     {
@@ -41,6 +47,39 @@ const FACTORY_EVENTS_ABI = [
             { indexed: false, internalType: 'uint256', name: 'amountOut', type: 'uint256' },
             { indexed: false, internalType: 'uint256', name: 'reserveIn', type: 'uint256' },
             { indexed: false, internalType: 'uint256', name: 'reserveOut', type: 'uint256' },
+        ],
+    },
+]
+
+// Minimal Uniswap V3 ABIs for events we need
+const V3_FACTORY_EVENTS_ABI = [
+    {
+        anonymous: false,
+        name: 'PoolCreated',
+        type: 'event',
+        inputs: [
+            { indexed: true, internalType: 'address', name: 'token0', type: 'address' },
+            { indexed: true, internalType: 'address', name: 'token1', type: 'address' },
+            { indexed: true, internalType: 'uint24', name: 'fee', type: 'uint24' },
+            { indexed: false, internalType: 'int24', name: 'tickSpacing', type: 'int24' },
+            { indexed: false, internalType: 'address', name: 'pool', type: 'address' },
+        ],
+    },
+]
+
+const V3_POOL_EVENTS_ABI = [
+    {
+        anonymous: false,
+        name: 'Swap',
+        type: 'event',
+        inputs: [
+            { indexed: true, internalType: 'address', name: 'sender', type: 'address' },
+            { indexed: true, internalType: 'address', name: 'recipient', type: 'address' },
+            { indexed: false, internalType: 'int256', name: 'amount0', type: 'int256' },
+            { indexed: false, internalType: 'int256', name: 'amount1', type: 'int256' },
+            { indexed: false, internalType: 'uint160', name: 'sqrtPriceX96', type: 'uint160' },
+            { indexed: false, internalType: 'uint128', name: 'liquidity', type: 'uint128' },
+            { indexed: false, internalType: 'int24', name: 'tick', type: 'int24' },
         ],
     },
 ]
@@ -141,6 +180,11 @@ function bucketStart(timestampMs, seconds) {
     return Math.floor(Number(timestampMs) / sizeMs) * sizeMs
 }
 
+function pow10(exp) {
+    // supports negative exponents
+    return Math.pow(10, exp)
+}
+
 function toNumber(value) {
     if (value === null || value === undefined) return null
     const num = Number(value)
@@ -221,6 +265,12 @@ function updateCandleAccumulator(map, marketId, timeframeSeconds, bucketMs, pric
 async function getLastBlock(stream) {
     const rows = await restGet('index_state', `select=last_block&chain_id=eq.${CHAIN_ID}&stream=eq.${encodeURIComponent(stream)}&limit=1`)
     if (!rows || rows.length === 0) return START_BLOCK
+    return BigInt(rows[0].last_block)
+}
+
+async function getLastBlockWithFallback(stream, fallbackStartBlock) {
+    const rows = await restGet('index_state', `select=last_block&chain_id=eq.${CHAIN_ID}&stream=eq.${encodeURIComponent(stream)}&limit=1`)
+    if (!rows || rows.length === 0) return BigInt(fallbackStartBlock)
     return BigInt(rows[0].last_block)
 }
 
@@ -414,6 +464,168 @@ async function indexSwaps(latest) {
     }
 }
 
+// ============= Uniswap V3 indexing =============
+
+function canonicalMarketV3(a, b) {
+    const aLower = toLowerAddr(a)
+    const bLower = toLowerAddr(b)
+    if (!aLower || !bLower) throw new Error('invalid market addresses')
+    if (aLower === bLower) throw new Error('market tokens must differ')
+    if (aLower < bLower) return { token0: aLower, token1: bLower }
+    return { token0: bLower, token1: aLower }
+}
+
+function v3MarketId(token0, token1, fee) {
+    // Include a prefix and fee tier to avoid collisions with other DEXes and fee tiers
+    const feeNum = Number(fee || 0)
+    return `univ3:${token0}-${token1}:fee${feeNum}`
+}
+
+async function indexV3Factory(latest) {
+    if (!V3_FACTORY_ADDR) return
+    let from = await getLastBlockWithFallback('v3:factory', V3_START_BLOCK)
+    if (from > latest) return
+    const chunk = BigInt(MAX_RANGE)
+    while (from <= latest) {
+        const to = from + chunk < latest ? from + chunk : latest
+        const logs = await client.getContractEvents({
+            address: V3_FACTORY_ADDR,
+            abi: V3_FACTORY_EVENTS_ABI,
+            eventName: 'PoolCreated',
+            fromBlock: from,
+            toBlock: to,
+        })
+        if (logs.length) {
+            // prepare markets and tokens
+            const marketRows = []
+            const tokenSet = new Set()
+            for (const l of logs) {
+                const t0 = toLowerAddr(l.args?.token0)
+                const t1 = toLowerAddr(l.args?.token1)
+                const fee = Number(l.args?.fee ?? 0)
+                if (!t0 || !t1) continue
+                const { token0, token1 } = canonicalMarketV3(t0, t1)
+                const [dec0, dec1] = await Promise.all([
+                    getTokenDecimals(token0),
+                    getTokenDecimals(token1),
+                ])
+                const mid = v3MarketId(token0, token1, fee)
+                marketRows.push({
+                    chain_id: CHAIN_ID,
+                    market_id: mid,
+                    token0,
+                    token1,
+                    pair_address: toLowerAddr(l.args?.pool) || '',
+                    dex: 'uniswap-v3',
+                    decimals0: dec0,
+                    decimals1: dec1,
+                })
+                tokenSet.add(token0)
+                tokenSet.add(token1)
+            }
+            if (marketRows.length) {
+                await restUpsert('swap_markets', marketRows, 'chain_id,market_id')
+            }
+            if (tokenSet.size) {
+                // Best-effort metadata fetch
+                for (const addr of tokenSet) {
+                    try {
+                        const [symbol, name] = await Promise.all([
+                            client.readContract({ address: addr, abi: erc20Abi, functionName: 'symbol' }),
+                            client.readContract({ address: addr, abi: erc20Abi, functionName: 'name' }),
+                        ])
+                        await restUpsert('tokens', [{ chain_id: CHAIN_ID, address: addr, symbol, name }], 'chain_id,address')
+                    } catch {}
+                }
+            }
+        }
+        await setLastBlock('v3:factory', to)
+        from = to + 1n
+    }
+}
+
+async function indexV3Swaps(latest) {
+    if (!V3_FACTORY_ADDR) return
+    // Load known V3 pools from swap_markets
+    const markets = await restGet('swap_markets', `select=market_id,pair_address,token0,token1,decimals0,decimals1&chain_id=eq.${CHAIN_ID}&dex=eq.uniswap-v3`)
+    if (!Array.isArray(markets) || markets.length === 0) return
+    const chunk = BigInt(MAX_RANGE)
+    for (const m of markets) {
+        const pool = toLowerAddr(m.pair_address)
+        if (!pool) continue
+        let from = await getLastBlockWithFallback(`v3:swap:${pool}`, V3_START_BLOCK)
+        if (from > latest) continue
+        while (from <= latest) {
+            const to = from + chunk < latest ? from + chunk : latest
+            const logs = await client.getContractEvents({
+                address: pool,
+                abi: V3_POOL_EVENTS_ABI,
+                eventName: 'Swap',
+                fromBlock: from,
+                toBlock: to,
+            })
+            if (logs.length) {
+                const blockNumbers = Array.from(new Set(logs.map((l) => String(l.blockNumber))))
+                const blocks = await Promise.all(blockNumbers.map((bn) => client.getBlock({ blockNumber: BigInt(bn) })))
+                const blockMap = new Map()
+                blocks.forEach((b, i) => blockMap.set(blockNumbers[i], Number(b.timestamp) * 1000))
+
+                const candleAccumulator = new Map()
+                const snapshotRows = []
+                for (const l of logs) {
+                    const tsMs = blockMap.get(String(l.blockNumber)) || null
+                    const amount0 = BigInt(l.args?.amount0 ?? 0)
+                    const amount1 = BigInt(l.args?.amount1 ?? 0)
+                    const sqrtPriceX96 = BigInt(l.args?.sqrtPriceX96 ?? 0)
+                    const dec0 = Number(m.decimals0 ?? 18)
+                    const dec1 = Number(m.decimals1 ?? 18)
+                    // Compute price1_per_0 = (sqrtX96/2^96)^2 * 10^(dec0-dec1)
+                    let price1_per_0 = null
+                    try {
+                        const q96 = Math.pow(2, 96)
+                        const sqrtP = Number(sqrtPriceX96) / q96
+                        const raw = sqrtP * sqrtP
+                        const adj = raw * pow10(dec0 - dec1)
+                        price1_per_0 = Number.isFinite(adj) && adj > 0 ? adj : null
+                    } catch {}
+                    const price0_per_1 = price1_per_0 && price1_per_0 > 0 ? 1 / price1_per_0 : null
+
+                    // Volumes per swap in natural units
+                    const vol0 = Math.abs(Number(amount0) / Math.pow(10, dec0))
+                    const vol1 = Math.abs(Number(amount1) / Math.pow(10, dec1))
+
+                    if (tsMs && price0_per_1 && Number.isFinite(vol0) && Number.isFinite(vol1)) {
+                        for (const seconds of TIMEFRAMES_SECONDS) {
+                            const bucketMs = bucketStart(tsMs, seconds)
+                            updateCandleAccumulator(candleAccumulator, m.market_id, seconds, bucketMs, price0_per_1, vol0, vol1)
+                        }
+                        snapshotRows.push({
+                            chain_id: CHAIN_ID,
+                            market_id: m.market_id,
+                            pair_address: pool,
+                            dex: 'uniswap-v3',
+                            block_number: String(l.blockNumber),
+                            timestamp: tsMs,
+                            reserve0: null,
+                            reserve1: null,
+                            price: price0_per_1,
+                        })
+                    }
+                }
+                if (candleAccumulator.size) {
+                    const withChain = Array.from(candleAccumulator.values()).map((c) => ({ ...c, chain_id: CHAIN_ID }))
+                    await restUpsert('swap_candles', withChain, 'chain_id,market_id,timeframe_seconds,bucket_start')
+                }
+                if (snapshotRows.length) {
+                    await restUpsert('swap_pair_snapshots', snapshotRows, 'chain_id,pair_address,block_number')
+                }
+            }
+            await setLastBlock(`v3:swap:${pool}`, to)
+            from = to + 1n
+        }
+    }
+}
+
 async function indexTransfers(latest) {
     const tokens = await restGet('tokens', `select=address&chain_id=eq.${CHAIN_ID}`)
     if (!Array.isArray(tokens) || tokens.length === 0) return
@@ -461,6 +673,9 @@ async function tick() {
     if (MODE === 'all' || MODE === 'creation') await indexCreation(latest)
     if (MODE === 'all' || MODE === 'swap') await indexSwaps(latest)
     if (MODE === 'all' || MODE === 'transfer') await indexTransfers(latest)
+    // Uniswap V3 indexing; runs when factory is provided or when mode explicitly targets v3
+    if (V3_FACTORY_ADDR && (MODE === 'all' || MODE === 'v3' || MODE === 'v3-market')) await indexV3Factory(latest)
+    if (V3_FACTORY_ADDR && (MODE === 'all' || MODE === 'v3' || MODE === 'v3-swap')) await indexV3Swaps(latest)
 }
 
 async function main() {
