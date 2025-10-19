@@ -122,7 +122,114 @@ const MAX_RANGE = Number(process.env.INDEXER_MAX_RANGE || '2000')
 const MODE = (process.env.INDEXER_MODE || 'all')
 const RPC_URL = process.env.INDEXER_RPC_URL || process.env.KUBTESTNET_RPC || 'https://rpc-testnet.bitkubchain.io'
 
+// Rate limit and retry configuration (tunable via env)
+const INDEXER_RPS = Math.max(1, Number(process.env.INDEXER_RPS || '5'))
+const INDEXER_MAX_CONCURRENCY = Math.max(1, Number(process.env.INDEXER_MAX_CONCURRENCY || '2'))
+const RETRY_MAX_ATTEMPTS = Math.max(1, Number(process.env.INDEXER_RETRY_MAX_ATTEMPTS || '6'))
+const RETRY_BASE_MS = Math.max(50, Number(process.env.INDEXER_RETRY_BASE_MS || '500'))
+const RETRY_MAX_MS = Math.max(RETRY_BASE_MS, Number(process.env.INDEXER_RETRY_MAX_MS || '30000'))
+const LOG_LEVEL = (process.env.INDEXER_LOG_LEVEL || 'info').toLowerCase()
+
 const client = createPublicClient({ chain: bitkubTestnet, transport: http(RPC_URL) })
+
+// ------------- Logging helpers -------------
+const levels = { error: 0, warn: 1, info: 2, debug: 3 }
+function log(level, msg, meta) {
+    if ((levels[level] ?? 2) > (levels[LOG_LEVEL] ?? 2)) return
+    const ts = new Date().toISOString()
+    if (meta !== undefined) console.log(`[${ts}] [${level.toUpperCase()}] ${msg}`, meta)
+    else console.log(`[${ts}] [${level.toUpperCase()}] ${msg}`)
+}
+
+// ------------- Rate limiter and retry -------------
+class RateLimiter {
+    constructor({ rps, maxConcurrency }) {
+        this.capacity = rps
+        this.tokens = rps
+        this.maxConcurrency = maxConcurrency
+        this.concurrency = 0
+        this.queue = []
+        this.metrics = { started: 0, completed: 0, failed: 0, queuedPeak: 0 }
+        setInterval(() => {
+            this.tokens = this.capacity
+            this.#drain()
+        }, 1000).unref?.()
+    }
+    schedule(fn, label = 'rpc') {
+        return new Promise((resolve, reject) => {
+            const task = async () => {
+                this.metrics.started++
+                try {
+                    this.concurrency++
+                    const res = await fn()
+                    this.metrics.completed++
+                    resolve(res)
+                } catch (e) {
+                    this.metrics.failed++
+                    reject(e)
+                } finally {
+                    this.concurrency--
+                    this.#drain()
+                }
+            }
+            this.queue.push({ task, label })
+            if (this.queue.length > this.metrics.queuedPeak) this.metrics.queuedPeak = this.queue.length
+            this.#drain()
+        })
+    }
+    #drain() {
+        while (this.queue.length && this.tokens > 0 && this.concurrency < this.maxConcurrency) {
+            this.tokens--
+            const { task, label } = this.queue.shift()
+            log('debug', `rateLimiter: dispatch task`, { label, queued: this.queue.length, tokens: this.tokens, concurrency: this.concurrency })
+            task()
+        }
+    }
+}
+
+const limiter = new RateLimiter({ rps: INDEXER_RPS, maxConcurrency: INDEXER_MAX_CONCURRENCY })
+
+function isRetriableRpcError(err) {
+    const msg = String(err?.message || err || '')
+    const code = err?.code || err?.status || err?.cause?.status
+    if (code === 429) return 'rate'
+    if (/429|too many requests|rate.?limit/i.test(msg)) return 'rate'
+    if (/timeout|timed out|etimedout|econnreset|fetch failed|network/i.test(msg)) return 'network'
+    // Viem HttpRequestError sometimes includes status in name or details
+    if (/HttpRequestError/.test(String(err?.name)) && /429/.test(msg)) return 'rate'
+    return null
+}
+
+async function retryWithBackoff(label, fn) {
+    let attempt = 0
+    while (true) {
+        attempt++
+        try {
+            return await limiter.schedule(fn, label)
+        } catch (e) {
+            const typ = isRetriableRpcError(e)
+            if (!typ || attempt >= RETRY_MAX_ATTEMPTS) {
+                log('error', `${label} failed (attempt ${attempt}): ${e?.message || e}`)
+                throw e
+            }
+            const backoff = Math.min(RETRY_MAX_MS, RETRY_BASE_MS * Math.pow(2, attempt - 1))
+            const jitter = Math.floor(Math.random() * Math.min(backoff, 1000))
+            const wait = backoff + jitter
+            log('warn', `${label} ${typ} backoff`, { attempt, waitMs: wait })
+            await sleep(wait)
+        }
+    }
+}
+
+// RPC wrappers
+const rpc = {
+    getBlockNumber: () => retryWithBackoff('getBlockNumber', () => client.getBlockNumber()),
+    getChainId: () => retryWithBackoff('getChainId', () => client.getChainId()),
+    getContractEvents: (args) => retryWithBackoff('getContractEvents', () => client.getContractEvents(args)),
+    readContract: (args) => retryWithBackoff('readContract', () => client.readContract(args)),
+    getBlock: (args) => retryWithBackoff('getBlock', () => client.getBlock(args)),
+    getTransaction: (args) => retryWithBackoff('getTransaction', () => client.getTransaction(args)),
+}
 
 let CHAIN_ID = Number(process.env.INDEXER_CHAIN_ID || '0') || null
 
@@ -188,7 +295,7 @@ async function getTokenDecimals(addr) {
     if (!lower) return 18
     if (decimalsCache.has(lower)) return decimalsCache.get(lower)
     try {
-        const decimals = await client.readContract({ address: lower, abi: erc20Abi, functionName: 'decimals' })
+        const decimals = await rpc.readContract({ address: lower, abi: erc20Abi, functionName: 'decimals' })
         const parsed = Number(decimals)
         const safe = Number.isFinite(parsed) ? parsed : 18
         decimalsCache.set(lower, safe)
@@ -254,13 +361,15 @@ async function indexCreation(latest) {
     const chunk = BigInt(MAX_RANGE)
     while (from <= latest) {
         const to = from + chunk < latest ? from + chunk : latest
-        const logs = await client.getContractEvents({
+        log('info', `creation: fetching events`, { from: String(from), to: String(to) })
+        const logs = await rpc.getContractEvents({
             address: FACTORY_ADDR,
             abi: FACTORY_EVENTS_ABI,
             eventName: 'Creation',
             fromBlock: from,
             toBlock: to,
         })
+        log('info', `creation: got logs`, { count: logs.length })
         if (logs.length) {
         const rows = logs.map((l) => ({
             chain_id: CHAIN_ID,
@@ -275,8 +384,8 @@ async function indexCreation(latest) {
         await restUpsert('tokens', rows, 'chain_id,address')
         for (const r of rows) {
             try {
-                const symbol = await client.readContract({ address: r.address, abi: erc20Abi, functionName: 'symbol' })
-                const name = await client.readContract({ address: r.address, abi: erc20Abi, functionName: 'name' })
+                const symbol = await rpc.readContract({ address: r.address, abi: erc20Abi, functionName: 'symbol' })
+                const name = await rpc.readContract({ address: r.address, abi: erc20Abi, functionName: 'name' })
                 await restUpsert('tokens', [{ chain_id: CHAIN_ID, address: r.address, symbol, name }], 'chain_id,address')
             } catch {}
         }
@@ -292,26 +401,28 @@ async function indexSwaps(latest) {
     const chunk = BigInt(MAX_RANGE)
     while (from <= latest) {
         const to = from + chunk < latest ? from + chunk : latest
-        const logs = await client.getContractEvents({
+        log('info', `swap: fetching events`, { from: String(from), to: String(to) })
+        const logs = await rpc.getContractEvents({
             address: FACTORY_ADDR,
             abi: FACTORY_EVENTS_ABI,
             eventName: 'Swap',
             fromBlock: from,
             toBlock: to,
         })
+        log('info', `swap: got logs`, { count: logs.length })
         if (logs.length) {
             // Fetch virtualAmount once per batch
             let virtualAmount = 0n
             try {
-                virtualAmount = await client.readContract({ address: FACTORY_ADDR, abi: [{ name: 'virtualAmount', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] }], functionName: 'virtualAmount' })
+                virtualAmount = await rpc.readContract({ address: FACTORY_ADDR, abi: [{ name: 'virtualAmount', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] }], functionName: 'virtualAmount' })
             } catch {}
             const blockNumbers = Array.from(new Set(logs.map((l) => String(l.blockNumber))))
-            const blocks = await Promise.all(blockNumbers.map((bn) => client.getBlock({ blockNumber: BigInt(bn) })))
+            const blocks = await Promise.all(blockNumbers.map((bn) => rpc.getBlock({ blockNumber: BigInt(bn) })))
             const blockMap = new Map()
             blocks.forEach((b, i) => blockMap.set(blockNumbers[i], Number(b.timestamp) * 1000))
 
             const txHashes = Array.from(new Set(logs.map((l) => l.transactionHash)))
-            const txs = await Promise.all(txHashes.map((h) => client.getTransaction({ hash: h })))
+            const txs = await Promise.all(txHashes.map((h) => rpc.getTransaction({ hash: h })))
             const txMap = new Map()
             txs.forEach((tx, i) => txMap.set(txHashes[i], tx.input))
             // No need to persist blocks or transactions; we embed timestamp in swaps
@@ -383,13 +494,15 @@ async function indexV3Factory(latest) {
     const chunk = BigInt(MAX_RANGE)
     while (from <= latest) {
         const to = from + chunk < latest ? from + chunk : latest
-        const logs = await client.getContractEvents({
+        log('info', `v3:factory: fetching events`, { from: String(from), to: String(to) })
+        const logs = await rpc.getContractEvents({
             address: V3_FACTORY_ADDR,
             abi: V3_FACTORY_EVENTS_ABI,
             eventName: 'PoolCreated',
             fromBlock: from,
             toBlock: to,
         })
+        log('info', `v3:factory: got logs`, { count: logs.length })
         if (logs.length) {
             // prepare markets and tokens
             const marketRows = []
@@ -426,8 +539,8 @@ async function indexV3Factory(latest) {
                 for (const addr of tokenSet) {
                     try {
                         const [symbol, name] = await Promise.all([
-                            client.readContract({ address: addr, abi: erc20Abi, functionName: 'symbol' }),
-                            client.readContract({ address: addr, abi: erc20Abi, functionName: 'name' }),
+                            rpc.readContract({ address: addr, abi: erc20Abi, functionName: 'symbol' }),
+                            rpc.readContract({ address: addr, abi: erc20Abi, functionName: 'name' }),
                         ])
                         await restUpsert('tokens', [{ chain_id: CHAIN_ID, address: addr, symbol, name }], 'chain_id,address')
                     } catch {}
@@ -452,16 +565,18 @@ async function indexV3Swaps(latest) {
         if (from > latest) continue
         while (from <= latest) {
             const to = from + chunk < latest ? from + chunk : latest
-            const logs = await client.getContractEvents({
+            log('info', `v3:swap: fetching`, { pool, from: String(from), to: String(to) })
+            const logs = await rpc.getContractEvents({
                 address: pool,
                 abi: V3_POOL_EVENTS_ABI,
                 eventName: 'Swap',
                 fromBlock: from,
                 toBlock: to,
             })
+            log('info', `v3:swap: got logs`, { pool, count: logs.length })
             if (logs.length) {
                 const blockNumbers = Array.from(new Set(logs.map((l) => String(l.blockNumber))))
-                const blocks = await Promise.all(blockNumbers.map((bn) => client.getBlock({ blockNumber: BigInt(bn) })))
+                const blocks = await Promise.all(blockNumbers.map((bn) => rpc.getBlock({ blockNumber: BigInt(bn) })))
                 const blockMap = new Map()
                 blocks.forEach((b, i) => blockMap.set(blockNumbers[i], Number(b.timestamp) * 1000))
 
@@ -532,16 +647,18 @@ async function indexTransfers(latest) {
         if (from > latest) continue
         while (from <= latest) {
             const to = from + chunk < latest ? from + chunk : latest
-            const logs = await client.getContractEvents({
+            log('info', `transfer: fetching`, { token, from: String(from), to: String(to) })
+            const logs = await rpc.getContractEvents({
                 address: token,
                 abi: erc20Abi,
                 eventName: 'Transfer',
                 fromBlock: from,
                 toBlock: to,
             })
+            log('info', `transfer: got logs`, { token, count: logs.length })
             if (logs.length) {
                 const blockNumbers = Array.from(new Set(logs.map((l) => String(l.blockNumber))))
-                const blocks = await Promise.all(blockNumbers.map((bn) => client.getBlock({ blockNumber: BigInt(bn) })))
+                const blocks = await Promise.all(blockNumbers.map((bn) => rpc.getBlock({ blockNumber: BigInt(bn) })))
                 const blockMap = new Map()
                 blocks.forEach((b, i) => blockMap.set(blockNumbers[i], Number(b.timestamp) * 1000))
                 const rows = logs.map((l) => ({
@@ -564,7 +681,9 @@ async function indexTransfers(latest) {
 }
 
 async function tick() {
-    const latest = await client.getBlockNumber()
+    log('debug', 'tick: start')
+    const latest = await rpc.getBlockNumber()
+    log('info', 'tick: latest block', { latest: String(latest) })
     if (MODE === 'all' || MODE === 'creation') await indexCreation(latest)
     if (MODE === 'all' || MODE === 'swap') await indexSwaps(latest)
     if (MODE === 'all' || MODE === 'transfer') await indexTransfers(latest)
@@ -574,22 +693,22 @@ async function tick() {
 }
 
 async function main() {
-    console.log('Standalone indexer starting...')
-    console.log('Supabase:', SUPABASE_URL)
-    console.log('RPC:', RPC_URL)
-    console.log('Mode:', MODE, 'Interval(ms):', INTERVAL_MS, 'MaxRange:', MAX_RANGE)
+    log('info', 'Standalone indexer starting...')
+    log('info', 'Supabase', { url: SUPABASE_URL })
+    log('info', 'RPC', { url: RPC_URL })
+    log('info', 'Config', { mode: MODE, intervalMs: INTERVAL_MS, maxRange: MAX_RANGE, rps: INDEXER_RPS, maxConcurrency: INDEXER_MAX_CONCURRENCY, retryMax: RETRY_MAX_ATTEMPTS })
     try {
-        if (!CHAIN_ID) CHAIN_ID = await client.getChainId()
+        if (!CHAIN_ID) CHAIN_ID = await rpc.getChainId()
     } catch (e) {
-        console.warn('Could not auto-detect chain id, using env or 0. Set INDEXER_CHAIN_ID to avoid this warning.')
+        log('warn', 'Could not auto-detect chain id, using env or 0. Set INDEXER_CHAIN_ID to avoid this warning.')
         CHAIN_ID = Number(process.env.INDEXER_CHAIN_ID || '0') || 0
     }
-    console.log('Chain ID:', CHAIN_ID)
+    log('info', 'Chain ID', { chainId: CHAIN_ID })
     while (true) {
         try {
             await tick()
         } catch (e) {
-            console.error('Indexer tick error:', e)
+            log('error', 'Indexer tick error', { error: String(e?.message || e) })
         }
         await sleep(INTERVAL_MS)
     }
