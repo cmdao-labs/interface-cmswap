@@ -302,11 +302,51 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
     const [state, setState] = useState<any>([{ result: BigInt(0) }, { result: BigInt(0) }, { result: false }, { result: [BigInt(0)] }]);
     const [showSocials, setShowSocials] = useState(false);
     const hasSetSocialsRef = React.useRef(false);
-    const [graphData, setGraphData] = useState<{ time: number; price: number; volume: number }[]>([]);
     const [socials, setSocials] = useState<Record<SocialField, string>>({ fb: "", x: "", telegram: "", website: "" });
     const [errors, setErrors] = useState<Record<SocialField, boolean>>({ fb: false, x: false, telegram: false, website: false });
     const [price, setPrice] = useState(0);
-    const [mcap, setMcap] = useState(0);
+    const [mcap, setMcap] = useState(0); // server-provided, but we will derive dynamically for UI
+    const [graphData, setGraphData] = useState<{ time: number; price: number; volume: number }[]>([]);
+    const chartData = React.useMemo(() => {
+        const base = Array.isArray(graphData) ? graphData.slice() : [];
+        if (Number.isFinite(price) && price > 0) {
+            if (base.length > 0) {
+                const last = base[base.length - 1];
+                const lastTime = typeof last?.time === 'number' ? last.time : Date.now();
+                // Append the live price immediately after the latest trade timestamp
+                base.push({ time: lastTime + 1, price, volume: 0 });
+            } else {
+                // No trades yet; seed with current time so chart has a point
+                base.push({ time: Date.now(), price, volume: 0 });
+            }
+        }
+        return base;
+    }, [graphData, price]);
+    const [tokenDecimals, setTokenDecimals] = useState<number | null>(null);
+    const [totalSupplyRaw, setTotalSupplyRaw] = useState<bigint | null>(null);
+    const supplyNormalized = React.useMemo(() => {
+        const dec = Number.isFinite(tokenDecimals as number) ? (tokenDecimals as number) : 18;
+        const raw = totalSupplyRaw;
+        if (typeof raw !== 'bigint') return 1_000_000_000;
+        try {
+            const scale = BigInt(10) ** BigInt(dec);
+            const whole = raw / scale; // bigint
+            const frac = raw % scale;  // bigint
+            const wholeNum = Number(whole);
+            const fracNum = Number(frac) / Number(scale);
+            const result = wholeNum + fracNum;
+            return Number.isFinite(result) && result > 0 ? result : 1_000_000_000;
+        } catch {
+            // Fallback for very large numbers or unexpected decimals
+            return 1_000_000_000;
+        }
+    }, [tokenDecimals, totalSupplyRaw]);
+    const currentMcap = React.useMemo(() => {
+        const p = Number(price || 0);
+        const s = Number.isFinite(supplyNormalized) && supplyNormalized > 0 ? supplyNormalized : 1_000_000_000;
+        const mc = p * s;
+        return Number.isFinite(mc) ? mc : 0;
+    }, [price, supplyNormalized]);
     const [symbol, setSymbol] = useState(null);
     const [name, setName] = useState(null);
     const [creator, setCreator] = useState<string | null>(null);
@@ -349,7 +389,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
         return rtf.format(Math.round(diff / 31557600), "year");
     };
     const relativeCreatedTime = formatRelativeTime(createTime);
-    const formattedMcap = React.useMemo(() => {return Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short", maximumFractionDigits: 2}).format(mcap || 0)}, [mcap]);
+    const formattedMcap = React.useMemo(() => {return Intl.NumberFormat("en-US", {notation: "compact", compactDisplay: "short", maximumFractionDigits: 2}).format(currentMcap || 0)}, [currentMcap]);
     const priceFormatter = React.useCallback((v: number) => {
         if (!Number.isFinite(v)) return "0"; 
         return Intl.NumberFormat("en-US", {minimumFractionDigits: v < 1 ? 2 : 0, maximumFractionDigits: v < 1 ? 6 : 2}).format(v);
@@ -369,15 +409,16 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
         const baseline = Number.isFinite(prevPrice as number) ? (prevPrice as number) : price;
         const abs = Number.isFinite(price) && Number.isFinite(baseline) ? Number(price) - Number(baseline) : 0;
         const pct = Number.isFinite(baseline) && baseline !== 0 ? (abs / baseline) * 100 : 0;
-        return {price24hAgo: baseline * 1_000_000_000, changeAbs: abs * 1_000_000_000, changePct: pct, athPrice: ath * 1_000_000_000,};
-    }, [graphData, price]);
+        const supply = Number.isFinite(supplyNormalized) && supplyNormalized > 0 ? supplyNormalized : 1_000_000_000;
+        return {price24hAgo: baseline * supply, changeAbs: abs * supply, changePct: pct, athPrice: ath * supply};
+    }, [graphData, price, supplyNormalized]);
     const formattedChangeAbs = React.useMemo(() => priceFormatter(Math.abs(changeAbs || 0)), [changeAbs, priceFormatter]);
     const formattedChangePct = React.useMemo(() => `${Number.isFinite(changePct) ? Math.abs(changePct).toFixed(2) : "0.00"}%`, [changePct]);
     const formattedAth = React.useMemo(() => priceFormatter(athPrice || 0), [athPrice, priceFormatter]);
     const athProgressPercent = React.useMemo(() => {
-        if (!Number.isFinite(mcap) || !Number.isFinite(athPrice) || athPrice <= 0) return 0; 
-        return Math.max(0, Math.min(100, (mcap / athPrice) * 100));
-    }, [mcap, athPrice]);
+        if (!Number.isFinite(currentMcap) || !Number.isFinite(athPrice) || athPrice <= 0) return 0; 
+        return Math.max(0, Math.min(100, (currentMcap / athPrice) * 100));
+    }, [currentMcap, athPrice]);
     const progressPercent = React.useMemo(() => {
         if (!Number.isFinite(progress)) return 0; 
         return Math.max(0, Math.min(100, progress));
@@ -664,6 +705,19 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
                 }) : 
                 [ { result: BigInt(0) }, { result: BigInt(0) }, { result: false }, { result: [BigInt(0)] } ];
             setState(state0);
+            // Fetch ERC20 decimals and totalSupply for dynamic market cap
+            try {
+                const meta = await readContracts(config, {
+                    contracts: [
+                        { ...tickerContract, functionName: "decimals", chainId: _chainId },
+                        { ...tickerContract, functionName: "totalSupply", chainId: _chainId },
+                    ],
+                });
+                const decRes = meta?.[0]?.result as number | undefined;
+                const tsRes = meta?.[1]?.result as bigint | undefined;
+                if (typeof decRes === 'number' && Number.isFinite(decRes)) setTokenDecimals(decRes);
+                if (typeof tsRes === 'bigint') setTotalSupplyRaw(tsRes);
+            } catch (e) { /* ignore token meta errors */ }
         };
         const fetchSummary = async () => {
             try {
@@ -897,7 +951,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[2fr_1fr] gap-4">
                 <div className="space-y-6">
                     <div className="rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl backdrop-blur">
-                        <div className="mt-4 h-[520px] w-full overflow-hidden rounded-2xl border border-white/5 bg-black/40"><Chart data={graphData} /></div>
+                        <div className="mt-4 h-[520px] w-full overflow-hidden rounded-2xl border border-white/5 bg-black/40"><Chart data={chartData} supply={supplyNormalized} /></div>
                     </div>
                     <BondingStatusCard className="block md:hidden" isGraduated={isGraduated} progressPercent={progressPercent} bondingTooltip={bondingTooltip} graduationLink={graduationLink} />
                     <TradeActionCard className="block md:hidden" trademode={trademode} onModeChange={handleModeChange} gradientButtonStyle={gradientButtonStyle} formattedAvailableBalance={formattedAvailableBalance} inputAssetSymbol={inputAssetSymbol} inputBalance={inputBalance} onInputChange={handleInputChange} outputAssetSymbol={outputAssetSymbol} formattedOutput={formattedOutput} onReset={handleReset} presetButtons={presetButtons} onPresetClick={handlePresetClick} onMaxClick={handleMaxClick} onTrade={trade} isWalletReady={isWalletReady} tradeButtonLabel={tradeButtonLabel} chainLabel={chainLabel} slippagePct={slippagePct} slippageTolerance={slippageTolerance} onSlippageToleranceChange={(v) => setSlippageTolerance(v)} />

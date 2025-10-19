@@ -14,6 +14,8 @@ type Candle = {
     low: number;
     close: number;
     volume: number;
+    // Last actual trade timestamp within this candle (seconds since epoch)
+    lastTs?: number;
 };
 const TIMEFRAMES = [
     { label: '1m', value: 1 * 60 * 1000 },
@@ -25,7 +27,7 @@ const TIMEFRAMES = [
     { label: '1W', value: 7 * 24 * 60 * 60 * 1000 },
     { label: '1M', value: 30 * 24 * 60 * 60 * 1000 },
 ] as const;
-type ChartProps = {data: RawPoint[];};
+type ChartProps = {data: RawPoint[]; supply?: number};
 
 function aggregateCandlesWithFill(points: RawPoint[], intervalMs: number): Candle[] {
     if (points.length === 0) return [];
@@ -50,6 +52,7 @@ function aggregateCandlesWithFill(points: RawPoint[], intervalMs: number): Candl
                 low: previousClose,
                 close: previousClose,
                 volume: 0,
+                lastTs: undefined,
             });
             continue;
         }
@@ -58,12 +61,13 @@ function aggregateCandlesWithFill(points: RawPoint[], intervalMs: number): Candl
         let high = Number.NEGATIVE_INFINITY;
         let low = Number.POSITIVE_INFINITY;
         let volume = 0;
+        let lastTradeMs = bucket[bucket.length - 1].time;
         for (const entry of bucket) {
             if (entry.price > high) high = entry.price;
             if (entry.price < low) low = entry.price;
             volume += entry.volume;
         }
-        candles.push({time: Math.floor(t / 1000), open, high, low, close, volume,});
+        candles.push({time: Math.floor(t / 1000), open, high, low, close, volume, lastTs: Math.floor(lastTradeMs / 1000)});
         previousClose = close;
     }
     return candles;
@@ -96,9 +100,9 @@ function getTimestampFromTime(time: Time): number | null {
 
 type Metric = 'price' | 'mcap';
 
-const MARKET_CAP_SUPPLY = 1_000_000_000; // default assumed supply for mcap calc
+const MARKET_CAP_SUPPLY = 1_000_000_000; // default fallback supply for mcap calc
 
-const Chart: React.FC<ChartProps> = ({ data }) => {
+const Chart: React.FC<ChartProps> = ({ data, supply }) => {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const tooltipRef = useRef<HTMLDivElement>(null);
     const infoRef = useRef<HTMLDivElement>(null);
@@ -109,10 +113,11 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
     const [timeframe, setTimeframe] = useState<number>(60 * 60 * 1000);
     const [metric, setMetric] = useState<Metric>('mcap');
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const effectiveSupply = Number.isFinite(supply as number) && (supply as number) > 0 ? (supply as number) : MARKET_CAP_SUPPLY;
     const transformedData = useMemo(() => {
         if (metric === 'price') return data;
-        return data.map((p) => ({ ...p, price: p.price * MARKET_CAP_SUPPLY }));
-    }, [data, metric]);
+        return data.map((p) => ({ ...p, price: p.price * effectiveSupply }));
+    }, [data, metric, effectiveSupply]);
     const candles = useMemo(() => aggregateCandlesWithFill(transformedData, timeframe), [transformedData, timeframe]);
     const candlestickSeriesData: CandlestickData[] = useMemo(() => candles.map((candle) => ({
         time: candle.time as Time,
@@ -166,6 +171,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
 
         const directionColor = change >= 0 ? '#31fca5' : '#ff5f7a';
 
+        const displayTs = candle.lastTs ?? candle.time;
         infoEl.innerHTML = `
             <span class="text-xs text-emerald-200">CMSWAP-PUMP · ${metric === 'mcap' ? 'MCap' : 'Price'}</span>
             <div class="flex flex-wrap">
@@ -175,6 +181,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
                 <span class="text-xs text-white/70">C <span style="color:${directionColor}">${formatByMetric(candle.close)}</span></span>
             </div>
             <span class="text-xs" style="color:${directionColor}">${change >= 0 ? '+' : ''}${formatByMetric(change)} (${changePct >= 0 ? '+' : ''}${tidyNumber(changePct)}%)</span>
+            <span class="text-xs text-white/60">Last trade: ${toUTCString(displayTs)}</span>
             ${maParts.length ? `<span class="text-xs text-white/60">${maParts.join(' · ')}</span>` : ''}
         `.replace(/\s+/g, ' ').trim();
     }, [formatByMetric, metric]);
@@ -313,9 +320,11 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
             const containerHeight = chartContainerRef.current?.clientHeight ?? 0;
             const clampedTop = Math.max(16, Math.min(point.y - 120, containerHeight - 160));
             tooltip.style.top = `${clampedTop}px`;
+            const candleAtIndex = candlesRef.current[index];
+            const displayTs = candleAtIndex?.lastTs ?? timestamp;
             tooltip.innerHTML = `
                 <div class="flex flex-col gap-1">
-                    <span class="text-xs text-emerald-200">${toUTCString(timestamp)}</span>
+                    <span class="text-xs text-emerald-200">${toUTCString(displayTs)}</span>
                     <span class="text-xs text-white/90">Open: ${formatByMetric(candleData.open as number)}</span>
                     <span class="text-xs text-white/90">High: ${formatByMetric(candleData.high as number)}</span>
                     <span class="text-xs text-white/90">Low: ${formatByMetric(candleData.low as number)}</span>

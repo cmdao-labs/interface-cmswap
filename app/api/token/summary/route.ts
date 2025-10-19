@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
     try {
         const supabase = getServiceSupabase()
         const cutoffMs = nowMs() - hours * 60 * 60 * 1000
+        const cutoffSec = Math.floor(cutoffMs / 1000)
         const { data: tokenRow } = await supabase.from('tokens').select('*').eq('address', token).maybeSingle()
         const latestRes = await supabase
             .from('swaps')
@@ -63,22 +64,19 @@ export async function GET(req: NextRequest) {
             .select('timestamp, price, volume_native')
             .eq('token_address', token)
             .not('price', 'is', null)
-            .gte('timestamp', cutoffMs)
+            .gte('timestamp', Math.min(cutoffMs, cutoffSec))
             .order('timestamp', { ascending: true })
         const rows = graphRes.data || []
-        const buckets = new Map()
-        for (const r of rows) {
-            const bucket = Math.floor(Number(r.timestamp) / 300000) * 300000
-            const g = buckets.get(bucket) || { time: bucket, priceSum: 0, priceCount: 0, volume: 0 }
-            const p = Number(r.price || 0)
-            g.priceSum += isFinite(p) ? p : 0
-            g.priceCount += isFinite(p) ? 1 : 0
-            g.volume += Number(r.volume_native || 0)
-            buckets.set(bucket, g)
-        }
-        const graph = Array.from(buckets.values())
-            .map((b) => ({ time: b.time, price: b.priceCount ? b.priceSum / b.priceCount : 0, volume: b.volume }))
-            .sort((a, b) => a.time - b.time)
+        const normalizeTs = (ts: number) => (ts > 1e12 ? ts : ts * 1000);
+        // Return raw per-swap points normalized to milliseconds
+        const graph = rows
+            .map((r: any) => ({
+                time: normalizeTs(Number(r?.timestamp || 0)),
+                price: Number(r?.price || 0),
+                volume: Number(r?.volume_native || 0),
+            }))
+            .filter((p: any) => Number.isFinite(p.time) && Number.isFinite(p.price) && p.time >= cutoffMs)
+            .sort((a: any, b: any) => a.time - b.time)
         const actRes = await supabase
             .from('swaps')
             .select('is_buy, amount_in, amount_out, sender, tx_hash, timestamp, volume_native, volume_token')
@@ -91,7 +89,7 @@ export async function GET(req: NextRequest) {
             value: Number(r.volume_token || 0),
             from: r.sender,
             hash: r.tx_hash,
-            timestamp: Number(r.timestamp || 0),
+            timestamp: normalizeTs(Number(r.timestamp || 0)),
         }))
         const holdersRes = await supabase.rpc('holders_for_token', { token, limit_i: holdersLimit, offset_i: 0 })
         const holders = (holdersRes.data || []).map((h: any) => ({ addr: h.holder, value: Number(h.balance || 0) }))
