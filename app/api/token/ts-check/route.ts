@@ -33,8 +33,8 @@ export async function GET(req: NextRequest) {
       .select('tx_hash, block_number, timestamp, price')
       .eq('token_address', token)
       .order('timestamp', { ascending: true })
-      .limit(limit)
-    const map = (rows: any[] = []) => rows.map((r) => ({
+    .limit(limit)
+    const map = (rows: any[] | null | undefined) => (rows || []).map((r: any) => ({
       tx_hash: r.tx_hash,
       block_number: r.block_number,
       price: Number(r.price || 0),
