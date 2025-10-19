@@ -7,6 +7,14 @@ import { getServiceSupabase } from "@/lib/supabaseServer";
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
+function parseChainId(value: string | null): number | null {
+  if (!value) return null;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) return null;
+  if (parsed < 0) return null;
+  return parsed;
+}
+
 function parseBoundedInt(
   value: string | null,
   fallback: number,
@@ -28,6 +36,10 @@ export async function GET(req: NextRequest) {
   const limit = parseBoundedInt(searchParams.get("limit"), DEFAULT_LIMIT, {
     max: MAX_LIMIT,
   });
+  const chainId = parseChainId(searchParams.get("chainId"));
+  if (chainId == null) {
+    return NextResponse.json({ error: "chainId required" }, { status: 400 });
+  }
   const startTsRaw = searchParams.get("startTs");
   const endTsRaw = searchParams.get("endTs");
   const startTs = startTsRaw ? Number(startTsRaw) : undefined;
@@ -47,6 +59,7 @@ export async function GET(req: NextRequest) {
         let q = supabase
           .from('swaps')
           .select('token_address, sender, is_buy, volume_native, timestamp')
+          .eq('chain_id', chainId)
           .order('timestamp', { ascending: true })
           .range(offset, offset + PAGE_SIZE - 1);
         if (Number.isFinite(startTs)) q = q.gte('timestamp', Number(startTs));
@@ -101,6 +114,7 @@ export async function GET(req: NextRequest) {
         const { data, error } = await supabase
           .from('tokens')
           .select('address, symbol, name, logo')
+          .eq('chain_id', chainId)
           .in('address', tokenAddresses);
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });
         for (const t of data || []) {
@@ -110,12 +124,12 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      return NextResponse.json({ volumeTokens, volumeTraders, profitTraders, degenTraders, tokens: tokenMeta, limit, startTs: Number.isFinite(startTs) ? Number(startTs) : null, endTs: Number.isFinite(endTs) ? Number(endTs) : null });
+      return NextResponse.json({ volumeTokens, volumeTraders, profitTraders, degenTraders, tokens: tokenMeta, limit, chainId, startTs: Number.isFinite(startTs) ? Number(startTs) : null, endTs: Number.isFinite(endTs) ? Number(endTs) : null });
     }
 
     // No time window: fallback to fast SQL RPC aggregations (all-time)
     // Top tokens by native volume (all-time)
-    const tokenAgg = await supabase.rpc('top_tokens', { limit_i: limit });
+    const tokenAgg = await supabase.rpc('top_tokens', { chain_i: chainId, limit_i: limit });
     if (tokenAgg.error)
       return NextResponse.json(
         { error: tokenAgg.error.message },
@@ -123,7 +137,7 @@ export async function GET(req: NextRequest) {
       );
 
     // Top traders by native volume (all-time)
-    const traderAgg = await supabase.rpc('top_volume_traders', { limit_i: limit });
+    const traderAgg = await supabase.rpc('top_volume_traders', { chain_i: chainId, limit_i: limit });
     if (traderAgg.error)
       return NextResponse.json(
         { error: traderAgg.error.message },
@@ -131,7 +145,7 @@ export async function GET(req: NextRequest) {
       );
 
     // Top traders by profit (all-time)
-    const profitAgg = await supabase.rpc('top_profit_traders', { limit_i: limit });
+    const profitAgg = await supabase.rpc('top_profit_traders', { chain_i: chainId, limit_i: limit });
     if (profitAgg.error)
       return NextResponse.json(
         { error: profitAgg.error.message },
@@ -145,7 +159,7 @@ export async function GET(req: NextRequest) {
     }));
 
     // Degen = trade count per sender
-    const degenAgg = await supabase.rpc('top_degen_traders', { limit_i: limit });
+    const degenAgg = await supabase.rpc('top_degen_traders', { chain_i: chainId, limit_i: limit });
     if (degenAgg.error)
       return NextResponse.json(
         { error: degenAgg.error.message },
@@ -166,6 +180,7 @@ export async function GET(req: NextRequest) {
       const { data, error } = await supabase
         .from("tokens")
         .select("address, symbol, name, logo")
+        .eq('chain_id', chainId)
         .in("address", Array.from(tokenAddresses));
       if (error)
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -198,6 +213,7 @@ export async function GET(req: NextRequest) {
         latest_ts: (r as any).latest_ts ?? null,
       })),
       tokens: tokenMeta,
+      chainId,
       limit,
     });
   } catch (e: any) {

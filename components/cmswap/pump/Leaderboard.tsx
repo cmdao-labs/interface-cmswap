@@ -30,7 +30,7 @@ const PLACEHOLDER_ADDRESS = "0x0000000000000000000000000000000000000000" as cons
 
 export default async function Leaderboard({ mode, chain, token, }: LeaderboardProps) {
     const network = resolveNetworkConfig({ chain, mode, token });
-    if (network.chainId !== 25925) return (<LeaderboardTabs explorerUrl={network.explorer} tabs={buildFallbackTabs()} />);
+    if (network.chainId !== 25925) return (<LeaderboardTabs explorerUrl={network.explorer} tabs={buildFallbackTabs()} chainId={network.chainId} />);
     const headersList = await headers();
     const host = headersList.get("host");
     const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
@@ -38,8 +38,9 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
 
     // Use aggregated, all-time leaderboard API
     const lbLimit = 20;
-    const res = await fetch(`${baseUrl}/api/swaps/leaderboard?limit=${lbLimit}`, { cache: "no-store" });
+    const res = await fetch(`${baseUrl}/api/swaps/leaderboard?chainId=${network.chainId}&limit=${lbLimit}`, { cache: "no-store" });
     const payload = res.ok ? await res.json() : null;
+    const responseChainId = typeof payload?.chainId === 'number' ? payload.chainId : network.chainId;
     const tokenMeta = new Map<string, { symbol?: string; name?: string; logo?: string }>();
     const metaObj = (payload?.tokens ?? {}) as Record<string, { symbol?: string | null; name?: string | null; logo?: string | null }>;
     for (const k of Object.keys(metaObj)) {
@@ -63,7 +64,7 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
             href: `${explorerBase}/address/${addr}`,
             type: 'token' as const,
             timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined,
-            chainId: network.chainId,
+            chainId: responseChainId,
         } as LeaderboardEntry;
     });
 
@@ -77,7 +78,7 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
             address: addr as `0x${string}`,
             type: 'trader' as const,
             timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined,
-            chainId: network.chainId,
+            chainId: responseChainId,
         } as LeaderboardEntry;
     });
 
@@ -91,7 +92,7 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
             address: addr as `0x${string}`,
             type: 'trader' as const,
             timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined,
-            chainId: network.chainId,
+            chainId: responseChainId,
         } as LeaderboardEntry;
     });
 
@@ -105,7 +106,7 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
             address: addr as `0x${string}`,
             type: 'degen' as const,
             timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined,
-            chainId: network.chainId,
+            chainId: responseChainId,
         } as LeaderboardEntry;
     });
     const tabs: LeaderboardTab[] = [
@@ -131,7 +132,7 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
         },
     ];
 
-    return <LeaderboardTabs explorerUrl={network.explorer} tabs={tabs} />;
+    return <LeaderboardTabs explorerUrl={network.explorer} tabs={tabs} chainId={responseChainId} />;
 }
 
 function resolveNetworkConfig({ chain, mode, token, }: Pick<LeaderboardProps, "chain" | "mode" | "token">): NetworkConfig {

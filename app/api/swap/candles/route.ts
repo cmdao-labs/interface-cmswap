@@ -57,6 +57,14 @@ function invertValue(value: number | null): number | null {
     return Number.isFinite(inverted) ? inverted : null
 }
 
+function parseChainId(value: string | null): number | null {
+    if (!value) return null
+    const parsed = Number.parseInt(value, 10)
+    if (!Number.isFinite(parsed)) return null
+    if (parsed < 0) return null
+    return parsed
+}
+
 type CandleRow = {
     bucket_start: number | string | null
     open: number | string | null
@@ -113,8 +121,12 @@ export async function GET(req: NextRequest) {
     const { searchParams } = req.nextUrl
     const baseToken = searchParams.get('baseToken')
     const quoteToken = searchParams.get('quoteToken')
+    const chainId = parseChainId(searchParams.get('chainId'))
     if (!baseToken || !quoteToken) {
         return NextResponse.json({ error: 'baseToken and quoteToken are required' }, { status: 400 })
+    }
+    if (chainId == null) {
+        return NextResponse.json({ error: 'chainId required' }, { status: 400 })
     }
     let timeframe
     try {
@@ -133,6 +145,7 @@ export async function GET(req: NextRequest) {
     const { data: marketRow, error: marketError } = await supabase
         .from('swap_markets')
         .select('market_id, token0, token1, decimals0, decimals1, pair_address, dex')
+        .eq('chain_id', chainId)
         .eq('market_id', canonical.marketId)
         .maybeSingle()
     if (marketError) {
@@ -145,6 +158,7 @@ export async function GET(req: NextRequest) {
     const { data: candleRows, error: candleError } = await supabase
         .from('swap_candles')
         .select('bucket_start, open, high, low, close, volume0, volume1, trades')
+        .eq('chain_id', chainId)
         .eq('market_id', canonical.marketId)
         .eq('timeframe_seconds', timeframe.seconds)
         .order('bucket_start', { ascending: false })
@@ -164,6 +178,7 @@ export async function GET(req: NextRequest) {
         const { data: snapshotRow, error: snapshotError } = await supabase
             .from('swap_pair_snapshots')
             .select('timestamp, price')
+            .eq('chain_id', chainId)
             .eq('market_id', canonical.marketId)
             .order('timestamp', { ascending: false })
             .limit(1)
@@ -191,5 +206,6 @@ export async function GET(req: NextRequest) {
             price: latestPrice,
             timestamp: latestTimestamp,
         },
+        chainId,
     })
 }

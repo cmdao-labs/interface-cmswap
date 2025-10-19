@@ -6,6 +6,14 @@ const DEFAULT_PAGE_SIZE = 1000;
 const MAX_LIMIT = 20000;
 const MAX_PAGE_SIZE = 2000;
 const TOKEN_CHUNK_SIZE = 100;
+
+function parseChainId(value: string | null): number | null {
+    if (!value) return null;
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isFinite(parsed)) return null;
+    if (parsed < 0) return null;
+    return parsed;
+}
 function parseBoundedInt( value: string | null, fallback: number, { min = 1, max }: { min?: number; max: number } ) {
     if (!value) return fallback;
     const parsed = Number.parseInt(value, 10);
@@ -21,6 +29,10 @@ export async function GET(req: NextRequest) {
     const { searchParams } = req.nextUrl;
     const limit = parseBoundedInt(searchParams.get("limit"), DEFAULT_LIMIT, {max: MAX_LIMIT});
     const pageSize = parseBoundedInt(searchParams.get("pageSize"), DEFAULT_PAGE_SIZE, {max: MAX_PAGE_SIZE});
+    const chainId = parseChainId(searchParams.get('chainId'));
+    if (chainId == null) {
+        return NextResponse.json({ error: 'chainId required' }, { status: 400 });
+    }
     try {
         const swaps: Array<{ token_address?: string; sender?: string; is_buy?: boolean | null; volume_native?: number | string | null; timestamp?: number | string | null; tx_hash?: string | null; }> = [];
         let page = 0;
@@ -32,6 +44,7 @@ export async function GET(req: NextRequest) {
             const { data, error } = await supabase
                 .from("swaps")
                 .select("token_address, sender, is_buy, volume_native, timestamp, tx_hash")
+                .eq('chain_id', chainId)
                 .order("timestamp", { ascending: false })
                 .range(from, to);
             if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -52,6 +65,7 @@ export async function GET(req: NextRequest) {
             const { data, error } = await supabase
                 .from("tokens")
                 .select("address, symbol, name, logo")
+                .eq('chain_id', chainId)
                 .in("address", chunk);
             if (error) return NextResponse.json({ error: error.message }, { status: 500 });
             for (const token of data || []) {
@@ -60,7 +74,7 @@ export async function GET(req: NextRequest) {
                 tokenMeta[addr] = {symbol: (token as any).symbol, name: (token as any).name, logo: (token as any).logo};
             }
         }
-        return NextResponse.json({swaps, tokens: tokenMeta, count: swaps.length, limit, pageSize});
+        return NextResponse.json({swaps, tokens: tokenMeta, count: swaps.length, limit, pageSize, chainId});
     } catch (e: any) {
         return NextResponse.json({ error: e?.message || "internal error" }, { status: 500 });
     }

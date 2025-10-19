@@ -43,6 +43,7 @@ type UseSwapChartDataArgs = {
     timeframe: SwapChartTimeframe
     enabled?: boolean
     limit?: number
+    chainId?: number
 }
 
 function toNumber(value: unknown): number | null {
@@ -52,7 +53,7 @@ function toNumber(value: unknown): number | null {
 }
 
 export function useSwapChartData(options: UseSwapChartDataArgs) {
-    const { baseToken, quoteToken, timeframe, enabled = true, limit = DEFAULT_LIMIT } = options
+    const { baseToken, quoteToken, timeframe, enabled = true, limit = DEFAULT_LIMIT, chainId } = options
     const [state, setState] = React.useState<SwapChartDataState>({
         candles: [],
         latest: null,
@@ -67,7 +68,7 @@ export function useSwapChartData(options: UseSwapChartDataArgs) {
     }, [])
 
     React.useEffect(() => {
-        if (!enabled || !baseToken || !quoteToken) {
+        if (!enabled || !baseToken || !quoteToken || typeof chainId !== 'number' || !Number.isFinite(chainId) || chainId <= 0) {
             setState((prev) => ({
                 ...prev,
                 candles: [],
@@ -86,6 +87,7 @@ export function useSwapChartData(options: UseSwapChartDataArgs) {
             timeframe,
             limit: String(limit),
         })
+        searchParams.set('chainId', String(chainId))
         const load = async () => {
             try {
                 if (!active) return
@@ -180,7 +182,7 @@ export function useSwapChartData(options: UseSwapChartDataArgs) {
             controller.abort()
             clearInterval(interval)
         }
-    }, [baseToken, quoteToken, timeframe, enabled, limit, refreshTick])
+    }, [baseToken, quoteToken, timeframe, enabled, limit, refreshTick, chainId])
 
     return {
         ...state,

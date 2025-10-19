@@ -3,6 +3,14 @@ import { getServiceSupabase } from '@/lib/supabaseServer'
 
 function nowMs() { return Date.now() }
 
+function parseChainId(value: string | null): number | null {
+    if (!value) return null
+    const parsed = Number.parseInt(value, 10)
+    if (!Number.isFinite(parsed)) return null
+    if (parsed < 0) return null
+    return parsed
+}
+
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export async function GET(req: NextRequest) {
@@ -13,15 +21,23 @@ export async function GET(req: NextRequest) {
     const holdersLimit = Number(searchParams.get('holdersLimit') || '50')
     const tradersLimit = Number(searchParams.get('tradersLimit') || '20000')
     const traderHours = Number(searchParams.get('traderHours') || '0')
+    const chainId = parseChainId(searchParams.get('chainId'))
     if (!token) return NextResponse.json({ error: 'token required' }, { status: 400 })
+    if (chainId == null) return NextResponse.json({ error: 'chainId required' }, { status: 400 })
     try {
         const supabase = getServiceSupabase()
         const cutoffMs = nowMs() - hours * 60 * 60 * 1000
         const cutoffSec = Math.floor(cutoffMs / 1000)
-        const { data: tokenRow } = await supabase.from('tokens').select('*').eq('address', token).maybeSingle()
+        const { data: tokenRow } = await supabase
+            .from('tokens')
+            .select('*')
+            .eq('chain_id', chainId)
+            .eq('address', token)
+            .maybeSingle()
         const latestRes = await supabase
             .from('swaps')
             .select('price, timestamp')
+            .eq('chain_id', chainId)
             .eq('token_address', token)
             .not('price', 'is', null)
             .order('block_number', { ascending: false })
@@ -31,6 +47,7 @@ export async function GET(req: NextRequest) {
         const athRes = await supabase
             .from('swaps')
             .select('price')
+            .eq('chain_id', chainId)
             .eq('token_address', token)
             .not('price', 'is', null)
             .order('price', { ascending: false })
@@ -39,6 +56,7 @@ export async function GET(req: NextRequest) {
         const base24hRes = await supabase
             .from('swaps')
             .select('price, timestamp')
+            .eq('chain_id', chainId)
             .eq('token_address', token)
             .not('price', 'is', null)
             .lte('timestamp', cutoffMs)
@@ -49,6 +67,7 @@ export async function GET(req: NextRequest) {
             const firstRes = await supabase
                 .from('swaps')
                 .select('price')
+                .eq('chain_id', chainId)
                 .eq('token_address', token)
                 .not('price', 'is', null)
                 .order('timestamp', { ascending: true })
@@ -62,6 +81,7 @@ export async function GET(req: NextRequest) {
         const graphRes = await supabase
             .from('swaps')
             .select('timestamp, price, volume_native')
+            .eq('chain_id', chainId)
             .eq('token_address', token)
             .not('price', 'is', null)
             .gte('timestamp', Math.min(cutoffMs, cutoffSec))
@@ -80,6 +100,7 @@ export async function GET(req: NextRequest) {
         const actRes = await supabase
             .from('swaps')
             .select('is_buy, amount_in, amount_out, sender, tx_hash, timestamp, volume_native, volume_token')
+            .eq('chain_id', chainId)
             .eq('token_address', token)
             .order('timestamp', { ascending: false })
             .limit(activityLimit)
@@ -91,7 +112,7 @@ export async function GET(req: NextRequest) {
             hash: r.tx_hash,
             timestamp: normalizeTs(Number(r.timestamp || 0)),
         }))
-        const holdersRes = await supabase.rpc('holders_for_token', { token, limit_i: holdersLimit, offset_i: 0 })
+        const holdersRes = await supabase.rpc('holders_for_token', { chain_i: chainId, token, limit_i: holdersLimit, offset_i: 0 })
         const holders = (holdersRes.data || []).map((h: any) => ({ addr: h.holder, value: Number(h.balance || 0) }))
         // Aggregate traders using paged scan and Node-side reduction (compatible with supabase-js)
         const PAGE_SIZE = 1000
@@ -101,6 +122,7 @@ export async function GET(req: NextRequest) {
             let q = supabase
                 .from('swaps')
                 .select('sender, is_buy, volume_native, volume_token, timestamp')
+                .eq('chain_id', chainId)
                 .eq('token_address', token)
                 .order('timestamp', { ascending: false })
                 .range(offset, offset + PAGE_SIZE - 1)
@@ -149,6 +171,7 @@ export async function GET(req: NextRequest) {
             activity,
             holders,
             traders,
+            chainId,
         })
     } catch (e: any) {
         return NextResponse.json({ error: e?.message || 'internal error' }, { status: 500 })

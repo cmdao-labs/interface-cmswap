@@ -15,22 +15,34 @@ function fmt(ts: number) {
   }
 }
 
+function parseChainId(value: string | null): number | null {
+  if (!value) return null
+  const parsed = Number.parseInt(value, 10)
+  if (!Number.isFinite(parsed)) return null
+  if (parsed < 0) return null
+  return parsed
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const token = searchParams.get('token')
   const limit = Number(searchParams.get('limit') || '5')
+  const chainId = parseChainId(searchParams.get('chainId'))
   if (!token) return NextResponse.json({ error: 'token required' }, { status: 400 })
+  if (chainId == null) return NextResponse.json({ error: 'chainId required' }, { status: 400 })
   try {
     const supabase = getServiceSupabase()
     const latest = await supabase
       .from('swaps')
       .select('tx_hash, block_number, timestamp, price')
+      .eq('chain_id', chainId)
       .eq('token_address', token)
       .order('timestamp', { ascending: false })
       .limit(limit)
     const earliest = await supabase
       .from('swaps')
       .select('tx_hash, block_number, timestamp, price')
+      .eq('chain_id', chainId)
       .eq('token_address', token)
       .order('timestamp', { ascending: true })
     .limit(limit)
@@ -44,10 +56,10 @@ export async function GET(req: NextRequest) {
       sample: {
         latest: map(latest.data),
         earliest: map(earliest.data),
-      }
+      },
+      chainId,
     })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'internal error' }, { status: 500 })
   }
 }
-

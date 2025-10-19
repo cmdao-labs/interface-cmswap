@@ -275,6 +275,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
         _explorer = "https://testnet.kubscan.com/";
         _rpc = "https://rpc-testnet.bitkubchain.io" as string;
     }
+    const fetchChainId = _chainId || 25925;
     let currencyAddr: string = ""; let factoryAddr: string = ""; let socialAddr: string = "";
     if ((chain === "kubtestnet" || chain === "") && (mode === "pro" || mode === "") && (token === "")) {
         currencyAddr = "0x700D3ba307E1256e509eD3E45D6f9dff441d6907";
@@ -721,7 +722,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
         };
         const fetchSummary = async () => {
             try {
-                const res = await fetch(`/api/token/summary?token=${ticker}&graphHours=8766&holdersLimit=50`, { cache: 'no-store' })
+                const res = await fetch(`/api/token/summary?chainId=${fetchChainId}&token=${ticker}&graphHours=8766&holdersLimit=50`, { cache: 'no-store' })
                 if (!res.ok) return
                 const data = await res.json()
                 if (data?.token) {
@@ -741,7 +742,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
                 if (Array.isArray(data?.activity)) setHx(data.activity)
                 if (Array.isArray(data?.traders)) setSrvTraders(data.traders)
                 try {
-                    const hres = await fetch(`/api/token/holders?token=${ticker}&limit=500`, { cache: 'no-store' })
+                    const hres = await fetch(`/api/token/holders?chainId=${fetchChainId}&token=${ticker}&limit=500`, { cache: 'no-store' })
                     if (hres.ok) {
                         const hdata = await hres.json()
                         const raw = Array.isArray(hdata?.holders) ? hdata.holders : []

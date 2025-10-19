@@ -26,6 +26,7 @@ export interface LeaderboardTab {
 interface LeaderboardTabsProps {
     explorerUrl: string;
     tabs: LeaderboardTab[];
+    chainId?: number;
 }
 
 const formatValue = (value: number) => {
@@ -78,7 +79,7 @@ const JazziconAvatar = ({ address, size = 48 }: { address: string; size?: number
     return <div ref={ref} className="h-12 w-12" />;
 };
 
-const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
+const LeaderboardTabs = ({ explorerUrl, tabs, chainId }: LeaderboardTabsProps) => {
     const [activeTabId, setActiveTabId] = useState(() => tabs[0]?.id ?? "");
     const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -135,6 +136,19 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
         if (!effectiveTabs.length) return undefined as any;
         return effectiveTabs.find((tab) => tab.id === activeTabId) ?? effectiveTabs[0];
     }, [activeTabId, effectiveTabs]);
+
+    const effectiveChainId = useMemo(() => {
+        if (typeof chainId === 'number' && Number.isFinite(chainId) && chainId > 0) return chainId;
+        for (const tab of tabs) {
+            if (!tab?.entries) continue;
+            for (const entry of tab.entries) {
+                if (entry && typeof entry.chainId === 'number' && Number.isFinite(entry.chainId) && entry.chainId > 0) {
+                    return entry.chainId;
+                }
+            }
+        }
+        return 0;
+    }, [chainId, tabs]);
 
     const entries = activeTab?.entries ?? [];
 
@@ -218,8 +232,14 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                 setRemoteTabs(null);
                 return;
             }
+            const chainIdForQuery = effectiveChainId;
+            if (!Number.isFinite(chainIdForQuery) || chainIdForQuery <= 0) {
+                setRemoteTabs(null);
+                return;
+            }
             const qs = new URLSearchParams();
             qs.set('limit', '20');
+            qs.set('chainId', String(chainIdForQuery));
             if (start) qs.set('startTs', String(start));
             if (end) qs.set('endTs', String(end));
             try {
@@ -233,7 +253,7 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                     tokenMeta.set(k.toLowerCase(), { symbol: v?.symbol ?? undefined, name: v?.name ?? undefined, logo: v?.logo ?? undefined });
                 }
                 const explorerBase = explorerUrl.replace(/\/$/, '');
-                const chainId = 25925; // pump env
+                const responseChainId = typeof payload?.chainId === 'number' ? payload.chainId : chainIdForQuery;
                 const volumeTokens = ((payload?.volumeTokens ?? []) as Array<{ token_address: string; value: number; latest_ts?: number | null }>).map((row) => {
                     const addr = String(row.token_address || '');
                     const meta = tokenMeta.get(addr.toLowerCase()) || {};
@@ -248,15 +268,15 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
                         href: `${explorerBase}/address/${addr}`,
                         type: 'token' as const,
                         timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined,
-                        chainId,
+                        chainId: responseChainId,
                     };
                 });
                 const volumeTraders = ((payload?.volumeTraders ?? []) as Array<{ sender: string; value: number; latest_ts?: number | null }>).
-                    map((row) => ({ id: String(row.sender || ''), name: shortAddress(row.sender), logo: '', value: Number(row.value || 0), address: String(row.sender || '') as `0x${string}`, type: 'trader' as const, timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined, chainId }));
+                    map((row) => ({ id: String(row.sender || ''), name: shortAddress(row.sender), logo: '', value: Number(row.value || 0), address: String(row.sender || '') as `0x${string}`, type: 'trader' as const, timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined, chainId: responseChainId }));
                 const profitTraders = ((payload?.profitTraders ?? []) as Array<{ sender: string; value: number; latest_ts?: number | null }>).
-                    map((row) => ({ id: `${row.sender}-profit`, name: shortAddress(row.sender), logo: '', value: Number(row.value || 0), address: String(row.sender || '') as `0x${string}`, type: 'trader' as const, timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined, chainId }));
+                    map((row) => ({ id: `${row.sender}-profit`, name: shortAddress(row.sender), logo: '', value: Number(row.value || 0), address: String(row.sender || '') as `0x${string}`, type: 'trader' as const, timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined, chainId: responseChainId }));
                 const degenTraders = ((payload?.degenTraders ?? []) as Array<{ sender: string; value: number; latest_ts?: number | null }>).
-                    map((row) => ({ id: `${row.sender}-degen`, name: shortAddress(row.sender), logo: '', value: Number(row.value || 0), address: String(row.sender || '') as `0x${string}`, type: 'degen' as const, timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined, chainId }));
+                    map((row) => ({ id: `${row.sender}-degen`, name: shortAddress(row.sender), logo: '', value: Number(row.value || 0), address: String(row.sender || '') as `0x${string}`, type: 'degen' as const, timestamp: typeof row.latest_ts === 'number' ? row.latest_ts : undefined, chainId: responseChainId }));
                 setRemoteTabs([
                     { id: 'volume-token', label: 'Top Volume Cult', entries: volumeTokens },
                     { id: 'top-volume-trader', label: 'Top Volume Trader', entries: volumeTraders },
@@ -268,7 +288,7 @@ const LeaderboardTabs = ({ explorerUrl, tabs }: LeaderboardTabsProps) => {
             }
         };
         fetchRange();
-    }, [timeRange, customStart, customEnd, explorerUrl]);
+    }, [timeRange, customStart, customEnd, explorerUrl, effectiveChainId]);
 
     return (
         <section className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-[#080b17]/85 shadow-[0_0_28px_rgba(15,118,110,0.15)] backdrop-blur-xl">

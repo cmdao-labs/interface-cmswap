@@ -1,11 +1,18 @@
-// Env required: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY // Optional: KUBTESTNET_RPC (default https://rpc-testnet.bitkubchain.io) / INDEXER_INTERVAL_MS (default 3000) / INDEXER_MAX_RANGE (default 2000) / INDEXER_MODE (all|creation|swap|transfer, default all)
+// Env required: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+// Optional: INDEXER_RPC_URL (fallback KUBTESTNET_RPC; default https://rpc-testnet.bitkubchain.io)
+//           INDEXER_INTERVAL_MS (default 3000) / INDEXER_MAX_RANGE (default 2000)
+//           INDEXER_MODE (all|creation|swap|transfer, default all)
+//           INDEXER_CHAIN_ID (default: auto-detect via RPC)
+//           INDEXER_FACTORY_ADDR (default current Bitkub testnet factory)
+//           INDEXER_START_BLOCK (default current Bitkub testnet start block)
+//           INDEXER_BASE_TOKEN
 import { createPublicClient, decodeFunctionData, http, formatEther, erc20Abi } from 'viem'
 import { bitkubTestnet } from 'viem/chains'
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
-const FACTORY_ADDR = '0x46a4073c830031ea19d7b9825080c05f8454e530'
-const START_BLOCK = 23935659n
+const FACTORY_ADDR = (process.env.INDEXER_FACTORY_ADDR || '0x46a4073c830031ea19d7b9825080c05f8454e530').toLowerCase()
+const START_BLOCK = BigInt(process.env.INDEXER_START_BLOCK || '23935659')
 
 const FACTORY_EVENTS_ABI = [
     {
@@ -74,9 +81,11 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 const INTERVAL_MS = Number(process.env.INDEXER_INTERVAL_MS || '3000')
 const MAX_RANGE = Number(process.env.INDEXER_MAX_RANGE || '2000')
 const MODE = (process.env.INDEXER_MODE || 'all')
-const RPC_URL = process.env.KUBTESTNET_RPC || 'https://rpc-testnet.bitkubchain.io'
+const RPC_URL = process.env.INDEXER_RPC_URL || process.env.KUBTESTNET_RPC || 'https://rpc-testnet.bitkubchain.io'
 
 const client = createPublicClient({ chain: bitkubTestnet, transport: http(RPC_URL) })
+
+let CHAIN_ID = Number(process.env.INDEXER_CHAIN_ID || '0') || null
 
 const BASE_TOKEN = (process.env.INDEXER_BASE_TOKEN || '0x700d3ba307e1256e509ed3e45d6f9dff441d6907').toLowerCase()
 const BASE_TOKEN_DECIMALS = Number(process.env.INDEXER_BASE_TOKEN_DECIMALS || '18')
@@ -164,6 +173,7 @@ async function ensureMarket(tokenAddress) {
         getTokenDecimals(BASE_TOKEN),
     ])
     const row = {
+        chain_id: CHAIN_ID,
         market_id: canonical.marketId,
         token0: canonical.token0,
         token1: canonical.token1,
@@ -172,7 +182,7 @@ async function ensureMarket(tokenAddress) {
         decimals0: canonical.token0 === tokenLower ? tokenDecimals : baseDecimals,
         decimals1: canonical.token1 === tokenLower ? tokenDecimals : baseDecimals,
     }
-    await restUpsert('swap_markets', [row], 'market_id')
+    await restUpsert('swap_markets', [row], 'chain_id,market_id')
     marketCache.add(canonical.marketId)
     return canonical
 }
@@ -209,13 +219,13 @@ function updateCandleAccumulator(map, marketId, timeframeSeconds, bucketMs, pric
 }
 
 async function getLastBlock(stream) {
-    const rows = await restGet('index_state', `select=last_block&stream=eq.${encodeURIComponent(stream)}&limit=1`)
+    const rows = await restGet('index_state', `select=last_block&chain_id=eq.${CHAIN_ID}&stream=eq.${encodeURIComponent(stream)}&limit=1`)
     if (!rows || rows.length === 0) return START_BLOCK
     return BigInt(rows[0].last_block)
 }
 
 async function setLastBlock(stream, block) {
-    await restUpsert('index_state', [{ stream, last_block: String(block) }], 'stream')
+    await restUpsert('index_state', [{ chain_id: CHAIN_ID, stream, last_block: String(block) }], 'chain_id,stream')
 }
 
 async function indexCreation(latest) {
@@ -233,6 +243,7 @@ async function indexCreation(latest) {
         })
         if (logs.length) {
         const rows = logs.map((l) => ({
+            chain_id: CHAIN_ID,
             address: l.args?.tokenAddr ?? '',
             symbol: null,
             name: null,
@@ -241,12 +252,12 @@ async function indexCreation(latest) {
             logo: l.args?.logo ?? null,
             description: l.args?.description ?? null,
         }))
-        await restUpsert('tokens', rows, 'address')
+        await restUpsert('tokens', rows, 'chain_id,address')
         for (const r of rows) {
             try {
                 const symbol = await client.readContract({ address: r.address, abi: erc20Abi, functionName: 'symbol' })
                 const name = await client.readContract({ address: r.address, abi: erc20Abi, functionName: 'name' })
-                await restUpsert('tokens', [{ address: r.address, symbol, name }], 'address')
+                await restUpsert('tokens', [{ chain_id: CHAIN_ID, address: r.address, symbol, name }], 'chain_id,address')
             } catch {}
         }
         }
@@ -302,6 +313,7 @@ async function indexSwaps(latest) {
                 const volume_native = Number(formatEther(isBuy ? amountIn : amountOut))
                 const volume_token = Number(formatEther(isBuy ? amountOut : amountIn))
                 return {
+                    chain_id: CHAIN_ID,
                     factory_address: FACTORY_ADDR,
                     token_address: tokenAddr,
                     block_number: String(l.blockNumber),
@@ -319,7 +331,7 @@ async function indexSwaps(latest) {
                     volume_token: isFinite(volume_token) ? volume_token : null,
                 }
             })
-            await restUpsert('swaps', rows, 'tx_hash,log_index')
+            await restUpsert('swaps', rows, 'chain_id,tx_hash,log_index')
             try {
                 const uniqueTokens = new Set()
                 for (const row of rows) {
@@ -375,6 +387,7 @@ async function indexSwaps(latest) {
                     const reserve0 = tokenIsToken0 ? tokenReserve : baseReserve
                     const reserve1 = tokenIsToken0 ? baseReserve : tokenReserve
                     snapshotRows.push({
+                        chain_id: CHAIN_ID,
                         market_id: market.marketId,
                         pair_address: tokenLower,
                         dex: 'cmswap-factory',
@@ -386,10 +399,11 @@ async function indexSwaps(latest) {
                     })
                 }
                 if (candleAccumulator.size) {
-                    await restUpsert('swap_candles', Array.from(candleAccumulator.values()), 'market_id,timeframe_seconds,bucket_start')
+                    const withChain = Array.from(candleAccumulator.values()).map((c) => ({ ...c, chain_id: CHAIN_ID }))
+                    await restUpsert('swap_candles', withChain, 'chain_id,market_id,timeframe_seconds,bucket_start')
                 }
                 if (snapshotRows.length) {
-                    await restUpsert('swap_pair_snapshots', snapshotRows, 'pair_address,block_number')
+                    await restUpsert('swap_pair_snapshots', snapshotRows, 'chain_id,pair_address,block_number')
                 }
             } catch (err) {
                 console.error('aggregate swap data error:', err)
@@ -401,7 +415,7 @@ async function indexSwaps(latest) {
 }
 
 async function indexTransfers(latest) {
-    const tokens = await restGet('tokens', 'select=address')
+    const tokens = await restGet('tokens', `select=address&chain_id=eq.${CHAIN_ID}`)
     if (!Array.isArray(tokens) || tokens.length === 0) return
     const chunk = BigInt(MAX_RANGE)
     for (const t of tokens) {
@@ -424,6 +438,7 @@ async function indexTransfers(latest) {
                 const blockMap = new Map()
                 blocks.forEach((b, i) => blockMap.set(blockNumbers[i], Number(b.timestamp) * 1000))
                 const rows = logs.map((l) => ({
+                    chain_id: CHAIN_ID,
                     token_address: token,
                     block_number: String(l.blockNumber),
                     log_index: Number(l.logIndex ?? 0),
@@ -433,7 +448,7 @@ async function indexTransfers(latest) {
                     amount: l.args?.value ? String(l.args.value) : null,
                     timestamp: blockMap.get(String(l.blockNumber)) || null,
                 }))
-                await restUpsert('transfers', rows, 'tx_hash,log_index')
+                await restUpsert('transfers', rows, 'chain_id,tx_hash,log_index')
             }
             await setLastBlock(`transfer:${token.toLowerCase()}`, to)
             from = to + 1n
@@ -453,6 +468,13 @@ async function main() {
     console.log('Supabase:', SUPABASE_URL)
     console.log('RPC:', RPC_URL)
     console.log('Mode:', MODE, 'Interval(ms):', INTERVAL_MS, 'MaxRange:', MAX_RANGE)
+    try {
+        if (!CHAIN_ID) CHAIN_ID = await client.getChainId()
+    } catch (e) {
+        console.warn('Could not auto-detect chain id, using env or 0. Set INDEXER_CHAIN_ID to avoid this warning.')
+        CHAIN_ID = Number(process.env.INDEXER_CHAIN_ID || '0') || 0
+    }
+    console.log('Chain ID:', CHAIN_ID)
     while (true) {
         try {
             await tick()

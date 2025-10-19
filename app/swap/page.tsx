@@ -26,7 +26,7 @@ export default function Page() {
     const [isChartOpen, setIsChartOpen] = React.useState(false)
     const [chartTimeframe, setChartTimeframe] = React.useState<SwapChartTimeframe>('5m')
     // Derive selected tokens from the URL using the same hooks as Swap
-    const { tokens: chainTokens, toWrapped } = useSwapChain()
+    const { tokens: chainTokens, toWrapped, chainId: swapChainId } = useSwapChain()
     const { tokenA, tokenB } = useSwapTokenSelection(chainTokens as any, { defaultTokenAIndex: 0, defaultTokenBIndex: 2, referralAddress: undefined as any })
     const resolveChartAddress = React.useCallback((token: any) => {
         if (!token || !token.value || token.value === '0x') return null
@@ -42,6 +42,7 @@ export default function Page() {
         baseToken: chartTokenAAddress ?? undefined,
         quoteToken: chartTokenBAddress ?? undefined,
         timeframe: chartTimeframe,
+        chainId: swapChainId,
         enabled: isChartOpen && !!chartTokenAAddress && !!chartTokenBAddress,
     })
     const chartLatestPrice = React.useMemo(() => {
