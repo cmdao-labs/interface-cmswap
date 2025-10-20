@@ -26,10 +26,7 @@ export const liquidityVariantConfig = {
     },
     [LiquidityVariant.BKC_TESTNET]: {
         chainId: 25925 as SupportedChainId,
-        isKap20Token: (addr: string) => {
-            const t = chains[25925].tokens[2]?.value?.toUpperCase()
-            return !!t && addr?.toUpperCase() === t
-        },
+        isKap20Token: (addr: string) => false,
         decimalsOf: (addr: string) => chains[25925].tokens.find(t => t.value.toUpperCase() === addr.toUpperCase())?.decimal ?? 18,
         displayPrecision: 4,
     },
