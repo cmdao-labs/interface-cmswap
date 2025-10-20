@@ -582,6 +582,34 @@ async function indexV3Swaps(latest) {
 
                 const candleAccumulator = new Map()
                 const snapshotRows = []
+                // Helper: compute price (token1 per 1 token0) from sqrtPriceX96 with decimals, using BigInt for precision
+                function price1Per0FromSqrtX96(sqrtPriceX96, dec0, dec1) {
+                    try {
+                        const sqrt = BigInt(sqrtPriceX96)
+                        if (sqrt <= 0n) return null
+                        const num = sqrt * sqrt // Q192 scaled
+                        const Q192 = 1n << 192n
+                        // Adjust for token decimals: multiply or divide by 10^(dec0 - dec1)
+                        let numerator = num
+                        let denominator = Q192
+                        if (dec0 > dec1) {
+                            const scale = 10n ** BigInt(dec0 - dec1)
+                            numerator = numerator * scale
+                        } else if (dec1 > dec0) {
+                            const scale = 10n ** BigInt(dec1 - dec0)
+                            denominator = denominator * scale
+                        }
+                        // Convert rational to Number with fixed precision using BigInt
+                        const PREC = 18n
+                        const SCALE = 10n ** PREC
+                        const scaled = (numerator * SCALE) / denominator
+                        const asNum = Number(scaled) / Math.pow(10, Number(PREC))
+                        return Number.isFinite(asNum) && asNum > 0 ? asNum : null
+                    } catch {
+                        return null
+                    }
+                }
+
                 for (const l of logs) {
                     const tsMs = blockMap.get(String(l.blockNumber)) || null
                     const amount0 = BigInt(l.args?.amount0 ?? 0)
@@ -589,25 +617,17 @@ async function indexV3Swaps(latest) {
                     const sqrtPriceX96 = BigInt(l.args?.sqrtPriceX96 ?? 0)
                     const dec0 = Number(m.decimals0 ?? 18)
                     const dec1 = Number(m.decimals1 ?? 18)
-                    // Compute price1_per_0 = (sqrtX96/2^96)^2 * 10^(dec0-dec1)
-                    let price1_per_0 = null
-                    try {
-                        const q96 = Math.pow(2, 96)
-                        const sqrtP = Number(sqrtPriceX96) / q96
-                        const raw = sqrtP * sqrtP
-                        const adj = raw * pow10(dec0 - dec1)
-                        price1_per_0 = Number.isFinite(adj) && adj > 0 ? adj : null
-                    } catch {}
-                    const price0_per_1 = price1_per_0 && price1_per_0 > 0 ? 1 / price1_per_0 : null
+                    // Compute price as token1 per 1 token0 (token0 priced in token1)
+                    const price1_per_0 = price1Per0FromSqrtX96(sqrtPriceX96, dec0, dec1)
 
                     // Volumes per swap in natural units
                     const vol0 = Math.abs(Number(amount0) / Math.pow(10, dec0))
                     const vol1 = Math.abs(Number(amount1) / Math.pow(10, dec1))
 
-                    if (tsMs && price0_per_1 && Number.isFinite(vol0) && Number.isFinite(vol1)) {
+                    if (tsMs && price1_per_0 && Number.isFinite(vol0) && Number.isFinite(vol1)) {
                         for (const seconds of TIMEFRAMES_SECONDS) {
                             const bucketMs = bucketStart(tsMs, seconds)
-                            updateCandleAccumulator(candleAccumulator, m.market_id, seconds, bucketMs, price0_per_1, vol0, vol1)
+                            updateCandleAccumulator(candleAccumulator, m.market_id, seconds, bucketMs, price1_per_0, vol0, vol1)
                         }
                         snapshotRows.push({
                             chain_id: CHAIN_ID,
@@ -618,7 +638,8 @@ async function indexV3Swaps(latest) {
                             timestamp: tsMs,
                             reserve0: null,
                             reserve1: null,
-                            price: price0_per_1,
+                            // Store price as token1 per 1 token0 (matches API orientation)
+                            price: price1_per_0,
                         })
                     }
                 }

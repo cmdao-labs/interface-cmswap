@@ -187,7 +187,15 @@ create table if not exists swap_markets (
   primary key (chain_id, market_id)
 );
 
-create unique index if not exists swap_markets_token_idx on swap_markets(chain_id, token0, token1);
+-- Allow multiple pools (e.g., Uniswap V3 fee tiers) per token pair.
+-- Previously this was UNIQUE and caused conflicts when inserting another fee tier
+-- for the same (token0, token1). Drop the unique index if it exists, then
+-- recreate as a normal (non-unique) index for query performance.
+drop index if exists swap_markets_token_idx;
+create index if not exists swap_markets_token_idx on swap_markets(chain_id, token0, token1);
+
+-- Ensure a given on-chain pair (pool) is only inserted once per chain.
+create unique index if not exists swap_markets_pair_idx on swap_markets(chain_id, pair_address);
 
 -- On-chain liquidity snapshots per market/pair
 create table if not exists swap_pair_snapshots (

@@ -45,6 +45,15 @@ export function useSwapTokenSelection<T extends SwapTokenBase>( tokens: readonly
                 url.searchParams.delete('ref')
             }
             window.history.replaceState({}, '', url.toString())
+            // Broadcast a lightweight event so other hook instances (e.g., chart panel)
+            // can react to token pair changes without tightly coupling component state.
+            try {
+                const detail = {
+                    input: tokenAValue ? tokenAValue.toLowerCase() : null,
+                    output: tokenBValue ? tokenBValue.toLowerCase() : null,
+                }
+                window.dispatchEvent(new CustomEvent('cmswap:tokenPairChanged', { detail }))
+            } catch {}
         }, []
     )
 
@@ -88,6 +97,27 @@ export function useSwapTokenSelection<T extends SwapTokenBase>( tokens: readonly
         setTokenB(initialTokenB)
         // We want to realign default tokens if the token list or default indices change.
     }, [initialTokenA, initialTokenB])
+
+    // Listen for global token pair updates (emitted by updateURLWithTokens).
+    React.useEffect(() => {
+        if (typeof window === 'undefined') return
+        function onPairChanged(evt: any) {
+            try {
+                const input = evt?.detail?.input as string | null | undefined
+                const output = evt?.detail?.output as string | null | undefined
+                if (!input && !output) return
+                const nextA = input ? tokens.find(t => t.value.toLowerCase() === input) : undefined
+                const nextB = output ? tokens.find(t => t.value.toLowerCase() === output) : undefined
+                if (nextA && nextA.value !== tokenA.value) setTokenA(nextA as T)
+                if (nextB && nextB.value !== tokenB.value) setTokenB(nextB as T)
+            } catch {}
+        }
+        window.addEventListener('cmswap:tokenPairChanged', onPairChanged as EventListener)
+        return () => {
+            window.removeEventListener('cmswap:tokenPairChanged', onPairChanged as EventListener)
+        }
+        // tokenA/tokenB included to keep updates minimal; tokens array provides identity
+    }, [tokens, tokenA.value, tokenB.value])
 
     return {tokenA, tokenB, setTokenA, setTokenB, hasInitializedFromParams, updateURLWithTokens, switchTokens}
 }
