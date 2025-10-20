@@ -52,7 +52,7 @@ export default function Swap({ setIsLoading, setErrMsg, isChartOpen: isChartOpen
 }) {
     const DEFAULT_SAMPLE_AMOUNT = "500"
     const { address } = useAccount()
-    const { variant, tokens: chainTokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, wrappedNative, unwarppedNative, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI, CMswapUniSmartRoute, bkcUnwapped, CMswapPoolDualRouterContract, CMswapUniSmartRouteContract } = useSwapChain()
+    const { variant, chainId, tokens: chainTokens, ROUTER02, qouterV2Contract, router02Contract, erc20ABI, kap20ABI, wrappedNative, unwarppedNative, CMswapUniSmartRouteContractV2, UniswapPairv2PoolABI, CMswapUniSmartRoute, bkcUnwapped, CMswapPoolDualRouterContract, CMswapUniSmartRouteContract } = useSwapChain()
     const tokens = chainTokens as readonly UIToken[]
     const [txupdate, setTxupdate] = React.useState("")
     const [exchangeRate, setExchangeRate] = React.useState("")
@@ -369,7 +369,7 @@ export default function Swap({ setIsLoading, setErrMsg, isChartOpen: isChartOpen
             let tokenAvalue = tokenA.value === tokens[0].value ? tokens[1].value : tokenA.value
             let tokenBvalue = tokenB.value === tokens[0].value ? tokens[1].value : tokenB.value
             if (tokenA.value.toUpperCase() !== tokens[0].value.toUpperCase()) {
-                const isKap20 = !!kap20ABI && (tokenA.value.toUpperCase() === (tokens[2]?.value?.toUpperCase?.() || ''))
+                const isKap20 = !!kap20ABI && (chainId === 96 && (tokenA.value.toUpperCase() === (tokens[2]?.value?.toUpperCase?.() || '')))
                 await ensureTokenAllowance({ config, token: { ...(isKap20 ? (kap20ABI as any) : erc20ABI), address: tokenA.value }, owner: address as `0x${string}`, spender: ROUTER02 as `0x${string}`, requiredAmount: parseUnits(amountA || '0', getDecimals(tokenA)), allowanceFunctionName: isKap20 ? 'allowances' : 'allowance' })
             }
             const parsedAmountIn = parseUnits(amountA || '0', getDecimals(tokenA))
