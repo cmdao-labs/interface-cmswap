@@ -73,15 +73,17 @@ function aggregateCandlesWithFill(points: RawPoint[], intervalMs: number): Candl
     return candles;
 }
 
-function toUTCString(timestampSec: number): string {
+function toLocalTimeString(timestampSec: number): string {
     const date = new Date(timestampSec * 1000);
-    const yyyy = date.getUTCFullYear();
-    const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(date.getUTCDate()).padStart(2, '0');
-    const hh = String(date.getUTCHours()).padStart(2, '0');
-    const min = String(date.getUTCMinutes()).padStart(2, '0');
-    const ss = String(date.getUTCSeconds()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss} UTC`;
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const hh = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    const ss = String(date.getSeconds()).padStart(2, '0');
+    const gmtOffset = -date.getTimezoneOffset() / 60;
+    const gmtString = gmtOffset === 0 ? 'GMT' : `GMT${gmtOffset >= 0 ? '+' : ''}${gmtOffset}`;
+    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss} ${gmtString}`;
 }
 
 function tidyNumber(value: number): string {
@@ -118,7 +120,14 @@ const Chart: React.FC<ChartProps> = ({ data, supply }) => {
         if (metric === 'price') return data;
         return data.map((p) => ({ ...p, price: p.price * effectiveSupply }));
     }, [data, metric, effectiveSupply]);
-    const candles = useMemo(() => aggregateCandlesWithFill(transformedData, timeframe), [transformedData, timeframe]);
+    const candles = useMemo(() => {
+        const result = aggregateCandlesWithFill(transformedData, timeframe);
+        if (result.length > 0) {
+            const firstCandle = result[0];
+            const lastCandle = result[result.length - 1];
+        }
+        return result;
+    }, [transformedData, timeframe]);
     const candlestickSeriesData: CandlestickData[] = useMemo(() => candles.map((candle) => ({
         time: candle.time as Time,
         open: candle.open,
@@ -171,7 +180,7 @@ const Chart: React.FC<ChartProps> = ({ data, supply }) => {
 
         const directionColor = change >= 0 ? '#31fca5' : '#ff5f7a';
 
-        const displayTs = candle.lastTs ?? candle.time;
+        const displayTs = candle.time;
         infoEl.innerHTML = `
             <span class="text-xs text-emerald-200">CMSWAP-PUMP · ${metric === 'mcap' ? 'MCap' : 'Price'}</span>
             <div class="flex flex-wrap">
@@ -181,7 +190,7 @@ const Chart: React.FC<ChartProps> = ({ data, supply }) => {
                 <span class="text-xs text-white/70">C <span style="color:${directionColor}">${formatByMetric(candle.close)}</span></span>
             </div>
             <span class="text-xs" style="color:${directionColor}">${change >= 0 ? '+' : ''}${formatByMetric(change)} (${changePct >= 0 ? '+' : ''}${tidyNumber(changePct)}%)</span>
-            <span class="text-xs text-white/60">Last trade: ${toUTCString(displayTs)}</span>
+            <span class="text-xs text-white/60">Last trade: ${toLocalTimeString(displayTs)}</span>
             ${maParts.length ? `<span class="text-xs text-white/60">${maParts.join(' · ')}</span>` : ''}
         `.replace(/\s+/g, ' ').trim();
     }, [formatByMetric, metric]);
@@ -233,11 +242,11 @@ const Chart: React.FC<ChartProps> = ({ data, supply }) => {
                 const timestamp = getTimestampFromTime(time);
                 if (timestamp == null) return '';
                     const date = new Date(timestamp * 1000);
-                    const hh = String(date.getUTCHours()).padStart(2, '0');
-                    const mm = String(date.getUTCMinutes()).padStart(2, '0');
-                    const dd = String(date.getUTCDate()).padStart(2, '0');
-                    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-                    return `${month}/${dd} ${hh}:${mm} UTC`;
+                    const hh = String(date.getHours()).padStart(2, '0');
+                    const mm = String(date.getMinutes()).padStart(2, '0');
+                    const dd = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    return `${month}/${dd} ${hh}:${mm}`;
                 },
             },
             handleScale: {
@@ -321,10 +330,10 @@ const Chart: React.FC<ChartProps> = ({ data, supply }) => {
             const clampedTop = Math.max(16, Math.min(point.y - 120, containerHeight - 160));
             tooltip.style.top = `${clampedTop}px`;
             const candleAtIndex = candlesRef.current[index];
-            const displayTs = candleAtIndex?.lastTs ?? timestamp;
+            const displayTs = timestamp;
             tooltip.innerHTML = `
                 <div class="flex flex-col gap-1">
-                    <span class="text-xs text-emerald-200">${toUTCString(displayTs)}</span>
+                    <span class="text-xs text-emerald-200">${toLocalTimeString(displayTs)}</span>
                     <span class="text-xs text-white/90">Open: ${formatByMetric(candleData.open as number)}</span>
                     <span class="text-xs text-white/90">High: ${formatByMetric(candleData.high as number)}</span>
                     <span class="text-xs text-white/90">Low: ${formatByMetric(candleData.low as number)}</span>

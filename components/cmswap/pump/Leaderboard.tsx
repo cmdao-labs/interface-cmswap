@@ -36,8 +36,8 @@ export default async function Leaderboard({ mode, chain, token, }: LeaderboardPr
     const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
     const baseUrl = host ? `${protocol}://${host}` : process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-    // Use aggregated, all-time leaderboard API
-    const lbLimit = 20;
+    // Use aggregated, all-time leaderboard API with increased limit for pagination
+    const lbLimit = 100;
     const res = await fetch(`${baseUrl}/api/swaps/leaderboard?chainId=${network.chainId}&limit=${lbLimit}`, { cache: "no-store" });
     const payload = res.ok ? await res.json() : null;
     const responseChainId = typeof payload?.chainId === 'number' ? payload.chainId : network.chainId;

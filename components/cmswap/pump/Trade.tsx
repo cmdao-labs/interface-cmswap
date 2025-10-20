@@ -74,14 +74,14 @@ function TradeActionCard({className, trademode, onModeChange, gradientButtonStyl
                     <div className="ml-2 flex items-center gap-2 text-white/40">
                         <span>Tolerance</span>
                         <input
-                            type="number"
                             min={0}
                             max={100}
                             step={0.1}
-                            value={Number.isFinite(slippageTolerance) ? slippageTolerance : 0}
+                            value={Number.isFinite(slippageTolerance) ? slippageTolerance : ''}
                             onChange={(e) => {
                                 const v = Number(e.target.value);
                                 const clamped = Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 0;
+                                console.log(clamped)
                                 onSlippageToleranceChange(clamped);
                             }}
                             className="w-16 rounded-md border border-white/10 bg-black/60 px-2 py-1 text-xs text-white outline-none hover:border-white/20"
@@ -737,8 +737,12 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
                     setMcap(Number(data.header.mcap || 0))
                     setProgress(Number(data.header.progress || 0))
                 }
-                if (Array.isArray(data?.graph)) setGraphData(data.graph)
-                if (Array.isArray(data?.activity)) setHx(data.activity)
+                if (Array.isArray(data?.graph)) {
+                    setGraphData(data.graph)
+                }
+                if (Array.isArray(data?.activity)) {
+                    setHx(data.activity)
+                }
                 if (Array.isArray(data?.traders)) setSrvTraders(data.traders)
                 try {
                     const hres = await fetch(`/api/token/holders?chainId=${fetchChainId}&token=${ticker}&limit=500`, { cache: 'no-store' })

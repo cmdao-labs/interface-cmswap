@@ -78,17 +78,29 @@ export async function GET(req: NextRequest) {
         const changePct = base24h ? (changeAbs / base24h) * 100 : 0
         const mcap = (lastPrice || 0) * 1_000_000_000
         const progress = (mcap / 60600) * 100
-        const graphRes = await supabase
-            .from('swaps')
-            .select('timestamp, price, volume_native')
-            .eq('chain_id', chainId)
-            .eq('token_address', token)
-            .not('price', 'is', null)
-            .gte('timestamp', Math.min(cutoffMs, cutoffSec))
-            .order('timestamp', { ascending: true })
-        const rows = graphRes.data || []
+        const CHART_PAGE_SIZE = 1000
+        const graphData: any[] = []
+        let graphOffset = 0
+        let hasMoreGraph = true
+        while (hasMoreGraph) {
+            const graphRes = await supabase
+                .from('swaps')
+                .select('timestamp, price, volume_native')
+                .eq('chain_id', chainId)
+                .eq('token_address', token)
+                .not('price', 'is', null)
+                .gte('timestamp', cutoffMs)
+                .order('timestamp', { ascending: true })
+                .range(graphOffset, graphOffset + CHART_PAGE_SIZE - 1)
+
+            const pageData = graphRes.data || []
+            graphData.push(...pageData)
+            graphOffset += CHART_PAGE_SIZE
+            hasMoreGraph = pageData.length === CHART_PAGE_SIZE
+            if (graphData.length > 50000) break;
+        }
+        const rows = graphData
         const normalizeTs = (ts: number) => (ts > 1e12 ? ts : ts * 1000);
-        // Return raw per-swap points normalized to milliseconds
         const graph = rows
             .map((r: any) => ({
                 time: normalizeTs(Number(r?.timestamp || 0)),
@@ -139,7 +151,7 @@ export async function GET(req: NextRequest) {
                 const isBuy = Boolean(r?.is_buy)
                 const volN = Number(r?.volume_native || 0)
                 const volT = Number(r?.volume_token || 0)
-                const ts = Number(r?.timestamp || 0)
+                const ts = normalizeTs(Number(r?.timestamp || 0))
                 const cur = tmap.get(addr) || { addr, buys: 0, sells: 0, trades: 0, lastActive: 0, boughtNative: 0, soldNative: 0, boughtToken: 0, soldToken: 0 }
                 if (isBuy) {
                     cur.buys += 1

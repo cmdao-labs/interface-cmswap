@@ -82,6 +82,8 @@ const JazziconAvatar = ({ address, size = 48 }: { address: string; size?: number
 const LeaderboardTabs = ({ explorerUrl, tabs, chainId }: LeaderboardTabsProps) => {
     const [activeTabId, setActiveTabId] = useState(() => tabs[0]?.id ?? "");
     const [filtersOpen, setFiltersOpen] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 20;
 
     // Read current query params to preserve navigation context
     const searchParams = useSearchParams();
@@ -94,9 +96,17 @@ const LeaderboardTabs = ({ explorerUrl, tabs, chainId }: LeaderboardTabsProps) =
     useEffect(() => {
         if (!rankbyParam) return;
         const match = tabs.find(t => t.id === rankbyParam);
-        if (match && match.id !== activeTabId) setActiveTabId(match.id);
+        if (match && match.id !== activeTabId) {
+            setActiveTabId(match.id);
+            setCurrentPage(1); // Reset page when tab changes
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [rankbyParam, tabs]);
+
+    // Reset page when active tab changes manually
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTabId]);
 
     const buildTokenHref = (entry: LeaderboardEntry) => {
         const params = new URLSearchParams();
@@ -205,6 +215,22 @@ const LeaderboardTabs = ({ explorerUrl, tabs, chainId }: LeaderboardTabsProps) =
         });
     }, [entries, timeRange, customStart, customEnd, minValue, addressQuery, activeTab?.id]);
 
+    // Pagination logic
+    const paginatedEntries = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        return filteredEntries.slice(startIndex, endIndex);
+    }, [filteredEntries, currentPage]);
+
+    const totalPages = Math.ceil(filteredEntries.length / ITEMS_PER_PAGE);
+    const hasNextPage = currentPage < totalPages;
+    const hasPreviousPage = currentPage > 1;
+
+    // Reset page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [timeRange, customStart, customEnd, minValue, addressQuery]);
+
     // Client fetch to get range-based aggregates so values match time filter
     useEffect(() => {
         // Only fetch when a specific time window is selected
@@ -238,7 +264,7 @@ const LeaderboardTabs = ({ explorerUrl, tabs, chainId }: LeaderboardTabsProps) =
                 return;
             }
             const qs = new URLSearchParams();
-            qs.set('limit', '20');
+            qs.set('limit', '100'); // Increased limit for pagination
             qs.set('chainId', String(chainIdForQuery));
             if (start) qs.set('startTs', String(start));
             if (end) qs.set('endTs', String(end));
@@ -301,7 +327,10 @@ const LeaderboardTabs = ({ explorerUrl, tabs, chainId }: LeaderboardTabsProps) =
                             <button
                                 key={tab.id}
                                 className={`group relative overflow-hidden rounded-full border px-5 py-2 text-xs font-semibold transition-all duration-300 ease-out ${isActive ? "border-emerald-300/40 bg-emerald-500/15 text-emerald-100 shadow-[0_0_20px_rgba(16,185,129,0.45)]" : "border-white/5 text-slate-400 hover:border-emerald-300/40 hover:text-emerald-100"}`}
-                                onClick={() => setActiveTabId(tab.id)}
+                                onClick={() => {
+                                    setActiveTabId(tab.id);
+                                    setCurrentPage(1);
+                                }}
                                 type="button"
                             >
                                 <span className="relative z-[1]">{tab.label}</span>
@@ -400,7 +429,7 @@ const LeaderboardTabs = ({ explorerUrl, tabs, chainId }: LeaderboardTabsProps) =
                     <>
                         <table className="hidden w-full border-separate border-spacing-y-4 text-sm text-slate-200 md:table">
                             <tbody>
-                                {filteredEntries.map((entry: any, index: any) => {
+                                {paginatedEntries.map((entry: any, index: any) => {
                                     const isTrader = entry.type === "trader" || entry.type === "degen";
                                     const primaryText = isTrader ? shortAddress(entry.address) : entry.subtitle;
                                     const secondaryText = isTrader ? undefined : entry.name;
@@ -414,7 +443,7 @@ const LeaderboardTabs = ({ explorerUrl, tabs, chainId }: LeaderboardTabsProps) =
                                                     target="_blank"
                                                 >
                                                     <div className="grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-6">
-                                <span className="text-lg font-semibold tracking-[0.2em] text-slate-300">{rankById.get(entry.id) ?? (index + 1)}</span>
+                                <span className="text-lg font-semibold tracking-[0.2em] text-slate-300">{rankById.get(entry.id) ?? ((currentPage - 1) * ITEMS_PER_PAGE + index + 1)}</span>
                                                         <div className="flex items-center gap-4">
                                                             <div className="h-12 w-12 overflow-hidden rounded-full border border-white/10 bg-[#0b1020]">
                                                                 {isTrader ? <JazziconAvatar address={entry.address} size={48} /> : <img src={resolveLogoUrl(entry.logo)} alt={entry.name} className="h-full w-full object-cover" />}
@@ -435,7 +464,7 @@ const LeaderboardTabs = ({ explorerUrl, tabs, chainId }: LeaderboardTabsProps) =
                         </table>
 
                         <div className="flex flex-col gap-4 md:hidden">
-                            {filteredEntries.map((entry: any, index: any) => {
+                            {paginatedEntries.map((entry: any, index: any) => {
                                 const isTrader = entry.type === "trader" || entry.type === "degen";
                                 const primaryText = isTrader ? shortAddress(entry.address) : entry.subtitle;
                                 const secondaryText = isTrader ? undefined : entry.name;
@@ -448,7 +477,7 @@ const LeaderboardTabs = ({ explorerUrl, tabs, chainId }: LeaderboardTabsProps) =
                                         target="_blank"
                                     >
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">#{rankById.get(entry.id) ?? (index + 1)}</span>
+                                            <span className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">#{rankById.get(entry.id) ?? ((currentPage - 1) * ITEMS_PER_PAGE + index + 1)}</span>
                                             <span className="text-xs uppercase tracking-[0.25em] text-slate-500">{entry.type === "token" ? "Token" : "Trader"}</span>
                                         </div>
                                         <div className="mt-4 flex items-center gap-4">
@@ -465,6 +494,44 @@ const LeaderboardTabs = ({ explorerUrl, tabs, chainId }: LeaderboardTabsProps) =
                                 );
                             })}
                         </div>
+
+                        {/* Pagination Controls */}
+                        {totalPages > 1 && (
+                            <div className="mt-8 flex items-center justify-center gap-4 border-t border-white/10 pt-6">
+                                <button
+                                    type="button"
+                                    className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-[#0b1020] px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                    disabled={!hasPreviousPage}
+                                >
+                                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M15 18l-6-6 6-6" />
+                                    </svg>
+                                    Previous
+                                </button>
+
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-slate-400">
+                                        Page <span className="font-medium text-slate-200">{currentPage}</span> of <span className="font-medium text-slate-200">{totalPages}</span>
+                                    </span>
+                                    <span className="text-sm text-slate-500">
+                                        ({filteredEntries.length} total items)
+                                    </span>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-[#0b1020] px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                    disabled={!hasNextPage}
+                                >
+                                    Next
+                                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M9 18l6-6-6-6" />
+                                    </svg>
+                                </button>
+                            </div>
+                        )}
                     </> :
                     <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-white/10 bg-[#0b0f1d]/80 px-6 py-16 text-center text-sm text-slate-400">
                         <span className="text-lg font-semibold tracking-[0.24em] text-slate-200">No data yet</span>
