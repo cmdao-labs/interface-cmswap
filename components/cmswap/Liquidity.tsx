@@ -477,9 +477,9 @@ export default function LiquidityUnified({ setIsLoading, setErrMsg, }: {
         if (foundTokenA) setTokenA(foundTokenA as any);
         if (foundTokenB) setTokenB(foundTokenB as any);
         if (!tokenAAddress || !tokenBAddress) {
-            if (tokenA?.value && tokenB?.value) updateURLWithTokens(tokenA.value, tokenB.value, address);
+            if (tokenA?.value && tokenB?.value) updateURLWithTokens(tokenA.value, tokenB.value);
         } else {
-            updateURLWithTokens(tokenAAddress, tokenBAddress, address)
+            updateURLWithTokens(tokenAAddress, tokenBAddress)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
@@ -502,7 +502,7 @@ export default function LiquidityUnified({ setIsLoading, setErrMsg, }: {
     React.useEffect(() => {
         setSliderZoomIndex(2)
     }, [tokenA.value, tokenB.value])
-    const updateURLWithTokens = (tokenAValue?: string, tokenBValue?: string, referralCode?: string) => {
+    const updateURLWithTokens = (tokenAValue?: string, tokenBValue?: string) => {
         const url = new URL(window.location.href)
         if (tokenAValue) {
             url.searchParams.set('input', tokenAValue)
@@ -513,11 +513,6 @@ export default function LiquidityUnified({ setIsLoading, setErrMsg, }: {
             url.searchParams.set('output', tokenBValue)
         } else {
             url.searchParams.delete('tokenB')
-        }
-        if (referralCode && referralCode.startsWith('0x')) {
-            url.searchParams.set('ref', referralCode)
-        } else {
-            url.searchParams.delete('ref')
         }
         window.history.replaceState({}, '', url.toString())
     }

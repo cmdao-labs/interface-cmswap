@@ -48,14 +48,6 @@ export default function RefError({ chainID }: RefErrorProps) {
             border: 'border-red-400/30',
             text: 'text-red-300'
         },
-        10143: {
-            primary: 'from-purple-400 to-violet-400',
-            secondary: 'from-purple-600 to-violet-600',
-            accent: 'purple-400',
-            glow: 'shadow-purple-400/50',
-            border: 'border-purple-400/30',
-            text: 'text-purple-300'
-        }
     }
 
     const getThemeColors = (chainID: number | undefined): Theme => {

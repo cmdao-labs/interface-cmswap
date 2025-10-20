@@ -4,7 +4,7 @@ import { useAccount } from "wagmi";
 import { simulateContract, waitForTransactionReceipt, writeContract, getBalance, sendTransaction, type WriteContractErrorType } from "@wagmi/core";
 import { Button } from "@/components/ui/button";
 import { createPublicClient, http, erc20Abi, parseUnits } from "viem";
-import { jbc, bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
+import { jbc, bitkub, bitkubTestnet } from "viem/chains";
 import { Copy, CopyCheck,ScanQrCode,ChevronDown } from "lucide-react";
 import { config } from "../../config/reown";
 import { chains } from '@/lib/chains'
@@ -47,15 +47,7 @@ const chainConfigs: Record<number, ChainConfig> = {
         rpc: "https://rpc2-l1.jbc.xpool.pw",
         blocktime: 5,
         lib: { tokens: chains[8899].tokens },
-    },
-    10143: {
-        chain: monadTestnet,
-        chainId: 10143,
-        explorer: "https://testnet.monadexplorer.com/",
-        rpc: "https://testnet-rpc.monad.xyz",
-        blocktime: 5,
-        lib: { tokens: chains[10143].tokens },
-    },
+    }
 };
 
 export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfig }: {

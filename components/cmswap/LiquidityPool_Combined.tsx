@@ -4,14 +4,14 @@ import { ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
 import { readContract, readContracts} from '@wagmi/core';
 import { config } from '@/config/reown';
 import { useAccount } from 'wagmi';
-import { jbc, bitkub, monadTestnet, bitkubTestnet } from 'viem/chains';
+import { jbc, bitkub, bitkubTestnet } from 'viem/chains';
 import { formatEther, erc20Abi, createPublicClient, http, } from 'viem';
 import { Button } from '@/components/ui/button';
 import { usePrice } from '@/context/getPrice';
 import { chains } from '@/lib/chains'
 import { useRouter } from 'next/navigation';
 const { erc721ABI, POSITION_MANAGER, positionManagerCreatedAt, V3_STAKER, v3StakerContract, } = chains[25925]
-type ThemeId = 96 | 8899 | 56 | 3501 | 10143 | 25925;
+type ThemeId = 96 | 8899 | 56 | 3501 | 25925;
 type Theme = {
     primary: string;
     secondary: string;
@@ -22,7 +22,7 @@ type Theme = {
     bg: string;
 };
 type ChainConfig = {
-    chain: typeof bitkub | typeof jbc | typeof monadTestnet | typeof bitkubTestnet;
+    chain: typeof bitkub | typeof jbc | typeof bitkubTestnet;
     chainId: ThemeId;
     explorer: string;
     rpc: string;
@@ -73,15 +73,6 @@ const themes: Record<ThemeId, Theme> = {
         glow: '',
         border: 'border-red-400/30',
         text: 'text-red-300',
-        bg: 'bg-gradient-to-br from-slate-700 via-black to-emerald-900',
-    },
-    10143: {
-        primary: 'from-purple-400 to-violet-400',
-        secondary: 'from-purple-600 to-violet-600',
-        accent: 'purple-400',
-        glow: '',
-        border: 'border-purple-400/30',
-        text: 'text-purple-300',
         bg: 'bg-gradient-to-br from-slate-700 via-black to-emerald-900',
     },
     25925: {

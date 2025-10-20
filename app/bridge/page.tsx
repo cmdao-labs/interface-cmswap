@@ -10,7 +10,6 @@ import { simulateContract, waitForTransactionReceipt, writeContract, readContrac
 import { formatEther, parseEther, erc20Abi } from 'viem'
 import { config } from '@/config/reown'
 import ErrorModal from '@/components/cmswap/error-modal'
-import ReferralTracker from '@/components/cmswap/Refferal'
 
 const chains: { name: string, id: number, logo: string }[] = [
     { name: 'JB chain', id: 8899, logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreiguxm4at5dehn6s7v2qniim7edqsntdmukwjmgyqkr4rv4aujvbdy' },
@@ -96,7 +95,6 @@ export default function BridgeInterface() {
 
     return (
         <div className="min-h-screen bg-[#0a0b1e] p-4 bg-gradient-to-br from-slate-700 via-black to-emerald-900">
-            <ReferralTracker />
             {isLoading && <div className="w-full h-full fixed backdrop-blur-[12px] z-999" />}
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
             <Card className="w-full max-w-xl mx-auto bg-water-950 border border-[#00ff9d]/20 rounded-lg overflow-hidden p-4 mb-8 mt-[100px]">

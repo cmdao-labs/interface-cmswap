@@ -9,7 +9,6 @@ import Swap from '@/components/cmswap/Swap'
 import Liquidity from '@/components/cmswap/Liquidity'
 import Positions from '@/components/cmswap/Positions'
 import { useSearchParams } from 'next/navigation'
-import ReferralTracker from '@/components/cmswap/Refferal'
 import SendTokenComponent from '@/components/cmswap/SendToken'
 import SwapChart from '@/components/cmswap/swap/SwapChart'
 import { useSwapChain } from '@/components/cmswap/useSwapChain'
@@ -27,7 +26,7 @@ export default function Page() {
     const [chartTimeframe, setChartTimeframe] = React.useState<SwapChartTimeframe>('5m')
     // Derive selected tokens from the URL using the same hooks as Swap
     const { tokens: chainTokens, toWrapped, chainId: swapChainId } = useSwapChain()
-    const { tokenA, tokenB } = useSwapTokenSelection(chainTokens as any, { defaultTokenAIndex: 0, defaultTokenBIndex: 2, referralAddress: undefined as any })
+    const { tokenA, tokenB } = useSwapTokenSelection(chainTokens as any, { defaultTokenAIndex: 0, defaultTokenBIndex: 2})
     const resolveChartAddress = React.useCallback((token: any) => {
         if (!token || !token.value || token.value === '0x') return null
         try { return String(toWrapped(token.value)).toLowerCase() } catch { return String(token.value).toLowerCase() }
@@ -60,7 +59,6 @@ export default function Page() {
     const gridActive = isChartOpen && tabValue === 'swap'
     return (
         <div className="min-h-screen w-full flex flex-col items-center justify-start text-xs bg-gradient-to-br from-slate-700 via-black to-emerald-900">
-            <ReferralTracker/>
             {isLoading && <div className="w-full h-full fixed backdrop-blur-[12px] z-999" />}
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
             <div className={gridActive ? 'grid w-full grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,560px)] lg:grid-cols-[2fr_1fr] gap-4 mt-[100px] mb-8 px-4' : 'w-full max-w-xl mx-auto mt-[100px] mb-8 px-4'}>

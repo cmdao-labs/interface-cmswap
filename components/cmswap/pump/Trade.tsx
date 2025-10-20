@@ -491,8 +491,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
     const getExplorerAddressUrl = (address?: string | null) => {
         if (!address) return "";
         const suffixKub = ["kub", "kubtestnet"].includes(chain) ? "/?tab=tokens" : "";
-        const suffixMonad = chain === "monad" ? "#tokens" : "";
-        return `${_explorer}address/${address}${suffixKub}${suffixMonad}`;
+        return `${_explorer}address/${address}${suffixKub}`;
     };
     const compactNumberFormatter = React.useMemo(() => new Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }), []);
     // Platform-specific social URL validation: require https and relevant domain

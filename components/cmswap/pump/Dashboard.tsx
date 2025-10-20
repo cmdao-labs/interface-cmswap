@@ -233,20 +233,20 @@ export default function Dashboard({
                         <span className="text-right text-sm font-medium">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result)}</span>
                         <span className="text-[11px] uppercase tracking-wide text-gray-500">Price</span>
                         <span className="text-right text-sm font-medium">
-                            {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[3].result)} {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kubtestnet' && mode === 'pro' && 'tKUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}
+                            {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[3].result)} {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kubtestnet' && mode === 'pro' && 'tKUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}
                         </span>
                         <span className="text-[11px] uppercase tracking-wide text-gray-500">Value</span>
                         <span className="text-right text-sm font-semibold">
-                            {(chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kubtestnet' && mode === 'pro' ? 'tKUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + (chain === 'monad' && mode === 'pro' ? 'MON' : '') + Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result * res[3].result)}
+                            {(chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kubtestnet' && mode === 'pro' ? 'tKUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result * res[3].result)}
                         </span>
                     </div>
                     <div className="hidden w-3/5 flex-row items-center justify-end sm:flex sm:gap-10">
                         <span className="text-right w-[50px] sm:w-[200px]">{Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result)}</span>
                         <span className={"text-right w-[100px] sm:w-[200px] " + (mode === 'pro' ? 'text-xs' : '')}>
-                            {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[3].result)} {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kubtestnet' && mode === 'pro' && 'tKUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}{chain === 'monad' && mode === 'pro' && 'MON'}
+                            {Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[3].result)} {chain === 'kub' && mode === 'pro' && 'KUB'}{chain === 'kubtestnet' && mode === 'pro' && 'tKUB'}{chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') && 'CMM'}
                         </span>
                         <span className="font-bold text-right w-[100px] sm:w-[200px]">
-                            {(chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kubtestnet' && mode === 'pro' ? 'tKUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + (chain === 'monad' && mode === 'pro' ? 'MON' : '') + Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result * res[3].result)}
+                            {(chain === 'kub' && mode === 'pro' ? 'KUB' : '') + (chain === 'kubtestnet' && mode === 'pro' ? 'tKUB' : '') + (chain === 'kub' && mode === 'lite' && (token === 'cmm' || token === '') ? 'CMM' : '') + Intl.NumberFormat('en-US', { notation: "compact" , compactDisplay: "short" }).format(res[2].result * res[3].result)}
                         </span>
                     </div>
                 </article>

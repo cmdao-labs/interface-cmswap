@@ -8,7 +8,6 @@ type SwapTokenBase = {
 interface UseSwapTokenSelectionOptions {
     defaultTokenAIndex?: number
     defaultTokenBIndex?: number
-    referralAddress?: string | null | undefined
     persistSearchParams?: boolean
 }
 interface UseSwapTokenSelectionResult<T extends SwapTokenBase> {
@@ -17,20 +16,20 @@ interface UseSwapTokenSelectionResult<T extends SwapTokenBase> {
     setTokenA: React.Dispatch<React.SetStateAction<T>>
     setTokenB: React.Dispatch<React.SetStateAction<T>>
     hasInitializedFromParams: boolean
-    updateURLWithTokens: (tokenAValue?: string, tokenBValue?: string, referralCode?: string | null | undefined) => void
+    updateURLWithTokens: (tokenAValue?: string, tokenBValue?: string) => void
     switchTokens: () => void
 }
 
 export function useSwapTokenSelection<T extends SwapTokenBase>( tokens: readonly T[], options?: UseSwapTokenSelectionOptions ): UseSwapTokenSelectionResult<T> {
     if (!tokens.length) throw new Error('useSwapTokenSelection requires a non-empty tokens array.');
-    const {defaultTokenAIndex = 0, defaultTokenBIndex = tokens.length > 1 ? 1 : 0, referralAddress, persistSearchParams = true} = options ?? {}
+    const {defaultTokenAIndex = 0, defaultTokenBIndex = tokens.length > 1 ? 1 : 0, persistSearchParams = true} = options ?? {}
     const initialTokenA = React.useMemo(() => tokens[defaultTokenAIndex], [tokens, defaultTokenAIndex])
     const initialTokenB = React.useMemo(() => tokens[defaultTokenBIndex], [tokens, defaultTokenBIndex])
     const [tokenA, setTokenA] = React.useState<T>(initialTokenA)
     const [tokenB, setTokenB] = React.useState<T>(initialTokenB)
     const [hasInitializedFromParams, setHasInitializedFromParams] = React.useState(false)
     const updateURLWithTokens = React.useCallback(
-        (tokenAValue?: string, tokenBValue?: string, referralCode?: string | null | undefined) => {
+        (tokenAValue?: string, tokenBValue?: string) => {
             if (typeof window === 'undefined') return
             const url = new URL(window.location.href)
             if (tokenAValue) url.searchParams.set('input', tokenAValue)
@@ -39,11 +38,6 @@ export function useSwapTokenSelection<T extends SwapTokenBase>( tokens: readonly
             if (tokenBValue) url.searchParams.set('output', tokenBValue)
             else url.searchParams.delete('output')
             url.searchParams.delete('tokenB')
-            if (referralCode && referralCode.startsWith('0x')) {
-                url.searchParams.set('ref', referralCode)
-            } else {
-                url.searchParams.delete('ref')
-            }
             window.history.replaceState({}, '', url.toString())
             // Broadcast a lightweight event so other hook instances (e.g., chart panel)
             // can react to token pair changes without tightly coupling component state.
@@ -73,9 +67,9 @@ export function useSwapTokenSelection<T extends SwapTokenBase>( tokens: readonly
             if (!tokenAAddress || !tokenBAddress) {
                 const fallbackTokenA = foundTokenA ?? initialTokenA
                 const fallbackTokenB = foundTokenB ?? initialTokenB
-                if (fallbackTokenA?.value && fallbackTokenB?.value) updateURLWithTokens(fallbackTokenA.value, fallbackTokenB.value, referralAddress);
+                if (fallbackTokenA?.value && fallbackTokenB?.value) updateURLWithTokens(fallbackTokenA.value, fallbackTokenB.value);
             } else {
-                updateURLWithTokens(tokenAAddress, tokenBAddress, referralAddress)
+                updateURLWithTokens(tokenAAddress, tokenBAddress)
             }
         }
 
@@ -89,8 +83,8 @@ export function useSwapTokenSelection<T extends SwapTokenBase>( tokens: readonly
         const nextTokenB = tokenA
         setTokenA(nextTokenA)
         setTokenB(nextTokenB)
-        if (persistSearchParams) updateURLWithTokens(nextTokenA?.value, nextTokenB?.value, referralAddress);
-    }, [tokenA, tokenB, updateURLWithTokens, referralAddress, persistSearchParams])
+        if (persistSearchParams) updateURLWithTokens(nextTokenA?.value, nextTokenB?.value);
+    }, [tokenA, tokenB, updateURLWithTokens, persistSearchParams])
 
     React.useEffect(() => {
         setTokenA(initialTokenA)

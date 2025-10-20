@@ -149,7 +149,7 @@ const StakingList = ({ setIsLoading, setErrMsg }: {
 
     React.useEffect(() => {renderPrograms();}, []);
 
-    type ChainName = 96 | 10143 | 56 | 3501 | 25925;
+    type ChainName = 96 | 56 | 3501 | 25925;
     const chainThemes: Record<ChainName, {
         primary: string;
         secondary: string;
@@ -173,14 +173,6 @@ const StakingList = ({ setIsLoading, setErrMsg }: {
             border: "border-green-500",
             bg: "bg-green-500/10",
             text: "text-green-400",
-        },
-        10143: {
-            primary: "rgb(147, 51, 234)", // purple-600
-            secondary: "rgb(126, 34, 206)", // purple-700
-            accent: "rgb(221, 214, 254)", // purple-200
-            border: "border-purple-500",
-            bg: "bg-purple-500/10",
-            text: "text-purple-400",
         },
         56: {
             primary: "rgb(234, 179, 8)", // yellow-500

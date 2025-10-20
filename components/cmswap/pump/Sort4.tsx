@@ -20,13 +20,6 @@ const chainStyles: Record<string, ChainStyle> = {
         label: 'KUB Network',
         supportedModes: ['lite', 'pro'],
     },
-    monad: {
-        gradient: 'from-purple-500/40 via-fuchsia-400/20 to-indigo-500/30',
-        accentBorder: 'border-purple-400/50 shadow-purple-500/20',
-        accentText: 'text-purple-300',
-        label: 'Monad Testnet',
-        supportedModes: ['pro'],
-    },
     kubtestnet: {
         gradient: 'from-emerald-400/35 via-emerald-300/15 to-emerald-500/25',
         accentBorder: 'border-emerald-300/50 shadow-emerald-400/20',

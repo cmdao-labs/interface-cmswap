@@ -79,7 +79,7 @@ export default function Swap({ setIsLoading, setErrMsg, isChartOpen: isChartOpen
     const [isSlippageModalOpen, setIsSlippageModalOpen] = React.useState(false)
     const [slippageDraftSelection, setSlippageDraftSelection] = React.useState<SlippageOptionKey>('0.5')
     const [slippageDraftCustom, setSlippageDraftCustom] = React.useState('0.5')
-    const { tokenA, tokenB, setTokenA, setTokenB, hasInitializedFromParams, updateURLWithTokens, switchTokens } = useSwapTokenSelection(tokens, { defaultTokenAIndex: 0, defaultTokenBIndex: 2, referralAddress: address })
+    const { tokenA, tokenB, setTokenA, setTokenB, hasInitializedFromParams, updateURLWithTokens, switchTokens } = useSwapTokenSelection(tokens, { defaultTokenAIndex: 0, defaultTokenBIndex: 2})
     const { resolveTokenAddress, quoteExactInputSingle, quoteExactInput } = useSwapQuote({ config, contract: qouterV2Contract, tokens })
     const chartOpen = (typeof isChartOpenProp === 'boolean') ? isChartOpenProp : internalChartOpen
     const handleToggleChart = React.useCallback(() => {
@@ -150,7 +150,6 @@ export default function Swap({ setIsLoading, setErrMsg, isChartOpen: isChartOpen
         if (variant === LiquidityVariant.BKC) return { ...base, setCMswapTVL, setDMswapTVL, setUdonTVL, setPonderTVL, setReserveUdonA, setReserveUdonB, setAmountA, setAmountB }
         if (variant === LiquidityVariant.JBC) return { ...base, setCMswapTVL, setGameSwapTvl, setJibSwapTvl, setBestPathArray, setFixedExchangeRate, setOnLoading, setAmountA, setAmountB }
         if (variant === LiquidityVariant.BKC_TESTNET) return { ...base, setCMswapTVL, setAmountA, setAmountB, setNewPrice }
-        if (variant === LiquidityVariant.MONAD_TESTNET) return { ...base, setCMswapTVL, setFixedExchangeRate, setAmountA, setAmountB }
         return base
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [variant, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute])
@@ -803,7 +802,7 @@ export default function Swap({ setIsLoading, setErrMsg, isChartOpen: isChartOpen
                         amountAutoFocus
                         selectedToken={tokenA}
                         tokens={tokens}
-                        onSelectToken={token => { setTokenA(token); updateURLWithTokens(token.value, tokenB?.value, address) }}
+                        onSelectToken={token => { setTokenA(token); updateURLWithTokens(token.value, tokenB?.value) }}
                         popoverOpen={open}
                         onPopoverOpenChange={setOpen}
                         balanceLabel={tokenABalanceLabel}
@@ -828,7 +827,7 @@ export default function Swap({ setIsLoading, setErrMsg, isChartOpen: isChartOpen
                         amountReadOnly
                         selectedToken={tokenB}
                         tokens={tokens}
-                        onSelectToken={token => { setTokenB(token); updateURLWithTokens(tokenA?.value, token.value, address) }}
+                        onSelectToken={token => { setTokenB(token); updateURLWithTokens(tokenA?.value, token.value) }}
                         popoverOpen={open2}
                         onPopoverOpenChange={setOpen2}
                         balanceLabel={tokenBBalanceLabel}

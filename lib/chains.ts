@@ -1,6 +1,7 @@
 import { createPublicClient, http, erc20Abi, erc721Abi } from 'viem'
-import { bitkub, bitkubTestnet, jbc, monadTestnet, } from 'viem/chains'
+import { bitkub, bitkubTestnet, jbc, } from 'viem/chains'
 import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3staker, WrappedNative, kap20abi, CMswapPoolDualRouterABI, CMswapUniSmartRouteABI, CMswapUniSmartRouteABIV2, UniswapPair, bkcUnwappedKKUB, cmSwapRefProgramABI, stakingV2FactoryABI, stakingV2ABI, stakingV3FactoryABI, stakingV3ABI, } from '@/lib/abi'
+
 type Token = {
     name: string
     value: '0xstring'
@@ -9,41 +10,11 @@ type Token = {
 }
 type ChainData = {
     chainId: number
-    chain: typeof bitkub | typeof bitkubTestnet | typeof jbc | typeof monadTestnet
+    chain: typeof bitkub | typeof bitkubTestnet | typeof jbc
     tokens: ReadonlyArray<Token>
     publicClient: ReturnType<typeof createPublicClient>
     [key: string]: unknown
 }
-
-const chain10143 = {
-    chainId: 10143,
-    chain: monadTestnet,
-    tokens: [
-        { name: 'MON', value: '0xnative' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreihsrmtri6lexqqudhckcttijekrerjmckq22v4p5d6tyolpa7qsx4', decimal: 18 },
-        { name: 'WMON', value: '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreihsrmtri6lexqqudhckcttijekrerjmckq22v4p5d6tyolpa7qsx4', decimal: 18 },
-        { name: 'USDC', value: '0xf817257fed379853cde0fa4f97ab987181b1e5ea' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreia32wzv3mr47pvo5dwdv2lu4rrjd6n4n7yizvyxuvyt5ewdxgvqfm', decimal: 6 },
-        { name: 'WETH', value: '0xb5a30b0fdc5ea94a52fdc42e3e9760cb8449fb37' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreigtqspnr2k6nt265g7fllkmsljasygjcqvqbb5igjxbnxakuwho2q', decimal: 18 },
-        { name: 'WBTC', value: '0xcf5a6076cfa32686c0df13abada2b40dec133f1d' as '0xstring', logo: 'https://cmswap.mypinata.cloud/ipfs/bafkreibdegct4vlxyb7k2vsyt6dn3ulo2xslegjkttvge73244rvshxiju', decimal: 8 },
-    ],
-    V3_FACTORY: '0x399fe73bb0ee60670430fd92fe25a0fdd308e142' as '0xstring',
-    POSITION_MANAGER: '0x5f364ef9241eae92a1ea361fe4976759d7656455' as '0xstring',
-    positionManagerCreatedAt: BigInt(16912189),
-    QOUTER_V2: '0x555756bd5b347853af6f713a2af6231414bedefc' as '0xstring',
-    ROUTER02: '0x5a16536bb85a2fa821ec774008d6068eced79c96' as '0xstring',
-    v3FactoryContract: { abi: v3Factory, address: '0x399fe73bb0ee60670430fd92fe25a0fdd308e142' as '0xstring', chainId: 10143 } as const,
-    positionManagerContract: { abi: NonfungiblePositionManager, address: '0x5f364ef9241eae92a1ea361fe4976759d7656455' as '0xstring', chainId: 10143 } as const,
-    qouterV2Contract: { abi: qouterV2, address: '0x555756bd5b347853af6f713a2af6231414bedefc' as '0xstring', chainId: 10143 } as const,
-    router02Contract: { abi: router02, address: '0x5a16536bb85a2fa821ec774008d6068eced79c96' as '0xstring', chainId: 10143 } as const,
-    erc20ABI: { abi: erc20Abi, chainId: 10143 } as const,
-    kap20ABI: { abi: kap20abi, chainId: 10143 } as const,
-    v3PoolABI: { abi: v3Pool, chainId: 10143 } as const,
-    V3_STAKER: '0x2769078273c29afc6a21bf8b64368cc5d1972c6a' as '0xstring',
-    v3StakerContract: { abi: v3staker, address: '0x2769078273c29afc6a21bf8b64368cc5d1972c6a' as '0xstring', chainId: 10143 } as const,
-    wrappedNative: { abi: WrappedNative, address: '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701' as '0xstring', chainId: 10143 } as const,
-    UniswapPairv2PoolABI: { abi: UniswapPair, chainId: 10143 } as const,
-    publicClient: createPublicClient({ chain: monadTestnet, transport: http() }),
-} as const
-
 const chain25925 = {
     chainId: 25925,
     chain: bitkubTestnet,
@@ -359,7 +330,6 @@ const chain96 = {
 } as const
 
 export const chains = {
-    10143: chain10143,
     25925: chain25925,
     8899: chain8899,
     96: chain96,

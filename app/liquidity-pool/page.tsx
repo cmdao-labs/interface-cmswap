@@ -3,7 +3,7 @@ import LiquidityPool from '@/components/cmswap/LiquidityPool_Combined';
 import { bitkub, jbc, bitkubTestnet } from 'viem/chains';
 import { chains } from '@/lib/chains'
 import { useAccount } from 'wagmi'
-type ThemeId = 96 | 8899 | 56 | 3501 | 10143 | 25925;
+type ThemeId = 96 | 8899 | 56 | 3501 | 25925;
 type ChainConfig = {
   chain: typeof bitkub | typeof jbc  | typeof bitkubTestnet;
   chainId: ThemeId;

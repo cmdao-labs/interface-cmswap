@@ -4,7 +4,6 @@ import { LiquidityVariant } from '@/components/cmswap/liquidityVariant'
 const VARIANT_POOLS: Record<LiquidityVariant, readonly RouteId[]> = {
     [LiquidityVariant.BKC]: ['CMswap', 'DiamonSwap', 'UdonSwap', 'ponder'],
     [LiquidityVariant.JBC]: ['CMswap', 'GameSwap', 'JibSwap'],
-    [LiquidityVariant.MONAD_TESTNET]: ['CMswap'],
     [LiquidityVariant.BKC_TESTNET]: ['CMswap'],
 }
 function isValidQuote(v: unknown): v is number {const n = Number(v); return Number.isFinite(n) && n > 0;}

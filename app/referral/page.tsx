@@ -3,7 +3,6 @@ import React from 'react'
 import { useAccount } from 'wagmi'
 import { type WriteContractErrorType } from '@wagmi/core'
 import ErrorModal from '@/components/cmswap/error-modal'
-// import Ref96 from '@/components/cmswap/Ref96'
 import Ref25925 from '@/components/cmswap/Ref25925'
 import RefError from '@/components/cmswap/RefError'
 import ReferralTracker from '@/components/cmswap/Refferal'
@@ -19,9 +18,7 @@ export default function Page() {
             {isLoading && <div className="fixed top-0 left-0 right-0 bottom-0 w-full h-full backdrop-blur-[12px] z-[999]" />}
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
             <div className="w-full max-w-full">
-                {/* {chainId === 96 ? (<Ref96 />) : (<Ref25925/>)} */}
                 {chainId === 25925 ? <Ref25925/> : <RefError chainID={Number(chainId)} />}
-                {/* {chainId === 96 ? <Ref96 /> : <RefError chainID={Number(chainId)} />} */}
             </div>
         </div>
     )
