@@ -4,6 +4,10 @@ import { ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from '@/components/ui/command'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
+import { useAccount } from 'wagmi'
+import { readContracts } from '@wagmi/core'
+import { config } from '@/config/reown'
+import { useSwapChain } from '@/components/cmswap/useSwapChain'
 type SwapTokenOption = {
     name: string
     value: '0xstring'
@@ -28,6 +32,95 @@ interface SwapTokenPanelProps<TToken extends SwapTokenOption> {
 }
 
 export function SwapTokenPanel<TToken extends SwapTokenOption>({ label, tokenAddress, onTokenAddressChange, amount, onAmountChange, amountPlaceholder = '0.0', amountReadOnly = false, amountAutoFocus = false, selectedToken, tokens, onSelectToken, popoverOpen, onPopoverOpenChange, balanceLabel, footerContent }: SwapTokenPanelProps<TToken>) {
+    const { chainId } = useAccount()
+    const { erc20ABI } = useSwapChain()
+    const [search, setSearch] = React.useState('')
+    const storageKey = React.useMemo(() => `cmswap.customTokens.${chainId ?? 'unknown'}`, [chainId])
+    const [customTokens, setCustomTokens] = React.useState<TToken[]>([] as TToken[])
+
+    // Load persisted custom tokens for the current chain
+    React.useEffect(() => {
+        try {
+            const raw = typeof window !== 'undefined' ? window.localStorage.getItem(storageKey) : null
+            if (!raw) { setCustomTokens([] as TToken[]); return }
+            const parsed = JSON.parse(raw)
+            if (Array.isArray(parsed)) {
+                // Normalize and keep minimal fields to avoid shape drift
+                const safe: TToken[] = parsed
+                    .filter((t: any) => t && typeof t.value === 'string' && typeof t.name === 'string')
+                    .map((t: any) => ({ name: t.name, value: t.value, logo: t.logo ?? '../favicon.ico', decimal: typeof t.decimal === 'number' ? t.decimal : 18 } as unknown as TToken))
+                setCustomTokens(safe)
+            } else {
+                setCustomTokens([] as TToken[])
+            }
+        } catch { setCustomTokens([] as TToken[]) }
+    }, [storageKey])
+
+    // Compose display tokens: whitelist first, then custom (deduped)
+    const displayTokens = React.useMemo(() => {
+        const wl = tokens
+        const wlSet = new Set(wl.map(t => t.value.toLowerCase()))
+        const extras = customTokens.filter(t => !wlSet.has(t.value.toLowerCase()))
+        return [...wl, ...extras] as readonly TToken[]
+    }, [tokens, customTokens])
+
+    const persistCustomTokens = React.useCallback((list: TToken[]) => {
+        try {
+            const payload = list.map((t: any) => ({ name: t.name, value: t.value, logo: t.logo ?? '../favicon.ico', decimal: typeof t.decimal === 'number' ? t.decimal : 18 }))
+            window.localStorage.setItem(storageKey, JSON.stringify(payload))
+        } catch {}
+    }, [storageKey])
+
+    const isHexAddress = React.useCallback((v: string) => /^0x[a-fA-F0-9]{40}$/.test(v.trim()), [])
+
+    // Fetch token metadata if user pastes an unknown address
+    const [fetchingAddr, setFetchingAddr] = React.useState<string | null>(null)
+    React.useEffect(() => {
+        const q = (search || '').trim()
+        if (!q || !isHexAddress(q)) return
+        if (q.toLowerCase() === '0xnative') return
+        // Already present?
+        const exists = displayTokens.some(t => t.value.toLowerCase() === q.toLowerCase())
+        if (exists) return
+        if (fetchingAddr && fetchingAddr.toLowerCase() === q.toLowerCase()) return
+
+        let cancelled = false
+        async function run() {
+            try {
+                setFetchingAddr(q)
+                // Attempt to read decimals, symbol, and name via ERC20 ABI.
+                const res = await readContracts(config, {
+                    allowFailure: true,
+                    contracts: [
+                        { ...erc20ABI, address: q as any, functionName: 'decimals' },
+                        { ...erc20ABI, address: q as any, functionName: 'symbol' },
+                        { ...erc20ABI, address: q as any, functionName: 'name' },
+                    ],
+                })
+                if (cancelled) return
+                const dec = Number(res?.[0]?.result ?? 18)
+                const sym = String(res?.[1]?.result ?? '').trim()
+                const nm = String(res?.[2]?.result ?? '').trim()
+                const label = sym || nm || 'Token'
+                const newToken = { name: label, value: q as any, logo: '../favicon.ico', decimal: Number.isFinite(dec) ? dec : 18 } as unknown as TToken
+                setCustomTokens(prev => {
+                    const lowered = newToken.value.toLowerCase()
+                    const next = [...prev.filter(t => t.value.toLowerCase() !== lowered), newToken]
+                    persistCustomTokens(next)
+                    return next
+                })
+            } catch {
+                // Swallow errors silently; user can still input address but item may not resolve
+            } finally {
+                setFetchingAddr(null)
+            }
+        }
+        run()
+        return () => { cancelled = true }
+        // displayTokens intentionally omitted to avoid loop; we guard with exists above
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [search, isHexAddress, erc20ABI, persistCustomTokens])
+
     const handleSelectToken = React.useCallback(
         (token: TToken) => {
             onSelectToken(token)
@@ -68,10 +161,15 @@ export function SwapTokenPanel<TToken extends SwapTokenOption>({ label, tokenAdd
                         </Button>
                     </DialogTrigger>
                     <DialogContent overlayClassName="bg-slate-950/70 backdrop-blur-lg" className="z-[110] w-full max-w-[420px] rounded-3xl border border-white/10 bg-slate-950/95 p-0 shadow-2xl sm:max-w-[440px]">
-                        <div className="flex flex-col gap-4 p-5 sm:p-6">
+                        <div className="flex flex-col gap-4 p-5 sm:p-6 mt-6 sm:mt-0">
                             <div className="space-y-1"><h2 className="text-sm font-semibold text-white">Select a token</h2></div>
                             <Command className="bg-transparent">
-                                <CommandInput placeholder="Search tokens" className="h-9 rounded-2xl border border-white/5 bg-slate-900/70 px-4 text-sm text-slate-200 placeholder:text-slate-500 focus:border-emerald-400/50 focus:ring-0" />
+                                <CommandInput
+                                    placeholder="Search tokens or paste address"
+                                    className="h-9 rounded-2xl border border-white/5 bg-slate-900/70 px-4 text-sm text-slate-200 placeholder:text-slate-500 focus:border-emerald-400/50 focus:ring-0"
+                                    value={search}
+                                    onValueChange={(v) => { setSearch(v) }}
+                                />
                                 <div className="mt-4 space-y-3">
                                     {popularTokens.length > 0 && (
                                         <div className="space-y-2">
@@ -98,7 +196,7 @@ export function SwapTokenPanel<TToken extends SwapTokenOption>({ label, tokenAdd
                                     <CommandList className="max-h-[45vh] overflow-y-auto rounded-2xl border border-white/5 bg-slate-950/80 p-2">
                                         <CommandEmpty className="py-6 text-center text-sm text-slate-400">No tokens found.</CommandEmpty>
                                         <CommandGroup className="space-y-1">
-                                            {tokens.map(token => (
+                                            {displayTokens.map(token => (
                                                 <CommandItem
                                                     key={token.value}
                                                     value={`${token.name} ${token.value}`}
