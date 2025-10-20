@@ -5,13 +5,376 @@ import { useDebouncedCallback } from 'use-debounce'
 import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Minus, Plus } from 'lucide-react'
 import { Token as UniToken, BigintIsh } from "@uniswap/sdk-core"
 import { TickMath, encodeSqrtRatioX96, Pool, Position } from "@uniswap/v3-sdk"
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther, formatUnits, parseUnits } from "viem"
 import { config } from '@/config/reown'
 import { useLiquidityChain } from './useLiquidityChain'
+
+const SLIDER_ZOOM_SPANS = [25, 50, 100, 200, 400] as const
+const SLIDER_MIN_GAP = 0.1
+const SLIDER_MIN_PERCENT = -99.9
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
+
+type SliderHandle = 'lower' | 'upper'
+type DistributionBar = { key: number; ratio: number; height: number; inRange: boolean; isCurrent: boolean }
+
+type LiquidityRangeSliderProps = {
+    currentPrice: number | null
+    lowerPercent: number | null
+    upperPercent: number | null
+    lowerPrice: number | null
+    upperPrice: number | null
+    zoomSpan: number
+    canZoomIn: boolean
+    canZoomOut: boolean
+    onZoomIn: () => void
+    onZoomOut: () => void
+    onLowerChange: (percent: number) => void
+    onUpperChange: (percent: number) => void
+    onLowerCommit: (percent: number) => void
+    onUpperCommit: (percent: number) => void
+    disabled?: boolean
+    upperIsInfinite?: boolean
+    distributionBuckets?: { ratio: number; height: number }[]
+}
+
+const LiquidityRangeSlider: React.FC<LiquidityRangeSliderProps> = ({
+    currentPrice,
+    lowerPercent,
+    upperPercent,
+    lowerPrice,
+    upperPrice,
+    zoomSpan,
+    canZoomIn,
+    canZoomOut,
+    onZoomIn,
+    onZoomOut,
+    onLowerChange,
+    onUpperChange,
+    onLowerCommit,
+    onUpperCommit,
+    disabled = false,
+    upperIsInfinite = false,
+    distributionBuckets,
+}) => {
+    const trackRef = React.useRef<HTMLDivElement>(null)
+    const dragHandleRef = React.useRef<SliderHandle | null>(null)
+    const [isDragging, setIsDragging] = React.useState(false)
+
+    const span = React.useMemo(() => Math.max(zoomSpan, SLIDER_MIN_GAP * 20), [zoomSpan])
+    const halfSpan = span / 2
+    const windowMin = -halfSpan
+    const windowMax = halfSpan
+
+    const fallbackLower = Math.max(windowMin, -Math.min(halfSpan * 0.5, 25))
+    const fallbackUpper = Math.min(windowMax, Math.min(halfSpan * 0.5, 25))
+
+    let baseLower = Number.isFinite(lowerPercent ?? NaN) ? (lowerPercent as number) : fallbackLower
+    let baseUpper = Number.isFinite(upperPercent ?? NaN) ? (upperPercent as number) : fallbackUpper
+
+    if (upperIsInfinite) baseUpper = windowMax
+
+    baseLower = clamp(baseLower, Math.max(windowMin, SLIDER_MIN_PERCENT), windowMax)
+    baseUpper = clamp(baseUpper, Math.max(windowMin, SLIDER_MIN_PERCENT + SLIDER_MIN_GAP), windowMax)
+
+    if (baseLower > baseUpper - SLIDER_MIN_GAP) {
+        const mid = (baseLower + baseUpper) / 2
+        baseLower = clamp(mid - SLIDER_MIN_GAP / 2, Math.max(windowMin, SLIDER_MIN_PERCENT), windowMax - SLIDER_MIN_GAP)
+        baseUpper = clamp(mid + SLIDER_MIN_GAP / 2, Math.max(windowMin + SLIDER_MIN_GAP, SLIDER_MIN_PERCENT + SLIDER_MIN_GAP), windowMax)
+    }
+
+    const [draftLower, setDraftLower] = React.useState(baseLower)
+    const [draftUpper, setDraftUpper] = React.useState(baseUpper)
+
+    React.useEffect(() => {
+        if (!isDragging) setDraftLower(baseLower)
+    }, [baseLower, isDragging])
+    React.useEffect(() => {
+        if (!isDragging) setDraftUpper(baseUpper)
+    }, [baseUpper, isDragging])
+
+    const draftLowerRef = React.useRef(draftLower)
+    const draftUpperRef = React.useRef(draftUpper)
+    React.useEffect(() => {
+        draftLowerRef.current = draftLower
+    }, [draftLower])
+    React.useEffect(() => {
+        draftUpperRef.current = draftUpper
+    }, [draftUpper])
+
+    const percentToRatio = React.useCallback((value: number) => {
+        if (!Number.isFinite(value)) return value >= 0 ? 1 : 0
+        return (value - windowMin) / (windowMax - windowMin)
+    }, [windowMin, windowMax])
+    const toRatio = React.useCallback((value: number) => clamp(percentToRatio(value), 0, 1), [percentToRatio])
+
+    const clientXToPercent = React.useCallback((clientX: number) => {
+        const track = trackRef.current
+        if (!track) return null
+        const rect = track.getBoundingClientRect()
+        if (rect.width === 0) return null
+        const ratio = (clientX - rect.left) / rect.width
+        const value = windowMin + ratio * (windowMax - windowMin)
+        return clamp(value, Math.max(windowMin, SLIDER_MIN_PERCENT), windowMax)
+    }, [windowMin, windowMax])
+
+    const updateActiveHandle = React.useCallback((clientX: number, commit: boolean) => {
+        const handle = dragHandleRef.current
+        if (!handle) return
+        const percent = clientXToPercent(clientX)
+        if (percent === null) return
+        if (handle === 'lower') {
+            const upper = draftUpperRef.current
+            const limit = clamp(upper - SLIDER_MIN_GAP, Math.max(windowMin, SLIDER_MIN_PERCENT), windowMax - SLIDER_MIN_GAP)
+            const next = clamp(Math.min(percent, limit), Math.max(windowMin, SLIDER_MIN_PERCENT), limit)
+            setDraftLower(next)
+            onLowerChange(next)
+            if (commit) onLowerCommit(next)
+        } else {
+            const lower = draftLowerRef.current
+            const limit = clamp(lower + SLIDER_MIN_GAP, Math.max(windowMin + SLIDER_MIN_GAP, SLIDER_MIN_PERCENT + SLIDER_MIN_GAP), windowMax)
+            const next = clamp(Math.max(percent, limit), limit, windowMax)
+            setDraftUpper(next)
+            onUpperChange(next)
+            if (commit) onUpperCommit(next)
+        }
+    }, [clientXToPercent, onLowerChange, onLowerCommit, onUpperChange, onUpperCommit, windowMin, windowMax])
+
+    React.useEffect(() => {
+        if (!isDragging) return
+        const handleMove = (event: PointerEvent) => updateActiveHandle(event.clientX, false)
+        const handleUp = (event: PointerEvent) => {
+            updateActiveHandle(event.clientX, true)
+            dragHandleRef.current = null
+            setIsDragging(false)
+        }
+        window.addEventListener('pointermove', handleMove)
+        window.addEventListener('pointerup', handleUp)
+        window.addEventListener('pointercancel', handleUp)
+        return () => {
+            window.removeEventListener('pointermove', handleMove)
+            window.removeEventListener('pointerup', handleUp)
+            window.removeEventListener('pointercancel', handleUp)
+        }
+    }, [isDragging, updateActiveHandle])
+
+    const step = React.useMemo(() => Math.max(span / 200, 0.1), [span])
+
+    const adjustHandle = React.useCallback((handle: SliderHandle, delta: number) => {
+        if (disabled) return
+        if (handle === 'lower') {
+            const upper = draftUpperRef.current
+            const limit = clamp(upper - SLIDER_MIN_GAP, Math.max(windowMin, SLIDER_MIN_PERCENT), windowMax - SLIDER_MIN_GAP)
+            const candidate = clamp(draftLowerRef.current + delta, Math.max(windowMin, SLIDER_MIN_PERCENT), limit)
+            setDraftLower(candidate)
+            onLowerChange(candidate)
+            onLowerCommit(candidate)
+        } else {
+            const lower = draftLowerRef.current
+            const limit = clamp(lower + SLIDER_MIN_GAP, Math.max(windowMin + SLIDER_MIN_GAP, SLIDER_MIN_PERCENT + SLIDER_MIN_GAP), windowMax)
+            const candidate = clamp(draftUpperRef.current + delta, limit, windowMax)
+            setDraftUpper(candidate)
+            onUpperChange(candidate)
+            onUpperCommit(candidate)
+        }
+    }, [disabled, onLowerChange, onLowerCommit, onUpperChange, onUpperCommit, windowMin, windowMax])
+
+    const handleKeyDown = React.useCallback((handle: SliderHandle) => (event: React.KeyboardEvent<HTMLButtonElement>) => {
+        if (disabled) return
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
+            event.preventDefault()
+            adjustHandle(handle, -step)
+        } else if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+            event.preventDefault()
+            adjustHandle(handle, step)
+        }
+    }, [adjustHandle, disabled, step])
+
+    const beginDrag = React.useCallback((handle: SliderHandle) => (event: React.PointerEvent<HTMLButtonElement>) => {
+        if (disabled) return
+        event.preventDefault()
+        dragHandleRef.current = handle
+        setIsDragging(true)
+        updateActiveHandle(event.clientX, false)
+    }, [disabled, updateActiveHandle])
+
+    const selectionStart = Math.min(toRatio(draftLower), toRatio(draftUpper))
+    const selectionEnd = Math.max(toRatio(draftLower), toRatio(draftUpper))
+    const selectionWidth = Math.max((selectionEnd - selectionStart) * 100, 0.5)
+    const currentRatio = toRatio(0)
+    const distribution = React.useMemo<DistributionBar[]>(() => {
+        const bucketCount = (Array.isArray(distributionBuckets) && distributionBuckets.length > 0)
+            ? distributionBuckets.length
+            : 41
+        const stepRatio = 1 / Math.max(1, bucketCount - 1)
+        if (Array.isArray(distributionBuckets) && distributionBuckets.length > 0) {
+            return distributionBuckets.map((b: { ratio: number; height: number }, idx: number) => {
+                const ratio = clamp(b.ratio, 0, 1)
+                const height = clamp(b.height, 0, 100)
+                const inRange = ratio >= selectionStart && ratio <= selectionEnd
+                const isCurrent = Math.abs(ratio - currentRatio) <= stepRatio / 2
+                return { key: idx, ratio, height, inRange, isCurrent }
+            })
+        }
+        const spanWidth = Math.max(windowMax - windowMin, 0.0001)
+        const sigma = Math.max(span / 3, 1)
+        return Array.from({ length: bucketCount }, (_, idx) => {
+            const ratio = idx * stepRatio
+            const percentValue = windowMin + ratio * spanWidth
+            const scaled = Math.exp(-Math.pow(percentValue / sigma, 2))
+            const height = Math.min(100, Math.max(8, scaled * 100))
+            const inRange = ratio >= selectionStart && ratio <= selectionEnd
+            const isCurrent = Math.abs(ratio - currentRatio) <= stepRatio / 2
+            return { key: idx, ratio, height, inRange, isCurrent }
+        })
+    }, [currentRatio, distributionBuckets, selectionEnd, selectionStart, span, windowMax, windowMin])
+
+    const formatPercentLabel = React.useCallback((value: number | null, opts?: { infinite?: boolean }) => {
+        if (opts?.infinite) return '+∞'
+        if (value === null || !Number.isFinite(value)) return '--'
+        const sign = value > 0 ? '+' : ''
+        return `${sign}${value.toFixed(2)}%`
+    }, [])
+    const formatPriceLabel = React.useCallback((value: number | null) => {
+        if (value === null) return '--'
+        if (!Number.isFinite(value)) return '∞'
+        if (Math.abs(value) >= 1) {
+            return value.toLocaleString(undefined, { maximumFractionDigits: 4 })
+        }
+        return Number(value.toPrecision(4)).toString()
+    }, [])
+
+    const lowerPercentLabel = formatPercentLabel(draftLower)
+    const upperPercentLabel = formatPercentLabel(upperIsInfinite ? null : draftUpper, { infinite: upperIsInfinite })
+    const lowerPriceLabel = formatPriceLabel(lowerPrice)
+    const upperPriceLabel = formatPriceLabel(upperPrice)
+    const currentPriceLabel = formatPriceLabel(currentPrice)
+    const viewLabel = `±${(span / 2).toFixed(0)}% window`
+
+    return (
+        <div className="space-y-4 rounded-xl border border-[#00ff9d]/15 bg-[#07111f]/80 p-4">
+            <div className="relative h-16">
+                <div ref={trackRef} className="absolute inset-x-4 top-1/2 h-2 -translate-y-1/2 rounded-full bg-[#0f1d2d] shadow-inner">
+                    <div
+                        className="absolute inset-y-[-8px] w-[2px] rounded-full bg-emerald-400/70 shadow-[0_0_12px_rgba(16,185,129,0.45)]"
+                        style={{ left: `${currentRatio * 100}%`, transform: 'translateX(-50%)' }}
+                    />
+                    <div
+                        className="absolute inset-y-[-4px] rounded-full border border-emerald-400/40 bg-emerald-500/20 backdrop-blur-sm"
+                        style={{ left: `${selectionStart * 100}%`, width: `${selectionWidth}%` }}
+                    />
+                </div>
+                <button
+                    type="button"
+                    role="slider"
+                    aria-valuemin={Math.max(windowMin, SLIDER_MIN_PERCENT)}
+                    aria-valuemax={draftUpper - SLIDER_MIN_GAP}
+                    aria-valuenow={draftLower}
+                    aria-label={`Lower range ${lowerPercentLabel}`}
+                    aria-disabled={disabled}
+                    disabled={disabled}
+                    onPointerDown={beginDrag('lower')}
+                    onKeyDown={handleKeyDown('lower')}
+                    className="absolute top-1/2 flex h-6 w-6 -translate-y-1/2 -translate-x-1/2 items-center justify-center rounded-full border border-emerald-400/70 bg-[#0a1a29] text-white shadow-[0_4px_16px_rgba(16,185,129,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
+                    style={{ left: `${toRatio(draftLower) * 100}%` }}
+                >
+                    <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-emerald-500/20 px-2 py-[2px] text-[11px] font-medium text-emerald-100 shadow">
+                        {lowerPercentLabel}
+                    </span>
+                    <span className="pointer-events-none absolute top-[110%] left-1/2 -translate-x-1/2 text-[10px] text-white/50">
+                        {lowerPriceLabel}
+                    </span>
+                </button>
+                <button
+                    type="button"
+                    role="slider"
+                    aria-valuemin={draftLower + SLIDER_MIN_GAP}
+                    aria-valuemax={windowMax}
+                    aria-valuenow={upperIsInfinite ? windowMax : draftUpper}
+                    aria-label={`Upper range ${upperPercentLabel}`}
+                    aria-disabled={disabled}
+                    disabled={disabled}
+                    onPointerDown={beginDrag('upper')}
+                    onKeyDown={handleKeyDown('upper')}
+                    className="absolute top-1/2 flex h-6 w-6 -translate-y-1/2 -translate-x-1/2 items-center justify-center rounded-full border border-emerald-400/70 bg-[#0a1a29] text-white shadow-[0_4px_16px_rgba(16,185,129,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
+                    style={{ left: `${toRatio(draftUpper) * 100}%` }}
+                >
+                    <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-emerald-500/20 px-2 py-[2px] text-[11px] font-medium text-emerald-100 shadow">
+                        {upperPercentLabel}
+                    </span>
+                    <span className="pointer-events-none absolute top-[110%] left-1/2 -translate-x-1/2 text-[10px] text-white/50">
+                        {upperPriceLabel}
+                    </span>
+                </button>
+                {disabled && (
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl bg-black/40 text-xs font-medium text-white/60">
+                        Select a token pair to unlock the range slider
+                    </div>
+                )}
+            </div>
+                <div className="space-y-2">
+                    <div className="relative h-28 rounded-xl border border-white/10 bg-[#0d1b2b]/70">
+                        <div className="absolute inset-0 flex items-end gap-[2px] px-3 pb-3 pt-6">
+                        {distribution.map((bucket: DistributionBar) => (
+                            <div
+                                key={bucket.key}
+                                className={`flex-1 rounded-t transition-all ${bucket.inRange ? 'bg-emerald-400/60 shadow-[0_0_10px_rgba(16,185,129,0.25)]' : 'bg-white/15'} ${bucket.isCurrent ? 'ring-1 ring-emerald-300/60' : ''}`}
+                                style={{ height: `${bucket.height}%` }}
+                            />
+                        ))}
+                    </div>
+                    <div
+                        className="pointer-events-none absolute inset-y-2 w-[2px] rounded-full bg-emerald-300/80 shadow-[0_0_10px_rgba(16,185,129,0.3)]"
+                        style={{ left: `${currentRatio * 100}%`, transform: 'translateX(-50%)' }}
+                    />
+                    <div
+                        className="pointer-events-none absolute inset-y-0 rounded-xl bg-emerald-500/10"
+                        style={{ left: `${selectionStart * 100}%`, width: `${selectionWidth}%` }}
+                    />
+                    {disabled && (
+                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl bg-black/40 text-[10px] font-medium text-white/60">
+                            Select tokens to view liquidity distribution
+                        </div>
+                    )}
+                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-[11px] text-white/60">
+                <div className="space-y-1 rounded-lg border border-white/10 bg-[#0d1b2b]/70 p-3">
+                    <p className="text-[10px] uppercase tracking-wide text-white/40">Min Price</p>
+                    <p className="text-sm font-semibold text-emerald-200">{lowerPriceLabel}</p>
+                    <p>{lowerPercentLabel}</p>
+                </div>
+                <div className="space-y-1 rounded-lg border border-white/10 bg-[#0d1b2b]/70 p-3">
+                    <p className="text-[10px] uppercase tracking-wide text-white/40">Max Price</p>
+                    <p className="text-sm font-semibold text-emerald-200">{upperPriceLabel}</p>
+                    <p>{upperPercentLabel}</p>
+                </div>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-[#0d1b2b]/70 p-3 text-[11px] text-white/60">
+                <span className="text-white/40">Current price:</span>{' '}
+                <span className="font-medium text-emerald-200">{currentPriceLabel}</span>
+            </div>
+        </div>
+    )
+}
+
+const parsePercentageValue = (value?: string | null): number | null => {
+    if (value === undefined || value === null || value === '') return null
+    if (value.includes('♾')) return Infinity
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+}
+
+const parsePriceValue = (value?: string | null): number | null => {
+    if (value === undefined || value === null || value === '') return null
+    if (value === 'Infinity') return Infinity
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+}
 
 export default function LiquidityUnified({ setIsLoading, setErrMsg, }: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
@@ -39,6 +402,72 @@ export default function LiquidityUnified({ setIsLoading, setErrMsg, }: {
     const [rangePercentage, setRangePercentage] = React.useState(1)
     const [open, setOpen] = React.useState(false)
     const [open2, setOpen2] = React.useState(false)
+    const [sliderZoomIndex, setSliderZoomIndex] = React.useState(2)
+    const tickSpacingNumber = React.useMemo(() => {
+        const parsed = Number(currTickSpacing)
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+    }, [currTickSpacing])
+    const currentPriceNumber = React.useMemo(() => {
+        const parsed = Number(currPrice)
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+    }, [currPrice])
+    const lowerPercentValue = React.useMemo(() => parsePercentageValue(lowerPercentage), [lowerPercentage])
+    const rawUpperPercentValue = React.useMemo(() => parsePercentageValue(upperPercentage), [upperPercentage])
+    const upperIsInfinite = rawUpperPercentValue === Infinity || upperPercentage === '+♾️'
+    const upperPercentValue = upperIsInfinite ? null : rawUpperPercentValue
+    const lowerPriceNumber = React.useMemo(() => parsePriceValue(lowerPrice), [lowerPrice])
+    const upperPriceNumber = React.useMemo(() => parsePriceValue(upperPrice), [upperPrice])
+    const sliderSpan = React.useMemo(
+        () => SLIDER_ZOOM_SPANS[Math.min(sliderZoomIndex, SLIDER_ZOOM_SPANS.length - 1)],
+        [sliderZoomIndex],
+    )
+    const selectionMaxAbs = React.useMemo(() => {
+        if (upperIsInfinite) return Infinity
+        const lowerAbs = lowerPercentValue !== null && Number.isFinite(lowerPercentValue) ? Math.abs(lowerPercentValue) : 0
+        const upperAbs = upperPercentValue !== null && Number.isFinite(upperPercentValue) ? Math.abs(upperPercentValue) : 0
+        return Math.max(lowerAbs, upperAbs)
+    }, [lowerPercentValue, upperPercentValue, upperIsInfinite])
+    const canZoomOut = sliderZoomIndex < SLIDER_ZOOM_SPANS.length - 1
+    const canZoomIn = sliderZoomIndex > 0 && selectionMaxAbs <= SLIDER_ZOOM_SPANS[sliderZoomIndex - 1] / 2
+    const sliderEnabled = Boolean(
+        currentPriceNumber &&
+        tickSpacingNumber &&
+        tokenA.value !== ('0x' as '0xstring') &&
+        tokenB.value !== ('0x' as '0xstring')
+    )
+
+    // Build price distribution buckets from API candles (if available)
+    const [distributionBuckets, setDistributionBuckets] = React.useState<{ ratio: number; height: number }[] | null>(null)
+    const fetchDistribution = React.useCallback(async () => {
+        try {
+            setDistributionBuckets(null)
+            const a = tokenA?.value
+            const b = tokenB?.value
+            if (!a || !b || a === ('0x' as '0xstring') || b === ('0x' as '0xstring')) return
+            const baseTokenAddr = String(toWrapped(tokenB.value)).toLowerCase()
+            const quoteTokenAddr = String(toWrapped(tokenA.value)).toLowerCase()
+            const timeframe = '5m'
+            const limit = 300
+            const buckets = 41
+            const span = sliderSpan // percent width of window
+            const searchParams = new URLSearchParams({ baseToken: baseTokenAddr, quoteToken: quoteTokenAddr, timeframe, limit: String(limit), buckets: String(buckets), span: String(span) })
+            searchParams.set('chainId', String(chainId))
+            const res = await fetch(`/api/swap/price-distribution?${searchParams.toString()}`, { cache: 'no-store' })
+            if (!res.ok) return
+            const payload = await res.json()
+            const serverBuckets = Array.isArray(payload?.buckets) ? payload.buckets : []
+            if (serverBuckets.length > 0) {
+                const mapped = serverBuckets.map((b: any) => ({ ratio: Number(b?.ratio) || 0, height: Number(b?.height) || 0 }))
+                setDistributionBuckets(mapped)
+            }
+        } catch {
+            // ignore; fallback bars will render
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tokenA?.value, tokenB?.value, chainId, sliderSpan])
+    React.useEffect(() => {
+        fetchDistribution()
+    }, [fetchDistribution])
     React.useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search)
         const tokenAAddress = searchParams.get('input')?.toLowerCase()
@@ -54,6 +483,25 @@ export default function LiquidityUnified({ setIsLoading, setErrMsg, }: {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
+    React.useEffect(() => {
+        if (upperIsInfinite) {
+            if (sliderZoomIndex !== SLIDER_ZOOM_SPANS.length - 1) {
+                setSliderZoomIndex(SLIDER_ZOOM_SPANS.length - 1)
+            }
+            return
+        }
+        const currentHalfSpan = SLIDER_ZOOM_SPANS[sliderZoomIndex] / 2
+        if (selectionMaxAbs > currentHalfSpan && sliderZoomIndex < SLIDER_ZOOM_SPANS.length - 1) {
+            let nextIndex = sliderZoomIndex
+            while (nextIndex < SLIDER_ZOOM_SPANS.length - 1 && selectionMaxAbs > SLIDER_ZOOM_SPANS[nextIndex] / 2) {
+                nextIndex += 1
+            }
+            if (nextIndex !== sliderZoomIndex) setSliderZoomIndex(nextIndex)
+        }
+    }, [selectionMaxAbs, sliderZoomIndex, upperIsInfinite])
+    React.useEffect(() => {
+        setSliderZoomIndex(2)
+    }, [tokenA.value, tokenB.value])
     const updateURLWithTokens = (tokenAValue?: string, tokenBValue?: string, referralCode?: string) => {
         const url = new URL(window.location.href)
         if (tokenAValue) {
@@ -107,6 +555,71 @@ export default function LiquidityUnified({ setIsLoading, setErrMsg, }: {
             setUpperTick(alignedUpperTick.toString())
         }
     }, 700)
+    const percentToPrice = React.useCallback((percent: number) => {
+        if (currentPriceNumber === null) return null
+        const ratio = 1 + percent / 100
+        if (!Number.isFinite(ratio) || ratio <= 0) {
+            if (percent <= -100) return 0
+            return null
+        }
+        const value = currentPriceNumber * ratio
+        return Number.isFinite(value) ? value : null
+    }, [currentPriceNumber])
+    const handleZoomIn = React.useCallback(() => {
+        setSliderZoomIndex((index) => {
+            if (index === 0) return index
+            const nextHalf = SLIDER_ZOOM_SPANS[index - 1] / 2
+            if (selectionMaxAbs > nextHalf) return index
+            return index - 1
+        })
+    }, [selectionMaxAbs])
+    const handleZoomOut = React.useCallback(() => {
+        setSliderZoomIndex((index) => Math.min(index + 1, SLIDER_ZOOM_SPANS.length - 1))
+    }, [])
+    const handleSliderLowerChange = React.useCallback((percent: number) => {
+        if (currentPriceNumber === null) return
+        const normalized = Number(percent.toFixed(4))
+        setRangePercentage(999)
+        setAmountA("")
+        setAmountB("")
+        setLowerPercentage(normalized.toString())
+        const nextPrice = percentToPrice(normalized)
+        if (nextPrice !== null) {
+            setLowerPrice(nextPrice.toString())
+        } else {
+            setLowerPrice("0")
+        }
+        setAlignedLowerTick.cancel()
+    }, [currentPriceNumber, percentToPrice, setAmountA, setAmountB, setAlignedLowerTick, setLowerPercentage, setLowerPrice, setRangePercentage])
+    const handleSliderLowerCommit = React.useCallback((percent: number) => {
+        if (currentPriceNumber === null) return
+        const normalized = Number(percent.toFixed(4))
+        const price = percentToPrice(normalized)
+        if (price === null) return
+        setAlignedLowerTick.cancel()
+        setAlignedLowerTick(price.toString())
+        setAlignedLowerTick.flush()
+    }, [currentPriceNumber, percentToPrice, setAlignedLowerTick])
+    const handleSliderUpperChange = React.useCallback((percent: number) => {
+        if (currentPriceNumber === null) return
+        const normalized = Number(percent.toFixed(4))
+        setRangePercentage(999)
+        setAmountA("")
+        setAmountB("")
+        setUpperPercentage(normalized.toString())
+        const nextPrice = percentToPrice(normalized)
+        if (nextPrice !== null) setUpperPrice(nextPrice.toString())
+        setAlignedUpperTick.cancel()
+    }, [currentPriceNumber, percentToPrice, setAmountA, setAmountB, setAlignedUpperTick, setRangePercentage, setUpperPercentage, setUpperPrice])
+    const handleSliderUpperCommit = React.useCallback((percent: number) => {
+        if (currentPriceNumber === null) return
+        const normalized = Number(percent.toFixed(4))
+        const price = percentToPrice(normalized)
+        if (price === null) return
+        setAlignedUpperTick.cancel()
+        setAlignedUpperTick(price.toString())
+        setAlignedUpperTick.flush()
+    }, [currentPriceNumber, percentToPrice, setAlignedUpperTick])
     const setAlignedAmountB = useDebouncedCallback(async (_amountA: string) => {
         if (!pairDetect) return
         const tokenAvalue = toWrapped(tokenA.value)
@@ -417,7 +930,9 @@ export default function LiquidityUnified({ setIsLoading, setErrMsg, }: {
                 <div className='gap-2 flex flex-row items-center justify-center'>
                   <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                     <span className="text-[#00ff9d] text-xs">
-                      {tokenA.logo !== '../favicon.ico' ? <img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
+                      {(tokenA.logo && tokenA.logo.trim() !== '' && tokenA.logo !== '../favicon.ico')
+                        ? <img alt="" src={tokenA.logo} className="size-5 shrink-0 rounded-full" />
+                        : '?'}
                     </span>
                   </div>
                   <span className="truncate">{tokenA.name}</span>
@@ -443,7 +958,9 @@ export default function LiquidityUnified({ setIsLoading, setErrMsg, }: {
                         className='cursor-pointer'
                       >
                         <div className="flex items-center">
-                          <img alt="" src={(token as any).logo} className="size-5 shrink-0 rounded-full" />
+                          {((token as any).logo && String((token as any).logo).trim() !== '')
+                            ? <img alt="" src={(token as any).logo} className="size-5 shrink-0 rounded-full" />
+                            : <div className="size-5 shrink-0 rounded-full bg-[#00ff9d]/10 text-center leading-5">?</div>}
                           <span className="ml-3 truncate">{token.name}</span>
                         </div>
                       </CommandItem>
@@ -489,7 +1006,9 @@ export default function LiquidityUnified({ setIsLoading, setErrMsg, }: {
                 <div className='gap-2 flex flex-row items-center justify-center'>
                   <div className="w-5 h-5 rounded-full bg-[#00ff9d]/20">
                     <span className="text-[#00ff9d] text-xs">
-                      {tokenB.logo !== '../favicon.ico' ? <img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" /> : '?'}
+                      {(tokenB.logo && tokenB.logo.trim() !== '' && tokenB.logo !== '../favicon.ico')
+                        ? <img alt="" src={tokenB.logo} className="size-5 shrink-0 rounded-full" />
+                        : '?'}
                     </span>
                   </div>
                   <span className="truncate">{tokenB.name}</span>
@@ -515,7 +1034,9 @@ export default function LiquidityUnified({ setIsLoading, setErrMsg, }: {
                         className='cursor-pointer'
                       >
                         <div className="flex items-center">
-                          <img alt="" src={(token as any).logo} className="size-5 shrink-0 rounded-full" />
+                          {((token as any).logo && String((token as any).logo).trim() !== '')
+                            ? <img alt="" src={(token as any).logo} className="size-5 shrink-0 rounded-full" />
+                            : <div className="size-5 shrink-0 rounded-full bg-[#00ff9d]/10 text-center leading-5">?</div>}
                           <span className="ml-3 truncate">{token.name}</span>
                         </div>
                       </CommandItem>
@@ -531,7 +1052,6 @@ export default function LiquidityUnified({ setIsLoading, setErrMsg, }: {
           {(upperPrice !== '' || Number(upperPrice) > Number(currPrice)) && <span className="text-gray-400 text-xs" onClick={() => setAmountB(tokenBBalance)}>{tokenB.name !== 'Choose Token' ? Number(tokenBBalance || '0').toFixed(displayPrecision) + ' ' + tokenB.name : '0.0000'}</span>}
         </div>
       </div>
-
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <Button variant="outline" className={"h-full p-4 rounded-md gap-1 flex flex-col text-xs overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-2xl backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-slate-700/50 " + (feeSelect === 100 ? "bg-emerald-700/50 text-[#00ff9d]" : "text-gray-400 border-[#00ff9d]/10 hover:bg-[#162638] hover:text-[#00ff9d]/80 cursor-pointer")} onClick={() => setFeeSelect(100)}>
           <span>0.01% fee</span>
@@ -550,7 +1070,27 @@ export default function LiquidityUnified({ setIsLoading, setErrMsg, }: {
           <span className="text-xs mt-1 opacity-60">best for exotic pairs</span>
         </Button>
       </div>
-
+      <div className="mt-4">
+        <LiquidityRangeSlider
+          currentPrice={currentPriceNumber}
+          lowerPercent={lowerPercentValue}
+          upperPercent={upperPercentValue}
+          lowerPrice={lowerPriceNumber}
+          upperPrice={upperPriceNumber}
+          zoomSpan={sliderSpan}
+          canZoomIn={canZoomIn}
+          canZoomOut={canZoomOut}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onLowerChange={handleSliderLowerChange}
+          onUpperChange={handleSliderUpperChange}
+          onLowerCommit={handleSliderLowerCommit}
+          onUpperCommit={handleSliderUpperCommit}
+          disabled={!sliderEnabled}
+          upperIsInfinite={upperIsInfinite}
+          distributionBuckets={distributionBuckets ?? undefined}
+        />
+      </div>
       <div className="grid grid-cols-4 sm:grid-cols-4 gap-2 mt-2">
         <Button variant="outline" className={"h-auto rounded text-xs flex flex-col " + (rangePercentage === 1 ? "text-[#00ff9d] border border-[#00ff9d]/20" : "text-gray-400 border border-[#00ff9d]/10 cursor-pointer")} onClick={() => setRangePercentage(1)}>
           <span>Full Range</span>

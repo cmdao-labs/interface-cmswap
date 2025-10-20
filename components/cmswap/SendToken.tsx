@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useAccount } from "wagmi";
 import { simulateContract, waitForTransactionReceipt, writeContract, getBalance, sendTransaction, type WriteContractErrorType } from "@wagmi/core";
 import { Button } from "@/components/ui/button";
-import { createPublicClient, http, erc20Abi } from "viem";
+import { createPublicClient, http, erc20Abi, parseUnits } from "viem";
 import { jbc, bitkub, monadTestnet, bitkubTestnet } from "viem/chains";
 import { Copy, CopyCheck,ScanQrCode,ChevronDown } from "lucide-react";
 import { config } from "../../config/reown";
@@ -76,6 +76,30 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
     const [token, setToken] = React.useState<{ name: string; value: "0xstring"; logo: string; }>(lib.tokens[0]);
     const [recipient, setRecipient] = useState("");
     const [showScanner, setShowScanner] = useState(false);
+    const [isMultiTransfer, setIsMultiTransfer] = useState(false);
+    const [multiInput, setMultiInput] = useState("");
+    const [multiMode, setMultiMode] = useState<"fixed" | "variable">("fixed");
+    const [variableMinAmount, setVariableMinAmount] = useState("");
+    const [variableMaxAmount, setVariableMaxAmount] = useState("");
+    const [uploadError, setUploadError] = useState<string | null>(null);
+    const parseAddresses = (input: string) =>
+        input
+            .split(/[\n,]+/)
+            .map((addr) => addr.trim())
+            .filter(Boolean);
+    const multiAddresses = React.useMemo(() => parseAddresses(multiInput), [multiInput]);
+    const amountLabel = isMultiTransfer
+        ? multiMode === "variable"
+            ? "Amount Range (per address)"
+            : "Amount per Address"
+        : "Amount to Send";
+    const formattedSingleAmount = amount ? Number(amount).toLocaleString() : "0";
+    const multiCountLabel = `${multiAddresses.length} ${multiAddresses.length === 1 ? "Address" : "Addresses"}`;
+    const sendButtonText = isMultiTransfer
+        ? multiMode === "variable"
+            ? `Send Variable Amounts to ${multiCountLabel}`
+            : `Send ${amount || "0"} ${token.name} to ${multiCountLabel}`
+        : `Send ${formattedSingleAmount} ${token.name}`;
 
 
     async function resolveNameIfNeeded(input: string) {
@@ -88,18 +112,107 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
         }
     }
 
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const input = event.target;
+        const file = input.files?.[0];
+        if (!file) return;
+        try {
+            const text = await file.text();
+            setMultiInput(text);
+            setUploadError(null);
+        } catch (err) {
+            setUploadError("Unable to read file. Please try again.");
+        } finally {
+            input.value = "";
+        }
+    };
+
+    const getRandomAmountInRange = (min: number, max: number) => {
+        if (max <= min) return min.toFixed(10);
+        const random = Math.random() * (max - min) + min;
+        return random.toFixed(10);
+    };
+
     async function handleSend() {
         if (!address) return;
         setIsLoading(true);
         try {
+            if (isMultiTransfer) {
+                if (multiAddresses.length === 0) {
+                    throw new Error("Add at least one destination address.");
+                }
+                let perAddressAmounts: string[] = [];
+                if (multiMode === "fixed") {
+                    const normalizedAmount = amount.trim();
+                    if (!normalizedAmount || Number(normalizedAmount) <= 0) {
+                        throw new Error("Enter a valid amount per address.");
+                    }
+                    perAddressAmounts = multiAddresses.map(() => normalizedAmount);
+                } else {
+                    const min = Number(variableMinAmount);
+                    const max = Number(variableMaxAmount);
+                    if (Number.isNaN(min) || Number.isNaN(max) || min <= 0 || max <= 0) {
+                        throw new Error("Enter valid minimum and maximum amounts.");
+                    }
+                    if (max < min) {
+                        throw new Error("Maximum amount must be greater than or equal to minimum amount.");
+                    }
+                    perAddressAmounts = multiAddresses.map(() => getRandomAmountInRange(min, max));
+                }
+
+                for (let i = 0; i < multiAddresses.length; i += 1) {
+                    const rawTarget = multiAddresses[i];
+                    const toResolved = await resolveNameIfNeeded(rawTarget);
+                    setResolvedTo(toResolved);
+                    const amountForRecipient = parseUnits(perAddressAmounts[i], 18);
+
+                    if (token.value === "0xnative" as "0xstring") {
+                        const tx = await sendTransaction(config, {
+                            account: address,
+                            to: toResolved as `0x${string}`,
+                            value: amountForRecipient,
+                            chainId: Number(chain.chainId),
+                        });
+                        await waitForTransactionReceipt(config, { hash: tx });
+                    } else {
+                        const { request } = await simulateContract(config, {
+                            account: address,
+                            address: token.value as `0x${string}`,
+                            abi: erc20Abi,
+                            functionName: "transfer",
+                            args: [toResolved as "0xstring", amountForRecipient],
+                        });
+                        const tx = await writeContract(config, request);
+                        await waitForTransactionReceipt(config, { hash: tx });
+                    }
+                }
+                return;
+            }
+
             const toResolved = await resolveNameIfNeeded(to);
             setResolvedTo(toResolved);
+            const normalizedAmount = amount.trim();
+            if (!normalizedAmount || Number(normalizedAmount) <= 0) {
+                throw new Error("Enter a valid amount to send.");
+            }
+            const amountToSend = parseUnits(normalizedAmount, 18);
             if (token.value === "0xnative" as "0xstring") {
-                const tx = await sendTransaction(config, {account: address, to: toResolved as `0x${string}`, value: BigInt(Number(amount) * 1e18), chainId: Number(chain.chainId)});
+                const tx = await sendTransaction(config, {
+                    account: address,
+                    to: toResolved as `0x${string}`,
+                    value: amountToSend,
+                    chainId: Number(chain.chainId),
+                });
                 await waitForTransactionReceipt(config, { hash: tx });
             } else {
-                const { request } = await simulateContract(config, {account: address, address: token.value as `0x${string}`, abi: erc20Abi, functionName: "transfer", args: [toResolved as '0xstring', BigInt(Number(amount) * 1e18)]});
-                const tx = await writeContract(config,request);
+                const { request } = await simulateContract(config, {
+                    account: address,
+                    address: token.value as `0x${string}`,
+                    abi: erc20Abi,
+                    functionName: "transfer",
+                    args: [toResolved as "0xstring", amountToSend],
+                });
+                const tx = await writeContract(config, request);
                 await waitForTransactionReceipt(config, { hash: tx });
             }
         } catch (err) {
@@ -212,36 +325,149 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
             </div>
 
             <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Recipient Address</label>
-                <div className="relative">
-                    <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded-lg p-3 pr-12 mt-1 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                        placeholder={`0x... or ${nameService ?? "address"}`}
-                        value={to}
-                        onChange={(e) => setTo(e.target.value)}
-                    />
-                        <div className="absolute inset-y-0 right-3 flex items-center">
-                        <ScanQrCode onClick={() => setShowScanner(true)} />
+                <div className="flex items-center justify-between gap-4 mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                        {isMultiTransfer ? "Recipient Addresses" : "Recipient Address"}
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-medium text-gray-500">
+                        <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-gray-400 text-emerald-500 focus:ring-emerald-500"
+                            checked={isMultiTransfer}
+                            onChange={(event) => {
+                                const checked = event.target.checked;
+                                setIsMultiTransfer(checked);
+                                if (checked) {
+                                    setShowScanner(false);
+                                }
+                            }}
+                        />
+                        Transfer to Multiple Addresses
+                    </label>
+                </div>
+                {isMultiTransfer ? (
+                    <div className="flex flex-col gap-3">
+                        <textarea
+                            className="w-full border border-gray-300 rounded-lg p-3 h-32 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors text-sm"
+                            placeholder="Paste comma or line separated addresses"
+                            value={multiInput}
+                            onChange={(e) => setMultiInput(e.target.value)}
+                        />
+                        <div className="flex flex-wrap items-center gap-3">
+                            <label
+                                htmlFor="multi-file-upload"
+                                className="cursor-pointer px-4 py-2 border border-dashed border-gray-500 rounded-lg text-xs uppercase tracking-wide text-gray-400 hover:border-emerald-500 hover:text-emerald-400 transition"
+                            >
+                                Upload Addresses (.txt / .csv)
+                            </label>
+                            <input
+                                id="multi-file-upload"
+                                type="file"
+                                accept=".txt,.csv"
+                                className="hidden"
+                                onChange={handleFileUpload}
+                            />
+                            <span className="text-xs text-gray-500">
+                                Detected {multiAddresses.length} address{multiAddresses.length === 1 ? "" : "es"}
+                            </span>
+                        </div>
+                        {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
                     </div>
-                </div>
+                ) : (
+                    <div className="relative">
+                        <input
+                            type="text"
+                            className="w-full border border-gray-300 rounded-lg p-3 pr-12 mt-1 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                            placeholder={`0x... or ${nameService ?? "address"}`}
+                            value={to}
+                            onChange={(e) => setTo(e.target.value)}
+                        />
+                        <div className="absolute inset-y-0 right-3 flex items-center">
+                            <ScanQrCode onClick={() => setShowScanner(true)} />
+                        </div>
+                    </div>
+                )}
             </div>
-            {showScanner && <QRScannerModal onClose={() => setShowScanner(false)} onScan={(addr: `0x${string}`) => setTo(addr)} />}
+            {showScanner && !isMultiTransfer && (
+                <QRScannerModal onClose={() => setShowScanner(false)} onScan={(addr: `0x${string}`) => setTo(addr)} />
+            )}
             <div className="mb-8">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Amount to Send</label>
-                <div className="flex gap-3">
-                    <input
-                        type="number"
-                        className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                        placeholder="0.00"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                    />
-                    <Button className="px-6 py-3 Token font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect shadow-lg shadow-emerald-500/40 rounded-lg active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" onClick={() => handleMax(10)}>MAX</Button>
+                <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">{amountLabel}</label>
+                    {isMultiTransfer && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                className={`h-9 px-4 text-xs font-semibold uppercase tracking-wide rounded-lg border transition ${
+                                    multiMode === "fixed"
+                                        ? "bg-emerald-500 text-white border-emerald-500"
+                                        : "bg-[#162638] text-gray-300 border-[#1f2f46]"
+                                }`}
+                                onClick={() => setMultiMode("fixed")}
+                                aria-pressed={multiMode === "fixed"}
+                            >
+                                Fixed Rate
+                            </button>
+                            <button
+                                type="button"
+                                className={`h-9 px-4 text-xs font-semibold uppercase tracking-wide rounded-lg border transition ${
+                                    multiMode === "variable"
+                                        ? "bg-emerald-500 text-white border-emerald-500"
+                                        : "bg-[#162638] text-gray-300 border-[#1f2f46]"
+                                }`}
+                                onClick={() => setMultiMode("variable")}
+                                aria-pressed={multiMode === "variable"}
+                            >
+                                Variable Rate
+                            </button>
+                        </div>
+                    )}
                 </div>
+                {isMultiTransfer && multiMode === "variable" ? (
+                    <div className="flex flex-col gap-3">
+                        <div className="flex gap-3">
+                            <input
+                                type="number"
+                                min="0"
+                                className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                                placeholder="Min amount"
+                                value={variableMinAmount}
+                                onChange={(e) => setVariableMinAmount(e.target.value)}
+                            />
+                            <input
+                                type="number"
+                                min="0"
+                                className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                                placeholder="Max amount"
+                                value={variableMaxAmount}
+                                onChange={(e) => setVariableMaxAmount(e.target.value)}
+                            />
+                        </div>
+                        <p className="text-xs text-gray-500">
+                            Each address receives a random amount within the specified range.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="flex gap-3">
+                        <input
+                            type="number"
+                            min="0"
+                            className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                            placeholder="0.00"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                        />
+                        <Button
+                            className="px-6 py-3 Token font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect shadow-lg shadow-emerald-500/40 rounded-lg active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer"
+                            onClick={() => handleMax(10)}
+                        >
+                            MAX
+                        </Button>
+                    </div>
+                )}
             </div>
             <Button className="w-full py-4 px-8 Token font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect shadow-lg shadow-emerald-500/40 rounded-lg active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" onClick={handleSend}>
-                Send {Number(amount).toLocaleString()} {token.name}
+                {sendButtonText}
             </Button>
         </div>
     );

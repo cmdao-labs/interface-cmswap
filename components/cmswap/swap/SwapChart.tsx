@@ -7,7 +7,6 @@ import {
     type ISeriesApi,
     type Time,
     CandlestickSeries,
-    HistogramSeries,
 } from 'lightweight-charts'
 import type { SwapChartCandle, SwapChartTimeframe } from '@/components/cmswap/swap/hooks/useSwapChartData'
 import { SWAP_CHART_TIMEFRAMES } from '@/components/cmswap/swap/hooks/useSwapChartData'
@@ -72,7 +71,6 @@ const SwapChart: React.FC<SwapChartProps> = ({
     const containerRef = React.useRef<HTMLDivElement>(null)
     const chartRef = React.useRef<IChartApi | null>(null)
     const candleSeriesRef = React.useRef<ISeriesApi<'Candlestick'> | null>(null)
-    const volumeSeriesRef = React.useRef<ISeriesApi<'Histogram'> | null>(null)
     const resizeObserverRef = React.useRef<ResizeObserver | null>(null)
 
     React.useEffect(() => {
@@ -92,7 +90,7 @@ const SwapChart: React.FC<SwapChartProps> = ({
             },
             rightPriceScale: {
                 borderVisible: false,
-                scaleMargins: { top: 0.2, bottom: 0.25 },
+                scaleMargins: { top: 0.2, bottom: 0.1 },
             },
             timeScale: {
                 borderVisible: false,
@@ -107,17 +105,9 @@ const SwapChart: React.FC<SwapChartProps> = ({
             wickUpColor: '#31fca5',
             wickDownColor: '#ff5f7a',
         })
-        const volumeSeries = chart.addSeries(HistogramSeries, {
-            priceFormat: { type: 'volume' },
-            priceScaleId: 'volume',
-            color: 'rgba(49, 252, 165, 0.4)',
-        })
-        volumeSeries.priceScale().applyOptions({
-            scaleMargins: { top: 0.75, bottom: 0 },
-        })
+        // Removed volume series
         chartRef.current = chart
         candleSeriesRef.current = candleSeries
-        volumeSeriesRef.current = volumeSeries
 
         const observer = new ResizeObserver((entries) => {
             const entry = entries[0]
@@ -135,12 +125,11 @@ const SwapChart: React.FC<SwapChartProps> = ({
             chart.remove()
             chartRef.current = null
             candleSeriesRef.current = null
-            volumeSeriesRef.current = null
         }
     }, [])
 
     React.useEffect(() => {
-        if (!candleSeriesRef.current || !volumeSeriesRef.current) return
+        if (!candleSeriesRef.current) return
         const candleData = candles.map((entry) => ({
             time: Math.floor(entry.time / 1000) as Time,
             open: entry.open,
@@ -148,13 +137,7 @@ const SwapChart: React.FC<SwapChartProps> = ({
             low: entry.low,
             close: entry.close,
         }))
-        const volumeData = candles.map((entry) => ({
-            time: Math.floor(entry.time / 1000) as Time,
-            value: entry.volumeBase ?? 0,
-            color: entry.close >= entry.open ? 'rgba(49, 252, 165, 0.45)' : 'rgba(255, 95, 122, 0.45)',
-        }))
         candleSeriesRef.current.setData(candleData)
-        volumeSeriesRef.current.setData(volumeData)
         if (chartRef.current && candleData.length > 0) {
             chartRef.current.timeScale().setVisibleRange({
                 from: candleData[0].time,
@@ -224,6 +207,15 @@ const SwapChart: React.FC<SwapChartProps> = ({
             </div>
             <div className="relative h-[520px] rounded-xl border border-white/5 bg-slate-950/60">
                 <div ref={containerRef} className="absolute inset-0" />
+                {candles.length > 0 && (
+                    <div className="pointer-events-none absolute left-2 top-2 z-10 rounded bg-black/30 px-2 py-1 text-[11px] text-white/80">
+                        <span className="mr-2 opacity-70">OHLC</span>
+                        <span className="mr-2">O {formatValue(candles[candles.length - 1]?.open)}</span>
+                        <span className="mr-2">H {formatValue(candles[candles.length - 1]?.high)}</span>
+                        <span className="mr-2">L {formatValue(candles[candles.length - 1]?.low)}</span>
+                        <span>C {formatValue(candles[candles.length - 1]?.close)}</span>
+                    </div>
+                )}
                 {isLoading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-slate-950/60 text-sm text-white/60">
                         Loading chart…

@@ -35,12 +35,14 @@ export default function Page() {
     const chartTokenAAddress = React.useMemo(() => resolveChartAddress(tokenA), [resolveChartAddress, tokenA])
     const chartTokenBAddress = React.useMemo(() => resolveChartAddress(tokenB), [resolveChartAddress, tokenB])
     const formatTokenLabel = (t: any) => (t?.name && t.name !== 'Choose Token') ? t.name : (t?.value ? `${String(t.value).slice(0,6)}...${String(t.value).slice(-4)}` : '--')
-    const chartBaseLabel = formatTokenLabel(tokenA)
-    const chartQuoteLabel = formatTokenLabel(tokenB)
+    // Flip the token pair for the chart (show B/A)
+    const chartBaseLabel = formatTokenLabel(tokenB)
+    const chartQuoteLabel = formatTokenLabel(tokenA)
     const chartPairLabel = `${chartBaseLabel} / ${chartQuoteLabel}`
     const { candles, latest, isLoading: chartLoading, error: chartError, notFound: chartNotFound, refresh: refreshChart } = useSwapChartData({
-        baseToken: chartTokenAAddress ?? undefined,
-        quoteToken: chartTokenBAddress ?? undefined,
+        // Flip base/quote for inverted price (B/A)
+        baseToken: chartTokenBAddress ?? undefined,
+        quoteToken: chartTokenAAddress ?? undefined,
         timeframe: chartTimeframe,
         chainId: swapChainId,
         enabled: isChartOpen && !!chartTokenAAddress && !!chartTokenBAddress,
