@@ -32,7 +32,7 @@ export default async function Launchpad(props: {searchParams?: Promise<{ chain?:
 						<Sort />
 					</div>
 					<Suspense key={`grid-${mode}-${chain}-${query}-${sort}-${order}`} fallback={<GridSkeleton />}>
-						<TokenGrid mode={mode} query={query} sort={sort} order={order} chain={chain} token={token} />
+						<TokenGrid mode={mode} query={query} sort={sort} order={order} />
 					</Suspense>
 				</section>
 			</main>
