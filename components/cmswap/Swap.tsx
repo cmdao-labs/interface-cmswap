@@ -237,10 +237,9 @@ export default function Swap({ setIsLoading, setErrMsg, isChartOpen: isChartOpen
                         const bestAmountOut = result !== undefined ? result[0] as bigint : BigInt(0)
                         const bestPath = result !== undefined ? result[1] : []
                         const bestPathArrayLocal: string[] = bestPath.map((addr: `0x${string}`) => addr)
-                        if (shouldUpdateUI && poolSelect === "DiamonSwap") {
-                            bestPathArrayLocal.length > 2 ? setAltRoute({ a: bestPathArrayLocal[0] as '0xstring', b: bestPathArrayLocal[1] as '0xstring', c: bestPathArrayLocal[2] as '0xstring' }) : setAltRoute(undefined)
-                        }
+                        if (shouldUpdateUI && poolSelect === "DiamonSwap") bestPathArrayLocal.length > 2 ? setAltRoute({ a: bestPathArrayLocal[0] as '0xstring', b: bestPathArrayLocal[1] as '0xstring', c: bestPathArrayLocal[2] as '0xstring' }) : setAltRoute(undefined);
                         if (shouldUpdateUI && poolSelect === "DiamonSwap" && Number(_amount) > 0 && bestAmountOut > 0) {
+                            setBestPathArray(bestPathArrayLocal)
                             const out = Number(formatUnits(bestAmountOut, getDecimals(tokenB)))
                             const price = tokenAvalue.toUpperCase() === tokens[0].value.toUpperCase() ? Number(_amount) / out : out / Number(_amount)
                             setNewPrice((1 / price).toFixed(6))
