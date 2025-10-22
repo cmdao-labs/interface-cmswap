@@ -27,12 +27,13 @@ type RouteQuoteMetrics = { amountOut?: number; priceQuote?: number; }
 type CmswapFeeTier = { fee: 100 | 500 | 3000 | 10000; label: string; tvlKey: 'tvl100' | 'tvl500' | 'tvl3000' | 'tvl10000' }
 const CMSWAP_FEE_TIERS: readonly CmswapFeeTier[] = [{ fee: 100, label: '0.01%', tvlKey: 'tvl100' }, { fee: 500, label: '0.05%', tvlKey: 'tvl500' }, { fee: 3000, label: '0.3%', tvlKey: 'tvl3000' }, { fee: 10000, label: '1%', tvlKey: 'tvl10000' } ] as const
 const SLIPPAGE_DENOMINATOR = BigInt(10_000)
-type SlippagePresetKey = '0.1' | '0.5' | '1'
+type SlippagePresetKey = '0.1' | '0.5' | '1' | '5'
 type SlippageOptionKey = SlippagePresetKey | 'custom'
 const SLIPPAGE_PRESETS: readonly { key: SlippagePresetKey; label: string; value: number }[] = [
     { key: '0.1', label: '0.1%', value: 0.1 },
     { key: '0.5', label: '0.5%', value: 0.5 },
     { key: '1', label: '1%', value: 1 },
+    { key: '5', label: '5%', value: 5 },
 ] as const
 const ROUTE_DESCRIPTIONS: Record<string, string> = {
     CMswap: 'Concentrated liquidity pools',
@@ -74,10 +75,10 @@ export default function Swap({ setIsLoading, setErrMsg, isChartOpen: isChartOpen
     const [JibSwapTvl, setJibSwapTvl] = React.useState<any>({ tvl10000: "", exchangeRate: "", t0: '' as '0xstring' })
     const [reserveUdonA, setReserveUdonA] = React.useState(BigInt(0))
     const [reserveUdonB, setReserveUdonB] = React.useState(BigInt(0))
-    const [slippageTolerance, setSlippageTolerance] = React.useState<number>(0.5)
+    const [slippageTolerance, setSlippageTolerance] = React.useState<number>(5)
     const [isSlippageModalOpen, setIsSlippageModalOpen] = React.useState(false)
-    const [slippageDraftSelection, setSlippageDraftSelection] = React.useState<SlippageOptionKey>('0.5')
-    const [slippageDraftCustom, setSlippageDraftCustom] = React.useState('0.5')
+    const [slippageDraftSelection, setSlippageDraftSelection] = React.useState<SlippageOptionKey>('5')
+    const [slippageDraftCustom, setSlippageDraftCustom] = React.useState('5')
     const { tokenA, tokenB, setTokenA, setTokenB, hasInitializedFromParams, updateURLWithTokens, switchTokens } = useSwapTokenSelection(tokens, { defaultTokenAIndex: 0, defaultTokenBIndex: 2})
     const { resolveTokenAddress, quoteExactInputSingle, quoteExactInput } = useSwapQuote({ config, contract: qouterV2Contract, tokens })
     const chartOpen = (typeof isChartOpenProp === 'boolean') ? isChartOpenProp : internalChartOpen
@@ -397,10 +398,17 @@ export default function Swap({ setIsLoading, setErrMsg, isChartOpen: isChartOpen
                 const { request } = await simulateContract(config, { ...CMswapUniSmartRouteContractV2, functionName: 'swapExactETHForTokensWithFee', value: parseUnits(amountA || '0', getDecimals(tokenA)), args: [BigInt(0), parseUnits(amountB || '0', getDecimals(tokenB)) * slippageMultiplier / SLIPPAGE_DENOMINATOR, bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error('Address required') })(), BigInt(deadline)] })
                 h = await writeContract(config, request)
             } else {
-                const route = bestPathArray as readonly `0x${string}`[]
-                const { request } = await simulateContract(config, { ...CMswapUniSmartRouteContractV2, functionName: 'swapExactTokensForTokensWithFee', args: [BigInt(0), parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * slippageMultiplier / SLIPPAGE_DENOMINATOR, route, address as `0x${string}`, BigInt(deadline)] })
-                h = await writeContract(config, request)
-                await waitForTransactionReceipt(config, { hash: h })
+                const allowanceA = tokenA.value.toUpperCase() === tokens[2].value.toUpperCase() ? await readContract(config, { ...kap20ABI as any, address: tokenA.value as '0xstring', functionName: 'allowances', args: [address as '0xstring', CMswapUniSmartRoute] }) : await readContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'allowance', args: [address as '0xstring', CMswapUniSmartRoute] })
+                if ((allowanceA as bigint) < parseUnits(amountA || '0', getDecimals(tokenA))) {
+                    const { request } = await simulateContract(config, { ...erc20ABI, address: tokenA.value as '0xstring', functionName: 'approve', args: [CMswapUniSmartRoute, parseUnits(amountA || '0', getDecimals(tokenA))] })
+                    const h0 = await writeContract(config, request)
+                    await waitForTransactionReceipt(config, { hash: h0 })
+                }
+                if (altRoute === undefined || bestPathArray !== undefined) {
+                    const { request } = await simulateContract(config, { ...CMswapUniSmartRouteContractV2, functionName: 'swapExactTokensForTokensWithFee', args: [BigInt(0), parseUnits(amountA || '0', getDecimals(tokenA)), parseUnits(amountB || '0', getDecimals(tokenB)) * slippageMultiplier / SLIPPAGE_DENOMINATOR, bestPathArray as readonly `0x${string}`[], address ?? (() => { throw new Error('Address required') })(), BigInt(deadline)] })
+                    h = await writeContract(config, request)
+                    await waitForTransactionReceipt(config, { hash: h })
+                }
             }
             h && setTxupdate(h)
         } catch (e) { setErrMsg(e as WriteContractErrorType) }
