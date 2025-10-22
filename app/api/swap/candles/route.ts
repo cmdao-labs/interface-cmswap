@@ -22,10 +22,6 @@ function canonicalMarket(a: string, b: string) {
     if (aLower === bLower) {
         throw new Error('baseToken and quoteToken must be different')
     }
-    // Note: Do not derive marketId here. Our DB can store
-    // multiple markets for the same token pair (e.g. Uniswap V3 fee tiers)
-    // and uses a decorated market_id (like "univ3:token0-token1:fee3000").
-    // We only canonicalize ordering to find matching rows by token0/token1.
     return aLower < bLower
         ? { token0: aLower, token1: bLower }
         : { token0: bLower, token1: aLower }
@@ -103,7 +99,6 @@ function transformCandle(row: CandleRow, invert: boolean) {
     }
     const invertedOpen = invertValue(baseOpen)
     const invertedClose = invertValue(baseClose)
-    // When inverting OHLC, high/low swap reciprocals
     const invertedHigh = invertValue(baseLow)
     const invertedLow = invertValue(baseHigh)
     return {
@@ -146,9 +141,6 @@ export async function GET(req: NextRequest) {
     }
     const limit = parseLimit(searchParams.get('limit'))
     const supabase = getServiceSupabase()
-    // Resolve concrete market row by token0/token1. Prefer Uniswap V3 if present,
-    // and if multiple fee tiers exist pick the one with the freshest data.
-    // 1) Try Uniswap V3 first
     const { data: v3Markets, error: v3Err } = await supabase
         .from('swap_markets')
         .select('market_id, token0, token1, decimals0, decimals1, pair_address, dex')
@@ -160,7 +152,6 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: v3Err.message }, { status: 500 })
     }
     let marketRow = (v3Markets && v3Markets[0]) || null
-    // 2) If multiple V3 markets exist (different fee tiers), choose the one with freshest snapshot
     if (v3Markets && v3Markets.length > 1) {
         const ids = v3Markets.map(m => m.market_id as string)
         const { data: latestSnap } = await supabase
@@ -175,7 +166,6 @@ export async function GET(req: NextRequest) {
             marketRow = v3Markets.find(m => m.market_id === bestId) || marketRow
         }
     }
-    // 3) Fallback to any market for the pair if V3 not found
     if (!marketRow) {
         const { data: anyMarkets, error: anyErr } = await supabase
             .from('swap_markets')

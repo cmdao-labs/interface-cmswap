@@ -1,24 +1,9 @@
 'use client';
 import * as React from 'react'
-type SwapTokenBase = {
-    name: string
-    value: '0xstring'
-    logo: string
-} & Record<string, unknown>
-interface UseSwapTokenSelectionOptions {
-    defaultTokenAIndex?: number
-    defaultTokenBIndex?: number
-    persistSearchParams?: boolean
-}
-interface UseSwapTokenSelectionResult<T extends SwapTokenBase> {
-    tokenA: T
-    tokenB: T
-    setTokenA: React.Dispatch<React.SetStateAction<T>>
-    setTokenB: React.Dispatch<React.SetStateAction<T>>
-    hasInitializedFromParams: boolean
-    updateURLWithTokens: (tokenAValue?: string, tokenBValue?: string) => void
-    switchTokens: () => void
-}
+
+type SwapTokenBase = { name: string; value: '0xstring'; logo: string; } & Record<string, unknown>
+interface UseSwapTokenSelectionOptions { defaultTokenAIndex?: number; defaultTokenBIndex?: number; persistSearchParams?: boolean; }
+interface UseSwapTokenSelectionResult<T extends SwapTokenBase> { tokenA: T; tokenB: T; setTokenA: React.Dispatch<React.SetStateAction<T>>; setTokenB: React.Dispatch<React.SetStateAction<T>>; hasInitializedFromParams: boolean; updateURLWithTokens: (tokenAValue?: string, tokenBValue?: string) => void; switchTokens: () => void; }
 
 export function useSwapTokenSelection<T extends SwapTokenBase>( tokens: readonly T[], options?: UseSwapTokenSelectionOptions ): UseSwapTokenSelectionResult<T> {
     if (!tokens.length) throw new Error('useSwapTokenSelection requires a non-empty tokens array.');
@@ -39,18 +24,12 @@ export function useSwapTokenSelection<T extends SwapTokenBase>( tokens: readonly
             else url.searchParams.delete('output')
             url.searchParams.delete('tokenB')
             window.history.replaceState({}, '', url.toString())
-            // Broadcast a lightweight event so other hook instances (e.g., chart panel)
-            // can react to token pair changes without tightly coupling component state.
             try {
-                const detail = {
-                    input: tokenAValue ? tokenAValue.toLowerCase() : null,
-                    output: tokenBValue ? tokenBValue.toLowerCase() : null,
-                }
+                const detail = {input: tokenAValue ? tokenAValue.toLowerCase() : null, output: tokenBValue ? tokenBValue.toLowerCase() : null}
                 window.dispatchEvent(new CustomEvent('cmswap:tokenPairChanged', { detail }))
             } catch {}
         }, []
     )
-
     React.useEffect(() => {
         if (typeof window === 'undefined') {
             setHasInitializedFromParams(true)
@@ -72,12 +51,9 @@ export function useSwapTokenSelection<T extends SwapTokenBase>( tokens: readonly
                 updateURLWithTokens(tokenAAddress, tokenBAddress)
             }
         }
-
         setHasInitializedFromParams(true)
-        // We intentionally run this effect only once on mount to match existing behaviour in the swap variants.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
-
     const switchTokens = React.useCallback(() => {
         const nextTokenA = tokenB
         const nextTokenB = tokenA
@@ -85,14 +61,7 @@ export function useSwapTokenSelection<T extends SwapTokenBase>( tokens: readonly
         setTokenB(nextTokenB)
         if (persistSearchParams) updateURLWithTokens(nextTokenA?.value, nextTokenB?.value);
     }, [tokenA, tokenB, updateURLWithTokens, persistSearchParams])
-
-    React.useEffect(() => {
-        setTokenA(initialTokenA)
-        setTokenB(initialTokenB)
-        // We want to realign default tokens if the token list or default indices change.
-    }, [initialTokenA, initialTokenB])
-
-    // Listen for global token pair updates (emitted by updateURLWithTokens).
+    React.useEffect(() => {setTokenA(initialTokenA); setTokenB(initialTokenB);}, [initialTokenA, initialTokenB])
     React.useEffect(() => {
         if (typeof window === 'undefined') return
         function onPairChanged(evt: any) {
@@ -107,11 +76,7 @@ export function useSwapTokenSelection<T extends SwapTokenBase>( tokens: readonly
             } catch {}
         }
         window.addEventListener('cmswap:tokenPairChanged', onPairChanged as EventListener)
-        return () => {
-            window.removeEventListener('cmswap:tokenPairChanged', onPairChanged as EventListener)
-        }
-        // tokenA/tokenB included to keep updates minimal; tokens array provides identity
+        return () => {window.removeEventListener('cmswap:tokenPairChanged', onPairChanged as EventListener)}
     }, [tokens, tokenA.value, tokenB.value])
-
     return {tokenA, tokenB, setTokenA, setTokenB, hasInitializedFromParams, updateURLWithTokens, switchTokens}
 }

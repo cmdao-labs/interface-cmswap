@@ -11,18 +11,8 @@ import Link from "next/link"
 import { redirect } from 'next/navigation';
 import { chains } from '@/lib/chains'
 
-type ChainConfig = {
-    chain: any;
-    chainId: number;
-    explorer: string;
-    rpc: string;
-    blocktime: number;
-    tokens: any;
-    lib: any;
-};
-
+type ChainConfig = { chain: any; chainId: number; explorer: string; rpc: string; blocktime: number; tokens: any; lib: any; };
 const chain25925 = chains[25925]
-
 const chainConfigs: Record<number, ChainConfig> = {
     25925: {
         chain: chain25925.chain,
@@ -45,10 +35,9 @@ const chainConfigs: Record<number, ChainConfig> = {
 };
 
 const StakingList = ({ setIsLoading, setErrMsg }: {
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>,
+    setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+    setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>,
 }) => {
-    const [expandedItem, setExpandedItem] = useState<number | null>(null);
     const [showPopup, setShowPopup] = useState(false);
     const [showTokenPopup, setShowTokenPopup] = useState(false);
     const [selectedProgram, setSelectedProgram] = useState<any>(null);
@@ -56,7 +45,6 @@ const StakingList = ({ setIsLoading, setErrMsg }: {
     const [copiedAddress, setCopiedAddress] = useState("");
     const [stakingInfos, setStakingInfos] = useState<Record<number, any>>({});
     const [stakeAmount, setStakeAmount] = useState<string>("");
-
     const [programList, setProgramList] = useState<{
         name: string;
         rewardToken: string;
@@ -84,13 +72,9 @@ const StakingList = ({ setIsLoading, setErrMsg }: {
     const [lockOption, setLockOption] = useState<number>(0);
     const { chainId, address } = useAccount();
     const [filter, setFilter] = useState('all');
-
-    const filteredPrograms = programList ? 
-        filter === 'all' ? programList : programList.filter((item) => Number(item.userStaked) > 0) : 
-        [];
+    const filteredPrograms = programList ? filter === 'all' ? programList : programList.filter((item) => Number(item.userStaked) > 0) : [];
     const selectedChainConfig = chainConfigs[chainId || 25925];
     const { chain, rpc, blocktime, tokens, lib } = selectedChainConfig;
-
     const renderPrograms = async () => {
         const renderV2 = async () => {
             try {
@@ -114,116 +98,70 @@ const StakingList = ({ setIsLoading, setErrMsg }: {
                     })
                     if (poolStatus !== undefined) {
                         poolInfoList.push({
-                        name: poolStatus?.[0]?.result?.name ?? "Unknown Pool",
-                        rewardToken: poolStatus?.[0]?.result?.rewardToken ?? ADDRESS_ZERO,
-                        stakedToken: poolStatus?.[0]?.result?.positionManagerOrStaking ?? ADDRESS_ZERO,
-                        programContract: projectLists[i],
-                        tokenA: ADDRESS_ZERO,
-                        tokenB: ADDRESS_ZERO,
-                        fees: BigInt(0),
-                        rewardPerBlock: formatEther(BigInt(poolStatus?.[0]?.result?.rewardPerBlock ?? 0)),
-                        totalPower: formatEther(BigInt(poolStatus?.[0]?.result?.totalPower ?? 0)),
-                        lockDurations: /* (poolStatus?.[0]?.result?.[5] as any[]) ?? */[],
-                        powerMultipliers: /* (poolStatus?.[0]?.result?.[6] as any[]) ?? */[],
-                        currentBlock: poolStatus?.[0]?.result?.currentBlock ?? BigInt(0),
-                        startBlock: poolStatus?.[0]?.result?.startBlock ?? BigInt(0),
-                        endBlock: poolStatus?.[0]?.result?.endBlock ?? BigInt(0),
-                        userStaked: formatEther(BigInt(/* poolStatus?.[1]?.result?.[0]  ?? */ 0)),
-                        userPending: formatEther(BigInt(poolStatus?.[2]?.result ?? 0)),
-                        userPower: formatEther(BigInt(/* poolStatus?.[1]?.result?.[2] ?? */ 0)),
-                        userStakedTimeStamp: poolStatus?.[1]?.result?.[3] ?? BigInt(0),
-                        userLockOption: poolStatus?.[1]?.result?.[4] ?? BigInt(0),
-                        userStakeTokenBalance: formatEther(BigInt(poolStatus?.[3]?.result ?? 0)),
-                        block: blocktime ?? 0,
-                        isNft: false
+                            name: poolStatus?.[0]?.result?.name ?? "Unknown Pool",
+                            rewardToken: poolStatus?.[0]?.result?.rewardToken ?? ADDRESS_ZERO,
+                            stakedToken: poolStatus?.[0]?.result?.positionManagerOrStaking ?? ADDRESS_ZERO,
+                            programContract: projectLists[i],
+                            tokenA: ADDRESS_ZERO,
+                            tokenB: ADDRESS_ZERO,
+                            fees: BigInt(0),
+                            rewardPerBlock: formatEther(BigInt(poolStatus?.[0]?.result?.rewardPerBlock ?? 0)),
+                            totalPower: formatEther(BigInt(poolStatus?.[0]?.result?.totalPower ?? 0)),
+                            lockDurations: /* (poolStatus?.[0]?.result?.[5] as any[]) ?? */[],
+                            powerMultipliers: /* (poolStatus?.[0]?.result?.[6] as any[]) ?? */[],
+                            currentBlock: poolStatus?.[0]?.result?.currentBlock ?? BigInt(0),
+                            startBlock: poolStatus?.[0]?.result?.startBlock ?? BigInt(0),
+                            endBlock: poolStatus?.[0]?.result?.endBlock ?? BigInt(0),
+                            userStaked: formatEther(BigInt(/* poolStatus?.[1]?.result?.[0]  ?? */ 0)),
+                            userPending: formatEther(BigInt(poolStatus?.[2]?.result ?? 0)),
+                            userPower: formatEther(BigInt(/* poolStatus?.[1]?.result?.[2] ?? */ 0)),
+                            userStakedTimeStamp: poolStatus?.[1]?.result?.[3] ?? BigInt(0),
+                            userLockOption: poolStatus?.[1]?.result?.[4] ?? BigInt(0),
+                            userStakeTokenBalance: formatEther(BigInt(poolStatus?.[3]?.result ?? 0)),
+                            block: blocktime ?? 0,
+                            isNft: false
                         });
                     }
                 }
                 setProgramList((prev: any) => [...(prev || []), ...poolInfoList]);
-            } catch (error) {
-                console.error("Error on rendering token staking service", error)
-            }
+            } catch (error) {console.error("Error on rendering token staking service", error)}
         }
         renderV2();
     }
-
     React.useEffect(() => {renderPrograms();}, []);
-
     type ChainName = 96 | 56 | 3501 | 25925;
-    const chainThemes: Record<ChainName, {
-        primary: string;
-        secondary: string;
-        accent: string;
-        border: string;
-        bg: string;
-        text: string;
-    }> = {
-        96: {
-            primary: "rgb(34, 197, 94)", // green-500
-            secondary: "rgb(22, 163, 74)", // green-600
-            accent: "rgb(187, 247, 208)", // green-200
-            border: "border-green-500",
-            bg: "bg-green-500/10",
-            text: "text-green-400",
-        },
-        25925: {
-            primary: "rgb(34, 197, 94)", // green-500
-            secondary: "rgb(22, 163, 74)", // green-600
-            accent: "rgb(187, 247, 208)", // green-200
-            border: "border-green-500",
-            bg: "bg-green-500/10",
-            text: "text-green-400",
-        },
-        56: {
-            primary: "rgb(234, 179, 8)", // yellow-500
-            secondary: "rgb(202, 138, 4)", // yellow-600
-            accent: "rgb(254, 240, 138)", // yellow-200
-            border: "border-yellow-500",
-            bg: "bg-yellow-500/10",
-            text: "text-yellow-400",
-        },
-        3501: {
-            primary: "rgb(239, 68, 68)", // red-500
-            secondary: "rgb(220, 38, 38)", // red-600
-            accent: "rgb(254, 202, 202)", // red-200
-            border: "border-red-500",
-            bg: "bg-red-500/10",
-            text: "text-red-400",
-        },
+    const chainThemes: Record<ChainName, { primary: string; secondary: string; accent: string; border: string; bg: string; text: string; }> = {
+        96: {primary: "rgb(34, 197, 94)", secondary: "rgb(22, 163, 74)", accent: "rgb(187, 247, 208)", border: "border-green-500", bg: "bg-green-500/10", text: "text-green-400"},
+        25925: {primary: "rgb(34, 197, 94)", secondary: "rgb(22, 163, 74)", accent: "rgb(187, 247, 208)", border: "border-green-500", bg: "bg-green-500/10", text: "text-green-400"},
+        56: {primary: "rgb(234, 179, 8)", secondary: "rgb(202, 138, 4)", accent: "rgb(254, 240, 138)", border: "border-yellow-500", bg: "bg-yellow-500/10", text: "text-yellow-400"},
+        3501: {primary: "rgb(239, 68, 68)", secondary: "rgb(220, 38, 38)", accent: "rgb(254, 202, 202)", border: "border-red-500", bg: "bg-red-500/10", text: "text-red-400"},
     };
-
     const copyToClipboard = (text: string, type: string) => {
         navigator.clipboard.writeText(text);
         setCopiedAddress(type);
         setTimeout(() => setCopiedAddress(""), 800);
     };
-
     const getTheme = (chain: number) => chainThemes[(chain as ChainName)] ?? chainThemes[96];
-
     const openLPPopup = (program: any) => {
         setSelectedProgram(program);
         setShowPopup(true);
     };
-
     const openTokenPopup = (program: any, programInfo: any) => {
         setSelectedProgram(program);
         setProgramInfo(programInfo);
         setShowTokenPopup(true);
     };
-
     const closePopups = () => {
         setShowPopup(false);
         setShowTokenPopup(false);
         setSelectedProgram(null);
     };
-
     const getUnlockDate = (daysToAdd: number): Date => {
-        const now = new Date(); // เวลาปัจจุบัน
-        const unlockDate = new Date(now); // สร้างสำเนา
-        unlockDate.setDate(unlockDate.getDate() + daysToAdd); // เพิ่มจำนวนวัน
+        const now = new Date();
+        const unlockDate = new Date(now);
+        unlockDate.setDate(unlockDate.getDate() + daysToAdd);
         return unlockDate;
     };
-
     const StakingLPPopup = ({ program, theme }: { program: any; theme: typeof chainThemes[96] }) => (
         <div className="fixed inset-0  flex items-center justify-center z-50 p-4">
             <div className=" rounded-xl p-6 max-w-md w-full border border-gray-700">
@@ -237,12 +175,12 @@ const StakingList = ({ setIsLoading, setErrMsg }: {
                             <img src={program.coinImage} alt="token1" className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0" />
                             {program.coin2Image && <img src={program.coin2Image} alt="token2" className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0" />}
                         </div>
-                    <div>
-                        <h4 className="font-semibold text-white">{program.coinName}</h4>
-                        <p className="text-sm text-gray-400">{program.programName}</p>
+                        <div>
+                            <h4 className="font-semibold text-white">{program.coinName}</h4>
+                            <p className="text-sm text-gray-400">{program.programName}</p>
+                        </div>
                     </div>
-                </div>
-                <div className="text-sm text-gray-400">APR: <span className={`font-semibold ${theme.text}`}>{program.apr}</span></div>
+                    <div className="text-sm text-gray-400">APR: <span className={`font-semibold ${theme.text}`}>{program.apr}</span></div>
                 </div>
                 <div className="space-y-4">
                     <div>
@@ -260,7 +198,6 @@ const StakingList = ({ setIsLoading, setErrMsg }: {
             </div>
         </div>
     );
-
     const StakingTokenPopup = ({ program, theme }: { program: any; theme: typeof chainThemes[96] }) => (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-gray-900 rounded-xl p-6 max-w-md w-full border border-gray-700">
@@ -344,7 +281,6 @@ const StakingList = ({ setIsLoading, setErrMsg }: {
                             const tokenBInfo = item.tokenB ? tokens.find((t: any) => t.value.toLowerCase() === item.tokenB.toLowerCase()) : null;
                             const rewardInfo = item.rewardToken ? tokens.find((t: any) => t.value.toLowerCase() === item.rewardToken.toLowerCase()) : null;
                             const isExpanded = false
-
                             return (
                                 <div key={index} className="bg-gray-900 rounded-xl border border-gray-700 overflow-hidden">
                                     <div className="p-4">

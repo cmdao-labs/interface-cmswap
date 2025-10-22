@@ -5,7 +5,7 @@ const DEFAULT_LIMIT = 500
 const MAX_LIMIT = 2000
 const DEFAULT_BUCKETS = 41
 const MAX_BUCKETS = 201
-const DEFAULT_SPAN = 100 // percent width of window (±50%)
+const DEFAULT_SPAN = 100
 const MIN_SPAN = 10
 const MAX_SPAN = 800
 
@@ -104,7 +104,6 @@ export async function GET(req: NextRequest) {
     const supabase = getServiceSupabase()
     let canonical
     try { canonical = canonicalMarket(baseToken, quoteToken) } catch (e: any) { return NextResponse.json({ error: e?.message || 'invalid market' }, { status: 400 }) }
-    // Prefer Uniswap V3 market with freshest snapshot
     const { data: v3Markets, error: v3Err } = await supabase
       .from('swap_markets')
       .select('market_id, token0, token1, pair_address, dex')
@@ -151,7 +150,6 @@ export async function GET(req: NextRequest) {
       .limit(limit)
     if (candleError) return NextResponse.json({ error: candleError.message }, { status: 500 })
     const ordered = (candleRows ?? []).slice().reverse()
-    // Determine latest oriented price
     let latestPrice: number | null = null
     if (ordered.length > 0) {
       const last = ordered[ordered.length - 1] as CandleRow
@@ -172,7 +170,6 @@ export async function GET(req: NextRequest) {
     if (!Number.isFinite(latestPrice) || !latestPrice || latestPrice <= 0) {
       return NextResponse.json({ buckets: [], latest: { price: null }, window: { span, min: windowMin, max: windowMax }, chainId, marketId })
     }
-    // Build buckets
     const sums = new Array<number>(bucketCount).fill(0)
     let maxVal = 0
     for (const row of ordered as CandleRow[]) {

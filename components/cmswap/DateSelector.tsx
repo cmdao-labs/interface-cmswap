@@ -1,43 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, Clock, ChevronDown, Check } from 'lucide-react';
-interface DateTimePickerProps {
-    onSelect?: (timestamp: number) => void;
-    minHours?: number;
-    maxDays?: number;
-    placeholder?: string;
-    className?: string;
-}
-interface TempDate {
-    day: number;
-    month: number;
-    year: number;
-    hour: number;
-    minute: number;
-}
-interface MonthOption {
-    value: number;
-    name: string;
-}
 
-const DateTimePicker: React.FC<DateTimePickerProps> = ({ 
-    onSelect = () => {}, 
-    minHours = 24,
-    maxDays = 7,
-    placeholder = "Select date and time",
-    className = "" 
-}) => {
+interface DateTimePickerProps { onSelect?: (timestamp: number) => void; minHours?: number; maxDays?: number; placeholder?: string; className?: string; }
+interface TempDate { day: number; month: number; year: number; hour: number; minute: number; }
+interface MonthOption { value: number; name: string; }
+const DateTimePicker: React.FC<DateTimePickerProps> = ({onSelect = () => {}, minHours = 24, maxDays = 7, placeholder = "Select date and time", className = ""}) => {
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);    
     const getInitialDate = (): TempDate => {
         const initialDate = new Date();
         initialDate.setHours(initialDate.getHours() + minHours);
-        return {
-            day: initialDate.getDate(),
-            month: initialDate.getMonth() + 1,
-            year: initialDate.getFullYear(),
-            hour: initialDate.getHours()+ minHours,
-            minute: initialDate.getMinutes()
-        };
+        return {day: initialDate.getDate(), month: initialDate.getMonth() + 1, year: initialDate.getFullYear(), hour: initialDate.getHours()+ minHours, minute: initialDate.getMinutes()};
     };
     const [tempDate, setTempDate] = useState<TempDate>(getInitialDate());
     const popupRef = useRef<HTMLDivElement>(null);
@@ -54,7 +27,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     };
     const getValidDaysInMonth = (month: number, year: number): number[] => {
         const daysInMonth = new Date(year, month, 0).getDate();
-        const minDate = getMinDateTime(); // ต้องเป็น +24 ชั่วโมง
+        const minDate = getMinDateTime();
         const maxDate = getMaxDateTime();
         const validDays: number[] = [];
         for (let day = 1; day <= daysInMonth; day++) {
@@ -96,10 +69,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
         return validMinutes;
     };
     const days = getValidDaysInMonth(tempDate.month, tempDate.year);
-    const months: MonthOption[] = Array.from({ length: 12 }, (_, i) => ({
-        value: i + 1,
-        name: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][i]
-    })).filter(month => getValidMonths(tempDate.year).includes(month.value));    
+    const months: MonthOption[] = Array.from({ length: 12 }, (_, i) => ({value: i + 1, name: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][i]})).filter(month => getValidMonths(tempDate.year).includes(month.value));    
     const minDate = getMinDateTime();
     const maxDate = getMaxDateTime();
     const minYear = minDate.getFullYear();
@@ -144,14 +114,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     };
     const formatDisplayDate = (date: Date | null): string => {
         if (!date) return placeholder;
-        return date.toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        });
+        return date.toLocaleString('en-US', {year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false});
     };
 
     return (

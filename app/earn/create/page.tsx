@@ -493,7 +493,7 @@ const CreateEarnProgram = () => {
                             rewardToken: rewardToken as `0x${string}`,
                             tokenA: "0x0000000000000000000000000000000000000000",
                             tokenB: "0x0000000000000000000000000000000000000000",
-                            poolFees: [] as number[], // uint24[]
+                            poolFees: [] as number[],
                             totalRewards: parseEther(rewardAmount),
                             mode: BigInt(selectLockOption),
                             lockDurations: selectLockOption === '1' ?
@@ -531,9 +531,9 @@ const CreateEarnProgram = () => {
                         tokenB: selectedPool?.tokenB,
                         poolFees: poolFees.map(fee => Number(fee)) as number[], 
                         totalRewards: parseEther(rewardAmount),
-                        mode: BigInt(0), // no mode
-                        lockDurations: [], // nolock mode 
-                        powerMultipliers: [], // no multiple mode
+                        mode: BigInt(0),
+                        lockDurations: [], 
+                        powerMultipliers: [],
                         projectOwner: address as `0x${string}`,
                         startBlockReward: BigInt(estimatedStartBlock),
                         endBlockReward: BigInt(Number(estimatedStartBlock) + Number(effectiveDuration)),

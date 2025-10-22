@@ -77,7 +77,7 @@ const chainConfigs: Record<number, ChainConfig> = {
 
 export default function App() {
   const { chainId } = useAccount();
-  const selectedChainConfig = chainConfigs[chainId || 96]; // Default to chainId 96 if not connected
+  const selectedChainConfig = chainConfigs[chainId || 96];
 
   return <LiquidityPool chainConfig={selectedChainConfig} />;
 }

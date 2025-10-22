@@ -1,13 +1,3 @@
-// Env required: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-// Optional: INDEXER_RPC_URL (fallback KUBTESTNET_RPC; default https://rpc-testnet.bitkubchain.io)
-//           INDEXER_INTERVAL_MS (default 3000) / INDEXER_MAX_RANGE (default 2000)
-//           INDEXER_MODE (all|creation|swap|transfer, default all)
-//           INDEXER_CHAIN_ID (default: auto-detect via RPC)
-//           INDEXER_FACTORY_ADDR (default current Bitkub testnet factory)
-//           INDEXER_START_BLOCK (default current Bitkub testnet start block)
-//           UNISWAP_V3_FACTORY_ADDR (optional; enables Uniswap V3 indexing if set)
-//           UNISWAP_V3_START_BLOCK (default Bitkub testnet V3 factory creation block)
-//           INDEXER_BASE_TOKEN
 import { createPublicClient, decodeFunctionData, http, formatEther, erc20Abi } from 'viem'
 import { bitkubTestnet } from 'viem/chains'
 import * as dotenv from 'dotenv';
@@ -15,11 +5,27 @@ dotenv.config({ path: '.env.local' });
 
 const FACTORY_ADDR = (process.env.INDEXER_FACTORY_ADDR || '0x46a4073c830031ea19d7b9825080c05f8454e530').toLowerCase()
 const START_BLOCK = BigInt(process.env.INDEXER_START_BLOCK || '23935659')
-
-// Uniswap V3 options (Bitkub testnet defaults from lib/chains.ts)
 const V3_FACTORY_ADDR = (process.env.UNISWAP_V3_FACTORY_ADDR || process.env.INDEXER_V3_FACTORY_ADDR || '').toLowerCase()
 const V3_START_BLOCK = BigInt(process.env.UNISWAP_V3_START_BLOCK || process.env.INDEXER_V3_START_BLOCK || '23935400')
-
+const SUPABASE_URL = process.env.SUPABASE_URL
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+const REST_BASE = SUPABASE_URL ? `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1` : ''
+const INTERVAL_MS = Number(process.env.INDEXER_INTERVAL_MS || '3000')
+const MAX_RANGE = Number(process.env.INDEXER_MAX_RANGE || '2000')
+const MODE = (process.env.INDEXER_MODE || 'all')
+const RPC_URL = process.env.INDEXER_RPC_URL || process.env.KUBTESTNET_RPC || 'https://rpc-testnet.bitkubchain.io'
+const INDEXER_RPS = Math.max(1, Number(process.env.INDEXER_RPS || '5'))
+const INDEXER_MAX_CONCURRENCY = Math.max(1, Number(process.env.INDEXER_MAX_CONCURRENCY || '2'))
+const RETRY_MAX_ATTEMPTS = Math.max(1, Number(process.env.INDEXER_RETRY_MAX_ATTEMPTS || '6'))
+const RETRY_BASE_MS = Math.max(50, Number(process.env.INDEXER_RETRY_BASE_MS || '500'))
+const RETRY_MAX_MS = Math.max(RETRY_BASE_MS, Number(process.env.INDEXER_RETRY_MAX_MS || '30000'))
+const LOG_LEVEL = (process.env.INDEXER_LOG_LEVEL || 'info').toLowerCase()
+let CHAIN_ID = Number(process.env.INDEXER_CHAIN_ID || '0') || null
+const BASE_TOKEN = (process.env.INDEXER_BASE_TOKEN || '0x700d3ba307e1256e509ed3e45d6f9dff441d6907').toLowerCase()
+const BASE_TOKEN_DECIMALS = Number(process.env.INDEXER_BASE_TOKEN_DECIMALS || '18')
+const TIMEFRAMES_SECONDS = [15, 60, 300, 900, 3600, 14400, 86400]
+const decimalsCache = new Map()
+decimalsCache.set(BASE_TOKEN, BASE_TOKEN_DECIMALS)
 const FACTORY_EVENTS_ABI = [
     {
         anonymous: false,
@@ -50,8 +56,6 @@ const FACTORY_EVENTS_ABI = [
         ],
     },
 ]
-
-// Minimal Uniswap V3 ABIs for events we need
 const V3_FACTORY_EVENTS_ABI = [
     {
         anonymous: false,
@@ -66,7 +70,6 @@ const V3_FACTORY_EVENTS_ABI = [
         ],
     },
 ]
-
 const V3_POOL_EVENTS_ABI = [
     {
         anonymous: false,
@@ -83,7 +86,6 @@ const V3_POOL_EVENTS_ABI = [
         ],
     },
 ]
-
 const FACTORY_FUNC_ABI = [
     {
         type: 'function',
@@ -107,32 +109,9 @@ const FACTORY_FUNC_ABI = [
         outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
     },
 ]
-
-const SUPABASE_URL = process.env.SUPABASE_URL
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-const REST_BASE = SUPABASE_URL ? `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1` : ''
-
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-    console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
-    process.exit(1)
-}
-
-const INTERVAL_MS = Number(process.env.INDEXER_INTERVAL_MS || '3000')
-const MAX_RANGE = Number(process.env.INDEXER_MAX_RANGE || '2000')
-const MODE = (process.env.INDEXER_MODE || 'all')
-const RPC_URL = process.env.INDEXER_RPC_URL || process.env.KUBTESTNET_RPC || 'https://rpc-testnet.bitkubchain.io'
-
-// Rate limit and retry configuration (tunable via env)
-const INDEXER_RPS = Math.max(1, Number(process.env.INDEXER_RPS || '5'))
-const INDEXER_MAX_CONCURRENCY = Math.max(1, Number(process.env.INDEXER_MAX_CONCURRENCY || '2'))
-const RETRY_MAX_ATTEMPTS = Math.max(1, Number(process.env.INDEXER_RETRY_MAX_ATTEMPTS || '6'))
-const RETRY_BASE_MS = Math.max(50, Number(process.env.INDEXER_RETRY_BASE_MS || '500'))
-const RETRY_MAX_MS = Math.max(RETRY_BASE_MS, Number(process.env.INDEXER_RETRY_MAX_MS || '30000'))
-const LOG_LEVEL = (process.env.INDEXER_LOG_LEVEL || 'info').toLowerCase()
-
+if (!SUPABASE_URL || !SUPABASE_KEY) {console.error('Missing SUPABASE configs'); process.exit(1);}
 const client = createPublicClient({ chain: bitkubTestnet, transport: http(RPC_URL) })
-
-// ------------- Logging helpers -------------
+const limiter = new RateLimiter({ rps: INDEXER_RPS, maxConcurrency: INDEXER_MAX_CONCURRENCY })
 const levels = { error: 0, warn: 1, info: 2, debug: 3 }
 function log(level, msg, meta) {
     if ((levels[level] ?? 2) > (levels[LOG_LEVEL] ?? 2)) return
@@ -140,8 +119,6 @@ function log(level, msg, meta) {
     if (meta !== undefined) console.log(`[${ts}] [${level.toUpperCase()}] ${msg}`, meta)
     else console.log(`[${ts}] [${level.toUpperCase()}] ${msg}`)
 }
-
-// ------------- Rate limiter and retry -------------
 class RateLimiter {
     constructor({ rps, maxConcurrency }) {
         this.capacity = rps
@@ -186,20 +163,15 @@ class RateLimiter {
         }
     }
 }
-
-const limiter = new RateLimiter({ rps: INDEXER_RPS, maxConcurrency: INDEXER_MAX_CONCURRENCY })
-
 function isRetriableRpcError(err) {
     const msg = String(err?.message || err || '')
     const code = err?.code || err?.status || err?.cause?.status
     if (code === 429) return 'rate'
     if (/429|too many requests|rate.?limit/i.test(msg)) return 'rate'
     if (/timeout|timed out|etimedout|econnreset|fetch failed|network/i.test(msg)) return 'network'
-    // Viem HttpRequestError sometimes includes status in name or details
-    if (/HttpRequestError/.test(String(err?.name)) && /429/.test(msg)) return 'rate'
+    if (/HttpRequestError/.test(String(err?.name)) && /429/.test(msg)) return 'rate' // Viem HttpRequestError sometimes includes status in name or details
     return null
 }
-
 async function retryWithBackoff(label, fn) {
     let attempt = 0
     while (true) {
@@ -220,8 +192,6 @@ async function retryWithBackoff(label, fn) {
         }
     }
 }
-
-// RPC wrappers
 const rpc = {
     getBlockNumber: () => retryWithBackoff('getBlockNumber', () => client.getBlockNumber()),
     getChainId: () => retryWithBackoff('getChainId', () => client.getChainId()),
@@ -230,24 +200,13 @@ const rpc = {
     getBlock: (args) => retryWithBackoff('getBlock', () => client.getBlock(args)),
     getTransaction: (args) => retryWithBackoff('getTransaction', () => client.getTransaction(args)),
 }
-
-let CHAIN_ID = Number(process.env.INDEXER_CHAIN_ID || '0') || null
-
-const BASE_TOKEN = (process.env.INDEXER_BASE_TOKEN || '0x700d3ba307e1256e509ed3e45d6f9dff441d6907').toLowerCase()
-const BASE_TOKEN_DECIMALS = Number(process.env.INDEXER_BASE_TOKEN_DECIMALS || '18')
-const TIMEFRAMES_SECONDS = [15, 60, 300, 900, 3600, 14400, 86400]
-const decimalsCache = new Map()
-decimalsCache.set(BASE_TOKEN, BASE_TOKEN_DECIMALS)
-
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)) }
-
 async function restGet(path, qs = '') {
     const url = `${REST_BASE}/${path}${qs ? `?${qs}` : ''}`
     const res = await fetch(url, {headers: {apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`}})
     if (!res.ok) throw new Error(`GET ${path} ${res.status}`)
     return await res.json()
 }
-
 async function restUpsert(table, rows, onConflictCols) {
     if (!rows || rows.length === 0) return
     const url = `${REST_BASE}/${table}?on_conflict=${encodeURIComponent(onConflictCols)}`
@@ -266,30 +225,14 @@ async function restUpsert(table, rows, onConflictCols) {
         throw new Error(`UPSERT ${table} ${res.status}: ${text}`)
     }
 }
-
 function toLowerAddr(value) {
     if (typeof value !== 'string') return ''
     return value.trim().toLowerCase()
 }
-
-// Note: canonicalMarket for cmswap removed; Uniswap V3 has its own canonical function
-
 function bucketStart(timestampMs, seconds) {
     const sizeMs = seconds * 1000
     return Math.floor(Number(timestampMs) / sizeMs) * sizeMs
 }
-
-function pow10(exp) {
-    // supports negative exponents
-    return Math.pow(10, exp)
-}
-
-function toNumber(value) {
-    if (value === null || value === undefined) return null
-    const num = Number(value)
-    return Number.isFinite(num) ? num : null
-}
-
 async function getTokenDecimals(addr) {
     const lower = toLowerAddr(addr)
     if (!lower) return 18
@@ -305,9 +248,6 @@ async function getTokenDecimals(addr) {
         return 18
     }
 }
-
-// cmswap market ensuring removed; swap_markets should be populated from Uniswap V3 only
-
 function updateCandleAccumulator(map, marketId, timeframeSeconds, bucketMs, price, volume0, volume1) {
     const key = `${marketId}:${timeframeSeconds}:${bucketMs}`
     const existing = map.get(key)
@@ -338,23 +278,19 @@ function updateCandleAccumulator(map, marketId, timeframeSeconds, bucketMs, pric
     existing.trades = (existing.trades ?? 0) + 1
     existing.updated_at = Date.now()
 }
-
 async function getLastBlock(stream) {
     const rows = await restGet('index_state', `select=last_block&chain_id=eq.${CHAIN_ID}&stream=eq.${encodeURIComponent(stream)}&limit=1`)
     if (!rows || rows.length === 0) return START_BLOCK
     return BigInt(rows[0].last_block)
 }
-
 async function getLastBlockWithFallback(stream, fallbackStartBlock) {
     const rows = await restGet('index_state', `select=last_block&chain_id=eq.${CHAIN_ID}&stream=eq.${encodeURIComponent(stream)}&limit=1`)
     if (!rows || rows.length === 0) return BigInt(fallbackStartBlock)
     return BigInt(rows[0].last_block)
 }
-
 async function setLastBlock(stream, block) {
     await restUpsert('index_state', [{ chain_id: CHAIN_ID, stream, last_block: String(block) }], 'chain_id,stream')
 }
-
 async function indexCreation(latest) {
     let from = await getLastBlock('creation')
     if (from > latest) return
@@ -394,7 +330,6 @@ async function indexCreation(latest) {
         from = to + 1n
     }
 }
-
 async function indexSwaps(latest) {
     let from = await getLastBlock('swap')
     if (from > latest) return
@@ -411,7 +346,6 @@ async function indexSwaps(latest) {
         })
         log('info', `swap: got logs`, { count: logs.length })
         if (logs.length) {
-            // Fetch virtualAmount once per batch
             let virtualAmount = 0n
             try {
                 virtualAmount = await rpc.readContract({ address: FACTORY_ADDR, abi: [{ name: 'virtualAmount', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] }], functionName: 'virtualAmount' })
@@ -425,7 +359,6 @@ async function indexSwaps(latest) {
             const txs = await Promise.all(txHashes.map((h) => rpc.getTransaction({ hash: h })))
             const txMap = new Map()
             txs.forEach((tx, i) => txMap.set(txHashes[i], tx.input))
-            // No need to persist blocks or transactions; we embed timestamp in swaps
             const rows = logs.map((l) => {
                 const input = txMap.get(l.transactionHash) || '0x'
                 let tokenAddr = null
@@ -463,15 +396,11 @@ async function indexSwaps(latest) {
                 }
             })
             await restUpsert('swaps', rows, 'chain_id,tx_hash,log_index')
-            // Note: cmswap candles/markets/snapshots aggregation removed. Uniswap V3 handles those tables.
         }
         await setLastBlock('swap', to)
         from = to + 1n
     }
 }
-
-// ============= Uniswap V3 indexing =============
-
 function canonicalMarketV3(a, b) {
     const aLower = toLowerAddr(a)
     const bLower = toLowerAddr(b)
@@ -480,13 +409,10 @@ function canonicalMarketV3(a, b) {
     if (aLower < bLower) return { token0: aLower, token1: bLower }
     return { token0: bLower, token1: aLower }
 }
-
 function v3MarketId(token0, token1, fee) {
-    // Include a prefix and fee tier to avoid collisions with other DEXes and fee tiers
     const feeNum = Number(fee || 0)
     return `univ3:${token0}-${token1}:fee${feeNum}`
 }
-
 async function indexV3Factory(latest) {
     if (!V3_FACTORY_ADDR) return
     let from = await getLastBlockWithFallback('v3:factory', V3_START_BLOCK)
@@ -504,7 +430,6 @@ async function indexV3Factory(latest) {
         })
         log('info', `v3:factory: got logs`, { count: logs.length })
         if (logs.length) {
-            // prepare markets and tokens
             const marketRows = []
             const tokenSet = new Set()
             for (const l of logs) {
@@ -535,7 +460,6 @@ async function indexV3Factory(latest) {
                 await restUpsert('swap_markets', marketRows, 'chain_id,market_id')
             }
             if (tokenSet.size) {
-                // Best-effort metadata fetch
                 for (const addr of tokenSet) {
                     try {
                         const [symbol, name] = await Promise.all([
@@ -551,10 +475,8 @@ async function indexV3Factory(latest) {
         from = to + 1n
     }
 }
-
 async function indexV3Swaps(latest) {
     if (!V3_FACTORY_ADDR) return
-    // Load known V3 pools from swap_markets
     const markets = await restGet('swap_markets', `select=market_id,pair_address,token0,token1,decimals0,decimals1&chain_id=eq.${CHAIN_ID}&dex=eq.uniswap-v3`)
     if (!Array.isArray(markets) || markets.length === 0) return
     const chunk = BigInt(MAX_RANGE)
@@ -579,17 +501,14 @@ async function indexV3Swaps(latest) {
                 const blocks = await Promise.all(blockNumbers.map((bn) => rpc.getBlock({ blockNumber: BigInt(bn) })))
                 const blockMap = new Map()
                 blocks.forEach((b, i) => blockMap.set(blockNumbers[i], Number(b.timestamp) * 1000))
-
                 const candleAccumulator = new Map()
                 const snapshotRows = []
-                // Helper: compute price (token1 per 1 token0) from sqrtPriceX96 with decimals, using BigInt for precision
                 function price1Per0FromSqrtX96(sqrtPriceX96, dec0, dec1) {
                     try {
                         const sqrt = BigInt(sqrtPriceX96)
                         if (sqrt <= 0n) return null
-                        const num = sqrt * sqrt // Q192 scaled
+                        const num = sqrt * sqrt
                         const Q192 = 1n << 192n
-                        // Adjust for token decimals: multiply or divide by 10^(dec0 - dec1)
                         let numerator = num
                         let denominator = Q192
                         if (dec0 > dec1) {
@@ -599,7 +518,6 @@ async function indexV3Swaps(latest) {
                             const scale = 10n ** BigInt(dec1 - dec0)
                             denominator = denominator * scale
                         }
-                        // Convert rational to Number with fixed precision using BigInt
                         const PREC = 18n
                         const SCALE = 10n ** PREC
                         const scaled = (numerator * SCALE) / denominator
@@ -609,7 +527,6 @@ async function indexV3Swaps(latest) {
                         return null
                     }
                 }
-
                 for (const l of logs) {
                     const tsMs = blockMap.get(String(l.blockNumber)) || null
                     const amount0 = BigInt(l.args?.amount0 ?? 0)
@@ -617,13 +534,9 @@ async function indexV3Swaps(latest) {
                     const sqrtPriceX96 = BigInt(l.args?.sqrtPriceX96 ?? 0)
                     const dec0 = Number(m.decimals0 ?? 18)
                     const dec1 = Number(m.decimals1 ?? 18)
-                    // Compute price as token1 per 1 token0 (token0 priced in token1)
                     const price1_per_0 = price1Per0FromSqrtX96(sqrtPriceX96, dec0, dec1)
-
-                    // Volumes per swap in natural units
                     const vol0 = Math.abs(Number(amount0) / Math.pow(10, dec0))
                     const vol1 = Math.abs(Number(amount1) / Math.pow(10, dec1))
-
                     if (tsMs && price1_per_0 && Number.isFinite(vol0) && Number.isFinite(vol1)) {
                         for (const seconds of TIMEFRAMES_SECONDS) {
                             const bucketMs = bucketStart(tsMs, seconds)
@@ -638,7 +551,6 @@ async function indexV3Swaps(latest) {
                             timestamp: tsMs,
                             reserve0: null,
                             reserve1: null,
-                            // Store price as token1 per 1 token0 (matches API orientation)
                             price: price1_per_0,
                         })
                     }
@@ -656,7 +568,6 @@ async function indexV3Swaps(latest) {
         }
     }
 }
-
 async function indexTransfers(latest) {
     const tokens = await restGet('tokens', `select=address&chain_id=eq.${CHAIN_ID}`)
     if (!Array.isArray(tokens) || tokens.length === 0) return
@@ -700,7 +611,6 @@ async function indexTransfers(latest) {
         }
     }
 }
-
 async function tick() {
     log('debug', 'tick: start')
     const latest = await rpc.getBlockNumber()
@@ -708,11 +618,9 @@ async function tick() {
     if (MODE === 'all' || MODE === 'creation') await indexCreation(latest)
     if (MODE === 'all' || MODE === 'swap') await indexSwaps(latest)
     if (MODE === 'all' || MODE === 'transfer') await indexTransfers(latest)
-    // Uniswap V3 indexing; runs when factory is provided or when mode explicitly targets v3
     if (V3_FACTORY_ADDR && (MODE === 'all' || MODE === 'v3' || MODE === 'v3-market')) await indexV3Factory(latest)
     if (V3_FACTORY_ADDR && (MODE === 'all' || MODE === 'v3' || MODE === 'v3-swap')) await indexV3Swaps(latest)
 }
-
 async function main() {
     log('info', 'Standalone indexer starting...')
     log('info', 'Supabase', { url: SUPABASE_URL })
@@ -734,5 +642,4 @@ async function main() {
         await sleep(INTERVAL_MS)
     }
 }
-
 main().catch((e) => { console.error(e); process.exit(1) })

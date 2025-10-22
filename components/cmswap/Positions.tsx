@@ -208,7 +208,6 @@ export default function PositionsUnified({ setIsLoading, setErrMsg, }: {
     try {
       const decA = decimalsOf(tokenA.value)
       const decB = decimalsOf(tokenB.value)
-      // If user inputs native token values, optionally deposit to wrapped contract
       if (isNative(tokenA.value) && amountA) {
         if (chainCfg.wrappedNative?.address) {
           const h = await sendTransaction(config, { to: chainCfg.wrappedNative.address, value: parseUnits(amountA, decA) })
@@ -289,7 +288,6 @@ export default function PositionsUnified({ setIsLoading, setErrMsg, }: {
       h = await writeContract(config, request2)
       await waitForTransactionReceipt(config, { hash: h })
       setTxupdate(h)
-      // Auto unwrap if either token is wrapped native
       const wrappedAddr = (chainCfg as any)?.wrappedNative?.address as string | undefined
       if (wrappedAddr) {
         if (tokenA.value.toUpperCase() === wrappedAddr.toUpperCase()) {

@@ -335,7 +335,6 @@ export default function Page() {
                     Reward: 0
                 }
             })))
-            // .filter((obj) => {return (Number(obj.Liquidity) !== 0 && (obj.Token0 === 'tKUB' && obj.Token1 === 'tK'))})
             .reverse()
             setPosition(myStaking.concat(myPosition))
         }

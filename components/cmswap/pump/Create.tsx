@@ -10,14 +10,9 @@ import { ERC20FactoryV2ABI } from "@/app/pump/abi/ERC20FactoryV2";
 import { useRouter } from "next/navigation";
 import CustomPopup from "@/components/cmswap/popup-modal";
 
-export default function Create({ mode, chain, token, }: {
-    mode: string;
-    chain: string;
-    token: string;
-}) {
+export default function Create({ mode, chain, token, }: { mode: string; chain: string; token: string; }) {
     const router = useRouter();
     const connections = useConnections();
-
     let _chainId = 0;
     if (chain === "kubtestnet" || chain === "") _chainId = 25925;
     let currencyAddr = "";
@@ -27,7 +22,6 @@ export default function Create({ mode, chain, token, }: {
         bkgafactoryAddr = "0x46a4073c830031ea19d7b9825080c05f8454e530";
     }
     const factoryContract = {address: bkgafactoryAddr as "0xstring", abi: ERC20FactoryV2ABI, chainId: _chainId} as const;
-
     const account = useAccount();
     const [file, setFile] = useState<File | null>(null);
     const [name, setName] = useState("");
@@ -36,14 +30,7 @@ export default function Create({ mode, chain, token, }: {
     const [isLaunching, setIsLaunching] = useState(false);
     const [buyAfterLaunch, setBuyAfterLaunch] = useState(false);
     const [buyAmount, setBuyAmount] = useState("");
-    const [popupState, setPopupState] = useState({
-        isOpen: false,
-        header: "",
-        description: "",
-        actionButton: null as ReactNode | null,
-        footer: null as ReactNode | null,
-    });
-
+    const [popupState, setPopupState] = useState({isOpen: false, header: "", description: "", actionButton: null as ReactNode | null, footer: null as ReactNode | null,});
     const chainLabel = useMemo(() => {
         switch (chain) {
             case "kubtestnet":
@@ -52,129 +39,66 @@ export default function Create({ mode, chain, token, }: {
                 return chain ? chain.toUpperCase() : "Bitkub Chain";
         }
     }, [chain]);
-
     const modeLabel = mode === "pro" ? "Pro Mode" : "Lite Mode";
     const isWalletReady = Boolean(connections) && account.address !== undefined && account.chainId === _chainId;
     const baseAssetSymbol = useMemo(() => {
         if ((chain === "kubtestnet" || chain === "") && (mode === "pro" || mode === "") && (token === "")) return "tKUB";
         return "NATIVE";
     }, [chain, mode, token]);
-
     const deploymentCostCopy = useMemo(() => {
         if ((chain === "kubtestnet" || chain === "") && (mode === "pro" || mode === "") && (token === "cmm" || token === "")) return "0 tKUB (network fee not included)";
         return "Gas fee only";
     }, [chain, mode, token]);
-
     const requirementNotes = useMemo(() => {
         const notes: string[] = [];
         notes.push("Your logo is automatically pinned to IPFS; 512x512 PNG works best.");
         notes.push("Connect to the correct network before confirming the transaction.");
         return notes;
     }, [mode, token]);
-
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         const selected = event.target.files?.[0] ?? null;
         setFile(selected);
     };
-
     const handleIpfsUpload = (upload: any) => {
         if (!upload || upload.IpfsHash === undefined) {
-            setPopupState({
-                isOpen: true,
-                header: "IPFS Upload Failed",
-                description: "Upload IPFS Fail, please contact support.",
-                actionButton: null,
-                footer: (
-                    <span>
-                        Contact support at{" "}
-                        <Link href="https://discord.gg/k92ReT5EYy" target="_blank" rel="noreferrer" className="underline transition hover:font-bold">Discord</Link>
-                    </span>
-                ),
-            });
+            setPopupState({isOpen: true, header: "IPFS Upload Failed", description: "Upload IPFS Fail, please contact support.", actionButton: null, footer: (<span>Contact support at{" "}<Link href="https://discord.gg/k92ReT5EYy" target="_blank" rel="noreferrer" className="underline transition hover:font-bold">Discord</Link></span>),});
             return false;
         }
         return true;
     };
-
-    const closePopup = () => {
-        setPopupState((prev) => ({ ...prev, isOpen: false }));
-    };
-
+    const closePopup = () => {setPopupState((prev) => ({ ...prev, isOpen: false }))};
     const _launch = async () => {
         if (name.length >= 32 || ticker.length >= 10) {
-            setPopupState({
-                isOpen: true,
-                header: "Invalid Input",
-                description: "Coin name must be less than 32 characters and ticker must be less than 10 characters.",
-                actionButton: null,
-                footer: null,
-            });
+            setPopupState({isOpen: true, header: "Invalid Input", description: "Coin name must be less than 32 characters and ticker must be less than 10 characters.", actionButton: null, footer: null,});
             return;
         }
         if (!file) {
-            setPopupState({
-                isOpen: true,
-                header: "Missing Logo",
-                description: "Please attach a token logo before launching.",
-                actionButton: null,
-                footer: null,
-            });
+            setPopupState({isOpen: true, header: "Missing Logo", description: "Please attach a token logo before launching.", actionButton: null, footer: null,});
             return;
         }
         if (buyAfterLaunch && (!buyAmount || Number(buyAmount) <= 0)) {
-            setPopupState({
-                isOpen: true,
-                header: "Invalid Buy Amount",
-                description: `Enter a valid ${baseAssetSymbol} amount to buy after launch or disable the option.`,
-                actionButton: null,
-                footer: null,
-            });
+            setPopupState({isOpen: true, header: "Invalid Buy Amount", description: `Enter a valid ${baseAssetSymbol} amount to buy after launch or disable the option.`, actionButton: null, footer: null,});
             return;
         }
-
         try {
             setIsLaunching(true);
-            setPopupState({
-                isOpen: true,
-                header: "Creating Token",
-                description: "Your token is being launched, please wait...",
-                actionButton: null,
-                footer: null,
-            });
-
+            setPopupState({isOpen: true, header: "Creating Token", description: "Your token is being launched, please wait...", actionButton: null, footer: null,});
             const data = new FormData();
             data.set("file", file);
             const uploadRequest = await fetch("/pump/api/files", { method: "POST", body: data });
             const upload = await uploadRequest.json();
-
             if (!handleIpfsUpload(upload)) return;
-
             let result = "";
             let createdTokenAddr: string | null = null;
             if (chain === "kubtestnet" && mode === "pro") {
-                const { request, result: simResult } = await simulateContract(config, {
-                    ...factoryContract,
-                    functionName: "createToken",
-                    args: [name, ticker, `ipfs://${upload.IpfsHash}`, desp, "ipfs://bafkreiexe7q5ptjflrlccf3vtqdbpwk36j3emlsulksx7ot52e3uqyqu3u", "l2", "l3"],
-                    value: parseEther("0"),
-                });
-                // Predicted token address from simulation
+                const { request, result: simResult } = await simulateContract(config, {...factoryContract, functionName: "createToken", args: [name, ticker, `ipfs://${upload.IpfsHash}`, desp, "ipfs://bafkreiexe7q5ptjflrlccf3vtqdbpwk36j3emlsulksx7ot52e3uqyqu3u", "l2", "l3"], value: parseEther("0"),});
                 createdTokenAddr = String(simResult);
-                // Execute actual create
                 result = await writeContract(config, request);
-                // Ensure creation is mined before attempting optional buy
                 await waitForTransactionReceipt(config, { hash: result as '0xstring' });
-                // Optional immediate buy with minimal slippage protection (minToken = 0)
                 if (buyAfterLaunch && createdTokenAddr && Number(buyAmount) > 0) {
-                    await writeContract(config, {
-                        ...factoryContract,
-                        functionName: "buy",
-                        args: [createdTokenAddr as "0xstring", BigInt(0)],
-                        value: parseEther(buyAmount),
-                    });
+                    await writeContract(config, {...factoryContract, functionName: "buy", args: [createdTokenAddr as "0xstring", BigInt(0)], value: parseEther(buyAmount),});
                 }
             }
-
             setPopupState({
                 isOpen: true,
                 header: buyAfterLaunch ? "Launch & Buy Successful" : "Launch Successful",
@@ -205,7 +129,6 @@ export default function Create({ mode, chain, token, }: {
                 ),
                 footer: null,
             });
-
             setName("");
             setTicker("");
             setDesp("");
@@ -226,14 +149,9 @@ export default function Create({ mode, chain, token, }: {
             setIsLaunching(false);
         }
     };
-
-    const launch = () => {
-        void _launch();
-    };
-
+    const launch = () => {void _launch()};
     const buttonDisabled = !isWalletReady || isLaunching || (buyAfterLaunch && (!buyAmount || Number(buyAmount) <= 0));
     const buttonLabel = isWalletReady ? (isLaunching ? "Launching..." : "Launch Meme Token") : "Connect Wallet to Launch";
-
     return (
         <main className="relative min-h-screen w-full overflow-hidden pt-14 sm:pt-20 text-white">
             <div className="w-full my-4 px-4 flex items-center gap-6 text-[8px] sm:text-sm">
@@ -250,55 +168,29 @@ export default function Create({ mode, chain, token, }: {
                     <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">{modeLabel}</span>
                 </div>
             </div>
-
             <section className="relative sm:mx-4 flex flex-col gap-8 overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-6 sm:p-10 shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur">
-                <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-                    Create a meme <span className="inline-block">🚀</span>
-                </h1>
-
+                <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Create a meme <span className="inline-block">🚀</span></h1>
                 <form action={launch} className="grid gap-8 lg:grid-cols-[1.35fr_1fr]">
                     <div className="flex flex-col gap-6">
                         <div className="grid gap-4 sm:grid-cols-2">
                             <label className="flex flex-col gap-2">
                                 <span className="text-xs uppercase tracking-wide text-white/50">Coin Name</span>
-                                <input
-                                    className="w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-emerald-400/80 focus:bg-white/[0.08]"
-                                    placeholder="e.g. Cosmic Meme"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    maxLength={32}
-                                    required
-                                />
+                                <input className="w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-emerald-400/80 focus:bg-white/[0.08]" placeholder="e.g. CMswap Meme" value={name} onChange={(e) => setName(e.target.value)} maxLength={32} required />
                                 <span className="text-[10px] text-white/35">{name.length}/31</span>
                             </label>
                             <label className="flex flex-col gap-2">
                                 <span className="text-xs uppercase tracking-wide text-white/50">Ticker</span>
-                                <input
-                                    className="w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-emerald-400/80 focus:bg-white/[0.08]"
-                                    placeholder="e.g. COSMIC"
-                                    value={ticker}
-                                    onChange={(e) => setTicker(e.target.value)}
-                                    maxLength={10}
-                                    required
-                                />
+                                <input className="w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-emerald-400/80 focus:bg-white/[0.08]" placeholder="e.g. CMSWAP" value={ticker} onChange={(e) => setTicker(e.target.value)} maxLength={10} required />
                                 <span className="text-[10px] text-white/35">{ticker.length}/9</span>
                             </label>
                         </div>
-
                         <label className="flex flex-col gap-3">
                             <div className="flex items-center justify-between text-xs uppercase tracking-wide text-white/50">
                                 <span>Description</span>
                                 <span className="text-[10px] font-normal text-white/35">{desp.length}/200</span>
                             </div>
-                            <textarea
-                                className="min-h-[140px] w-full resize-none rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-emerald-400/80 focus:bg-white/[0.08]"
-                                placeholder="Share your meme coin&apos;s backstory in a sentence or two."
-                                value={desp}
-                                onChange={(e) => setDesp(e.target.value)}
-                                maxLength={200}
-                            />
+                            <textarea className="min-h-[140px] w-full resize-none rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-emerald-400/80 focus:bg-white/[0.08]" placeholder="Share your meme coin&apos;s backstory in a sentence or two." value={desp} onChange={(e) => setDesp(e.target.value)} maxLength={200} />
                         </label>
-
                         <div className="flex flex-col gap-2">
                             <span className="text-xs uppercase tracking-wide text-white/50">Token Logo</span>
                             <label className="group relative flex flex-col gap-4 rounded-2xl border border-dashed border-white/20 bg-white/[0.04] px-4 py-6 transition hover:border-emerald-300/60 hover:bg-emerald-300/5">
@@ -310,17 +202,10 @@ export default function Create({ mode, chain, token, }: {
                                     <UploadCloud className="h-4 w-4" aria-hidden="true" />
                                     <span>Select logo</span>
                                 </div>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="absolute inset-0 cursor-pointer opacity-0"
-                                    onChange={handleFileChange}
-                                    required
-                                />
+                                <input type="file" accept="image/*" className="absolute inset-0 cursor-pointer opacity-0" onChange={handleFileChange} required />
                             </label>
                         </div>
                     </div>
-
                     <aside className="flex h-full flex-col gap-6 rounded-2xl border border-white/10 bg-white/[0.04] p-6">
                         <div className="flex items-center gap-3">
                             <div className="rounded-full border border-emerald-400/40 bg-emerald-400/10 p-2 text-emerald-200">
@@ -330,9 +215,8 @@ export default function Create({ mode, chain, token, }: {
                                 <p className="text-sm font-semibold text-white">Launch checklist</p>
                                 <p className="text-xs text-white/50">Review fees and prerequisites before confirming.</p>
                             </div>
-                            </div>
-
-                            <div className="grid gap-4 text-sm text-white/70">
+                        </div>
+                        <div className="grid gap-4 text-sm text-white/70">
                             <div>
                                 <span className="text-xs uppercase tracking-wide text-white/40">Deployment Cost</span>
                                 <p className="mt-1 text-base text-white">{deploymentCostCopy}</p>
@@ -349,18 +233,11 @@ export default function Create({ mode, chain, token, }: {
                                 </ul>
                             </div>
                         </div>
-
                         <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-xs text-emerald-200">Make sure your wallet is connected to {chainLabel} and has enough balance to cover the network fee.</div>
-
                         <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white/70">
                             <div className="flex items-center justify-between">
                                 <label className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        className="h-4 w-4 rounded border-white/20 bg-transparent"
-                                        checked={buyAfterLaunch}
-                                        onChange={(e) => setBuyAfterLaunch(e.target.checked)}
-                                    />
+                                    <input type="checkbox" className="h-4 w-4 rounded border-white/20 bg-transparent" checked={buyAfterLaunch} onChange={(e) => setBuyAfterLaunch(e.target.checked)} />
                                     <span className="font-medium text-white">Buy after launch (optional)</span>
                                 </label>
                             </div>
@@ -368,47 +245,21 @@ export default function Create({ mode, chain, token, }: {
                                 <div className="mt-3">
                                     <label className="block text-xs uppercase tracking-wide text-white/50">Spend amount</label>
                                     <div className="mt-1 flex items-center gap-2">
-                                        <input
-                                            type="number"
-                                            inputMode="decimal"
-                                            min="0"
-                                            placeholder={`0.0`}
-                                            value={buyAmount}
-                                            onChange={(e) => setBuyAmount(e.target.value)}
-                                            className="w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-white placeholder-white/40 outline-none transition focus:border-emerald-400/80 focus:bg-white/[0.08]"
-                                        />
+                                        <input type="number" inputMode="decimal" min="0" placeholder={`0.0`} value={buyAmount} onChange={(e) => setBuyAmount(e.target.value)} className="w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-white placeholder-white/40 outline-none transition focus:border-emerald-400/80 focus:bg-white/[0.08]" />
                                         <span className="text-xs uppercase tracking-wide text-white/60 min-w-12 text-center">{baseAssetSymbol}</span>
                                     </div>
                                     <p className="mt-2 text-[11px] text-white/40">A market buy will be sent immediately after your token is created.</p>
                                 </div>
                             )}
                         </div>
-
-                        <button
-                            type="submit"
-                            disabled={buttonDisabled}
-                            aria-busy={isLaunching}
-                            className={`flex items-center justify-center gap-2 rounded-full border px-6 py-3 text-sm font-semibold tracking-wide transition ${
-                                buttonDisabled
-                                ? "cursor-not-allowed border-white/10 bg-white/5 text-white/40"
-                                : "border-emerald-400/40 bg-emerald-400/20 text-emerald-100 hover:bg-emerald-400/30 hover:shadow-[0_0_25px_rgba(16,185,129,0.35)]"
-                            }`}
-                        >
+                        <button type="submit" disabled={buttonDisabled} aria-busy={isLaunching} className={`flex items-center justify-center gap-2 rounded-full border px-6 py-3 text-sm font-semibold tracking-wide transition ${buttonDisabled ? "cursor-not-allowed border-white/10 bg-white/5 text-white/40" : "border-emerald-400/40 bg-emerald-400/20 text-emerald-100 hover:bg-emerald-400/30 hover:shadow-[0_0_25px_rgba(16,185,129,0.35)]"}`}>
                             {isLaunching && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
                             <span>{buttonLabel}</span>
                         </button>
                     </aside>
                 </form>
             </section>
-
-            <CustomPopup
-                isOpen={popupState.isOpen}
-                onClose={closePopup}
-                header={popupState.header}
-                description={popupState.description}
-                actionButton={popupState.actionButton}
-                footer={popupState.footer}
-            />
+            <CustomPopup isOpen={popupState.isOpen} onClose={closePopup} header={popupState.header} description={popupState.description} actionButton={popupState.actionButton} footer={popupState.footer} />
         </main>
     );
 }

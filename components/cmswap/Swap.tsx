@@ -20,7 +20,6 @@ import { SwapTokenPanel } from '@/components/cmswap/swap/SwapTokenPanel'
 import { useSwapChain } from '@/components/cmswap/useSwapChain'
 import { LiquidityVariant } from '@/components/cmswap/liquidityVariant'
 import { selectSwapPoolDataHook } from '@/components/cmswap/swap/hooks/selectSwapPoolData'
-// Chart is rendered at page level; Swap only exposes a toggle button
 
 type UIToken = { name: string; value: '0xstring'; logo: string; decimal: number }
 type RouteOption = { id: string; pool: string; label: string; tvl: number; tvlUnit: string; fee?: number; feeLabel?: string; description?: string; amountOut?: number; priceQuote?: number; }
@@ -680,7 +679,6 @@ export default function Swap({ setIsLoading, setErrMsg, isChartOpen: isChartOpen
     }, [setPoolSelect, setFeeSelect, getQuote, amountA])
     const piValue = !wrappedRoute && Number(amountB) > 0 ? computePriceImpact(Number(newPrice || '0'), Number((fixedExchangeRate || exchangeRate || '0'))) : undefined
     const tokenPairSelected = tokenA.value !== '0x' as '0xstring' && tokenB.value !== '0x' as '0xstring'
-    // Chart data is now handled at page level
     const amountsEntered = tokenPairSelected && Number(amountA) > 0 && Number(amountB) > 0
     const routeLabel = altRoute ? [tokenNameByAddress(altRoute.a), tokenNameByAddress(altRoute.b), tokenNameByAddress(altRoute.c)].filter(Boolean).join(' -> ') : ''
     const priceImpactValue = piValue !== undefined ? Number(piValue) : undefined
@@ -718,76 +716,34 @@ export default function Swap({ setIsLoading, setErrMsg, isChartOpen: isChartOpen
                         <div className="grid grid-cols-3 gap-2">
                             {SLIPPAGE_PRESETS.map(option => {
                                 const active = slippageDraftSelection === option.key
-                                return (
-                                    <button
-                                        key={option.key}
-                                        type="button"
-                                        onClick={() => handleSlippageSelection(option.key)}
-                                        className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
-                                            active
-                                                ? 'border-emerald-400/80 bg-emerald-500/15 text-white shadow-[0_0_20px_rgba(16,185,129,0.35)]'
-                                                : 'border-white/10 bg-slate-900/50 text-slate-200 hover:border-white/20 hover:bg-slate-900/70'
-                                        }`}
-                                    >
-                                        {option.label}
-                                    </button>
-                                )
+                                return (<button key={option.key} type="button" onClick={() => handleSlippageSelection(option.key)} className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${active ? 'border-emerald-400/80 bg-emerald-500/15 text-white shadow-[0_0_20px_rgba(16,185,129,0.35)]' : 'border-white/10 bg-slate-900/50 text-slate-200 hover:border-white/20 hover:bg-slate-900/70'}`}>{option.label}</button>)
                             })}
                         </div>
-                        <div
-                            className={`rounded-2xl border p-3 transition ${
-                                isCustomSelected
-                                    ? 'border-emerald-400/80 bg-emerald-500/15 shadow-[0_0_20px_rgba(16,185,129,0.35)]'
-                                    : 'border-white/10 bg-slate-900/50 hover:border-white/20 hover:bg-slate-900/70'
-                            }`}
-                        >
+                        <div className={`rounded-2xl border p-3 transition ${isCustomSelected ? 'border-emerald-400/80 bg-emerald-500/15 shadow-[0_0_20px_rgba(16,185,129,0.35)]' : 'border-white/10 bg-slate-900/50 hover:border-white/20 hover:bg-slate-900/70'}`}>
                             <div className="mb-2 flex items-center justify-between">
                                 <span className="text-sm font-semibold text-white">Custom (%)</span>
                                 {isCustomSelected && trimmedCustom && <span className="text-xs text-slate-300">{trimmedCustom}%</span>}
                             </div>
                             <div className="flex items-center gap-2">
-                                <Input
-                                    value={slippageDraftCustom}
-                                    onChange={event => handleCustomInputChange(event.target.value)}
-                                    onFocus={() => handleSlippageSelection('custom')}
-                                    inputMode="decimal"
-                                    placeholder="0.50"
-                                    className="h-10 bg-slate-950/80 text-sm text-white"
-                                />
+                                <Input value={slippageDraftCustom} onChange={event => handleCustomInputChange(event.target.value)} onFocus={() => handleSlippageSelection('custom')} inputMode="decimal" placeholder="0.50" className="h-10 bg-slate-950/80 text-sm text-white" />
                                 <span className="text-sm text-slate-300">%</span>
                             </div>
                             {customError && <p className="pt-2 text-xs text-red-400">{customError}</p>}
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="button" className="w-full rounded-xl bg-emerald-500 text-white hover:bg-emerald-400" onClick={handleSaveSlippage} disabled={saveDisabled}>
-                            Save
-                        </Button>
+                        <Button type="button" className="w-full rounded-xl bg-emerald-500 text-white hover:bg-emerald-400" onClick={handleSaveSlippage} disabled={saveDisabled}>Save</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
             <div>
                 <div className="w-full space-y-2">
                     <div className="flex items-center justify-end gap-2">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            className={`flex h-10 items-center gap-2 rounded-full px-4 text-xs font-semibold transition ${
-                                chartOpen
-                                    ? 'border border-emerald-400/80 bg-emerald-500/15 text-white shadow-[0_0_18px_rgba(16,185,129,0.25)]'
-                                    : 'border border-white/10 bg-slate-900/60 text-white hover:border-white/20 hover:bg-slate-900/80'
-                            }`}
-                            onClick={handleToggleChart}
-                        >
+                        <Button onClick={handleToggleChart} type="button" variant="ghost" className={`flex h-10 items-center gap-2 rounded-full px-4 text-xs font-semibold transition ${chartOpen ? 'border border-emerald-400/80 bg-emerald-500/15 text-white shadow-[0_0_18px_rgba(16,185,129,0.25)]' : 'border border-white/10 bg-slate-900/60 text-white hover:border-white/20 hover:bg-slate-900/80'}`}>
                             <BarChart3 className="h-3 w-3" aria-hidden="true" />
                             <span>Chart</span>
                         </Button>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            className="flex h-10 items-center gap-2 rounded-full border border-white/10 bg-slate-900/60 px-4 text-xs font-semibold text-white hover:border-white/20 hover:bg-slate-900/80"
-                            onClick={openSlippageModal}
-                        >
+                        <Button onClick={openSlippageModal} type="button" variant="ghost" className="flex h-10 items-center gap-2 rounded-full border border-white/10 bg-slate-900/60 px-4 text-xs font-semibold text-white hover:border-white/20 hover:bg-slate-900/80">
                             <Settings className="h-3 w-3" aria-hidden="true" />
                             <span>Slippage {slippageDisplay}%</span>
                         </Button>
@@ -799,23 +755,17 @@ export default function Swap({ setIsLoading, setErrMsg, isChartOpen: isChartOpen
                             onTokenAddressChange={value => {if (value !== '0x') setTokenA({ name: 'Choose Token', value: value as '0xstring', logo: '../favicon.ico', decimal: 18 }); else setTokenA({ name: 'Choose Token', value: '0x' as '0xstring', logo: '../favicon.ico', decimal: 18 })}}
                             amount={amountA}
                             onAmountChange={value => { setAmountA(value); getQuote(value) }}
-                        amountAutoFocus
-                        selectedToken={tokenA}
-                        tokens={tokens}
-                        onSelectToken={token => { setTokenA(token); updateURLWithTokens(token.value, tokenB?.value) }}
-                        popoverOpen={open}
-                        onPopoverOpenChange={setOpen}
-                        balanceLabel={tokenABalanceLabel}
-                        footerContent={<Button variant="ghost" size="sm" className="h-7 rounded-full bg-slate-800/80 px-3 text-[11px] font-semibold text-slate-200 hover:bg-slate-800 cursor-pointer" onClick={() => { setAmountA(tokenABalance); getQuote(tokenABalance) }}>MAX</Button>}
-                    />
+                            amountAutoFocus
+                            selectedToken={tokenA}
+                            tokens={tokens}
+                            onSelectToken={token => { setTokenA(token); updateURLWithTokens(token.value, tokenB?.value) }}
+                            popoverOpen={open}
+                            onPopoverOpenChange={setOpen}
+                            balanceLabel={tokenABalanceLabel}
+                            footerContent={<Button variant="ghost" size="sm" className="h-7 rounded-full bg-slate-800/80 px-3 text-[11px] font-semibold text-slate-200 hover:bg-slate-800 cursor-pointer" onClick={() => { setAmountA(tokenABalance); getQuote(tokenABalance) }}>MAX</Button>}
+                        />
                     <div className="flex justify-center">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-900/70 text-white shadow-sm transition hover:bg-slate-900 cursor-pointer"
-                            onClick={() => { setExchangeRate(""); switchTokens() }}
-                        >
+                        <Button onClick={() => { setExchangeRate(""); switchTokens() }} type="button" variant="outline" size="icon" className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-900/70 text-white shadow-sm transition hover:bg-slate-900 cursor-pointer">
                             <ArrowDown className="h-4 w-4" />
                         </Button>
                     </div>

@@ -306,7 +306,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
     const [socials, setSocials] = useState<Record<SocialField, string>>({ fb: "", x: "", telegram: "", website: "" });
     const [errors, setErrors] = useState<Record<SocialField, boolean>>({ fb: false, x: false, telegram: false, website: false });
     const [price, setPrice] = useState(0);
-    const [mcap, setMcap] = useState(0); // server-provided, but we will derive dynamically for UI
+    const [mcap, setMcap] = useState(0);
     const [graphData, setGraphData] = useState<{ time: number; price: number; volume: number }[]>([]);
     const chartData = React.useMemo(() => {
         const base = Array.isArray(graphData) ? graphData.slice() : [];
@@ -314,10 +314,8 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
             if (base.length > 0) {
                 const last = base[base.length - 1];
                 const lastTime = typeof last?.time === 'number' ? last.time : Date.now();
-                // Append the live price immediately after the latest trade timestamp
                 base.push({ time: lastTime + 1, price, volume: 0 });
             } else {
-                // No trades yet; seed with current time so chart has a point
                 base.push({ time: Date.now(), price, volume: 0 });
             }
         }
@@ -331,14 +329,13 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
         if (typeof raw !== 'bigint') return 1_000_000_000;
         try {
             const scale = BigInt(10) ** BigInt(dec);
-            const whole = raw / scale; // bigint
-            const frac = raw % scale;  // bigint
+            const whole = raw / scale;
+            const frac = raw % scale;
             const wholeNum = Number(whole);
             const fracNum = Number(frac) / Number(scale);
             const result = wholeNum + fracNum;
             return Number.isFinite(result) && result > 0 ? result : 1_000_000_000;
         } catch {
-            // Fallback for very large numbers or unexpected decimals
             return 1_000_000_000;
         }
     }, [tokenDecimals, totalSupplyRaw]);
@@ -494,9 +491,8 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
         return `${_explorer}address/${address}${suffixKub}`;
     };
     const compactNumberFormatter = React.useMemo(() => new Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short" }), []);
-    // Platform-specific social URL validation: require https and relevant domain
     const isValidSocial = (field: keyof typeof socials, url: string) => {
-        if (url.trim() === "") return true; // optional
+        if (url.trim() === "") return true;
         try {
             const u = new URL(url);
             if (u.protocol !== "https:") return false;
@@ -509,7 +505,6 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
                 case "telegram":
                     return host === "t.me" || host === "www.t.me";
                 case "website":
-                    // any https domain is accepted for generic website
                     return true;
                 default:
                     return false;
@@ -652,7 +647,6 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
                 return b.lastActive - a.lastActive;
             });
         }
-        // Fallback to client-side aggregation from recent activity if server traders are not provided
         const stats = new Map<string, { address: string; totalBought: number; totalSold: number; trades: number; lastActive: number; }>();
         filteredHx.forEach((res: any) => {
             const from = typeof res?.from === "string" ? res.from : "";
@@ -705,7 +699,6 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
                 }) : 
                 [ { result: BigInt(0) }, { result: BigInt(0) }, { result: false }, { result: [BigInt(0)] } ];
             setState(state0);
-            // Fetch ERC20 decimals and totalSupply for dynamic market cap
             try {
                 const meta = await readContracts(config, {
                     contracts: [
@@ -773,7 +766,7 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
                         ],
                     });
                     const getAmountOut = (_inputAmount: number, _inputReserve: bigint, _outputReserve: bigint): number => {
-                        const inputAmountWithFee = _inputAmount * 99; // Apply 99/100 multiplier for fee
+                        const inputAmountWithFee = _inputAmount * 99;
                         const numerator = BigInt(Math.floor(inputAmountWithFee)) * _outputReserve;
                         const denominator = _inputReserve * BigInt(100) + BigInt(Math.floor(inputAmountWithFee));
                         return Number(Number(numerator) / Number(denominator));
@@ -792,8 +785,6 @@ export default function Trade({ mode, chain, ticker, lp, token }: { mode: string
                     const amountOut = trademode ? getAmountOut(amountInAfterFee, virtualAmount + pumpReserve[0], pumpReserve[1]) : getAmountOut(amountInAfterFee, pumpReserve[1], pumpReserve[0] + virtualAmount);
                     setOutputBalance(amountOut.toFixed(18));
                     try {
-                        // Price impact (slippage) for constant-product: impact = dx / (R_in + dx)
-                        // Use consistent units by converting reserves from wei to float via formatEther.
                         const inputReserveWei = trademode ? (virtualAmount + pumpReserve[0]) : pumpReserve[1];
                         const rin = Number(formatEther(inputReserveWei));
                         const dx = Number(value);

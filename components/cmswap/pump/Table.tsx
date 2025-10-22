@@ -4,74 +4,16 @@ import GridLayout, { CoinCardData } from "./GridLayout";
 
 const FALLBACK_LOGO = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%230a111f'/><path d='M20 34c0-7.732 6.268-14 14-14s14 6.268 14 14-6.268 14-14 14-14-6.268-14-14Zm14-10a10 10 0 1 0 10 10 10.011 10.011 0 0 0-10-10Zm1 6v5.586l3.707 3.707-1.414 1.414L33 37.414V30h2Z' fill='%235965f7'/></svg>";
 const RELATIVE_TIME_FORMAT = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-
-export default async function TokenGrid({ mode, query, sort, order, chain, token }: {
-    mode: string;
-    query: string;
-    sort: string;
-    order: string;
-    chain: string;
-    token: string;
-}) {
-    await connection();
-
-    const network = resolveNetworkConfig(chain, mode, token);
-    const listings = await fetchSupabaseListings({ network });
-    const filteredListings = filterListings(listings, query);
-    const sortedListings = sortListings(filteredListings, sort, order);
-    const coins = mapToCoinCards(sortedListings, {
-        baseSymbol: network.baseSymbol,
-        chainParam: network.queryChain,
-        modeParam: network.queryMode,
-    });
-
-    return <GridLayout coins={coins} />;
-}
-
 type NetworkKey = "kubtestnet";
-
-type NetworkConfig = {
-    key: NetworkKey;
-    baseSymbol: string;
-    chainTag: string;
-    queryChain: string;
-    queryMode: "lite" | "pro";
-};
-
-type ListingMetrics = {
-    id: string;
-    address: `0x${string}`;
-    symbol: string;
-    name: string;
-    description?: string;
-    logoUrl: string;
-    createdAt?: number;
-    creator?: string;
-    price: number;
-    marketCap: number;
-    searchTerms: string;
-};
-
+type NetworkConfig = { key: NetworkKey; baseSymbol: string; chainTag: string; queryChain: string; queryMode: "lite" | "pro"; };
+type ListingMetrics = { id: string; address: `0x${string}`; symbol: string; name: string; description?: string; logoUrl: string; createdAt?: number; creator?: string; price: number; marketCap: number; searchTerms: string; };
 type KubTestnetContext = { network: NetworkConfig };
-
-function resolveNetworkConfig(chain: string, mode: string, token: string): NetworkConfig {
-    const normalizedChain = (chain || "kubtestnet").toLowerCase() as NetworkKey;
+function resolveNetworkConfig(mode: string): NetworkConfig {
     const normalizedMode = (mode || "pro").toLowerCase() as "lite" | "pro";
-
-    // Only kubtestnet is supported currently but keep mode passthrough
-    return {
-        key: "kubtestnet",
-        baseSymbol: "tKUB",
-        chainTag: "tKUB",
-        queryChain: "kubtestnet",
-        queryMode: normalizedMode,
-    };
+    return {key: "kubtestnet", baseSymbol: "tKUB", chainTag: "tKUB", queryChain: "kubtestnet", queryMode: normalizedMode,};
 }
-
 async function fetchSupabaseListings({ network }: KubTestnetContext): Promise<ListingMetrics[]> {
     const supabase = getServiceSupabase();
-
-    // Pull all tokens with pagination to avoid default row caps
     const PAGE_SIZE = 1000;
     let offset = 0;
     const tokens: Array<{ address?: string; symbol?: string; name?: string; description?: string; logo?: string; created_time?: number | string | null; creator?: string; }> = [];
@@ -86,16 +28,10 @@ async function fetchSupabaseListings({ network }: KubTestnetContext): Promise<Li
         if (!rows.length || rows.length < PAGE_SIZE) break;
         offset += rows.length;
     }
-
-    // Use raw addresses to match DB values exactly (case sensitive)
-    const addresses = tokens
-        .map((t) => String(t.address || ''))
-        .filter(Boolean);
-
-    // Fetch latest non-null price per token, chunked + paginated to cover all
+    const addresses = tokens.map((t) => String(t.address || '')).filter(Boolean);
     const latestPriceByToken = new Map<string, { price: number; timestamp: number }>();
-    const ADDR_CHUNK = 150; // keep URL/query size reasonable
-    const SWAPS_PAGE = 1000; // PostgREST page size
+    const ADDR_CHUNK = 150;
+    const SWAPS_PAGE = 1000;
     for (let i = 0; i < addresses.length; i += ADDR_CHUNK) {
         const chunk = addresses.slice(i, i + ADDR_CHUNK);
         let gotForChunk = 0;
@@ -124,8 +60,6 @@ async function fetchSupabaseListings({ network }: KubTestnetContext): Promise<Li
             start += rows.length;
         }
     }
-
-    // Map into ListingMetrics
     const listings: ListingMetrics[] = tokens.map((t) => {
         const addrRaw = String(t.address || '');
         const sym = String(t.symbol || '');
@@ -134,31 +68,16 @@ async function fetchSupabaseListings({ network }: KubTestnetContext): Promise<Li
         const createdAt = toSecondsMaybe(Number(t.created_time || 0));
         const latest = latestPriceByToken.get(addrRaw);
         const price = latest?.price || 0;
-        const marketCap = Number.isFinite(price) ? price * 1_000_000_000 : 0; // assume 1e9 supply
-        return {
-            id: addrRaw,
-            address: addrRaw as `0x${string}`,
-            symbol: sym || 'N/A',
-            name: nm || sym || 'Token',
-            description: t.description || undefined,
-            logoUrl,
-            createdAt,
-            creator: t.creator as `0x${string}` | undefined,
-            price,
-            marketCap,
-            searchTerms: `${sym} ${nm}`.toLowerCase(),
-        } satisfies ListingMetrics;
+        const marketCap = Number.isFinite(price) ? price * 1_000_000_000 : 0;
+        return {id: addrRaw, address: addrRaw as `0x${string}`, symbol: sym || 'N/A', name: nm || sym || 'Token', description: t.description || undefined, logoUrl, createdAt, creator: t.creator as `0x${string}` | undefined, price, marketCap, searchTerms: `${sym} ${nm}`.toLowerCase()} satisfies ListingMetrics;
     });
-
     return listings;
 }
-
 function filterListings(listings: ListingMetrics[], query: string) {
     const trimmed = query.trim().toLowerCase();
     if (!trimmed) return listings;
     return listings.filter((listing) => listing.searchTerms.includes(trimmed),);
 }
-
 function sortListings(listings: ListingMetrics[], sort: string, order: string) {
     const desired = sort.toLowerCase();
     const desiredOrder = order.toLowerCase();
@@ -175,73 +94,38 @@ function sortListings(listings: ListingMetrics[], sort: string, order: string) {
         return capB - capA;
     });
 }
-
-function mapToCoinCards(
-    listings: ListingMetrics[],
-    {
-        baseSymbol,
-        chainParam,
-        modeParam,
-    }: {
-        baseSymbol: string;
-        chainParam: string;
-        modeParam: "lite" | "pro";
-    },
-): CoinCardData[] {
+function mapToCoinCards(listings: ListingMetrics[], { baseSymbol, chainParam, modeParam }: { baseSymbol: string; chainParam: string; modeParam: "lite" | "pro"; },): CoinCardData[] {
     return listings.map((listing) => {
         const href = buildTokenHref(listing.address, chainParam, modeParam);
         const marketCapDisplay = formatMarketCap(listing.marketCap, baseSymbol);
         const progressPercent = computeProgressPercent(listing, chainParam, modeParam);
-        return {
-            id: listing.id,
-            href,
-            name: listing.name,
-            symbol: listing.symbol,
-            logoUrl: listing.logoUrl,
-            marketCapDisplay,
-            createdAgo: formatRelativeTime(listing.createdAt),
-            progressPercent,
-        } satisfies CoinCardData;
+        return {id: listing.id, href, name: listing.name, symbol: listing.symbol, logoUrl: listing.logoUrl, marketCapDisplay, createdAgo: formatRelativeTime(listing.createdAt), progressPercent} satisfies CoinCardData;
     });
 }
-
-function buildTokenHref(
-    address: string,
-    chain: string,
-    mode: "lite" | "pro",
-) {
+function buildTokenHref(address: string, chain: string, mode: "lite" | "pro") {
     const params = new URLSearchParams();
     params.set("ticker", address);
     params.set("chain", chain);
     params.set("mode", mode);
     return `launchpad/token?${params.toString()}`;
 }
-
 function formatMarketCap(value: number, symbol: string) {
     if (!Number.isFinite(value) || value <= 0) return `${symbol} --`;
     return `${symbol} ${Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(value)}`;
 }
-
-function computeProgressPercent(
-    listing: ListingMetrics,
-    chain: string,
-    mode: "lite" | "pro",
-) {
+function computeProgressPercent(listing: ListingMetrics, chain: string, mode: "lite" | "pro") {
     const c = chain.toLowerCase();
     const m = mode.toLowerCase();
     const denom = (() => {
         if (c === "kubtestnet" && m === "pro") return 60600;
         return undefined;
     })();
-
     if (!denom || denom <= 0) return 0;
-
     const raw = c === "kubtestnet" ? listing.marketCap : listing.price;
     const pct = (raw * 100) / denom;
     if (!Number.isFinite(pct)) return 0;
     return pct;
 }
-
 function formatRelativeTime(timestamp?: number) {
     if (!timestamp) return undefined;
     const now = Math.floor(Date.now() / 1000);
@@ -252,18 +136,25 @@ function formatRelativeTime(timestamp?: number) {
     if (abs < 86400) return RELATIVE_TIME_FORMAT.format(Math.round(diff / 3600), "hour");
     return RELATIVE_TIME_FORMAT.format(Math.round(diff / 86400), "day");
 }
-
 function resolveLogoUrl(raw?: string) {
     if (!raw) return FALLBACK_LOGO;
     if (raw.startsWith("ipfs://")) return `https://cmswap.mypinata.cloud/ipfs/${raw.slice(7)}`;
     if (raw.startsWith("https://") || raw.startsWith("http://")) return raw;
     return `https://cmswap.mypinata.cloud/ipfs/${raw}`;
 }
-
 function toSecondsMaybe(ts: number | undefined | null): number | undefined {
     if (!ts || !Number.isFinite(Number(ts))) return undefined;
     const n = Number(ts);
-    // Heuristic: if timestamp looks like ms, convert to seconds
     if (n > 1e12) return Math.floor(n / 1000);
     return n;
+}
+
+export default async function TokenGrid({ mode, query, sort, order }: { mode: string; query: string; sort: string; order: string; }) {
+    await connection();
+    const network = resolveNetworkConfig(mode);
+    const listings = await fetchSupabaseListings({ network });
+    const filteredListings = filterListings(listings, query);
+    const sortedListings = sortListings(filteredListings, sort, order);
+    const coins = mapToCoinCards(sortedListings, {baseSymbol: network.baseSymbol, chainParam: network.queryChain, modeParam: network.queryMode});
+    return <GridLayout coins={coins} />;
 }

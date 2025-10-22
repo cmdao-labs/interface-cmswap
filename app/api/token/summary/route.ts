@@ -126,7 +126,6 @@ export async function GET(req: NextRequest) {
         }))
         const holdersRes = await supabase.rpc('holders_for_token', { chain_i: chainId, token, limit_i: holdersLimit, offset_i: 0 })
         const holders = (holdersRes.data || []).map((h: any) => ({ addr: h.holder, value: Number(h.balance || 0) }))
-        // Aggregate traders using paged scan and Node-side reduction (compatible with supabase-js)
         const PAGE_SIZE = 1000
         let offset = 0
         const tmap = new Map<string, { addr: string; buys: number; sells: number; trades: number; lastActive: number; boughtNative: number; soldNative: number; boughtToken: number; soldToken: number }>()

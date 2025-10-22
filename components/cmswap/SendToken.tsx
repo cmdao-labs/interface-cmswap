@@ -12,42 +12,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import QRScannerModal from "./QRScannerModal";
 
-type ChainConfig = {
-    chain: any;
-    chainId: number;
-    explorer: string;
-    rpc: string;
-    blocktime: number;
-    nameService?: "ENS" | "KNS";
-    lib: { tokens: any; };
-};
-
+type ChainConfig = { chain: any; chainId: number; explorer: string; rpc: string; blocktime: number; nameService?: "ENS" | "KNS"; lib: { tokens: any; }; };
 const chainConfigs: Record<number, ChainConfig> = {
-    25925: {
-        chain: bitkubTestnet,
-        chainId: 25925,
-        explorer: "https://testnet.kubscan.com/",
-        rpc: "https://rpc-testnet.bitkubchain.io",
-        blocktime: 5,
-        lib: { tokens: chains[25925].tokens },
-    },
-    96: {
-        chain: bitkub,
-        chainId: 96,
-        explorer: "https://www.kubscan.com/",
-        rpc: "https://rpc.bitkubchain.io",
-        blocktime: 5,
-        nameService: "KNS",
-        lib: { tokens: chains[96].tokens },
-    },
-    8899: {
-        chain: jbc,
-        chainId: 8899,
-        explorer: "https://exp.jbcha.in/",
-        rpc: "https://rpc2-l1.jbc.xpool.pw",
-        blocktime: 5,
-        lib: { tokens: chains[8899].tokens },
-    }
+    25925: {chain: bitkubTestnet, chainId: 25925, explorer: "https://testnet.kubscan.com/", rpc: "https://rpc-testnet.bitkubchain.io", blocktime: 5, lib: { tokens: chains[25925].tokens } },
+    96: { chain: bitkub, chainId: 96, explorer: "https://www.kubscan.com/", rpc: "https://rpc.bitkubchain.io", blocktime: 5, nameService: "KNS", lib: { tokens: chains[96].tokens } },
+    8899: { chain: jbc, chainId: 8899, explorer: "https://exp.jbcha.in/", rpc: "https://rpc2-l1.jbc.xpool.pw", blocktime: 5, lib: { tokens: chains[8899].tokens } }
 };
 
 export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfig }: {
@@ -66,7 +35,6 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
     const [copied, setCopied] = useState(false);
     const [open, setOpen] = React.useState(false);
     const [token, setToken] = React.useState<{ name: string; value: "0xstring"; logo: string; }>(lib.tokens[0]);
-    const [recipient, setRecipient] = useState("");
     const [showScanner, setShowScanner] = useState(false);
     const [isMultiTransfer, setIsMultiTransfer] = useState(false);
     const [multiInput, setMultiInput] = useState("");
@@ -74,26 +42,16 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
     const [variableMinAmount, setVariableMinAmount] = useState("");
     const [variableMaxAmount, setVariableMaxAmount] = useState("");
     const [uploadError, setUploadError] = useState<string | null>(null);
-    const parseAddresses = (input: string) =>
-        input
-            .split(/[\n,]+/)
-            .map((addr) => addr.trim())
-            .filter(Boolean);
+    const parseAddresses = (input: string) => input.split(/[\n,]+/).map((addr) => addr.trim()).filter(Boolean);
     const multiAddresses = React.useMemo(() => parseAddresses(multiInput), [multiInput]);
-    const amountLabel = isMultiTransfer
-        ? multiMode === "variable"
-            ? "Amount Range (per address)"
-            : "Amount per Address"
-        : "Amount to Send";
+    const amountLabel = isMultiTransfer ? 
+        multiMode === "variable" ? "Amount Range (per address)" : "Amount per Address" : 
+        "Amount to Send";
     const formattedSingleAmount = amount ? Number(amount).toLocaleString() : "0";
     const multiCountLabel = `${multiAddresses.length} ${multiAddresses.length === 1 ? "Address" : "Addresses"}`;
-    const sendButtonText = isMultiTransfer
-        ? multiMode === "variable"
-            ? `Send Variable Amounts to ${multiCountLabel}`
-            : `Send ${amount || "0"} ${token.name} to ${multiCountLabel}`
-        : `Send ${formattedSingleAmount} ${token.name}`;
-
-
+    const sendButtonText = isMultiTransfer ? 
+        multiMode === "variable" ? `Send Variable Amounts to ${multiCountLabel}` : `Send ${amount || "0"} ${token.name} to ${multiCountLabel}` : 
+        `Send ${formattedSingleAmount} ${token.name}`;
     async function resolveNameIfNeeded(input: string) {
         if (!nameService) return input;
         try {
@@ -103,7 +61,6 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
             return input as '0xstring';
         }
     }
-
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const input = event.target;
         const file = input.files?.[0];
@@ -118,92 +75,55 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
             input.value = "";
         }
     };
-
     const getRandomAmountInRange = (min: number, max: number) => {
         if (max <= min) return min.toFixed(10);
         const random = Math.random() * (max - min) + min;
         return random.toFixed(10);
     };
-
     async function handleSend() {
         if (!address) return;
         setIsLoading(true);
         try {
             if (isMultiTransfer) {
-                if (multiAddresses.length === 0) {
-                    throw new Error("Add at least one destination address.");
-                }
+                if (multiAddresses.length === 0) throw new Error("Add at least one destination address.");
                 let perAddressAmounts: string[] = [];
                 if (multiMode === "fixed") {
                     const normalizedAmount = amount.trim();
-                    if (!normalizedAmount || Number(normalizedAmount) <= 0) {
-                        throw new Error("Enter a valid amount per address.");
-                    }
+                    if (!normalizedAmount || Number(normalizedAmount) <= 0) throw new Error("Enter a valid amount per address.");
                     perAddressAmounts = multiAddresses.map(() => normalizedAmount);
                 } else {
                     const min = Number(variableMinAmount);
                     const max = Number(variableMaxAmount);
-                    if (Number.isNaN(min) || Number.isNaN(max) || min <= 0 || max <= 0) {
-                        throw new Error("Enter valid minimum and maximum amounts.");
-                    }
-                    if (max < min) {
-                        throw new Error("Maximum amount must be greater than or equal to minimum amount.");
-                    }
+                    if (Number.isNaN(min) || Number.isNaN(max) || min <= 0 || max <= 0) throw new Error("Enter valid minimum and maximum amounts.");
+                    if (max < min) throw new Error("Maximum amount must be greater than or equal to minimum amount.");
                     perAddressAmounts = multiAddresses.map(() => getRandomAmountInRange(min, max));
                 }
-
                 for (let i = 0; i < multiAddresses.length; i += 1) {
                     const rawTarget = multiAddresses[i];
                     const toResolved = await resolveNameIfNeeded(rawTarget);
                     setResolvedTo(toResolved);
                     const amountForRecipient = parseUnits(perAddressAmounts[i], 18);
-
                     if (token.value === "0xnative" as "0xstring") {
-                        const tx = await sendTransaction(config, {
-                            account: address,
-                            to: toResolved as `0x${string}`,
-                            value: amountForRecipient,
-                            chainId: Number(chain.chainId),
-                        });
+                        const tx = await sendTransaction(config, {account: address, to: toResolved as `0x${string}`, value: amountForRecipient, chainId: Number(chain.chainId)});
                         await waitForTransactionReceipt(config, { hash: tx });
                     } else {
-                        const { request } = await simulateContract(config, {
-                            account: address,
-                            address: token.value as `0x${string}`,
-                            abi: erc20Abi,
-                            functionName: "transfer",
-                            args: [toResolved as "0xstring", amountForRecipient],
-                        });
+                        const { request } = await simulateContract(config, {account: address, address: token.value as `0x${string}`, abi: erc20Abi, functionName: "transfer", args: [toResolved as "0xstring", amountForRecipient]});
                         const tx = await writeContract(config, request);
                         await waitForTransactionReceipt(config, { hash: tx });
                     }
                 }
                 return;
             }
-
             const toResolved = await resolveNameIfNeeded(to);
             setResolvedTo(toResolved);
             const normalizedAmount = amount.trim();
-            if (!normalizedAmount || Number(normalizedAmount) <= 0) {
-                throw new Error("Enter a valid amount to send.");
-            }
+            if (!normalizedAmount || Number(normalizedAmount) <= 0) throw new Error("Enter a valid amount to send.");
             const amountToSend = parseUnits(normalizedAmount, 18);
             if (token.value === "0xnative" as "0xstring") {
-                const tx = await sendTransaction(config, {
-                    account: address,
-                    to: toResolved as `0x${string}`,
-                    value: amountToSend,
-                    chainId: Number(chain.chainId),
-                });
+                const tx = await sendTransaction(config, {account: address, to: toResolved as `0x${string}`, value: amountToSend, chainId: Number(chain.chainId)});
                 await waitForTransactionReceipt(config, { hash: tx });
             } else {
-                const { request } = await simulateContract(config, {
-                    account: address,
-                    address: token.value as `0x${string}`,
-                    abi: erc20Abi,
-                    functionName: "transfer",
-                    args: [toResolved as "0xstring", amountToSend],
-                });
+                const { request } = await simulateContract(config, {account: address, address: token.value as `0x${string}`, abi: erc20Abi, functionName: "transfer", args: [toResolved as "0xstring", amountToSend]});
                 const tx = await writeContract(config, request);
                 await waitForTransactionReceipt(config, { hash: tx });
             }
@@ -213,30 +133,23 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
             setIsLoading(false);
         }
     }
-
     async function handleMax(decimals: number = 10) {
         if (!address) return;
         let bal: bigint;
         if (token.value === "0xnative" as '0xstring') {
             const nativeBal = await getBalance(config, { address });
-            bal = nativeBal.value - BigInt(1e15); // reserve handle - 0.001 for gas 
+            bal = nativeBal.value - BigInt(1e15);
         } else {
-            const ercBal = await publicClient.readContract({
-            address: token.value as `0x${string}`,
-            abi: erc20Abi,
-            functionName: "balanceOf",
-            args: [address],
-            });
+            const ercBal = await publicClient.readContract({address: token.value as `0x${string}`, abi: erc20Abi, functionName: "balanceOf", args: [address]});
             bal = BigInt(ercBal);
         }
         const factor = BigInt(10) ** BigInt(18 - decimals);
         const truncated = bal / factor;
-        const str = truncated.toString().padStart(decimals + 1, "0"); // pad เผื่อกรณี <1
+        const str = truncated.toString().padStart(decimals + 1, "0");
         const integerPart = str.slice(0, -decimals) || "0";
         const decimalPart = str.slice(-decimals).padEnd(decimals, "0");
         setAmount(`${integerPart}.${decimalPart}`);
     }
-
     const renderToken = async(value: string) => {
         if (!address) return;
         if (value === "0xnative") {
@@ -247,7 +160,6 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
             setBalance((Number(bal) / 1e18).toLocaleString(undefined, { maximumFractionDigits: 6 }));
         }
     };
-
     React.useEffect(() => {renderToken(token.value);}, [token])
 
     return (
@@ -318,9 +230,7 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
 
             <div className="mb-6">
                 <div className="flex items-center justify-between gap-4 mb-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                        {isMultiTransfer ? "Recipient Addresses" : "Recipient Address"}
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700">{isMultiTransfer ? "Recipient Addresses" : "Recipient Address"}</label>
                     <label className="flex items-center gap-2 text-xs font-medium text-gray-500">
                         <input
                             type="checkbox"
@@ -339,128 +249,48 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
                 </div>
                 {isMultiTransfer ? (
                     <div className="flex flex-col gap-3">
-                        <textarea
-                            className="w-full border border-gray-300 rounded-lg p-3 h-32 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors text-sm"
-                            placeholder="Paste comma or line separated addresses"
-                            value={multiInput}
-                            onChange={(e) => setMultiInput(e.target.value)}
-                        />
+                        <textarea value={multiInput} onChange={(e) => setMultiInput(e.target.value)} placeholder="Paste comma or line separated addresses" className="w-full border border-gray-300 rounded-lg p-3 h-32 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors text-sm" />
                         <div className="flex flex-wrap items-center gap-3">
-                            <label
-                                htmlFor="multi-file-upload"
-                                className="cursor-pointer px-4 py-2 border border-dashed border-gray-500 rounded-lg text-xs uppercase tracking-wide text-gray-400 hover:border-emerald-500 hover:text-emerald-400 transition"
-                            >
-                                Upload Addresses (.txt / .csv)
-                            </label>
-                            <input
-                                id="multi-file-upload"
-                                type="file"
-                                accept=".txt,.csv"
-                                className="hidden"
-                                onChange={handleFileUpload}
-                            />
-                            <span className="text-xs text-gray-500">
-                                Detected {multiAddresses.length} address{multiAddresses.length === 1 ? "" : "es"}
-                            </span>
+                            <label htmlFor="multi-file-upload" className="cursor-pointer px-4 py-2 border border-dashed border-gray-500 rounded-lg text-xs uppercase tracking-wide text-gray-400 hover:border-emerald-500 hover:text-emerald-400 transition">Upload Addresses (.txt / .csv)</label>
+                            <input id="multi-file-upload" type="file" accept=".txt,.csv" className="hidden" onChange={handleFileUpload} />
+                            <span className="text-xs text-gray-500">Detected {multiAddresses.length} address{multiAddresses.length === 1 ? "" : "es"}</span>
                         </div>
                         {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
                     </div>
                 ) : (
                     <div className="relative">
-                        <input
-                            type="text"
-                            className="w-full border border-gray-300 rounded-lg p-3 pr-12 mt-1 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                            placeholder={`0x... or ${nameService ?? "address"}`}
-                            value={to}
-                            onChange={(e) => setTo(e.target.value)}
-                        />
-                        <div className="absolute inset-y-0 right-3 flex items-center">
-                            <ScanQrCode onClick={() => setShowScanner(true)} />
-                        </div>
+                        <input value={to} onChange={(e) => setTo(e.target.value)} placeholder={`0x... or ${nameService ?? "address"}`} type="text" className="w-full border border-gray-300 rounded-lg p-3 pr-12 mt-1 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors" />
+                        <div className="absolute inset-y-0 right-3 flex items-center"><ScanQrCode onClick={() => setShowScanner(true)} /></div>
                     </div>
                 )}
             </div>
-            {showScanner && !isMultiTransfer && (
-                <QRScannerModal onClose={() => setShowScanner(false)} onScan={(addr: `0x${string}`) => setTo(addr)} />
-            )}
+            {showScanner && !isMultiTransfer && (<QRScannerModal onClose={() => setShowScanner(false)} onScan={(addr: `0x${string}`) => setTo(addr)} />)}
             <div className="mb-8">
                 <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-gray-700">{amountLabel}</label>
                     {isMultiTransfer && (
                         <div className="flex items-center gap-2">
-                            <button
-                                type="button"
-                                className={`h-9 px-4 text-xs font-semibold uppercase tracking-wide rounded-lg border transition ${
-                                    multiMode === "fixed"
-                                        ? "bg-emerald-500 text-white border-emerald-500"
-                                        : "bg-[#162638] text-gray-300 border-[#1f2f46]"
-                                }`}
-                                onClick={() => setMultiMode("fixed")}
-                                aria-pressed={multiMode === "fixed"}
-                            >
-                                Fixed Rate
-                            </button>
-                            <button
-                                type="button"
-                                className={`h-9 px-4 text-xs font-semibold uppercase tracking-wide rounded-lg border transition ${
-                                    multiMode === "variable"
-                                        ? "bg-emerald-500 text-white border-emerald-500"
-                                        : "bg-[#162638] text-gray-300 border-[#1f2f46]"
-                                }`}
-                                onClick={() => setMultiMode("variable")}
-                                aria-pressed={multiMode === "variable"}
-                            >
-                                Variable Rate
-                            </button>
+                            <button onClick={() => setMultiMode("fixed")} aria-pressed={multiMode === "fixed"} type="button" className={`h-9 px-4 text-xs font-semibold uppercase tracking-wide rounded-lg border transition ${multiMode === "fixed" ? "bg-emerald-500 text-white border-emerald-500" : "bg-[#162638] text-gray-300 border-[#1f2f46]"}`}>Fixed Rate</button>
+                            <button onClick={() => setMultiMode("variable")} aria-pressed={multiMode === "variable"} type="button" className={`h-9 px-4 text-xs font-semibold uppercase tracking-wide rounded-lg border transition ${multiMode === "variable" ? "bg-emerald-500 text-white border-emerald-500" : "bg-[#162638] text-gray-300 border-[#1f2f46]"}`}>Variable Rate</button>
                         </div>
                     )}
                 </div>
                 {isMultiTransfer && multiMode === "variable" ? (
                     <div className="flex flex-col gap-3">
                         <div className="flex gap-3">
-                            <input
-                                type="number"
-                                min="0"
-                                className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                                placeholder="Min amount"
-                                value={variableMinAmount}
-                                onChange={(e) => setVariableMinAmount(e.target.value)}
-                            />
-                            <input
-                                type="number"
-                                min="0"
-                                className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                                placeholder="Max amount"
-                                value={variableMaxAmount}
-                                onChange={(e) => setVariableMaxAmount(e.target.value)}
-                            />
+                            <input value={variableMinAmount} onChange={(e) => setVariableMinAmount(e.target.value)} placeholder="Min amount" type="number" min="0" className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors" />
+                            <input value={variableMaxAmount} onChange={(e) => setVariableMaxAmount(e.target.value)} placeholder="Max amount" type="number" min="0" className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors" />
                         </div>
-                        <p className="text-xs text-gray-500">
-                            Each address receives a random amount within the specified range.
-                        </p>
+                        <p className="text-xs text-gray-500">Each address receives a random amount within the specified range.</p>
                     </div>
                 ) : (
                     <div className="flex gap-3">
-                        <input
-                            type="number"
-                            min="0"
-                            className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                            placeholder="0.00"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                        />
-                        <Button
-                            className="px-6 py-3 Token font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect shadow-lg shadow-emerald-500/40 rounded-lg active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer"
-                            onClick={() => handleMax(10)}
-                        >
-                            MAX
-                        </Button>
+                        <input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" min="0" className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors" placeholder="0.00" />
+                        <Button onClick={() => handleMax(10)} className="px-6 py-3 Token font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect shadow-lg shadow-emerald-500/40 rounded-lg active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer">MAX</Button>
                     </div>
                 )}
             </div>
-            <Button className="w-full py-4 px-8 Token font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect shadow-lg shadow-emerald-500/40 rounded-lg active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" onClick={handleSend}>
-                {sendButtonText}
-            </Button>
+            <Button className="w-full py-4 px-8 Token font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect shadow-lg shadow-emerald-500/40 rounded-lg active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" onClick={handleSend}>{sendButtonText}</Button>
         </div>
     );
 }
