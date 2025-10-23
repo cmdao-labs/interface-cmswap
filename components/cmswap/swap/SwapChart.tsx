@@ -4,41 +4,12 @@ import { createChart, type IChartApi, type ISeriesApi, type Time, CandlestickSer
 import type { SwapChartCandle, SwapChartTimeframe, SwapFeeTier } from '@/components/cmswap/swap/hooks/useSwapChartData'
 import { SWAP_CHART_TIMEFRAMES } from '@/components/cmswap/swap/hooks/useSwapChartData'
 
-function toLocalTimeString(timestampSec: number): string {
-    const date = new Date(timestampSec * 1000);
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
-    const hh = String(date.getHours()).padStart(2, '0');
-    const min = String(date.getMinutes()).padStart(2, '0');
-    const ss = String(date.getSeconds()).padStart(2, '0');
-    const gmtOffset = -date.getTimezoneOffset() / 60;
-    const gmtString = gmtOffset === 0 ? 'GMT' : `GMT${gmtOffset >= 0 ? '+' : ''}${gmtOffset}`;
-    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss} ${gmtString}`;
-}
-
 function getTimestampFromTime(time: Time): number | null {
     if (typeof time === 'number') return time;
     if (typeof time === 'object' && 'timestamp' in time) return (time as { timestamp: number }).timestamp;
     return null;
 }
-
-type SwapChartProps = {
-    candles: SwapChartCandle[]
-    timeframe: SwapChartTimeframe
-    onTimeframeChange: (value: SwapChartTimeframe) => void
-    latestPrice: number | null | undefined
-    latestTimestamp: number | null | undefined
-    baseLabel: string
-    quoteLabel: string
-    pairLabel: string
-    isLoading: boolean
-    error: string | null
-    notFound: boolean
-    ready: boolean
-    onRefresh?: () => void
-    currentFeeTier: SwapFeeTier | null
-}
+type SwapChartProps = { candles: SwapChartCandle[]; timeframe: SwapChartTimeframe; onTimeframeChange: (value: SwapChartTimeframe) => void; latestPrice: number | null | undefined; latestTimestamp: number | null | undefined; baseLabel: string; quoteLabel: string; pairLabel: string; isLoading: boolean; error: string | null; notFound: boolean; ready: boolean; currentFeeTier: SwapFeeTier | null; }
 function formatValue(value: number | null | undefined): string {
     if (value === null || value === undefined) return '--'
     const abs = Math.abs(value)
@@ -59,23 +30,7 @@ function formatRelative(timestamp: number | null | undefined): string {
     const deltaDays = Math.floor(deltaHours / 24)
     return `${deltaDays}d ago`
 }
-const CHART_HEIGHT = 320
-const SwapChart: React.FC<SwapChartProps> = ({
-    candles,
-    timeframe,
-    onTimeframeChange,
-    latestPrice,
-    latestTimestamp,
-    baseLabel,
-    quoteLabel,
-    pairLabel,
-    isLoading,
-    error,
-    notFound,
-    ready,
-    onRefresh,
-    currentFeeTier,
-}) => {
+const SwapChart: React.FC<SwapChartProps> = ({candles, timeframe, onTimeframeChange, latestPrice, latestTimestamp, baseLabel, quoteLabel, pairLabel, isLoading, error, notFound, ready, currentFeeTier}) => {
     const containerRef = React.useRef<HTMLDivElement>(null)
     const chartRef = React.useRef<IChartApi | null>(null)
     const candleSeriesRef = React.useRef<ISeriesApi<'Candlestick'> | null>(null)
@@ -85,20 +40,11 @@ const SwapChart: React.FC<SwapChartProps> = ({
         if (!container) return
         const chart = createChart(container, {
             width: container.clientWidth,
-            height: CHART_HEIGHT,
-            layout: {
-                background: { color: '#0b0b0f' },
-                textColor: '#d3f7ef'
-            },
+            height: 320,
+            layout: {background: { color: '#0b0b0f' }, textColor: '#d3f7ef'},
             crosshair: { mode: 1 },
-            grid: {
-                vertLines: { color: 'rgba(180, 255, 244, 0.05)' },
-                horzLines: { color: 'rgba(180, 255, 244, 0.05)' }
-            },
-            rightPriceScale: {
-                borderVisible: false,
-                scaleMargins: { top: 0.2, bottom: 0.1 }
-            },
+            grid: {vertLines: { color: 'rgba(180, 255, 244, 0.05)' }, horzLines: { color: 'rgba(180, 255, 244, 0.05)' }},
+            rightPriceScale: {borderVisible: false, scaleMargins: { top: 0.2, bottom: 0.1 }},
             timeScale: {
                 borderVisible: false,
                 timeVisible: true,
@@ -106,8 +52,6 @@ const SwapChart: React.FC<SwapChartProps> = ({
                     const timestamp = getTimestampFromTime(time);
                     if (timestamp == null) return '';
                     const date = new Date(timestamp * 1000);
-
-                    // Format based on the tick mark type (year, month, day, etc.)
                     switch (tickMarkType) {
                         case 'year':
                             return date.getFullYear().toString();
@@ -133,12 +77,12 @@ const SwapChart: React.FC<SwapChartProps> = ({
                 timeFormatter: (time: Time) => {
                     const timestamp = getTimestampFromTime(time);
                     if (timestamp == null) return '';
-                        const date = new Date(timestamp * 1000);
-                        const hh = String(date.getHours()).padStart(2, '0');
-                        const mm = String(date.getMinutes()).padStart(2, '0');
-                        const dd = String(date.getDate()).padStart(2, '0');
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        return `${month}/${dd} ${hh}:${mm}`;
+                    const date = new Date(timestamp * 1000);
+                    const hh = String(date.getHours()).padStart(2, '0');
+                    const mm = String(date.getMinutes()).padStart(2, '0');
+                    const dd = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    return `${month}/${dd} ${hh}:${mm}`;
                 },
             },
         })
@@ -163,9 +107,7 @@ const SwapChart: React.FC<SwapChartProps> = ({
         if (!candleSeriesRef.current) return
         const candleData = candles.map((entry) => ({time: Math.floor(entry.time / 1000) as Time, open: entry.open, high: entry.high, low: entry.low, close: entry.close}))
         candleSeriesRef.current.setData(candleData)
-        if (chartRef.current && candleData.length > 0) {
-            chartRef.current.timeScale().setVisibleRange({from: candleData[0].time, to: candleData[candleData.length - 1].time})
-        }
+        if (chartRef.current && candleData.length > 0) chartRef.current.timeScale().setVisibleRange({from: candleData[0].time, to: candleData[candleData.length - 1].time});
     }, [candles])
     const statusMessage = React.useMemo(() => {
         if (!ready) return 'Select tokens to load the price chart.'
@@ -175,7 +117,6 @@ const SwapChart: React.FC<SwapChartProps> = ({
         }
         return null
     }, [ready, error, isLoading, candles.length, notFound])
-
     return (
         <div className="space-y-4 rounded-2xl border border-white/5 bg-slate-950/50 p-4 backdrop-blur">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -185,11 +126,7 @@ const SwapChart: React.FC<SwapChartProps> = ({
                         <span className="text-2xl font-semibold text-white">{formatValue(latestPrice)}</span>
                         <span className="text-xs text-emerald-300">{baseLabel} / {quoteLabel}</span>
                         <span className="text-xs text-white/40">{formatRelative(latestTimestamp)}</span>
-                        {currentFeeTier && (
-                            <span className="text-xs font-semibold text-cyan-400">
-                                {(currentFeeTier.fee / 10000).toFixed(2)}% fee
-                            </span>
-                        )}
+                        {currentFeeTier && <span className="text-xs font-semibold text-cyan-400">{(currentFeeTier.fee / 10000).toFixed(2)}% fee</span>}
                     </div>
                     <p className="text-xs text-white/40">{pairLabel}</p>
                 </div>
@@ -200,7 +137,6 @@ const SwapChart: React.FC<SwapChartProps> = ({
                     })}
                 </div>
             </div>
-
             <div className="relative h-[520px] rounded-xl border border-white/5 bg-slate-950/60">
                 <div ref={containerRef} className="absolute inset-0" />
                 {candles.length > 0 && (

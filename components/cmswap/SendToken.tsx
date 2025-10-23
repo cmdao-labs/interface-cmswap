@@ -44,14 +44,7 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
     const [uploadError, setUploadError] = useState<string | null>(null);
     const parseAddresses = (input: string) => input.split(/[\n,]+/).map((addr) => addr.trim()).filter(Boolean);
     const multiAddresses = React.useMemo(() => parseAddresses(multiInput), [multiInput]);
-    const amountLabel = isMultiTransfer ? 
-        multiMode === "variable" ? "Amount Range (per address)" : "Amount per Address" : 
-        "Amount to Send";
-    const formattedSingleAmount = amount ? Number(amount).toLocaleString() : "0";
-    const multiCountLabel = `${multiAddresses.length} ${multiAddresses.length === 1 ? "Address" : "Addresses"}`;
-    const sendButtonText = isMultiTransfer ? 
-        multiMode === "variable" ? `Send Variable Amounts to ${multiCountLabel}` : `Send ${amount || "0"} ${token.name} to ${multiCountLabel}` : 
-        `Send ${formattedSingleAmount} ${token.name}`;
+    const amountLabel = isMultiTransfer ?  multiMode === "variable" ? "Amount Range (per address)" : "Amount per Address" : "Amount to Send";
     async function resolveNameIfNeeded(input: string) {
         if (!nameService) return input;
         try {
@@ -227,7 +220,6 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
                     </div>
                 )}
             </div>
-
             <div className="mb-6">
                 <div className="flex items-center justify-between gap-4 mb-2">
                     <label className="block text-sm font-medium text-gray-700">{isMultiTransfer ? "Recipient Addresses" : "Recipient Address"}</label>
@@ -259,7 +251,7 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
                     </div>
                 ) : (
                     <div className="relative">
-                        <input value={to} onChange={(e) => setTo(e.target.value)} placeholder={`0x... or ${nameService ?? "address"}`} type="text" className="w-full border border-gray-300 rounded-lg p-3 pr-12 mt-1 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors" />
+                        <input value={to} onChange={(e) => setTo(e.target.value)} placeholder={`0x... or ${nameService ?? "address"}`} type="text" className="w-full border border-gray-300 rounded-lg p-3 pr-12 mt-1 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors text-base" />
                         <div className="absolute inset-y-0 right-3 flex items-center"><ScanQrCode onClick={() => setShowScanner(true)} /></div>
                     </div>
                 )}
@@ -277,20 +269,20 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
                 </div>
                 {isMultiTransfer && multiMode === "variable" ? (
                     <div className="flex flex-col gap-3">
-                        <div className="flex gap-3">
-                            <input value={variableMinAmount} onChange={(e) => setVariableMinAmount(e.target.value)} placeholder="Min amount" type="number" min="0" className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors" />
-                            <input value={variableMaxAmount} onChange={(e) => setVariableMaxAmount(e.target.value)} placeholder="Max amount" type="number" min="0" className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors" />
+                        <div className="grid grid-cols-2 gap-3">
+                            <input value={variableMinAmount} onChange={(e) => setVariableMinAmount(e.target.value)} placeholder="Min amount" type="number" min="0" className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors text-base" />
+                            <input value={variableMaxAmount} onChange={(e) => setVariableMaxAmount(e.target.value)} placeholder="Max amount" type="number" min="0" className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors text-base" />
                         </div>
                         <p className="text-xs text-gray-500">Each address receives a random amount within the specified range.</p>
                     </div>
                 ) : (
-                    <div className="flex gap-3">
-                        <input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" min="0" className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors" placeholder="0.00" />
-                        <Button onClick={() => handleMax(10)} className="px-6 py-3 Token font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect shadow-lg shadow-emerald-500/40 rounded-lg active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer">MAX</Button>
+                    <div className="grid grid-cols-[2fr_1fr] gap-3">
+                        <input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" min="0" className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors text-base" placeholder="0.00" />
+                        <Button onClick={() => handleMax(10)} className="p-6 Token font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect shadow-lg shadow-emerald-500/40 rounded-lg active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer">MAX</Button>
                     </div>
                 )}
             </div>
-            <Button className="w-full py-4 px-8 Token font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect shadow-lg shadow-emerald-500/40 rounded-lg active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" onClick={handleSend}>{sendButtonText}</Button>
+            <Button className="w-full py-4 px-8 Token font-bold uppercase tracking-wider text-white relative overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 hover:scale-[1.02] hover:custom-gradient hover:custom-text-shadow hover-effect shadow-lg shadow-emerald-500/40 rounded-lg active:translate-y-[-1px] active:scale-[1.01] active:duration-100 cursor-pointer" onClick={handleSend}>Send</Button>
         </div>
     );
 }

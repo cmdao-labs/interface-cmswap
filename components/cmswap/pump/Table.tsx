@@ -5,12 +5,12 @@ import GridLayout, { CoinCardData } from "./GridLayout";
 const FALLBACK_LOGO = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%230a111f'/><path d='M20 34c0-7.732 6.268-14 14-14s14 6.268 14 14-6.268 14-14 14-14-6.268-14-14Zm14-10a10 10 0 1 0 10 10 10.011 10.011 0 0 0-10-10Zm1 6v5.586l3.707 3.707-1.414 1.414L33 37.414V30h2Z' fill='%235965f7'/></svg>";
 const RELATIVE_TIME_FORMAT = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 type NetworkKey = "kubtestnet";
-type NetworkConfig = { key: NetworkKey; baseSymbol: string; chainTag: string; queryChain: string; queryMode: "lite" | "pro"; };
+type NetworkConfig = { key: NetworkKey; baseSymbol: string; chainTag: string; queryChain: string; queryMode: "lite" | "pro"; chainId: number; cmswapFactoryAddress: string; };
 type ListingMetrics = { id: string; address: `0x${string}`; symbol: string; name: string; description?: string; logoUrl: string; createdAt?: number; creator?: string; price: number; marketCap: number; searchTerms: string; };
 type KubTestnetContext = { network: NetworkConfig };
 function resolveNetworkConfig(mode: string): NetworkConfig {
     const normalizedMode = (mode || "pro").toLowerCase() as "lite" | "pro";
-    return {key: "kubtestnet", baseSymbol: "tKUB", chainTag: "tKUB", queryChain: "kubtestnet", queryMode: normalizedMode,};
+    return {key: "kubtestnet", baseSymbol: "tKUB", chainTag: "tKUB", queryChain: "kubtestnet", queryMode: normalizedMode, chainId: 25925, cmswapFactoryAddress: "0x01837156518e60362048e78d025a419C51346f55"};
 }
 async function fetchSupabaseListings({ network }: KubTestnetContext): Promise<ListingMetrics[]> {
     const supabase = getServiceSupabase();
@@ -21,6 +21,8 @@ async function fetchSupabaseListings({ network }: KubTestnetContext): Promise<Li
         const page = await supabase
             .from('tokens')
             .select('address, symbol, name, description, logo, created_time, creator')
+            .eq('chain_id', network.chainId)
+            .not('creator', 'is', null)
             .order('created_time', { ascending: false })
             .range(offset, offset + PAGE_SIZE - 1);
         const rows = (page.data || []) as typeof tokens;
@@ -40,6 +42,7 @@ async function fetchSupabaseListings({ network }: KubTestnetContext): Promise<Li
             const { data, error } = await supabase
                 .from('swaps')
                 .select('token_address, price, timestamp')
+                .eq('chain_id', network.chainId)
                 .in('token_address', chunk)
                 .order('timestamp', { ascending: false })
                 .range(start, start + SWAPS_PAGE - 1);

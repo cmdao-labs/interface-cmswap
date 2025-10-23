@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServiceSupabase } from '@/lib/supabaseServer'
 
 function nowMs() { return Date.now() }
-
 function parseChainId(value: string | null): number | null {
     if (!value) return null
     const parsed = Number.parseInt(value, 10)
@@ -27,7 +26,6 @@ export async function GET(req: NextRequest) {
     try {
         const supabase = getServiceSupabase()
         const cutoffMs = nowMs() - hours * 60 * 60 * 1000
-        const cutoffSec = Math.floor(cutoffMs / 1000)
         const { data: tokenRow } = await supabase
             .from('tokens')
             .select('*')
@@ -92,7 +90,6 @@ export async function GET(req: NextRequest) {
                 .gte('timestamp', cutoffMs)
                 .order('timestamp', { ascending: true })
                 .range(graphOffset, graphOffset + CHART_PAGE_SIZE - 1)
-
             const pageData = graphRes.data || []
             graphData.push(...pageData)
             graphOffset += CHART_PAGE_SIZE
@@ -102,11 +99,7 @@ export async function GET(req: NextRequest) {
         const rows = graphData
         const normalizeTs = (ts: number) => (ts > 1e12 ? ts : ts * 1000);
         const graph = rows
-            .map((r: any) => ({
-                time: normalizeTs(Number(r?.timestamp || 0)),
-                price: Number(r?.price || 0),
-                volume: Number(r?.volume_native || 0),
-            }))
+            .map((r: any) => ({time: normalizeTs(Number(r?.timestamp || 0)), price: Number(r?.price || 0), volume: Number(r?.volume_native || 0)}))
             .filter((p: any) => Number.isFinite(p.time) && Number.isFinite(p.price) && p.time >= cutoffMs)
             .sort((a: any, b: any) => a.time - b.time)
         const actRes = await supabase
@@ -116,14 +109,7 @@ export async function GET(req: NextRequest) {
             .eq('token_address', token)
             .order('timestamp', { ascending: false })
             .limit(activityLimit)
-        const activity = (actRes.data || []).map((r: any) => ({
-            action: r.is_buy ? 'buy' : 'sell',
-            nativeValue: Number(r.volume_native || 0),
-            value: Number(r.volume_token || 0),
-            from: r.sender,
-            hash: r.tx_hash,
-            timestamp: normalizeTs(Number(r.timestamp || 0)),
-        }))
+        const activity = (actRes.data || []).map((r: any) => ({action: r.is_buy ? 'buy' : 'sell', nativeValue: Number(r.volume_native || 0), value: Number(r.volume_token || 0), from: r.sender, hash: r.tx_hash, timestamp: normalizeTs(Number(r.timestamp || 0))}))
         const holdersRes = await supabase.rpc('holders_for_token', { chain_i: chainId, token, limit_i: holdersLimit, offset_i: 0 })
         const holders = (holdersRes.data || []).map((h: any) => ({ addr: h.holder, value: Number(h.balance || 0) }))
         const PAGE_SIZE = 1000
@@ -175,15 +161,7 @@ export async function GET(req: NextRequest) {
                 return b.lastActive - a.lastActive
             })
             .slice(0, tradersLimit)
-        return NextResponse.json({
-            token: tokenRow,
-            header: {price: lastPrice, mcap, progress, athPrice, changeAbs, changePct},
-            graph,
-            activity,
-            holders,
-            traders,
-            chainId,
-        })
+        return NextResponse.json({token: tokenRow, header: {price: lastPrice, mcap, progress, athPrice, changeAbs, changePct}, graph, activity, holders, traders, chainId})
     } catch (e: any) {
         return NextResponse.json({ error: e?.message || 'internal error' }, { status: 500 })
     }

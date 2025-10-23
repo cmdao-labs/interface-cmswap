@@ -9,14 +9,9 @@ import { useAccount } from 'wagmi'
 export default function Headbar() {
     const queryClient = new QueryClient()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
-    const toggleMenu = () => {
-        setIsMenuOpen(!isMenuOpen)
-    }
-    const handleLinkClick = () => {
-        setIsMenuOpen(false)
-    }
+    const toggleMenu = () => {setIsMenuOpen(!isMenuOpen)}
+    const handleLinkClick = () => {setIsMenuOpen(false)}
     const { chainId,address } = useAccount()
-
     return (
         <QueryClientProvider client={queryClient}> 
             <header className='h-[85px] w-full lg:w-full fixed backdrop-blur-lg text-sm text-white z-999'>
@@ -32,11 +27,9 @@ export default function Headbar() {
                                         <Link href="/bridge" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
                                             <Button variant="ghost" className="cursor-pointer">Bridge</Button>
                                         </Link>
-                                        {/* {typeof chainId === 'number' && [25925].includes(chainId) && ( */}
-                                            <Link href="/pump" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                                <Button variant="ghost" className="cursor-pointer">Pump</Button>
-                                            </Link>
-                                        {/* )} */}
+                                        <Link href="/pump" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
+                                            <Button variant="ghost" className="cursor-pointer">Pump</Button>
+                                        </Link>
                                         {typeof chainId === 'number' && [25925].includes(chainId) && address === "0xCA811301C650C92fD45ed32A81C0B757C61595b6" && (
                                             <Link href="/earn" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
                                                 <Button variant="ghost" className="cursor-pointer">Earn</Button>
@@ -45,22 +38,10 @@ export default function Headbar() {
                                         <Link href="/liquidity-pool" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
                                             <Button variant="ghost" className="cursor-pointer">Liquidity</Button>
                                         </Link>
-                                        {chainId === 2 && (
-                                            <>
-                                                <Link href="/referral" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                                <Button variant="ghost" className="cursor-pointer">Referral Program</Button>
-                                                </Link>
-                                            </>
-                                        )}
                                 </div>
                             </div>
                             <div className="md:hidden ml-4 flex items-center">
-                                <button 
-                                    type="button"
-                                    className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                                    aria-expanded="false"
-                                    onClick={toggleMenu}
-                                >
+                                <button  onClick={toggleMenu} aria-expanded="false" type="button" className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
                                     <span className="sr-only">Open main menu</span>
                                     {isMenuOpen ? <X className="block h-6 w-6" aria-hidden="true" /> : <Menu className="block h-6 w-6" aria-hidden="true" />}
                                 </button>

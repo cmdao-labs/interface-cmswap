@@ -1,62 +1,9 @@
 'use client'
-
 import * as React from 'react'
-
-export type SwapChartTimeframe = '15s' | '1m' | '5m' | '15m' | '1h' | '4h' | '1d'
-
-export const SWAP_CHART_TIMEFRAMES: readonly { label: string; value: SwapChartTimeframe }[] = [
-    { label: '15s', value: '15s' },
-    { label: '1m', value: '1m' },
-    { label: '5m', value: '5m' },
-    { label: '15m', value: '15m' },
-    { label: '1h', value: '1h' },
-    { label: '4h', value: '4h' },
-    { label: '1d', value: '1d' },
-] as const
-
-export type SwapFeeTier = {
-    fee: number
-    feeBps: number
-    marketId: string
-    isActive: boolean
-    latestTimestamp?: number | null
-}
-
-export type SwapMarket = {
-    marketId: string
-    token0: string
-    token1: string
-    decimals0: number
-    decimals1: number
-    pairAddress: string
-    dex: string
-}
-
 const DEFAULT_LIMIT = 500
 const POLL_FAST_MS = 10000
 const POLL_SLOW_MS = 30000
-
-export type SwapChartCandle = {
-    time: number
-    open: number
-    high: number
-    low: number
-    close: number
-    volumeBase: number
-    volumeQuote: number
-    trades: number
-}
-
-type SwapChartDataState = {
-    candles: SwapChartCandle[]
-    latest: { price: number | null; timestamp: number | null } | null
-    isLoading: boolean
-    error: string | null
-    notFound: boolean
-    market: SwapMarket | null
-    currentFeeTier: SwapFeeTier | null
-}
-
+type SwapChartDataState = { candles: SwapChartCandle[]; latest: { price: number | null; timestamp: number | null } | null; isLoading: boolean; error: string | null; notFound: boolean; market: SwapMarket | null; currentFeeTier: SwapFeeTier | null; }
 type UseSwapChartDataArgs = {
     baseToken?: string | null
     quoteToken?: string | null
@@ -66,102 +13,49 @@ type UseSwapChartDataArgs = {
     chainId?: number
     selectedFeeTier?: number | null
 }
-
 function toNumber(value: unknown): number | null {
     if (value === null || value === undefined) return null
     const num = Number(value)
     return Number.isFinite(num) ? num : null
 }
 
+export type SwapChartTimeframe = '15s' | '1m' | '5m' | '15m' | '1h' | '4h' | '1d'
+export const SWAP_CHART_TIMEFRAMES: readonly { label: string; value: SwapChartTimeframe }[] = [{ label: '15s', value: '15s' }, { label: '1m', value: '1m' }, { label: '5m', value: '5m' }, { label: '15m', value: '15m' }, { label: '1h', value: '1h' }, { label: '4h', value: '4h' }, { label: '1d', value: '1d' }] as const
+export type SwapFeeTier = { fee: number; feeBps: number; marketId: string; isActive: boolean; latestTimestamp?: number | null; }
+export type SwapMarket = { marketId: string; token0: string; token1: string; decimals0: number; decimals1: number; pairAddress: string; dex: string; }
+export type SwapChartCandle = { time: number; open: number; high: number; low: number; close: number; volumeBase: number; volumeQuote: number; trades: number; }
 export function useSwapChartData(options: UseSwapChartDataArgs) {
     const { baseToken, quoteToken, timeframe, enabled = true, limit = DEFAULT_LIMIT, chainId, selectedFeeTier } = options
-    const [state, setState] = React.useState<SwapChartDataState>({
-        candles: [],
-        latest: null,
-        isLoading: false,
-        error: null,
-        notFound: false,
-        market: null,
-        currentFeeTier: null,
-    })
+    const [state, setState] = React.useState<SwapChartDataState>({candles: [], latest: null, isLoading: false, error: null, notFound: false, market: null, currentFeeTier: null})
     const [refreshTick, setRefreshTick] = React.useState(0)
-
-    const refresh = React.useCallback(() => {
-        setRefreshTick((tick) => tick + 1)
-    }, [])
-
+    const refresh = React.useCallback(() => {setRefreshTick((tick) => tick + 1)}, [])
     React.useEffect(() => {
         if (!enabled || !baseToken || !quoteToken || typeof chainId !== 'number' || !Number.isFinite(chainId) || chainId <= 0) {
-            setState((prev) => ({
-                ...prev,
-                candles: [],
-                latest: null,
-                isLoading: false,
-                error: null,
-                notFound: false,
-                market: null,
-                currentFeeTier: null,
-            }))
+            setState((prev) => ({...prev, candles: [], latest: null, isLoading: false, error: null, notFound: false, market: null, currentFeeTier: null}))
             return
         }
         let active = true
         const controller = new AbortController()
-        const searchParams = new URLSearchParams({
-            baseToken,
-            quoteToken,
-            timeframe,
-            limit: String(limit),
-        })
+        const searchParams = new URLSearchParams({baseToken, quoteToken, timeframe, limit: String(limit)})
         searchParams.set('chainId', String(chainId))
-        if (selectedFeeTier) {
-            searchParams.set('feeTier', String(selectedFeeTier))
-        }
+        if (selectedFeeTier) searchParams.set('feeTier', String(selectedFeeTier));
         const load = async () => {
             try {
                 if (!active) return
-                console.log('🚀 useSwapChartData - Starting data load')
-                console.log('  Request URL:', `/api/swap/candles?${searchParams.toString()}`)
-                console.log('  baseToken:', baseToken)
-                console.log('  quoteToken:', quoteToken)
-                console.log('  timeframe:', timeframe)
-                console.log('  chainId:', chainId)
-                console.log('  selectedFeeTier:', selectedFeeTier)
-
-                setState((prev) => ({
-                    ...prev,
-                    isLoading: true,
-                    error: null,
-                    notFound: false,
-                }))
-                const res = await fetch(`/api/swap/candles?${searchParams.toString()}`, {
-                    cache: 'no-store',
-                    signal: controller.signal,
-                })
+                setState((prev) => ({...prev, isLoading: true, error: null, notFound: false}))
+                const res = await fetch(`/api/swap/candles?${searchParams.toString()}`, {cache: 'no-store', signal: controller.signal})
                 if (!res.ok) {
                     if (res.status === 404) {
-                        console.log('❌ useSwapChartData - 404 Not Found')
                         if (!active) return
-                        setState({
-                            candles: [],
-                            latest: null,
-                            isLoading: false,
-                            error: null,
-                            notFound: true,
-                            market: null,
-                            currentFeeTier: null,
-                        })
+                        setState({candles: [], latest: null, isLoading: false, error: null, notFound: true, market: null, currentFeeTier: null})
                         return
                     }
                     const message = await res.text()
                     throw new Error(message || `Failed to load chart data (${res.status})`)
                 }
                 const payload = await res.json()
-                console.log('📦 useSwapChartData - Raw API response:', payload)
                 if (!active) return
                 const raw = Array.isArray(payload?.candles) ? payload.candles : []
-                console.log('🔥 useSwapChartData - Raw candle data:', raw)
-                console.log('  Number of raw candles:', raw.length)
-
                 const candles: SwapChartCandle[] = raw
                     .map((item: any, index: number) => {
                         const time = toNumber(item?.time ?? item?.bucket_start)
@@ -169,93 +63,26 @@ export function useSwapChartData(options: UseSwapChartDataArgs) {
                         const high = toNumber(item?.high)
                         const low = toNumber(item?.low)
                         const close = toNumber(item?.close)
-
-                        if (index < 3) {
-                            console.log(`  Raw candle ${index}:`, item)
-                            console.log(`  Parsed candle ${index}:`, { time, open, high, low, close })
-                        }
-
-                        if (
-                            time === null ||
-                            open === null ||
-                            high === null ||
-                            low === null ||
-                            close === null
-                        ) {
-                            console.log(`  ❌ Invalid candle ${index} - filtered out`)
+                        if (time === null || open === null || high === null || low === null || close === null) {
                             return null
                         }
-                        return {
-                            time,
-                            open,
-                            high,
-                            low,
-                            close,
-                            volumeBase: toNumber(item?.volumeBase ?? item?.volume0) ?? 0,
-                            volumeQuote: toNumber(item?.volumeQuote ?? item?.volume1) ?? 0,
-                            trades: Number.isFinite(Number(item?.trades)) ? Number(item.trades) : 0,
-                        }
+                        return {time, open, high, low, close, volumeBase: toNumber(item?.volumeBase ?? item?.volume0) ?? 0, volumeQuote: toNumber(item?.volumeQuote ?? item?.volume1) ?? 0, trades: Number.isFinite(Number(item?.trades)) ? Number(item.trades) : 0}
                     })
                     .filter((entry: any): entry is SwapChartCandle => Boolean(entry))
-
-                console.log('✅ useSwapChartData - Processed candles:', candles.length)
-                if (candles.length > 0) {
-                    console.log('  First candle:', candles[0])
-                    console.log('  Last candle:', candles[candles.length - 1])
-                }
                 const latestPayload = payload?.latest
-                console.log('⏰ useSwapChartData - Latest payload:', latestPayload)
-
-                const latest = latestPayload
-                    ? {
-                        price: toNumber(latestPayload.price),
-                        timestamp: toNumber(latestPayload.timestamp),
-                    }
-                    : null
-
-                console.log('📊 useSwapChartData - Processed latest:', latest)
-
-                // Parse market information
+                const latest = latestPayload ? {price: toNumber(latestPayload.price), timestamp: toNumber(latestPayload.timestamp)} : null
                 const marketPayload = payload?.market
-                const market: SwapMarket | null = marketPayload ? {
-                    marketId: marketPayload.marketId,
-                    token0: marketPayload.token0,
-                    token1: marketPayload.token1,
-                    decimals0: marketPayload.decimals0,
-                    decimals1: marketPayload.decimals1,
-                    pairAddress: marketPayload.pairAddress,
-                    dex: marketPayload.dex,
-                } : null
-
-                // Parse current fee tier
+                const market: SwapMarket | null = marketPayload ? 
+                    {marketId: marketPayload.marketId, token0: marketPayload.token0, token1: marketPayload.token1, decimals0: marketPayload.decimals0, decimals1: marketPayload.decimals1, pairAddress: marketPayload.pairAddress, dex: marketPayload.dex} : 
+                    null
                 const currentFeeTierPayload = payload?.currentFeeTier
-                const currentFeeTier: SwapFeeTier | null = currentFeeTierPayload ? {
-                    fee: currentFeeTierPayload.fee,
-                    feeBps: currentFeeTierPayload.feeBps,
-                    marketId: currentFeeTierPayload.marketId,
-                    isActive: currentFeeTierPayload.isActive,
-                    latestTimestamp: currentFeeTierPayload.latestTimestamp ? toNumber(currentFeeTierPayload.latestTimestamp) : undefined,
-                } : null
-                setState({
-                    candles,
-                    latest,
-                    isLoading: false,
-                    error: null,
-                    notFound: false,
-                    market,
-                    currentFeeTier,
-                })
+                const currentFeeTier: SwapFeeTier | null = currentFeeTierPayload ? 
+                    {fee: currentFeeTierPayload.fee, feeBps: currentFeeTierPayload.feeBps, marketId: currentFeeTierPayload.marketId, isActive: currentFeeTierPayload.isActive, latestTimestamp: currentFeeTierPayload.latestTimestamp ? toNumber(currentFeeTierPayload.latestTimestamp) : undefined} : 
+                    null
+                setState({candles, latest, isLoading: false, error: null, notFound: false, market, currentFeeTier})
             } catch (err: any) {
                 if (!active || controller.signal.aborted) return
-                setState({
-                    candles: [],
-                    latest: null,
-                    isLoading: false,
-                    error: err?.message || 'Failed to load chart data',
-                    notFound: false,
-                    market: null,
-                    currentFeeTier: null,
-                })
+                setState({candles: [], latest: null, isLoading: false, error: err?.message || 'Failed to load chart data', notFound: false, market: null, currentFeeTier: null})
             }
         }
         load()
@@ -269,9 +96,5 @@ export function useSwapChartData(options: UseSwapChartDataArgs) {
             clearInterval(interval)
         }
     }, [baseToken, quoteToken, timeframe, enabled, limit, refreshTick, chainId, selectedFeeTier])
-
-    return {
-        ...state,
-        refresh,
-    }
+    return {...state, refresh}
 }
