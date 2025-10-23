@@ -1,10 +1,44 @@
 'use client'
 import * as React from 'react'
 import { createChart, type IChartApi, type ISeriesApi, type Time, CandlestickSeries } from 'lightweight-charts'
-import type { SwapChartCandle, SwapChartTimeframe } from '@/components/cmswap/swap/hooks/useSwapChartData'
+import type { SwapChartCandle, SwapChartTimeframe, SwapFeeTier } from '@/components/cmswap/swap/hooks/useSwapChartData'
 import { SWAP_CHART_TIMEFRAMES } from '@/components/cmswap/swap/hooks/useSwapChartData'
 
-type SwapChartProps = { candles: SwapChartCandle[]; timeframe: SwapChartTimeframe; onTimeframeChange: (value: SwapChartTimeframe) => void; latestPrice: number | null | undefined; latestTimestamp: number | null | undefined; baseLabel: string; quoteLabel: string; pairLabel: string; isLoading: boolean; error: string | null; notFound: boolean; ready: boolean; onRefresh?: () => void; }
+function toLocalTimeString(timestampSec: number): string {
+    const date = new Date(timestampSec * 1000);
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const hh = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    const ss = String(date.getSeconds()).padStart(2, '0');
+    const gmtOffset = -date.getTimezoneOffset() / 60;
+    const gmtString = gmtOffset === 0 ? 'GMT' : `GMT${gmtOffset >= 0 ? '+' : ''}${gmtOffset}`;
+    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss} ${gmtString}`;
+}
+
+function getTimestampFromTime(time: Time): number | null {
+    if (typeof time === 'number') return time;
+    if (typeof time === 'object' && 'timestamp' in time) return (time as { timestamp: number }).timestamp;
+    return null;
+}
+
+type SwapChartProps = {
+    candles: SwapChartCandle[]
+    timeframe: SwapChartTimeframe
+    onTimeframeChange: (value: SwapChartTimeframe) => void
+    latestPrice: number | null | undefined
+    latestTimestamp: number | null | undefined
+    baseLabel: string
+    quoteLabel: string
+    pairLabel: string
+    isLoading: boolean
+    error: string | null
+    notFound: boolean
+    ready: boolean
+    onRefresh?: () => void
+    currentFeeTier: SwapFeeTier | null
+}
 function formatValue(value: number | null | undefined): string {
     if (value === null || value === undefined) return '--'
     const abs = Math.abs(value)
@@ -26,7 +60,22 @@ function formatRelative(timestamp: number | null | undefined): string {
     return `${deltaDays}d ago`
 }
 const CHART_HEIGHT = 320
-const SwapChart: React.FC<SwapChartProps> = ({candles, timeframe, onTimeframeChange, latestPrice, latestTimestamp, baseLabel, quoteLabel, pairLabel, isLoading, error, notFound, ready, onRefresh,}) => {
+const SwapChart: React.FC<SwapChartProps> = ({
+    candles,
+    timeframe,
+    onTimeframeChange,
+    latestPrice,
+    latestTimestamp,
+    baseLabel,
+    quoteLabel,
+    pairLabel,
+    isLoading,
+    error,
+    notFound,
+    ready,
+    onRefresh,
+    currentFeeTier,
+}) => {
     const containerRef = React.useRef<HTMLDivElement>(null)
     const chartRef = React.useRef<IChartApi | null>(null)
     const candleSeriesRef = React.useRef<ISeriesApi<'Candlestick'> | null>(null)
@@ -34,7 +83,65 @@ const SwapChart: React.FC<SwapChartProps> = ({candles, timeframe, onTimeframeCha
     React.useEffect(() => {
         const container = containerRef.current
         if (!container) return
-        const chart = createChart(container, {width: container.clientWidth, height: CHART_HEIGHT, layout: {background: { color: '#0b0b0f' }, textColor: '#d3f7ef'}, crosshair: { mode: 1 }, grid: {vertLines: { color: 'rgba(180, 255, 244, 0.05)' }, horzLines: { color: 'rgba(180, 255, 244, 0.05)' }}, rightPriceScale: {borderVisible: false, scaleMargins: { top: 0.2, bottom: 0.1 }}, timeScale: {borderVisible: false, timeVisible: true}})
+        const chart = createChart(container, {
+            width: container.clientWidth,
+            height: CHART_HEIGHT,
+            layout: {
+                background: { color: '#0b0b0f' },
+                textColor: '#d3f7ef'
+            },
+            crosshair: { mode: 1 },
+            grid: {
+                vertLines: { color: 'rgba(180, 255, 244, 0.05)' },
+                horzLines: { color: 'rgba(180, 255, 244, 0.05)' }
+            },
+            rightPriceScale: {
+                borderVisible: false,
+                scaleMargins: { top: 0.2, bottom: 0.1 }
+            },
+            timeScale: {
+                borderVisible: false,
+                timeVisible: true,
+                tickMarkFormatter: (time: Time, tickMarkType: string, locale: string) => {
+                    const timestamp = getTimestampFromTime(time);
+                    if (timestamp == null) return '';
+                    const date = new Date(timestamp * 1000);
+
+                    // Format based on the tick mark type (year, month, day, etc.)
+                    switch (tickMarkType) {
+                        case 'year':
+                            return date.getFullYear().toString();
+                        case 'month':
+                            return `${date.getMonth() + 1}/${date.getFullYear()}`;
+                        case 'dayOfMonth':
+                            return `${date.getMonth() + 1}/${date.getDate()}`;
+                        case 'time':
+                            const hh = String(date.getHours()).padStart(2, '0');
+                            const mm = String(date.getMinutes()).padStart(2, '0');
+                            return `${hh}:${mm}`;
+                        case 'timeWithSeconds':
+                            const hh2 = String(date.getHours()).padStart(2, '0');
+                            const mm2 = String(date.getMinutes()).padStart(2, '0');
+                            const ss = String(date.getSeconds()).padStart(2, '0');
+                            return `${hh2}:${mm2}:${ss}`;
+                        default:
+                            return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+                    }
+                }
+            },
+            localization: {
+                timeFormatter: (time: Time) => {
+                    const timestamp = getTimestampFromTime(time);
+                    if (timestamp == null) return '';
+                        const date = new Date(timestamp * 1000);
+                        const hh = String(date.getHours()).padStart(2, '0');
+                        const mm = String(date.getMinutes()).padStart(2, '0');
+                        const dd = String(date.getDate()).padStart(2, '0');
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        return `${month}/${dd} ${hh}:${mm}`;
+                },
+            },
+        })
         const candleSeries = chart.addSeries(CandlestickSeries, {upColor: '#31fca5', downColor: '#ff5f7a', borderUpColor: '#31fca5', borderDownColor: '#ff5f7a', wickUpColor: '#31fca5', wickDownColor: '#ff5f7a'})
         chartRef.current = chart
         candleSeriesRef.current = candleSeries
@@ -78,6 +185,11 @@ const SwapChart: React.FC<SwapChartProps> = ({candles, timeframe, onTimeframeCha
                         <span className="text-2xl font-semibold text-white">{formatValue(latestPrice)}</span>
                         <span className="text-xs text-emerald-300">{baseLabel} / {quoteLabel}</span>
                         <span className="text-xs text-white/40">{formatRelative(latestTimestamp)}</span>
+                        {currentFeeTier && (
+                            <span className="text-xs font-semibold text-cyan-400">
+                                {(currentFeeTier.fee / 10000).toFixed(2)}% fee
+                            </span>
+                        )}
                     </div>
                     <p className="text-xs text-white/40">{pairLabel}</p>
                 </div>
@@ -88,15 +200,18 @@ const SwapChart: React.FC<SwapChartProps> = ({candles, timeframe, onTimeframeCha
                     })}
                 </div>
             </div>
+
             <div className="relative h-[520px] rounded-xl border border-white/5 bg-slate-950/60">
                 <div ref={containerRef} className="absolute inset-0" />
                 {candles.length > 0 && (
                     <div className="pointer-events-none absolute left-2 top-2 z-10 rounded bg-black/30 px-2 py-1 text-[11px] text-white/80">
-                        <span className="mr-2 opacity-70">OHLC</span>
-                        <span className="mr-2">O {formatValue(candles[candles.length - 1]?.open)}</span>
-                        <span className="mr-2">H {formatValue(candles[candles.length - 1]?.high)}</span>
-                        <span className="mr-2">L {formatValue(candles[candles.length - 1]?.low)}</span>
-                        <span>C {formatValue(candles[candles.length - 1]?.close)}</span>
+                        <div>
+                            <span className="mr-2 opacity-70">OHLC</span>
+                            <span className="mr-2">O {formatValue(candles[candles.length - 1]?.open)}</span>
+                            <span className="mr-2">H {formatValue(candles[candles.length - 1]?.high)}</span>
+                            <span className="mr-2">L {formatValue(candles[candles.length - 1]?.low)}</span>
+                            <span>C {formatValue(candles[candles.length - 1]?.close)}</span>
+                        </div>
                     </div>
                 )}
                 {isLoading && <div className="absolute inset-0 flex items-center justify-center bg-slate-950/60 text-sm text-white/60">Loading chart…</div>}

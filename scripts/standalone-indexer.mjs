@@ -111,14 +111,6 @@ const FACTORY_FUNC_ABI = [
 ]
 if (!SUPABASE_URL || !SUPABASE_KEY) {console.error('Missing SUPABASE configs'); process.exit(1);}
 const client = createPublicClient({ chain: bitkubTestnet, transport: http(RPC_URL) })
-const limiter = new RateLimiter({ rps: INDEXER_RPS, maxConcurrency: INDEXER_MAX_CONCURRENCY })
-const levels = { error: 0, warn: 1, info: 2, debug: 3 }
-function log(level, msg, meta) {
-    if ((levels[level] ?? 2) > (levels[LOG_LEVEL] ?? 2)) return
-    const ts = new Date().toISOString()
-    if (meta !== undefined) console.log(`[${ts}] [${level.toUpperCase()}] ${msg}`, meta)
-    else console.log(`[${ts}] [${level.toUpperCase()}] ${msg}`)
-}
 class RateLimiter {
     constructor({ rps, maxConcurrency }) {
         this.capacity = rps
@@ -162,6 +154,14 @@ class RateLimiter {
             task()
         }
     }
+}
+const limiter = new RateLimiter({ rps: INDEXER_RPS, maxConcurrency: INDEXER_MAX_CONCURRENCY })
+const levels = { error: 0, warn: 1, info: 2, debug: 3 }
+function log(level, msg, meta) {
+    if ((levels[level] ?? 2) > (levels[LOG_LEVEL] ?? 2)) return
+    const ts = new Date().toISOString()
+    if (meta !== undefined) console.log(`[${ts}] [${level.toUpperCase()}] ${msg}`, meta)
+    else console.log(`[${ts}] [${level.toUpperCase()}] ${msg}`)
 }
 function isRetriableRpcError(err) {
     const msg = String(err?.message || err || '')
@@ -271,7 +271,7 @@ function updateCandleAccumulator(map, marketId, timeframeSeconds, bucketMs, pric
     if (price != null) {
         if (existing.high == null || price > existing.high) existing.high = price
         if (existing.low == null || price < existing.low) existing.low = price
-        if (existing.open == null) existing.open = price
+        // Open price should remain as the first price in the bucket, never updated
     }
     existing.volume0 = (existing.volume0 ?? 0) + (volume0 ?? 0)
     existing.volume1 = (existing.volume1 ?? 0) + (volume1 ?? 0)

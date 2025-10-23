@@ -44,11 +44,18 @@ const ROUTE_DESCRIPTIONS: Record<string, string> = {
     JibSwap: 'Legacy standard pool',
 }
 
-export default function Swap({ setIsLoading, setErrMsg, isChartOpen: isChartOpenProp, onToggleChart }: {
+export default function Swap({
+    setIsLoading,
+    setErrMsg,
+    isChartOpen: isChartOpenProp,
+    onToggleChart,
+    onPoolInfoChange
+}: {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
     setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>
     isChartOpen?: boolean
     onToggleChart?: () => void
+    onPoolInfoChange?: (poolInfo: { pool: string; feeTier?: number; isAutoFee?: boolean } | null) => void
 }) {
     const DEFAULT_SAMPLE_AMOUNT = "500"
     const { address } = useAccount()
@@ -571,6 +578,21 @@ export default function Swap({ setIsLoading, setErrMsg, isChartOpen: isChartOpen
     }, [CMswapTVL, DMswapTVL, UdonTVL, ponderTVL, GameSwapTvl, JibSwapTvl, amountA, onLoading, variant])
     React.useEffect(() => { setFeeSelect(10000); setAutoCmswapFee(true) }, [tokenA, tokenB])
     React.useEffect(() => { setRouteQuoteMap({}) }, [tokenA.value, variant])
+
+    // Sync pool info with parent component for chart fee tier selection
+    React.useEffect(() => {
+        if (onPoolInfoChange) {
+            if (poolSelect) {
+                onPoolInfoChange({
+                    pool: poolSelect,
+                    feeTier: poolSelect === 'CMswap' ? feeSelect : undefined,
+                    isAutoFee: autoCmswapFee
+                })
+            } else {
+                onPoolInfoChange(null)
+            }
+        }
+    }, [poolSelect, feeSelect, autoCmswapFee, onPoolInfoChange])
     const [routesExpanded, setRoutesExpanded] = React.useState(false)
     const baseTvlUnit = React.useMemo(() => {
         const stableSymbols = ['KUSDT', 'JUSDT']
