@@ -71,7 +71,7 @@ export default function Page() {
             <div className={gridActive ? 'grid w-full grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,560px)] lg:grid-cols-[2fr_1fr] gap-4 mt-[100px] mb-8 px-4' : 'w-full max-w-xl mx-auto mt-[100px] mb-8 px-4'}>
                 {gridActive && (
                     <div className="rounded-2xl border border-white/5 bg-slate-950/40 p-2">
-                        <SwapChart candles={candles} timeframe={chartTimeframe} onTimeframeChange={setChartTimeframe} latestPrice={chartLatestPrice} latestTimestamp={chartLatestTimestamp} baseLabel={chartBaseLabel} quoteLabel={chartQuoteLabel} pairLabel={chartPairLabel} isLoading={chartLoading} error={chartError} notFound={chartNotFound} ready={Boolean(chartTokenAAddress && chartTokenBAddress)} onRefresh={refreshChart} currentFeeTier={currentFeeTier} />
+                        <SwapChart candles={candles} timeframe={chartTimeframe} onTimeframeChange={setChartTimeframe} latestPrice={chartLatestPrice} latestTimestamp={chartLatestTimestamp} baseLabel={chartBaseLabel} quoteLabel={chartQuoteLabel} pairLabel={chartPairLabel} isLoading={chartLoading} error={chartError} notFound={chartNotFound} ready={Boolean(chartTokenAAddress && chartTokenBAddress)} currentFeeTier={currentFeeTier} />
                     </div>
                 )}
                 <Card className={gridActive ? 'w-full bg-water-950 border border-[#00ff9d]/20 rounded-lg overflow-hidden p-2' : 'w-full bg-water-950 border border-[#00ff9d]/20 rounded-lg overflow-hidden p-2'}>
