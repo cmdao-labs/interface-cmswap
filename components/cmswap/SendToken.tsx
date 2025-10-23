@@ -42,9 +42,38 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
     const [variableMinAmount, setVariableMinAmount] = useState("");
     const [variableMaxAmount, setVariableMaxAmount] = useState("");
     const [uploadError, setUploadError] = useState<string | null>(null);
+    const [amountMode, setAmountMode] = useState<"equal" | "specific">("equal");
+    const [specificAmounts, setSpecificAmounts] = useState<{ address: string; amount: string }[]>([]);
     const parseAddresses = (input: string) => input.split(/[\n,]+/).map((addr) => addr.trim()).filter(Boolean);
     const multiAddresses = React.useMemo(() => parseAddresses(multiInput), [multiInput]);
     const amountLabel = isMultiTransfer ?  multiMode === "variable" ? "Amount Range (per address)" : "Amount per Address" : "Amount to Send";
+    const downloadCSVTpl = () => {
+        const csv = "address,amount\n0x1234567890123456789012345678901234567890,0.1\n0x0987654321098765432109876543210987654321,0.2";
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "transfer_template.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+    const parseAddressAmountCSV = (csvText: string): { address: string; amount: string }[] => {
+        const lines = csvText.trim().split('\n');
+        if (lines.length < 2) throw new Error("CSV must have header and at least one data row");
+        const header = lines[0].toLowerCase().trim();
+        if (!header.includes('address') || !header.includes('amount')) throw new Error("CSV must have 'address' and 'amount' columns");
+        const result: { address: string; amount: string }[] = [];
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            const parts = line.split(',').map(p => p.trim());
+            if (parts.length < 2) continue;
+            const address = parts[0];
+            const amount = parts[1];
+            if (address && amount) result.push({ address, amount });
+        }
+        return result;
+    };
     async function resolveNameIfNeeded(input: string) {
         if (!nameService) return input;
         try {
@@ -60,10 +89,17 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
         if (!file) return;
         try {
             const text = await file.text();
-            setMultiInput(text);
+            if (amountMode === "specific") {
+                const parsed = parseAddressAmountCSV(text);
+                setSpecificAmounts(parsed);
+                setMultiInput(parsed.map(item => item.address).join('\n'));
+            } else {
+                setMultiInput(text);
+                setSpecificAmounts([]);
+            }
             setUploadError(null);
         } catch (err) {
-            setUploadError("Unable to read file. Please try again.");
+            setUploadError(err instanceof Error ? err.message : "Unable to read file. Please try again.");
         } finally {
             input.value = "";
         }
@@ -80,19 +116,23 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
             if (isMultiTransfer) {
                 if (multiAddresses.length === 0) throw new Error("Add at least one destination address.");
                 let perAddressAmounts: string[] = [];
-                if (multiMode === "fixed") {
+                if (multiMode === "fixed" && amountMode === "equal") {
                     const normalizedAmount = amount.trim();
                     if (!normalizedAmount || Number(normalizedAmount) <= 0) throw new Error("Enter a valid amount per address.");
                     perAddressAmounts = multiAddresses.map(() => normalizedAmount);
-                } else {
+                } else if (multiMode === "fixed" && amountMode === "specific") {
+                    if (specificAmounts.length === 0) throw new Error("Upload a CSV with specific amounts.");
+                    perAddressAmounts = specificAmounts.map(item => item.amount);
+                } else if (multiMode === "variable") {
                     const min = Number(variableMinAmount);
                     const max = Number(variableMaxAmount);
                     if (Number.isNaN(min) || Number.isNaN(max) || min <= 0 || max <= 0) throw new Error("Enter valid minimum and maximum amounts.");
                     if (max < min) throw new Error("Maximum amount must be greater than or equal to minimum amount.");
                     perAddressAmounts = multiAddresses.map(() => getRandomAmountInRange(min, max));
                 }
-                for (let i = 0; i < multiAddresses.length; i += 1) {
-                    const rawTarget = multiAddresses[i];
+                const addressesToProcess = amountMode === "specific" && specificAmounts.length > 0 ? specificAmounts.map(item => item.address) : multiAddresses;
+                for (let i = 0; i < addressesToProcess.length; i += 1) {
+                    const rawTarget = addressesToProcess[i];
                     const toResolved = await resolveNameIfNeeded(rawTarget);
                     setResolvedTo(toResolved);
                     const amountForRecipient = parseUnits(perAddressAmounts[i], 18);
@@ -243,9 +283,14 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
                     <div className="flex flex-col gap-3">
                         <textarea value={multiInput} onChange={(e) => setMultiInput(e.target.value)} placeholder="Paste comma or line separated addresses" className="w-full border border-gray-300 rounded-lg p-3 h-32 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors text-sm" />
                         <div className="flex flex-wrap items-center gap-3">
-                            <label htmlFor="multi-file-upload" className="cursor-pointer px-4 py-2 border border-dashed border-gray-500 rounded-lg text-xs uppercase tracking-wide text-gray-400 hover:border-emerald-500 hover:text-emerald-400 transition">Upload Addresses (.txt / .csv)</label>
+                            <label htmlFor="multi-file-upload" className="cursor-pointer px-4 py-2 border border-dashed border-gray-500 rounded-lg text-xs uppercase tracking-wide text-gray-400 hover:border-emerald-500 hover:text-emerald-400 transition">
+                                Upload {amountMode === "specific" ? "CSV with Amounts" : "Addresses"} (.txt / .csv)
+                            </label>
                             <input id="multi-file-upload" type="file" accept=".txt,.csv" className="hidden" onChange={handleFileUpload} />
-                            <span className="text-xs text-gray-500">Detected {multiAddresses.length} address{multiAddresses.length === 1 ? "" : "es"}</span>
+                            <span className="text-xs text-gray-500">
+                                Detected {multiAddresses.length} address{multiAddresses.length === 1 ? "" : "es"}
+                                {amountMode === "specific" && specificAmounts.length > 0 && ` with ${specificAmounts.length} specific amounts`}
+                            </span>
                         </div>
                         {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
                     </div>
@@ -261,9 +306,23 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
                 <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-gray-700">{amountLabel}</label>
                     {isMultiTransfer && (
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => setMultiMode("fixed")} aria-pressed={multiMode === "fixed"} type="button" className={`h-9 px-4 text-xs font-semibold uppercase tracking-wide rounded-lg border transition ${multiMode === "fixed" ? "bg-emerald-500 text-white border-emerald-500" : "bg-[#162638] text-gray-300 border-[#1f2f46]"}`}>Fixed Rate</button>
-                            <button onClick={() => setMultiMode("variable")} aria-pressed={multiMode === "variable"} type="button" className={`h-9 px-4 text-xs font-semibold uppercase tracking-wide rounded-lg border transition ${multiMode === "variable" ? "bg-emerald-500 text-white border-emerald-500" : "bg-[#162638] text-gray-300 border-[#1f2f46]"}`}>Variable Rate</button>
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setMultiMode("fixed")} aria-pressed={multiMode === "fixed"} type="button" className={`h-9 px-4 text-xs font-semibold uppercase tracking-wide rounded-lg border transition ${multiMode === "fixed" ? "bg-emerald-500 text-white border-emerald-500" : "bg-[#162638] text-gray-300 border-[#1f2f46]"}`}>Fixed Rate</button>
+                                <button onClick={() => setMultiMode("variable")} aria-pressed={multiMode === "variable"} type="button" className={`h-9 px-4 text-xs font-semibold uppercase tracking-wide rounded-lg border transition ${multiMode === "variable" ? "bg-emerald-500 text-white border-emerald-500" : "bg-[#162638] text-gray-300 border-[#1f2f46]"}`}>Variable Rate</button>
+                            </div>
+                            {multiMode === "fixed" && (
+                                <div className="flex items-center gap-3">
+                                    <label className="flex items-center gap-2 text-xs text-gray-400">
+                                        <input type="radio" name="amountMode" checked={amountMode === "equal"} onChange={() => setAmountMode("equal")} className="h-3 w-3 text-emerald-500 focus:ring-emerald-500" />
+                                        Equal Amount
+                                    </label>
+                                    <label className="flex items-center gap-2 text-xs text-gray-400">
+                                        <input type="radio" name="amountMode" checked={amountMode === "specific"} onChange={() => setAmountMode("specific")} className="h-3 w-3 text-emerald-500 focus:ring-emerald-500" />
+                                        Specific Amounts
+                                    </label>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -274,6 +333,17 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
                             <input value={variableMaxAmount} onChange={(e) => setVariableMaxAmount(e.target.value)} placeholder="Max amount" type="number" min="0" className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors text-base" />
                         </div>
                         <p className="text-xs text-gray-500">Each address receives a random amount within the specified range.</p>
+                    </div>
+                ) : isMultiTransfer && multiMode === "fixed" && amountMode === "specific" ? (
+                    <div className="flex flex-col gap-3">
+                        <div className="p-3 bg-[#162638] rounded-lg border border-gray-600">
+                            <p className="text-xs text-gray-400 mb-2">Upload CSV with specific amounts per address.</p>
+                            <p className="text-xs text-gray-500 mb-3">Format: address,amount (one per line)</p>
+                            <div className="flex items-center gap-2">
+                                <button onClick={downloadCSVTpl} className="px-3 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors">Download Template</button>
+                                {specificAmounts.length > 0 && <span className="text-xs text-emerald-400">Loaded {specificAmounts.length} specific amounts</span>}
+                            </div>
+                        </div>
                     </div>
                 ) : (
                     <div className="grid grid-cols-[2fr_1fr] gap-3">
