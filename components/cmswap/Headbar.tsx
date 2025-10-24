@@ -11,7 +11,7 @@ export default function Headbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const toggleMenu = () => {setIsMenuOpen(!isMenuOpen)}
     const handleLinkClick = () => {setIsMenuOpen(false)}
-    const { chainId,address } = useAccount()
+    const { chainId } = useAccount()
     return (
         <QueryClientProvider client={queryClient}> 
             <header className='h-[85px] w-full lg:w-full fixed backdrop-blur-lg text-sm text-white z-999'>
@@ -21,23 +21,15 @@ export default function Headbar() {
                             <Link href="/"><Button variant="ghost" className='cursor-pointer' size="icon"><img alt="" src="/favicon.ico" height="25" width="25" /></Button></Link>
                             <div className="hidden md:block">
                                 <div className="ml-8 flex justify-between items-center w-full max-w-screen-xl mx-auto">
-                                        <Link href="/swap" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                            <Button variant="ghost" className="cursor-pointer">Swap</Button>
-                                        </Link>
-                                        <Link href="/bridge" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                            <Button variant="ghost" className="cursor-pointer">Bridge</Button>
-                                        </Link>
-                                        <Link href="/pump" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                            <Button variant="ghost" className="cursor-pointer">Pump</Button>
-                                        </Link>
-                                        {typeof chainId === 'number' && [25925].includes(chainId) && address === "0xCA811301C650C92fD45ed32A81C0B757C61595b6" && (
-                                            <Link href="/earn" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                                <Button variant="ghost" className="cursor-pointer">Earn</Button>
-                                            </Link>
-                                        )}
-                                        <Link href="/liquidity-pool" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                            <Button variant="ghost" className="cursor-pointer">Liquidity</Button>
-                                        </Link>
+                                    <Link href="/swap" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
+                                        <Button variant="ghost" className="cursor-pointer">Swap</Button>
+                                    </Link>
+                                    <Link href="/bridge" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
+                                        <Button variant="ghost" className="cursor-pointer">Bridge</Button>
+                                    </Link>
+                                    <Link href="/pump" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
+                                        <Button variant="ghost" className="cursor-pointer">Pump</Button>
+                                    </Link>
                                 </div>
                             </div>
                             <div className="md:hidden ml-4 flex items-center">

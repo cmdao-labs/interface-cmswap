@@ -4,23 +4,26 @@ import { LiquidityVariant } from '@/components/cmswap/liquidityVariant'
 const VARIANT_POOLS: Record<LiquidityVariant, readonly RouteId[]> = {
     [LiquidityVariant.BKC]: ['CMswap', 'DiamonSwap', 'UdonSwap', 'ponder'],
     [LiquidityVariant.JBC]: ['CMswap', 'GameSwap', 'JibSwap'],
+    [LiquidityVariant.BSC]: ['PancakeSwap'],
     [LiquidityVariant.BKC_TESTNET]: ['CMswap'],
 }
 function isValidQuote(v: unknown): v is number {const n = Number(v); return Number.isFinite(n) && n > 0;}
 
-export type RouteId = 'CMswap' | 'DiamonSwap' | 'UdonSwap' | 'ponder' | 'GameSwap' | 'JibSwap'
+export type RouteId = 'CMswap' | 'DiamonSwap' | 'UdonSwap' | 'ponder' | 'GameSwap' | 'JibSwap' | 'PancakeSwap'
 export type CmswapFee = 100 | 500 | 3000 | 10000
 export type QuoteComparisonInput = {
     variant: LiquidityVariant
     quotes: Partial<Record<RouteId, number | undefined>>
     currentPool?: RouteId | ''
     cmSwapBestFee?: CmswapFee
+    pancakeSwapBestFee?: 100 | 500 | 2500 | 10000
 }
 export type QuoteComparisonResult = {
     bestPool?: RouteId
     cmSwapFee?: CmswapFee
+    pancakeSwapFee?: 100 | 500 | 2500 | 10000
 }
-export function selectBestRoute({ variant, quotes, currentPool, cmSwapBestFee }: QuoteComparisonInput): QuoteComparisonResult {
+export function selectBestRoute({ variant, quotes, currentPool, cmSwapBestFee, pancakeSwapBestFee }: QuoteComparisonInput): QuoteComparisonResult {
     const candidates = VARIANT_POOLS[variant]
     const valid = candidates
         .map((id) => ({ id, value: isValidQuote(quotes[id]) ? Number(quotes[id]) : undefined }))
@@ -33,5 +36,9 @@ export function selectBestRoute({ variant, quotes, currentPool, cmSwapBestFee }:
     if (current) chosen = current.id
     else if (top.find((t) => t.id === 'CMswap')) chosen = 'CMswap'
     else chosen = top.sort((a, b) => a.id.localeCompare(b.id))[0].id
-    return { bestPool: chosen, cmSwapFee: chosen === 'CMswap' ? cmSwapBestFee : undefined }
+    return {
+        bestPool: chosen,
+        cmSwapFee: chosen === 'CMswap' ? cmSwapBestFee : undefined,
+        pancakeSwapFee: chosen === 'PancakeSwap' ? pancakeSwapBestFee : undefined
+    }
 }

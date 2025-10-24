@@ -4,7 +4,7 @@ import { useAccount } from "wagmi";
 import { simulateContract, waitForTransactionReceipt, writeContract, getBalance, sendTransaction, type WriteContractErrorType } from "@wagmi/core";
 import { Button } from "@/components/ui/button";
 import { createPublicClient, http, erc20Abi, parseUnits } from "viem";
-import { jbc, bitkub, bitkubTestnet } from "viem/chains";
+import { jbc, bitkub, bitkubTestnet, bsc } from "viem/chains";
 import { Copy, CopyCheck,ScanQrCode,ChevronDown } from "lucide-react";
 import { config } from "../../config/reown";
 import { chains } from '@/lib/chains'
@@ -16,7 +16,8 @@ type ChainConfig = { chain: any; chainId: number; explorer: string; rpc: string;
 const chainConfigs: Record<number, ChainConfig> = {
     25925: {chain: bitkubTestnet, chainId: 25925, explorer: "https://testnet.kubscan.com/", rpc: "https://rpc-testnet.bitkubchain.io", blocktime: 5, lib: { tokens: chains[25925].tokens } },
     96: { chain: bitkub, chainId: 96, explorer: "https://www.kubscan.com/", rpc: "https://rpc.bitkubchain.io", blocktime: 5, nameService: "KNS", lib: { tokens: chains[96].tokens } },
-    8899: { chain: jbc, chainId: 8899, explorer: "https://exp.jbcha.in/", rpc: "https://rpc2-l1.jbc.xpool.pw", blocktime: 5, lib: { tokens: chains[8899].tokens } }
+    8899: { chain: jbc, chainId: 8899, explorer: "https://exp.jbcha.in/", rpc: "https://rpc2-l1.jbc.xpool.pw", blocktime: 5, lib: { tokens: chains[8899].tokens } },
+    56: { chain: bsc, chainId: 56, explorer: "https://bscscan.com/", rpc: "https://bsc-dataseed1.binance.org/", blocktime: 3, lib: { tokens: chains[56].tokens } }
 };
 
 export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfig }: {

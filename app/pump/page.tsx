@@ -10,11 +10,12 @@ export default function Home() {
     useEffect(() => {
         if (chainId === undefined) return;
         if (chainId === 25925 || chainId === null) router.push('/pump/launchpad?chain=kubtestnet&mode=pro');
-        else if (chainId === 96 || chainId === 10143) setShowPopup(true);
+        else if (chainId !== 25925) setShowPopup(true);
     }, [chainId]);
     const handleConfirm = () => {
         if (chainId === 96) window.location.href = 'https://www.cmswap.fun/pump/launchpad?chain=kub&mode=pro';
         else if (chainId === 10143) window.location.href = 'https://www.cmswap.fun/pump/launchpad?chain=monad&mode=pro';
+        else window.location.href = 'https://www.cmswap.fun';
     };
     const handleCancel = () => {router.push('/pump/launchpad?chain=kubtestnet&mode=pro')};
     return (

@@ -2,17 +2,15 @@
 import { wagmiAdapter, projectId } from '@/config/reown'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createAppKit } from '@reown/appkit/react'
-import { jbc, bsc, bitkub, bitkubTestnet } from '@reown/appkit/networks'
+import { bsc, base, worldchain, bitkub, jbc, bitkubTestnet } from '@reown/appkit/networks'
 import React, { type ReactNode } from 'react'
 import { cookieToInitialState, WagmiProvider, type Config } from 'wagmi'
 
 const queryClient = new QueryClient()
-
 if (!projectId) throw new Error('Project ID is not defined');
-
 createAppKit({
     adapters: [wagmiAdapter],
-    networks: [bsc, bitkub, jbc,bitkubTestnet],
+    networks: [bsc, base, worldchain, bitkub, jbc, bitkubTestnet],
     projectId,
     themeMode: 'dark',
     themeVariables: {'--w3m-font-size-master': '8px', '--w3m-z-index': 1000, '--w3m-accent': '#1a1a3a'},
@@ -24,7 +22,6 @@ createAppKit({
     },
     features: { analytics: true, }
 })
-
 function ContextProvider({ children, cookies }: { children: ReactNode; cookies: string | null }) {
     const initialState = cookieToInitialState(wagmiAdapter.wagmiConfig as Config, cookies)
     return (
