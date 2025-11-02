@@ -39,8 +39,11 @@ export const BitkubEvmKYCContract = {chainId: 25925, abi: BitkubEvmKYCABI, addre
 
 export const StakingFactoryV2 = '0xB2335f770497Caaa9DE22f1296f172939AB786Ca' as '0xstring'
 export const StakingFactoryV2Contract = {chainId: 25925, abi: stakingV2FactoryABI, address: StakingFactoryV2} as const 
-export const StakingFactoryV3 = '0xa894aAa564F66e59783384995C9ddaaEC9E97291' as '0xstring'
-export const StakingFactoryV3Contract = {chainId: 25925, abi: stakingV3FactoryABI, address: StakingFactoryV3} as const 
+
+export const StakingFactoryV3 = '0xe445e132E9D4d0863E0BE079faf716A97250f37E' as '0xstring' // Uniswap V3 Staking Factory Address
+export const StakingFactoryV3Contract = {chainId: 25925, abi: stakingV3ABI, address: StakingFactoryV3} as const 
+export const StakingFactoryV3CreatedAt = BigInt(23935424)
+
 export const StakingV2ABI = {chainId: 25925, abi: stakingV2ABI}
 export const StakingV3ABI = {chainId: 25925, abi: stakingV3ABI}
 

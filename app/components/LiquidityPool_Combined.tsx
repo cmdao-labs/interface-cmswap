@@ -1,6 +1,7 @@
 'use client'
 import React, { useState } from 'react';
 import { ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
+import { FiGrid, FiList } from 'react-icons/fi';
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, getBalance, sendTransaction, type WriteContractErrorType } from '@wagmi/core';
 import { config } from '@/app/config';
 import { useAccount } from 'wagmi';
@@ -13,10 +14,13 @@ import {
   http,
 } from 'viem';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+
+import StakingV3Modal from './StakingV3Modal';
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { usePrice } from '@/app/context/getPrice';
 import { v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, publicClient, erc721ABI, POSITION_MANAGER, positionManagerCreatedAt, V3_STAKER, v3StakerContract } from '@/app/lib/25925'
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 type ThemeId = 96 | 8899 | 56 | 3501 | 10143 | 25925;
 type Theme = {
@@ -43,6 +47,9 @@ type ChainConfig = {
     V3_FACTORY: string;
     V3_FACTORYCreatedAt: bigint;
     positionManagerContract: any;
+    StakingFactoryV3Contract: any;
+    StakingFactoryV3_Addr:  "0xstring";
+    StakingFactoryV3CreatedAt: bigint;
   };
 };
 
@@ -122,6 +129,13 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
   const [sortBy, setSortBy] = useState<SortField>('liquidity');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [listFilter, setListFilter] = useState<any>('allRP');
+  const [openStake, setOpenStake] = useState(false);
+  const [selectedProgramAddr, setSelectedProgramAddr] = useState<`0x${string}` | null>(null);
+  const [selectedIncentive, setSelectedIncentive] = useState<{ rewardToken: `0x${string}`; pool: `0x${string}`; startTime: bigint; endTime: bigint; refundee: `0x${string}` } | null>(null);
+  const [stakeTokenId, setStakeTokenId] = useState('');
+  const [withdrawTokenId, setWithdrawTokenId] = useState('');
+  const [claimAmount, setClaimAmount] = useState('');
+  const [view, setView] = useState<'table' | 'grid'>('table');
   const [validPools, setValidPools] = useState<{
       tokenA: string;
       tokenALogo: string;
@@ -152,7 +166,11 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
       url : string;
       feeList: string[];
       chain: string;
-
+      poolAddress: string;
+      rewardToken?: string;
+      startTime?: bigint;
+      endTime?: bigint;
+      refundee?: string;
   }[]>([]);
 
   const feeOptions = [100, 500, 3000, 10000];
@@ -163,6 +181,8 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
   const theme = themes[selectedChainId as ThemeId] || themes[96];
   const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   const publicClient = createPublicClient({
     chain,
@@ -182,6 +202,23 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
       return () => window.removeEventListener("resize", checkMobile);
     }
   }, []);
+
+  // Initialize layout from URL and sync on toggle
+  React.useEffect(() => {
+    const v = searchParams?.get('view');
+    if (v === 'grid' || v === 'table') {
+      setView(v);
+    }
+  }, [searchParams]);
+
+  const updateViewParam = (next: 'table' | 'grid') => {
+    try {
+      const current = new URLSearchParams(searchParams?.toString() ?? '');
+      current.set('view', next);
+      const qs = current.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname);
+    } catch {}
+  };
 
 
   const handleClick = (url: string) => {
@@ -395,80 +432,195 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
     };
 
     const fetchPrograms = async () => {
-      const incentiveStat = await readContract(config, { ...v3StakerContract, functionName: 'incentives', args: ['0x54f969cc76b69f12f67a135d9a7f088edafa2e8ebb3e247859acd17d8e849993'] })
-    const getMyReward = async () => {
+      // New implementation: derive programs from UniswapV3Staker IncentiveCreated events
       try {
-        // 1️⃣ ดึง Event ของ NFT ที่ stake เข้าสู่ V3_STAKER
-        const events = await publicClientTestnet.getContractEvents({
-          ...erc721ABI,
-          address: POSITION_MANAGER,
-          eventName: 'Transfer',
-          args: { to: V3_STAKER },
-          fromBlock: positionManagerCreatedAt,
+        const created: any[] = await publicClient.getContractEvents({
+          ...lib.StakingFactoryV3Contract,
+          eventName: 'IncentiveCreated',
+          fromBlock: lib.StakingFactoryV3CreatedAt,
           toBlock: 'latest',
-        });
+        }) as any[];
 
-        // 2️⃣ เอาเฉพาะ tokenId ที่ unique
-        const eventMyNftStaking = [...new Set(events.map(obj => obj.args.tokenId))];
-        console.log("eventMyNftStaking", eventMyNftStaking);
+        const items: typeof stakingList = [];
+        for (const ev of created) {
+          const rewardToken = (ev.args.key?.rewardToken ?? ev.args.rewardToken) as '0xstring';
+          const poolAddr = (ev.args.key?.pool ?? ev.args.pool) as '0xstring';
+          const startTime = BigInt(ev.args.key?.startTime ?? ev.args.startTime ?? 0);
+          const endTime = BigInt(ev.args.key?.endTime ?? ev.args.endTime ?? 0);
+          const refundee = (ev.args.key?.refundee ?? ev.args.refundee) as '0xstring';
 
-        if (eventMyNftStaking.length === 0) return 0;
+          try {
+            const [t0, t1, feeRes] = await readContracts(config, {
+              contracts: [
+                { ...v3PoolABI, address: poolAddr, functionName: 'token0' },
+                { ...v3PoolABI, address: poolAddr, functionName: 'token1' },
+                { ...v3PoolABI, address: poolAddr, functionName: 'fee' },
+              ],
+            });
 
-        // 3️⃣ อ่านข้อมูล deposit ของแต่ละ NFT
-        const checkMyNftOwner = await readContracts(config, {
-          contracts: eventMyNftStaking.map(tokenId => ({
-            ...v3StakerContract,
-            functionName: 'deposits',
-            args: [tokenId],
-          })),
-        });
+            const token0Addr = t0.result as string;
+            const token1Addr = t1.result as string;
+            const fee = Number(feeRes.result ?? 0);
 
-        console.log("checkMyNftOwner", checkMyNftOwner);
+            const tA = chainConfig.tokens.find(t => t.value.toLowerCase() === token0Addr.toLowerCase());
+            const tB = chainConfig.tokens.find(t => t.value.toLowerCase() === token1Addr.toLowerCase());
 
-        // 4️⃣ filter เฉพาะ NFT ที่ owner เป็น address ของเรา
-        const checkedMyNftStaking = eventMyNftStaking.filter((obj, index) => {
-                const res = checkMyNftOwner[index].result as unknown as [string, bigint, bigint, bigint][]
-                return res[0].toString().toUpperCase() === address?.toUpperCase()
-            })
+            // Resolve reward token name: prefer known token list, then ERC20 symbol, else short address
+            let rewardName: string | undefined = chainConfig.tokens.find(t => t.value.toLowerCase() === (rewardToken as string).toLowerCase())?.name;
+            if (!rewardName) {
+              try {
+                const [sym] = await readContracts(config, {
+                  contracts: [
+                    { abi: erc20Abi, address: rewardToken as '0xstring', functionName: 'symbol' },
+                  ],
+                });
+                if (sym?.status === 'success' && sym.result) rewardName = String(sym.result);
+              } catch {}
+            }
+            const rewardLabel = rewardName ?? `${rewardToken.slice(0,6)}...${rewardToken.slice(-4)}`;
 
-        console.log("checkedMyNftStaking", checkedMyNftStaking);
-
-        if (checkedMyNftStaking.length === 0) return 0;
-
-        // 5️⃣ ดึง reward info ของแต่ละ NFT
-        const myReward = await readContracts(config, {
-          contracts: checkedMyNftStaking.map(tokenId => ({
-            ...v3StakerContract,
-            functionName: 'getRewardInfo',
-            args: [{
-              rewardToken: '0xE7f64C5fEFC61F85A8b851d8B16C4E21F91e60c0' as '0xstring',
-              pool: '0x77069e705dce52ed903fd577f46dcdb54d4db0ac' as '0xstring',
-              startTime: BigInt(1755589200),
-              endTime: BigInt(3270351988),
-              refundee: '0x1fe5621152a33a877f2b40a4bb7bc824eebea1ea' as '0xstring',
-            }, tokenId],
-          })),
-        });
-
-        console.log("myReward", myReward);
-
-        // 6️⃣ รวม pending reward ทั้งหมด
-        let _allPending = 0
-        for (let i = 0; i <= myReward.length - 1; i++) {
-            const result: any = myReward[i].result
-            _allPending += Number(formatEther(result[0]))
+          items.push({
+            name: `Staking ${(tA?.name ?? 'Token0')}-${(tB?.name ?? 'Token1')} earn ${rewardLabel}`,
+            tokenALogo: tA?.logo || '/default2.png',
+            tokenBLogo: tB?.logo || '/default2.png',
+            totalStaked: 0,
+            apr: 0,
+            pending: 0,
+            staked: 0,
+            themeId: chainConfig.chainId,
+            url: `/staking/${poolAddr}`,
+            feeList: [ `${(fee/10000).toFixed(2)}%` ],
+            chain: (chain as any)?.name ?? 'Bitkub Testnet',
+            poolAddress: poolAddr as string,
+            rewardToken,
+            startTime,
+            endTime,
+            refundee,
+          });
+          } catch {
+          items.push({
+            name: `Staking ${poolAddr.slice(0,6)}... earn ...`,
+            tokenALogo: '/default2.png',
+            tokenBLogo: '/default2.png',
+            totalStaked: 0,
+            apr: 0,
+            pending: 0,
+            staked: 0,
+            themeId: chainConfig.chainId,
+            url: `/staking/${poolAddr}`,
+            feeList: [],
+            chain: (chain as any)?.name ?? 'Bitkub Testnet',
+            poolAddress: poolAddr as string,
+            rewardToken,
+            startTime,
+            endTime,
+            refundee,
+          });
+          }
         }
-
-        console.log("totalPending", _allPending);
-        return {
-          totalPending: _allPending,
-          totalStaked: myReward.length
-        };
-      } catch (err) {
-        console.error("getMyReward error:", err);
-        return 0;
+        setStakingList(items);
+        return; // do not execute legacy code below
+      } catch (e) {
+        console.error('fetchPrograms (UniswapV3Staking) error:', e);
+        setStakingList([]);
+        return;
       }
-    };
+
+      console.log('Fetching staking programs...');
+      console.log('V3_STAKER:', lib.StakingFactoryV3_Addr);
+
+      const incentiveStat = await readContract(config, { ...v3StakerContract, functionName: 'incentives', args: ['0x54f969cc76b69f12f67a135d9a7f088edafa2e8ebb3e247859acd17d8e849993'] })
+      
+      const logCreateData = await publicClient.getContractEvents({
+        ...lib.StakingFactoryV3Contract,
+        eventName: 'createIncentive',
+        fromBlock: lib.StakingFactoryV3CreatedAt,
+        toBlock: 'latest',
+      });
+
+      let CreateData = logCreateData.map((res: any) => ({
+        action: 'create',
+        token0: res.args.token0 as '0xstring',
+        token1: res.args.token1 as '0xstring',
+        fee: res.args.fee as '0xstring',
+        pool: res.args.pool as '0xstring',
+        tx: res.transactionHash as '0xstring',
+      }));
+
+      
+      const getMyReward = async () => {
+        try {
+          // 1️⃣ ดึง Event ของ NFT ที่ stake เข้าสู่ V3_STAKER
+          const events = await publicClientTestnet.getContractEvents({
+            ...erc721ABI,
+            address: POSITION_MANAGER,
+            eventName: 'Transfer',
+            args: { to: V3_STAKER },
+            fromBlock: positionManagerCreatedAt,
+            toBlock: 'latest',
+          });
+
+          // 2️⃣ เอาเฉพาะ tokenId ที่ unique
+          const eventMyNftStaking = [...new Set(events.map(obj => obj.args.tokenId))];
+          console.log("eventMyNftStaking", eventMyNftStaking);
+
+          if (eventMyNftStaking.length === 0) return 0;
+
+          // 3️⃣ อ่านข้อมูล deposit ของแต่ละ NFT
+          const checkMyNftOwner = await readContracts(config, {
+            contracts: eventMyNftStaking.map(tokenId => ({
+              ...v3StakerContract,
+              functionName: 'deposits',
+              args: [tokenId],
+            })),
+          });
+
+          console.log("checkMyNftOwner", checkMyNftOwner);
+
+          // 4️⃣ filter เฉพาะ NFT ที่ owner เป็น address ของเรา
+          const checkedMyNftStaking = eventMyNftStaking.filter((obj, index) => {
+                  const res = checkMyNftOwner[index].result as unknown as [string, bigint, bigint, bigint][]
+                  return res[0].toString().toUpperCase() === address?.toUpperCase()
+              })
+
+          console.log("checkedMyNftStaking", checkedMyNftStaking);
+
+          if (checkedMyNftStaking.length === 0) return 0;
+
+          // 5️⃣ ดึง reward info ของแต่ละ NFT
+          const myReward = await readContracts(config, {
+            contracts: checkedMyNftStaking.map(tokenId => ({
+              ...v3StakerContract,
+              functionName: 'getRewardInfo',
+              args: [{
+                rewardToken: '0xE7f64C5fEFC61F85A8b851d8B16C4E21F91e60c0' as '0xstring',
+                pool: '0x77069e705dce52ed903fd577f46dcdb54d4db0ac' as '0xstring',
+                startTime: BigInt(1755589200),
+                endTime: BigInt(3270351988),
+                refundee: '0x1fe5621152a33a877f2b40a4bb7bc824eebea1ea' as '0xstring',
+              }, tokenId],
+            })),
+          });
+
+          console.log("myReward", myReward);
+
+          // 6️⃣ รวม pending reward ทั้งหมด
+          let _allPending = 0
+          for (let i = 0; i <= myReward.length - 1; i++) {
+              const result: any = myReward[i].result
+              _allPending += Number(formatEther(result[0]))
+          }
+
+          console.log("totalPending", _allPending);
+          return {
+            totalPending: _allPending,
+            totalStaked: myReward.length
+          };
+        } catch (err) {
+          console.error("getMyReward error:", err);
+          return 0;
+        }
+      };
 
       const result = await getMyReward();
       console.log("pendingRewards",result);
@@ -487,7 +639,8 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
           themeId: 96,
           url: '/staking/0x',
           feeList: ["0.01%","0.05%","0.3%","1%"],
-          chain: "Bitkub Testnet"
+          chain: "Bitkub Testnet",
+          poolAddress: '0x'
         }]);
       };
         
@@ -549,6 +702,7 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
   };
 
   return (
+    <>
     <div className={`min-h-screen ${theme.bg}`}>
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 mt-[120px]">
@@ -576,31 +730,52 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
               {formatNumber(validPools.reduce((sum, pool) => sum + pool.fee24h, 0))}
             </p>
           </div>
+                
         </div>
      <div className="my-4">
       {/* --- PC --- */}
-      <div
-        className={`hidden sm:flex items-center gap-1.5 p-1 rounded-full w-fit border ${theme.border} shadow-inner shadow-${theme.accent}/10 backdrop-blur-md bg-[#061f1c]`}
-      >
-        {[
-          { label: 'ALL Reward', value: 'allRP' },
-          { label: 'My Reward', value: 'myRP' },
-          { label: 'All Liquidity', value: 'allLP' },
-          { label: 'Listed', value: 'listedLP' },
-          { label: 'Not Listed', value: 'unlistedLP' },
-        ].map(({ label, value }) => (
+      <div className="hidden sm:flex items-center justify-between gap-3">
+        <div
+          className={`flex items-center gap-1.5 p-1 rounded-full w-fit border ${theme.border} shadow-inner shadow-${theme.accent}/10 backdrop-blur-md bg-[#061f1c]`}
+        >
+          {[
+            { label: 'ALL Reward', value: 'allRP' },
+            { label: 'My Reward', value: 'myRP' },
+            { label: 'All Liquidity', value: 'allLP' },
+            { label: 'Listed', value: 'listedLP' },
+            { label: 'Not Listed', value: 'unlistedLP' },
+          ].map(({ label, value }) => (
+            <button
+              key={value}
+              onClick={() => setListFilter(value)}
+              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200
+                ${listFilter === value
+                  ? `bg-gradient-to-r ${theme.primary} text-black shadow-lg shadow-${theme.accent}/30`
+                  : `${theme.text} hover:text-white hover:bg-${theme.accent}/10`
+                }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Layout toggle (PC) */}
+        <div className={`hidden lg:flex items-center gap-1.5 p-1 rounded-full border ${theme.border} bg-[#061f1c] shadow-inner shadow-${theme.accent}/10`}> 
           <button
-            key={value}
-            onClick={() => setListFilter(value)}
-            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200
-              ${listFilter === value
-                ? `bg-gradient-to-r ${theme.primary} text-black shadow-lg shadow-${theme.accent}/30`
-                : `${theme.text} hover:text-white hover:bg-${theme.accent}/10`
-              }`}
+            onClick={() => { setView('table'); updateViewParam('table'); }}
+            className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all duration-200 flex items-center gap-1.5 ${view === 'table' ? `bg-gradient-to-r ${theme.primary} text-black shadow` : `${theme.text} hover:text-white hover:bg-${theme.accent}/10`}`}
           >
-            {label}
+            <FiList className={`h-4 w-4 ${view === 'table' ? 'text-black' : ''}`} />
+            Table
           </button>
-        ))}
+          <button
+            onClick={() => { setView('grid'); updateViewParam('grid'); }}
+            className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all duration-200 flex items-center gap-1.5 ${view === 'grid' ? `bg-gradient-to-r ${theme.primary} text-black shadow` : `${theme.text} hover:text-white hover:bg-${theme.accent}/10`}`}
+          >
+            <FiGrid className={`h-4 w-4 ${view === 'grid' ? 'text-black' : ''}`} />
+            Grid
+          </button>
+        </div>
       </div>
 
       {/* --- Mobile --- */}
@@ -631,7 +806,20 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
         {
           ['allRP', 'myRP'].includes(listFilter) ? (
             <div>
+     
+              {view === 'table' ? (
               <div className="hidden lg:block">
+                <div className="flex justify-end mb-4">
+                  <Button
+                      variant="outline"
+                      className={`font-mono h-auto rounded-xl text-xs flex flex-col bg-[#162638] text-[#00ff9d] border-${theme.accent}/20 hover:bg-${theme.accent}/10 text-black`}
+                    >
+                      <Link href="/earn/create" className="text-white/60 hover:text-[#32ffa7] text-xs flex items-center gap-1 font-mono">
+                        <span >Create Staking Program</span>
+                      </Link>
+          
+                  </Button>
+                </div> 
                 <div className="backdrop-blur-xl rounded-2xl border border-slate-700/50 overflow-hidden">
                   <div className="grid [grid-template-columns:1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 p-6 border-b border-slate-700/50">
                     <button onClick={() => handleSort('name')} className="flex items-center gap-2 text-left font-medium text-slate-300 hover:text-white transition-colors">
@@ -692,9 +880,9 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
                             </div>
 
                             {/* FeeList แสดงใต้ชื่อ */}
-                            <div className="text-[11px] text-slate-400 mt-1">
+                           {/*  <div className="text-[11px] text-slate-400 mt-1">
                               Fee Tiers: {pool.feeList?.join(' , ')}
-                            </div>
+                            </div> */}
                           </div>
                         </div>
 
@@ -712,13 +900,7 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
                             <span className="text-white font-medium">{(pool.staked)}</span>
                           </div>
                           <div className="flex items-center gap-2 whitespace-nowrap">
-                            <Button
-                              variant="ghost"
-                              className="cursor-pointer px-2 py-1 text-xs"
-                              onClick={() =>handleClick(pool.url)}
-                            >
-                              Go Farm
-                            </Button>
+                            <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs" onClick={() => { setSelectedProgramAddr(pool.poolAddress as `0x${string}`); setSelectedIncentive(pool.rewardToken && pool.startTime && pool.endTime && pool.refundee ? { rewardToken: pool.rewardToken as `0x${string}`, pool: pool.poolAddress as `0x${string}`, startTime: pool.startTime as bigint, endTime: pool.endTime as bigint, refundee: pool.refundee as `0x${string}` } : null); setOpenStake(true); }}>Staking</Button>
                           </div>
                         </div>
                       );
@@ -726,6 +908,41 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
                   </div>
                 </div>
               </div>
+              ) : (
+                <div className="hidden lg:grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {sortedStaking.map((pool,index) => {
+                    const theme = themes[pool.themeId as ThemeId];
+                    return (
+                      <div
+                        key={index}
+                        className={`bg-slate-800/50 backdrop-blur-xl rounded-xl border ${theme.border} p-4 hover:bg-slate-800/70 transition-all cursor-pointer`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-10 h-10">
+                              <img src={pool.tokenALogo || '/default2.png'} alt="token1" className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0" />
+                              <img src={pool.tokenBLogo || '/default2.png'} alt="token2" className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0" />
+                            </div>
+                            <div className="flex flex-col">
+                              <div className="inline-block text-[10px] px-2 py-[2px] rounded-md bg-slate-700/40 text-slate-300 w-fit mb-1">{pool.chain}</div>
+                              <div className="font-semibold text-white">{pool.name}</div>
+                              <div className="text-[11px] text-slate-400 mt-0.5">Fee: {pool.feeList?.join(' , ')}</div>
+                              <div className="text-[11px] text-slate-400 mt-0.5">Total Staked: {(pool.totalStaked)}</div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-white font-medium">{Number(pool.pending).toFixed(4)}</div>
+                            <div className={`font-bold text-lg ${theme.text}`}>{formatPercentage(pool.apr)}</div>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex items-center gap-2 whitespace-nowrap">
+                          <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs" onClick={() => handleClick(`${pool.url}`)}>Staking</Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               <div className="lg:hidden space-y-4">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-semibold text-white">Pool</h2>
@@ -791,7 +1008,7 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
                               className="cursor-pointer px-2 py-1 text-xs"
                               onClick={() => handleClick(`${pool.url}`)}
                             >
-                              Go Farm
+                              Staking
                             </Button>
                           </div>
                         
@@ -801,9 +1018,9 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
               </div>
             </div>
 
-          )
-            :
-            (<div>
+          ) : (
+            <div>
+              {view === 'table' ? (
               <div className="hidden lg:block">
                 <div className="backdrop-blur-xl rounded-2xl border border-slate-700/50 overflow-hidden">
                   <div className="grid [grid-template-columns:1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 p-6 border-b border-slate-700/50">
@@ -895,6 +1112,42 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
                   </div>
                 </div>
               </div>
+              ) : (
+                <div className="hidden lg:grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {sortedPools.map((pool) => {
+                    const theme = themes[pool.themeId as ThemeId];
+                    return (
+                      <div
+                        key={`${pool.tokenA}-${pool.tokenB}-${pool.fee}-${pool.poolAddress}`}
+                        className={`bg-slate-800/50 backdrop-blur-xl rounded-xl border ${theme.border} p-4 hover:bg-slate-800/70 transition-all cursor-pointer`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-10 h-10">
+                              <img src={pool.tokenALogo || '/default2.png'} alt="token1" className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0" />
+                              <img src={pool.tokenBLogo || '/default2.png'} alt="token2" className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0" />
+                            </div>
+                            <div>
+                              <div className="font-semibold text-white">{pool.tokenA} / {pool.tokenB}</div>
+                              <div className={`text-sm ${theme.text}`}>{(pool.fee / 10000)}% Fee</div>
+                              <div className="text-xs text-slate-400 mt-1">TVL: {formatNumber(pool.liquidity)}</div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-white font-medium">{formatNumber(pool.volume24h)}</div>
+                            <div className={`font-bold text-lg ${theme.text}`}>{formatPercentage(pool.apr)}</div>
+                            <div className="text-xs text-slate-400 mt-1">Fee: {formatNumber(pool.fee24h)}</div>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex items-center gap-2 whitespace-nowrap">
+                          <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs" onClick={() => handleClick(`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=liquidity`)}>Supply</Button>
+                          <Button variant="ghost" className="cursor-pointer px-2 py-1 text-xs" onClick={() => handleClick(`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=swap`)}>Swap</Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               <div className="lg:hidden space-y-4">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-semibold text-white">Pool</h2>
@@ -960,9 +1213,12 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
                   );
                 })}
               </div>
-            </div>)
-        }
+            </div>
+          )}
+          { /* end conditional section */ }
+        <StakingV3Modal open={openStake} onOpenChange={setOpenStake} poolAddress={selectedProgramAddr ?? undefined} incentiveKey={selectedIncentive ?? undefined} />
       </div>
     </div>
-  );
+    </>
+    );
 }

@@ -13,6 +13,16 @@ export default function ErrorModal({ errorMsg, setErrMsg }: {
     setErrMsg: React.Dispatch<React.SetStateAction<WriteContractErrorType | null>>
 }) {
     const [detailsOpen, setDetailsOpen] = React.useState(false)
+    const anyErr: any = errorMsg as any
+    const version = anyErr?.version || anyErr?.name || ""
+    const short = anyErr?.shortMessage || anyErr?.message || "Transaction failed"
+    const reason = anyErr?.details || anyErr?.cause?.shortMessage || anyErr?.message || ""
+    const fromVal = anyErr?.from || anyErr?.request?.from || anyErr?.account || ""
+    const toVal = anyErr?.to || anyErr?.address || anyErr?.contractAddress || anyErr?.request?.to || anyErr?.meta?.lastCall?.to || ""
+    const funcVal = anyErr?.functionName || anyErr?.meta?.functionName || anyErr?.request?.method || anyErr?.meta?.lastCall?.functionName || ""
+    const argsVal = anyErr?.args || anyErr?.meta?.args || anyErr?.request?.args || anyErr?.parameters || anyErr?.meta?.lastCall?.args || null
+    const incentiveIdVal = anyErr?.meta?.lastCall?.incentiveId || anyErr?.meta?.incentiveId || null
+    const viaVal = anyErr?.meta?.lastCall?.via || anyErr?.meta?.via || null
 
     return (
         <Dialog open={errorMsg !== null} onOpenChange={() => setErrMsg(null)}>
@@ -23,15 +33,15 @@ export default function ErrorModal({ errorMsg, setErrMsg }: {
                     <DialogTitle className="text-xl">Transaction Failed</DialogTitle>
                     <div className="flex items-center gap-2 mt-1">
                         <Badge variant="outline" className="text-xs font-normal bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800">beta 0.1.1</Badge>
-                        {errorMsg !== null && <span className="text-xs text-muted-foreground">viem@{Object.values(errorMsg)[5]}</span>}
+                        {errorMsg !== null && version && <span className="text-xs text-muted-foreground">{String(version)}</span>}
                     </div>
                 </div>
                 </DialogHeader>
                 <div className="py-2">
-                    {errorMsg !== null && <DialogDescription className="text-sm text-foreground mb-2">{Object.values(errorMsg)[1]}</DialogDescription>}
+                    {errorMsg !== null && <DialogDescription className="text-sm text-foreground mb-2">{short}</DialogDescription>}
                     <div className="rounded-md bg-muted/50 p-3 text-sm">
                         <div className="font-medium mb-1">Error Reason</div>
-                        {errorMsg !== null && <div className="font-mono text-xs text-muted-foreground mb-3">{Object.values(errorMsg)[4]}</div>}
+                        {errorMsg !== null && <div className="font-mono text-xs text-muted-foreground mb-3">{reason || 'No reason provided'}</div>}
                         <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen} className="space-y-2">
                             <CollapsibleTrigger asChild>
                                 <Button variant="ghost" size="sm" className="flex w-full justify-between p-0 h-auto">
@@ -43,36 +53,51 @@ export default function ErrorModal({ errorMsg, setErrMsg }: {
                             <CollapsibleContent className="space-y-3">
   {errorMsg !== null && (
     <>
-      <div>
-        <span className="text-xs font-medium">From</span>
-        <div className="font-mono text-xs text-muted-foreground overflow-x-auto whitespace-nowrap">
-          {Object.values(errorMsg)[12]}
+      {fromVal && (
+        <div>
+          <span className="text-xs font-medium">From</span>
+          <div className="font-mono text-xs text-muted-foreground overflow-x-auto whitespace-nowrap">{String(fromVal)}</div>
         </div>
-      </div>
-      <div>
-        <span className="text-xs font-medium">To</span>
-        <div className="font-mono text-xs text-muted-foreground overflow-x-auto whitespace-nowrap">
-          {Object.values(errorMsg)[9]}
+      )}
+      {toVal && (
+        <div>
+          <span className="text-xs font-medium">To</span>
+          <div className="font-mono text-xs text-muted-foreground overflow-x-auto whitespace-nowrap">{String(toVal)}</div>
         </div>
-      </div>
-      <div>
-        <span className="text-xs font-medium">Function</span>
-        <div className="font-mono text-xs text-muted-foreground overflow-x-auto whitespace-nowrap">
-          {Object.values(errorMsg)[11]}
+      )}
+      {funcVal && (
+        <div>
+          <span className="text-xs font-medium">Function</span>
+          <div className="font-mono text-xs text-muted-foreground overflow-x-auto whitespace-nowrap">{String(funcVal)}</div>
         </div>
-      </div>
-      <div>
-        <span className="text-xs font-medium">Arguments</span>
-        <div className="font-mono text-xs text-muted-foreground overflow-x-auto text-wrap break-all">
-          {Array.isArray(Object.values(errorMsg)[8]) ? (
-            Object.values(errorMsg)[8].map((value: string, index: number) => (
-              <div key={index}>arg[{index}]: {value}</div>
-            ))
-          ) : (
-            <div>{String(Object.values(errorMsg)[8])}</div>
-          )}
+      )}
+      {argsVal !== null && (
+        <div>
+          <span className="text-xs font-medium">Arguments</span>
+          <div className="font-mono text-xs text-muted-foreground overflow-x-auto text-wrap break-all">
+            {Array.isArray(argsVal) ? (
+              (argsVal as any[]).map((value: any, index: number) => (
+                <div key={index}>arg[{index}]: {String(value)}</div>
+              ))
+            ) : typeof argsVal === 'object' ? (
+              Object.entries(argsVal as Record<string, any>).map(([k, v]) => (
+                <div key={k}>{k}: {String(v)}</div>
+              ))
+            ) : (
+              <div>{String(argsVal)}</div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+      {(incentiveIdVal || viaVal) && (
+        <div>
+          <span className="text-xs font-medium">Incentive Key</span>
+          <div className="font-mono text-xs text-muted-foreground overflow-x-auto text-wrap break-all">
+            {incentiveIdVal && <div>incentiveId: {String(incentiveIdVal)}</div>}
+            {viaVal && <div>via: {String(viaVal)}</div>}
+          </div>
+        </div>
+      )}
     </>
   )}
 </CollapsibleContent>

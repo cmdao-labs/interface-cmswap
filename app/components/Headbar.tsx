@@ -45,7 +45,7 @@ export default function Headbar() {
                                         <Link href="/liquidity-pool" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
                                             <Button variant="ghost" className="cursor-pointer">Liquidity</Button>
                                         </Link>
-                                        {chainId === 2 && (
+                                        {chainId === 25925 && (
                                             <>
                                                 <Link href="/referral" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
                                                 <Button variant="ghost" className="cursor-pointer">Referral Program</Button>

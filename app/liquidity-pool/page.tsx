@@ -1,9 +1,33 @@
 'use client'
 import LiquidityPool from '../components/LiquidityPool_Combined';
 import { bitkub, jbc, bitkubTestnet } from 'viem/chains';
-import { tokens as tokens96, v3FactoryContract as v3FactoryContract96, erc20ABI as erc20ABI96, v3PoolABI as v3PoolABI96, V3_FACTORY as V3_FACTORY96, V3_FACTORYCreatedAt as V3_FACTORYCreatedAt96, positionManagerContract as positionManagerContract96 } from '@/app/lib/96';
-import { tokens as tokens8899, v3FactoryContract as v3FactoryContract8899, erc20ABI as erc20ABI8899, v3PoolABI as v3PoolABI8899, V3_FACTORY as V3_FACTORY8899, V3_FACTORYCreatedAt as V3_FACTORYCreatedAt8899, positionManagerContract as positionManagerContract8899 } from '@/app/lib/8899';
-import { tokens as tokens25925, v3FactoryContract as v3FactoryContract25925, erc20ABI as erc20ABI25925, v3PoolABI as v3PoolABI25925, V3_FACTORY as V3_FACTORY25925, V3_FACTORYCreatedAt as V3_FACTORYCreatedAt25925, positionManagerContract as positionManagerContract25925 } from '@/app/lib/25925';
+import { tokens as tokens96,
+        v3FactoryContract as v3FactoryContract96,
+        erc20ABI as erc20ABI96,
+        v3PoolABI as v3PoolABI96,
+        V3_FACTORY as V3_FACTORY96,
+        V3_FACTORYCreatedAt as V3_FACTORYCreatedAt96,
+        positionManagerContract as positionManagerContract96 
+      } from '@/app/lib/96';
+import { tokens as tokens8899,
+        v3FactoryContract as v3FactoryContract8899,
+        erc20ABI as erc20ABI8899,
+        v3PoolABI as v3PoolABI8899,
+        V3_FACTORY as V3_FACTORY8899,
+        V3_FACTORYCreatedAt as V3_FACTORYCreatedAt8899,
+        positionManagerContract as positionManagerContract8899
+      } from '@/app/lib/8899';
+import { tokens as tokens25925,
+        v3FactoryContract as v3FactoryContract25925,
+        erc20ABI as erc20ABI25925,
+        v3PoolABI as v3PoolABI25925,
+        V3_FACTORY as V3_FACTORY25925,
+        V3_FACTORYCreatedAt as V3_FACTORYCreatedAt25925,
+        positionManagerContract as positionManagerContract25925,
+        StakingFactoryV3 as StakingFactoryV3_Addr25925,
+        StakingFactoryV3Contract as StakingFactoryV3Contract25925,
+        StakingFactoryV3CreatedAt as StakingFactoryV3CreatedAt25925
+      } from '@/app/lib/25925';
 import { useAccount } from 'wagmi'
 
 type ThemeId = 96 | 8899 | 56 | 3501 | 10143 | 25925;
@@ -24,14 +48,7 @@ type ChainConfig = {
   rpc: string;
   blocktime: number;
   tokens: { name: string; value: string; logo: string }[];
-  lib: {
-    v3FactoryContract: any;
-    erc20ABI: any;
-    v3PoolABI: any;
-    V3_FACTORY: string;
-    V3_FACTORYCreatedAt: bigint;
-    positionManagerContract: any;
-  };
+  lib: any
 };
 
 const chainConfigs: Record<number, ChainConfig> = {
@@ -49,6 +66,7 @@ const chainConfigs: Record<number, ChainConfig> = {
       V3_FACTORY: V3_FACTORY96,
       V3_FACTORYCreatedAt: V3_FACTORYCreatedAt96,
       positionManagerContract: positionManagerContract96,
+      
     },
   },
   8899: {
@@ -81,6 +99,9 @@ const chainConfigs: Record<number, ChainConfig> = {
       V3_FACTORY: V3_FACTORY25925,
       V3_FACTORYCreatedAt: V3_FACTORYCreatedAt25925,
       positionManagerContract: positionManagerContract25925,
+      StakingFactoryV3Contract: StakingFactoryV3Contract25925,
+      StakingFactoryV3_Addr: StakingFactoryV3_Addr25925,
+      StakingFactoryV3CreatedAt: StakingFactoryV3CreatedAt25925,
     },
   },
 };
