@@ -3,7 +3,6 @@ import { Calendar, Clock, ChevronDown, Check } from 'lucide-react';
 
 interface DateTimePickerProps {
   onSelect?: (timestamp: number) => void;
-  minHours?: number;
   maxDays?: number;
   placeholder?: string;
   className?: string;
@@ -24,8 +23,7 @@ interface MonthOption {
 
 const DateTimePicker: React.FC<DateTimePickerProps> = ({ 
   onSelect = () => {}, 
-  minHours = 24,
-  maxDays = 7,
+  maxDays = 31,
   placeholder = "Select date and time",
   className = "" 
 }) => {
@@ -35,12 +33,11 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   // ตั้งค่าเริ่มต้นเป็น +24 ชั่วโมง
   const getInitialDate = (): TempDate => {
     const initialDate = new Date();
-    initialDate.setHours(initialDate.getHours() + minHours);
     return {
       day: initialDate.getDate(),
       month: initialDate.getMonth() + 1,
       year: initialDate.getFullYear(),
-      hour: initialDate.getHours()+ minHours,
+      hour: initialDate.getHours(),
       minute: initialDate.getMinutes()
     };
   };
@@ -52,9 +49,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
   // คำนวณวันที่ขั้นต่ำ (จาก minHours)
   const getMinDateTime = (): Date => {
-    const now = new Date();
-    now.setHours(now.getHours() + minHours);
-    return now;
+    return new Date();
   };
 
   // คำนวณวันที่สูงสุด (จาก maxDays)
@@ -73,7 +68,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
     for (let day = 1; day <= daysInMonth; day++) {
       const dayStart = new Date(year, month - 1, day, 0, 0);
-      if (dayStart >= minDate && dayStart <= maxDate) {
+      const dayEnd = new Date(year, month - 1, day, 23, 59);
+      if (dayEnd >= minDate && dayStart <= maxDate) {
         validDays.push(day);
       }
     }

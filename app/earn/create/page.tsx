@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ChevronDown, Search, Check } from "lucide-react";
 import {
   simulateContract,
@@ -189,13 +189,15 @@ const chainConfigs: Record<number, ChainConfig> = {
   },
 };
 
-const CreateEarnProgram = (classProps="mt-[120px]") => {
+const CreateEarnProgram = () => {
   const ENABLED_STAKING_TYPES = new Set<string>([
     "Concentrate Liquidity Staking",
     // "Token Staking",
   ]);
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedPool, setSelectedPool] = useState<Pool | null>(null);
+  const [selectedPair, setSelectedPair] = useState<string | null>(null);
+  const [selectedFee, setSelectedFee] = useState<string | null>(null);
   const [selectToken, setSelectToken] = useState("");
   const [selectTokenInfo, setSelectTokenInfo] = useState<{
     name: string;
@@ -251,12 +253,10 @@ const CreateEarnProgram = (classProps="mt-[120px]") => {
 
   const selectedChainConfig = chainConfigs[chainId || 96];
   const { chain, rpc, blocktime, tokens, lib } = selectedChainConfig;
-  const publicClient = useMemo(() => (
-    createPublicClient({
-      chain: selectedChainConfig.chain,
-      transport: http(selectedChainConfig.rpc),
-    })
-  ), [selectedChainConfig.chainId]);
+  const publicClient = createPublicClient({
+    chain: selectedChainConfig.chain,
+    transport: http(selectedChainConfig.rpc),
+  });
 
   const currentTheme = chains[selectedChain];
   const stakingTypes = [
@@ -430,11 +430,7 @@ const CreateEarnProgram = (classProps="mt-[120px]") => {
   };
 
   useEffect(() => {
-    if (!priceList || priceList.length < 2) return;
-
     const fetchPools = async () => {
-      const seenPairs = new Set<string>();
-
       try {
         const logCreateData = await publicClient.getContractEvents({
           ...lib.v3FactoryContract,
@@ -453,12 +449,6 @@ const CreateEarnProgram = (classProps="mt-[120px]") => {
         }));
 
         const results: Pool[] = [];
-        const currencyTokens = [
-          tokens[2].value,
-          tokens[1].value,
-          tokens[3].value,
-        ];
-
         for (const item of createData) {
           let isListed = true;
           let tokenA = tokens.find(
@@ -495,144 +485,20 @@ const CreateEarnProgram = (classProps="mt-[120px]") => {
               logo: "/default2.png",
             };
           }
-
-          try {
-            const poolStatus = await readContracts(config, {
-              contracts: [
-                {
-                  abi: erc20Abi,
-                  address: tokenA.value as `0x${string}`,
-                  functionName: "balanceOf",
-                  args: [item.pool],
-                },
-                {
-                  abi: erc20Abi,
-                  address: tokenB.value as `0x${string}`,
-                  functionName: "balanceOf",
-                  args: [item.pool],
-                },
-              ],
-            });
-
-            let tokenAamount = poolStatus[0].result ?? BigInt(0);
-            let tokenBamount = poolStatus[1].result ?? BigInt(0);
-            let priceA =
-              priceList.find((p) => p.token === tokenA!.name)?.priceUSDT ?? 0;
-            let priceB =
-              priceList.find((p) => p.token === tokenB!.name)?.priceUSDT ?? 0;
-            let balanceA = Number(tokenAamount) / 1e18;
-            let balanceB = Number(tokenBamount) / 1e18;
-            const liquidityUSD = balanceA * priceA + balanceB * priceB;
-
-            const blockAmountDaily = 86400 / selectedChainConfig.blocktime;
-            const currentBlock = await publicClient.getBlockNumber();
-
-            const logBuyData = await publicClient.getContractEvents({
-              abi: erc20Abi,
-              address: tokenA.value as `0x${string}`,
-              eventName: "Transfer",
-              args: { from: item.pool },
-              fromBlock: currentBlock - BigInt(blockAmountDaily),
-              toBlock: "latest",
-            });
-
-            const buyData = logBuyData.map((res: any) => ({
-              action: "buy",
-              value: Number(formatEther(res.args.value)),
-              tx: res.transactionHash,
-            }));
-
-            const logSellData = await publicClient.getContractEvents({
-              abi: erc20Abi,
-              address: tokenA.value as `0x${string}`,
-              eventName: "Transfer",
-              args: { to: item.pool },
-              fromBlock: currentBlock - BigInt(blockAmountDaily),
-              toBlock: "latest",
-            });
-
-            const sellData = logSellData.map((res: any) => ({
-              action: "sell",
-              value: Number(formatEther(res.args.value)),
-              tx: res.transactionHash,
-            }));
-
-            const logAddLiquidity = await publicClient.getContractEvents({
-              ...selectedChainConfig.lib.positionManagerContract,
-              eventName: "IncreaseLiquidity",
-              address: item.pool,
-              fromBlock: currentBlock - BigInt(blockAmountDaily),
-              toBlock: "latest",
-            });
-
-            const addLiquidityData = logAddLiquidity.map((res: any) => ({
-              action: "add",
-              value: Number(formatEther(res.args.value)),
-              tx: res.transactionHash,
-            }));
-
-            const logRemoveLiquidity = await publicClient.getContractEvents({
-              ...selectedChainConfig.lib.positionManagerContract,
-              eventName: "DecreaseLiquidity",
-              address: item.pool,
-              fromBlock: currentBlock - BigInt(blockAmountDaily),
-              toBlock: "latest",
-            });
-
-            const removeLiquidityData = logRemoveLiquidity.map((res: any) => ({
-              action: "remove",
-              value: Number(formatEther(res.args.value)),
-              tx: res.transactionHash,
-            }));
-
-            const liquidityTxs = new Set([
-              ...addLiquidityData.map((item: any) => item.tx),
-              ...removeLiquidityData.map((item: any) => item.tx),
-            ]);
-            const filteredBuyData = buyData.filter(
-              (item: any) => !liquidityTxs.has(item.tx)
-            );
-            const filteredSellData = sellData.filter(
-              (item: any) => !liquidityTxs.has(item.tx)
-            );
-            const volumeToken = [
-              ...filteredBuyData,
-              ...filteredSellData,
-            ].reduce((sum, tx) => sum + tx.value, 0);
-            const feeRate = Number(item.fee) / 1_000_000;
-            const fee24h = volumeToken * feeRate * priceA;
-            const apr = ((fee24h * 365) / liquidityUSD) * 100 || 0;
-
-            const a = currencyTokens.indexOf(tokenA.value as "0xstring");
-            const b = currencyTokens.indexOf(tokenB.value as "0xstring");
-            if ((a !== -1 && b === -1) || (a !== -1 && b !== -1 && b < a)) {
-              [tokenA, tokenB] = [tokenB, tokenA];
-              [tokenAamount, tokenBamount] = [tokenBamount, tokenAamount];
-              [priceA, priceB] = [priceB, priceA];
-              [balanceA, balanceB] = [balanceB, balanceA];
-            }
-
-            const pairKey = [tokenA.name, tokenB.name].sort().join("|");
-
-            if (!seenPairs.has(pairKey)) {
-              seenPairs.add(pairKey);
-
-              results.push({
-                id: `${tokenA.name}-${tokenB.name}-${item.fee}`,
-                name: `${tokenA.name}/${tokenB.name}`,
-                apr: `${apr.toFixed(2)}%`,
-                tvl: `$${liquidityUSD.toFixed(3)}`,
-                volume: `$${(volumeToken * priceA).toFixed(3)}`,
-                tokenA: tokenA.value,
-                tokenB: tokenB.value,
-                fee: Number(item.fee),
-                poolAddress: item.pool,
-                listed: isListed,
-              });
-            }
-          } catch (e) {
-            setErrMsg(e as WriteContractErrorType);
-          }
+          // Normalize pair name for grouping; keep all fee tiers
+          const [n0, n1] = [tokenA.name, tokenB.name].sort();
+          results.push({
+            id: `${n0}-${n1}-${item.fee}`,
+            name: `${n0}/${n1}`,
+            apr: "-",
+            tvl: "-",
+            volume: "-",
+            tokenA: tokenA.value,
+            tokenB: tokenB.value,
+            fee: Number(item.fee),
+            poolAddress: item.pool,
+            listed: isListed,
+          });
         }
 
         setValidPools(results);
@@ -737,7 +603,7 @@ const CreateEarnProgram = (classProps="mt-[120px]") => {
     }
 
     fetchCurrentBlock();
-  }, [selectedChainConfig.chainId]);
+  }, [publicClient]);
 
   useEffect(() => {
     if (rewardToken) {
@@ -1011,7 +877,7 @@ const CreateEarnProgram = (classProps="mt-[120px]") => {
 
   return (
     <div className="h-full max-h-[100vh] w-full bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white overflow-y-auto overflow-x-hidden">
-      <div className={`container mx-auto px-4 md:px-6 py-4 md:py-6  ${classProps}`}>
+      <div className="container mx-auto px-4 md:px-6 py-4 md:py-6 mt-[120px] ">
         <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
         <div className="max-w-4xl mx-auto w-full mt-4 md:mt-8 pb-6 md:pb-10">
           <div className="text-center mb-6">
@@ -1212,54 +1078,86 @@ const CreateEarnProgram = (classProps="mt-[120px]") => {
                       className={`w-full pl-10 pr-4 py-3  border ${currentTheme.border} ${currentTheme.hover} rounded-lg text-white placeholder-gray-400 focus:outline-none focus:${currentTheme.border}`}
                     />
                   </div>
-                  <div className="space-y-3">
-                    {validPools.map((pool) => (
-                      <div
-                        key={pool.id}
-                        onClick={() => setSelectedPool(pool)}
-                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                          selectedPool?.id === pool.id
-                            ? `${currentTheme.accent} ${currentTheme.bg}`
-                            : `${currentTheme.border} ${currentTheme.hover}`
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="relative w-10 h-10">
-                              <img
-                                src="/default2.png"
-                                alt="token1"
-                                className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0"
-                              />
-                              <img
-                                src="/default2.png"
-                                alt="token2"
-                                className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0"
-                              />
-                            </div>
-                            <div>
-                              <h3 className="font-medium text-white">
-                                {pool.name}
-                              </h3>
-                              {/*                             <p className="text-sm text-gray-400">Fee: {(pool.fee / 10000)}%</p>
-                               */}{" "}
+                  {(() => {
+                    const uniquePairsMap = new Map<string, Pool>();
+                    for (const p of validPools) {
+                      if (!uniquePairsMap.has(p.name)) uniquePairsMap.set(p.name, p);
+                    }
+                    const uniquePairs = Array.from(uniquePairsMap.values());
+                    return (
+                      <div className="space-y-3">
+                        {uniquePairs.map((pool) => (
+                          <div
+                            key={pool.name}
+                            onClick={() => {
+                              setSelectedPair(pool.name);
+                              setSelectedFee(null);
+                              setSelectedPool(null);
+                            }}
+                            className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                              selectedPair === pool.name
+                                ? `${currentTheme.accent} ${currentTheme.bg}`
+                                : `${currentTheme.border} ${currentTheme.hover}`
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="relative w-10 h-10">
+                                  <img
+                                    src="/default2.png"
+                                    alt="token1"
+                                    className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0"
+                                  />
+                                  <img
+                                    src="/default2.png"
+                                    alt="token2"
+                                    className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0"
+                                  />
+                                </div>
+                                <div>
+                                  <h3 className="font-medium text-white">{pool.name}</h3>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                          {/*     <div className="text-right">
-                          <div className="flex gap-4 text-sm">
-                            <span className="text-gray-400">
-                              APR: <span className={currentTheme.text}>{pool.apr}</span>
-                            </span>
-                            <span className="text-gray-400">
-                              TVL: <span className="text-white">{pool.tvl}</span>
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-400 mt-1">24h Vol: {pool.volume}</p>
-                        </div> */}
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })()}
+
+                  {selectedPair && (
+                    <div className="w-full space-y-4">
+                      <div>
+                        <h2 className="text-lg font-semibold">Select Fee Tier</h2>
+                        <p className="text-sm text-gray-400">
+                          Choose the fee tier for the selected pair.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {Array.from(
+                          new Set(
+                            validPools
+                              .filter((p) => p.name === selectedPair)
+                              .map((p) => String(p.fee))
+                          )
+                        )
+                          .sort((a, b) => Number(a) - Number(b))
+                          .map((fee) => (
+                            <button
+                              key={`${selectedPair}-${fee}`}
+                              onClick={() => setSelectedFee(fee)}
+                              className={`px-4 py-2 rounded-full border text-sm transition ${
+                                selectedFee === fee
+                                  ? `${currentTheme.bg} ${currentTheme.text} ring-2 ring-offset-1 ring-primary`
+                                  : " text-gray-400 hover:bg-gray-700 hover:text-gray-300"
+                              }`}
+                            >
+                              {Number(fee) / 10000}%
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                   {/* <div className="w-full space-y-4">
                   <div>
                     <h2 className="text-lg font-semibold">Eligible Liquidity Fees</h2>
@@ -1286,6 +1184,8 @@ const CreateEarnProgram = (classProps="mt-[120px]") => {
                       onClick={() => {
                         setCurrentStep(1);
                         setSelectedPool(null);
+                        setSelectedPair(null);
+                        setSelectedFee(null);
                         setSelectToken("");
                       }}
                       className="flex-1 py-3 border border-gray-500 text-gray-300 rounded-lg font-medium hover:bg-gray-600 transition-colors"
@@ -1293,10 +1193,23 @@ const CreateEarnProgram = (classProps="mt-[120px]") => {
                       Back
                     </button>
                     <button
-                      onClick={() => selectedPool && setCurrentStep(3)}
-                      disabled={!selectedPool}
+                      onClick={() => {
+                        const pool = validPools.find(
+                          (p) => p.name === selectedPair && String(p.fee) === String(selectedFee)
+                        );
+                        if (pool) {
+                          setSelectedPool(pool);
+                          setCurrentStep(3);
+                        }
+                      }}
+                      disabled={
+                        !selectedPair || !selectedFee ||
+                        !validPools.some(
+                          (p) => p.name === selectedPair && String(p.fee) === String(selectedFee)
+                        )
+                      }
                       className={`flex-1 py-3 rounded-lg font-medium transition-all ${
-                        selectedPool
+                        selectedPair && selectedFee
                           ? `${currentTheme.text} ${currentTheme.bg} border ${currentTheme.accent} hover:opacity-80`
                           : "border border-gray-500 text-gray-400 cursor-not-allowed"
                       }`}
@@ -1645,6 +1558,7 @@ const CreateEarnProgram = (classProps="mt-[120px]") => {
                         First Block Reward
                       </label>
                       <DateTimePicker
+                 
                         onSelect={(timestamp) => {
                           const date = new Date(timestamp);
                           setStartDate({
@@ -2167,21 +2081,21 @@ const CreateEarnProgram = (classProps="mt-[120px]") => {
                       </button>
                     </div>
 
-                    {stakingType !== "Token Staking" && (
-                      <>
-                        {/*  <div>
-                        <span className="text-gray-400 text-sm tracking-normal" style={{ letterSpacing: '0.015em' }}>
+                    {stakingType !== "Token Staking" && selectedPool && (
+                      <div>
+                        <span
+                          className="text-gray-400 text-sm tracking-normal"
+                          style={{ letterSpacing: "0.015em" }}
+                        >
                           Fee:
                         </span>
-                        <span className={`${currentTheme.text} ml-2 tracking-wide`} style={{ letterSpacing: '0.02em', fontSize: '0.9rem' }}>
-                          {poolFees
-                            .map((fee) => Number(fee))
-                            .sort((a, b) => a - b)
-                            .map((fee) => `${(fee / 10000).toFixed(2)}%`)
-                            .join(", ")}
+                        <span
+                          className={`${currentTheme.text} ml-2 tracking-wide`}
+                          style={{ letterSpacing: "0.02em", fontSize: "0.9rem" }}
+                        >
+                          {(selectedPool.fee / 10000).toFixed(2)}%
                         </span>
-                      </div> */}
-                      </>
+                      </div>
                     )}
 
                     <div className="space-y-4">

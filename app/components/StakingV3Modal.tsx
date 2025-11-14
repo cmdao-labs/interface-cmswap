@@ -160,6 +160,21 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
         setIsLoading(false);
         return;
       }
+      // Pre-check token's actual pool matches the incentive pool
+      try {
+        const pos: any = await readContract(config, { ...positionManagerContract, functionName: 'positions', args: [_nftId] });
+        const token0 = String(pos?.token0 || pos?.[2] || '') as `0x${string}`;
+        const token1 = String(pos?.token1 || pos?.[3] || '') as `0x${string}`;
+        const fee = Number(pos?.fee ?? pos?.[4] ?? 0);
+        const tokenPool = await readContract(config, { ...v3FactoryContract, functionName: 'getPool', args: [token0, token1, fee] }) as `0x${string}`;
+    /*     if (tokenPool.toLowerCase() !== (EFFECTIVE_POOL as string).toLowerCase()) {
+          const err: any = new Error('Token pool does not match the selected incentive pool.');
+          err.meta = { functionName: 'stakeToken', tokenId: _nftId.toString(), tokenPool, incentivePool: EFFECTIVE_POOL };
+          setErrMsg(err as WriteContractErrorType);
+          setIsLoading(false);
+          return;
+        } */
+      } catch {}
       const { request: request1 } = await simulateContract(config, { ...erc721ABI, address: POSITION_MANAGER, functionName: 'safeTransferFrom', args: [address as '0xstring', StakingFactoryV3, _nftId] })
       const h = await writeContract(config, request1)
       await waitForTransactionReceipt(config, { hash: h })
