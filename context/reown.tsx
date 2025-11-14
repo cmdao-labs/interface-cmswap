@@ -1,16 +1,16 @@
 'use client'
-import { wagmiAdapter, projectId } from '@/config/reown'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { createAppKit } from '@reown/appkit/react'
-import { bsc, /*base, worldchain,*/ bitkub, jbc, bitkubTestnet } from '@reown/appkit/networks'
 import React, { type ReactNode } from 'react'
 import { cookieToInitialState, WagmiProvider, type Config } from 'wagmi'
-
+import { wagmiAdapter, projectId } from '@/config/reown'
+import { bitkub, bsc, jbc, bitkubTestnet, /*base, worldchain,*/ } from '@reown/appkit/networks'
+import { createAppKit } from '@reown/appkit/react'
 const queryClient = new QueryClient()
 if (!projectId) throw new Error('Project ID is not defined');
 createAppKit({
     adapters: [wagmiAdapter],
-    networks: [bsc, /*base, worldchain,*/ bitkub, jbc, bitkubTestnet],
+    networks: [bitkub, bsc, jbc, bitkubTestnet, /*base, worldchain,*/],
+    defaultNetwork: bitkub,
     projectId,
     themeMode: 'dark',
     themeVariables: {'--w3m-font-size-master': '8px', '--w3m-z-index': 1000, '--w3m-accent': '#1a1a3a'},
@@ -22,7 +22,8 @@ createAppKit({
     },
     features: { analytics: true, }
 })
-function ContextProvider({ children, cookies }: { children: ReactNode; cookies: string | null }) {
+
+export default function ContextProvider({ children, cookies }: { children: ReactNode; cookies: string | null }) {
     const initialState = cookieToInitialState(wagmiAdapter.wagmiConfig as Config, cookies)
     return (
         <WagmiProvider config={wagmiAdapter.wagmiConfig as Config} initialState={initialState}>
@@ -30,4 +31,3 @@ function ContextProvider({ children, cookies }: { children: ReactNode; cookies: 
         </WagmiProvider>
     )
 }
-export default ContextProvider

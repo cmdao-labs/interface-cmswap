@@ -2,12 +2,11 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { headers } from 'next/headers'
+import ContextProvider from '@/context/reown'
 import { ThemeProvider } from '@/components/cmswap/theme-provider'
+import { PriceProvider } from '@/context/getPrice'
 import Headbar from '@/components/cmswap/Headbar'
 import Footer from '@/components/cmswap/Footer'
-import ContextProvider from '@/context/reown'
-import { PriceProvider } from '@/context/getPrice'
-
 const inter = Inter({subsets: ['latin'], display: 'swap'})
 
 export const metadata: Metadata = {
@@ -45,7 +44,7 @@ export default async function RootLayout({ children, }: { children: React.ReactN
                     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
                         <PriceProvider>
                             <Headbar />
-                                {children}
+                            {children}
                             <Footer />
                         </PriceProvider>
                     </ThemeProvider>
