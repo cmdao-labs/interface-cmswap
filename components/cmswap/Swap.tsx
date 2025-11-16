@@ -14,20 +14,14 @@ import { useSwapQuote } from '@/components/cmswap/swap/useSwapQuote'
 import { encodePath } from '@/components/cmswap/swap/path'
 import { ensureTokenAllowance, executeRouterSwap, wrapNativeToken, unwrapWrappedToken } from '@/components/cmswap/swap/swapActions'
 import { computePriceImpact, getDecimals } from '@/components/cmswap/swap/utils'
-import { selectBestRoute } from '@/components/cmswap/swap/quoteComparison'
-import type { CmswapFee } from '@/components/cmswap/swap/quoteComparison'
+import { CMSWAP_FEE_TIERS, PANCAKESWAP_FEE_TIERS, ROUTE_DESCRIPTIONS, selectBestRoute } from '@/components/cmswap/swap/quoteComparison'
+import type { RouteOption, RouteQuoteMetrics } from '@/components/cmswap/swap/quoteComparison'
 import { SwapTokenPanel } from '@/components/cmswap/swap/SwapTokenPanel'
 import { useSwapChain } from '@/components/cmswap/useSwapChain'
 import { LiquidityVariant } from '@/components/cmswap/liquidityVariant'
 import { selectSwapPoolDataHook } from '@/components/cmswap/swap/hooks/selectSwapPoolData'
 
 type UIToken = { name: string; value: '0xstring'; logo: string; decimal: number }
-type RouteOption = { id: string; pool: string; label: string; tvl: number; tvlUnit: string; fee?: number; feeLabel?: string; description?: string; amountOut?: number; priceQuote?: number; }
-type RouteQuoteMetrics = { amountOut?: number; priceQuote?: number; }
-type CmswapFeeTier = { fee: 100 | 500 | 3000 | 10000; label: string; tvlKey: 'tvl100' | 'tvl500' | 'tvl3000' | 'tvl10000' }
-type PancakeSwapFeeTier = { fee: 100 | 500 | 2500 | 10000; label: string; tvlKey: 'tvl100' | 'tvl500' | 'tvl2500' | 'tvl10000' }
-const CMSWAP_FEE_TIERS: readonly CmswapFeeTier[] = [{ fee: 100, label: '0.01%', tvlKey: 'tvl100' }, { fee: 500, label: '0.05%', tvlKey: 'tvl500' }, { fee: 3000, label: '0.3%', tvlKey: 'tvl3000' }, { fee: 10000, label: '1%', tvlKey: 'tvl10000' } ] as const
-const PANCAKESWAP_FEE_TIERS: readonly PancakeSwapFeeTier[] = [{ fee: 100, label: '0.01%', tvlKey: 'tvl100' }, { fee: 500, label: '0.05%', tvlKey: 'tvl500' }, { fee: 2500, label: '0.25%', tvlKey: 'tvl2500' }, { fee: 10000, label: '1%', tvlKey: 'tvl10000' } ] as const
 const SLIPPAGE_DENOMINATOR = BigInt(10_000)
 type SlippagePresetKey = '0.1' | '0.5' | '1' | '5'
 type SlippageOptionKey = SlippagePresetKey | 'custom'
@@ -37,15 +31,6 @@ const SLIPPAGE_PRESETS: readonly { key: SlippagePresetKey; label: string; value:
     { key: '1', label: '1%', value: 1 },
     { key: '5', label: '5%', value: 5 },
 ] as const
-const ROUTE_DESCRIPTIONS: Record<string, string> = {
-    CMswap: 'v3',
-    PancakeSwap: 'v3',
-    DiamonSwap: 'v2',
-    UdonSwap: 'v2',
-    ponder: 'v2',
-    GameSwap: 'simple xy = k',
-    JibSwap: 'v2',
-}
 
 export default function Swap({
     setIsLoading,
@@ -84,6 +69,7 @@ export default function Swap({
     const [GameSwapTvl, setGameSwapTvl] = React.useState<any>({ tvl10000: "", tvl3000: "", tvl500: "", tvl100: "", exchangeRate: "", t0: '' as '0xstring' })
     const [JibSwapTvl, setJibSwapTvl] = React.useState<any>({ tvl10000: "", exchangeRate: "", t0: '' as '0xstring' })
     const [PancakeSwapTVL, setPancakeSwapTVL] = React.useState<any>({ tvl10000: "", tvl2500: "", tvl500: "", tvl100: "", exchangeRate: "", FixedExchangeRate: "", t0: '' as '0xstring' })
+    const [UniswapV3TVL, setUniswapV3TVL] = React.useState<any>({ tvl10000: "", tvl3000: "", tvl500: "", tvl100: "", exchangeRate: "", t0: '' as '0xstring' })
     const [reserveUdonA, setReserveUdonA] = React.useState(BigInt(0))
     const [reserveUdonB, setReserveUdonB] = React.useState(BigInt(0))
     const [slippageTolerance, setSlippageTolerance] = React.useState<number>(5)
@@ -161,10 +147,11 @@ export default function Swap({
         if (variant === LiquidityVariant.BKC) return { ...base, setCMswapTVL, setDMswapTVL, setUdonTVL, setPonderTVL, setReserveUdonA, setReserveUdonB, setAmountA, setAmountB }
         if (variant === LiquidityVariant.JBC) return { ...base, setCMswapTVL, setGameSwapTvl, setJibSwapTvl, setBestPathArray, setFixedExchangeRate, setOnLoading, setAmountA, setAmountB }
         if (variant === LiquidityVariant.BSC) return { ...base, setPancakeSwapTVL, setBestPathArray, setFixedExchangeRate, setOnLoading, setAmountA, setAmountB }
+        if (variant === LiquidityVariant.BASE) return { ...base, setUniswapV3TVL, setBestPathArray, setFixedExchangeRate, setOnLoading, setAmountA, setAmountB }
         if (variant === LiquidityVariant.BKC_TESTNET) return { ...base, setCMswapTVL, setAmountA, setAmountB, setNewPrice }
         return base
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [variant, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute])
+    }, [variant, address, tokens, tokenA, tokenB, feeSelect, txupdate, hasInitializedFromParams, setTokenA, setTokenB, setTokenABalance, setTokenBBalance, setWrappedRoute, setExchangeRate, setAltRoute, setUniswapV3TVL, setOnLoading])
     usePoolData(poolParams)
     const getQuote = useDebouncedCallback(async (_amount: string) => {
         const isSampleCall = _amount !== amountA
@@ -193,6 +180,8 @@ export default function Swap({
         let ponderRate: number | undefined = undefined
         let GameswapRate: number | undefined = undefined
         let JibswapRate: number | undefined = undefined
+        let UniswapV3Rate: number | undefined = undefined
+        let bestUniswapV3Fee: 100 | 500 | 3000 | 10000 | undefined = undefined
         const tokenAvalue = resolveTokenAddress(tokenA)
         const tokenBvalue = resolveTokenAddress(tokenB)
         if (wrappedRoute) {
@@ -268,6 +257,38 @@ export default function Swap({
                                     setNewPrice(execPriceAB.toFixed(6))
                                 }
                                 if (autoCmswapFee && bestPancakeSwapFee !== undefined) setFeeSelect(bestPancakeSwapFee)
+                            }
+                        } else { if (shouldUpdateUI) setAmountB("") }
+                    }
+                } catch {}
+            }
+            if (variant === LiquidityVariant.BASE) {
+                try {
+                    if (Number(amountForQuote) !== 0) {
+                        let bestOut = 0
+                        const feeTiers = CMSWAP_FEE_TIERS
+                        for (const meta of feeTiers) {
+                            const quoteOutput = await quoteExactInputSingle({ tokenIn: tokenA, tokenOut: tokenB, amount: amountForQuote, fee: meta.fee, parseAmount: (value: string) => parseUnits(value, getDecimals(tokenA)), suppressErrors: true })
+                            if (quoteOutput) {
+                                const out = Number(formatUnits(quoteOutput.amountOut, getDecimals(tokenB)))
+                                recordQuote(`UniswapV3-${meta.fee}`, out)
+                                if (out > bestOut) { bestOut = out; bestUniswapV3Fee = meta.fee as 100 | 500 | 3000 | 10000 }
+                            } else {
+                                recordQuote(`UniswapV3-${meta.fee}`)
+                            }
+                        }
+                        if (bestOut > 0) {
+                            UniswapV3Rate = bestOut
+                            if (shouldUpdateUI && poolSelect === "UniswapV3") {
+                                const selectedKey = `UniswapV3-${feeSelect}` as const
+                                const selectedOut = nextRouteQuoteMap[selectedKey]?.amountOut
+                                const outToUse = autoCmswapFee ? bestOut : (selectedOut ?? 0)
+                                if (outToUse > 0) {
+                                    setAmountB(outToUse.toString())
+                                    const execPriceAB = outToUse > 0 ? userAmountIn / outToUse : 0
+                                    setNewPrice(execPriceAB.toFixed(6))
+                                }
+                                if (autoCmswapFee && bestUniswapV3Fee !== undefined) setFeeSelect(bestUniswapV3Fee)
                             }
                         } else { if (shouldUpdateUI) setAmountB("") }
                     }
@@ -390,7 +411,7 @@ export default function Swap({
             }
         }
         setRouteQuoteMap(nextRouteQuoteMap)
-        return { CMswapRate, PancakeSwapRate, DiamonSwapRate, UdonswapRate, ponderRate, GameswapRate, JibswapRate, CMswapBestFee: bestCmswapFee, PancakeSwapBestFee: bestPancakeSwapFee }
+        return { CMswapRate, PancakeSwapRate, UniswapV3Rate, DiamonSwapRate, UdonswapRate, ponderRate, GameswapRate, JibswapRate, CMswapBestFee: bestCmswapFee, PancakeSwapBestFee: bestPancakeSwapFee, bestUniswapV3Fee }
     }, 400)
     const wrap = async () => {
         setIsLoading(true)
@@ -568,6 +589,8 @@ export default function Swap({
         } else if (variant === LiquidityVariant.JBC) {
             if (poolSelect === "GameSwap") return gameswap()
             if (poolSelect === "JibSwap") return jibswap()
+        } else if (variant === LiquidityVariant.BASE) {
+            if (poolSelect === "UniswapV3") return CMswap()
         }
     }
     React.useEffect(() => {
@@ -581,12 +604,15 @@ export default function Swap({
             } else if (variant === LiquidityVariant.BSC) {
                 const map: any = { PancakeSwap: PancakeSwapTVL }
                 if (poolSelect in map) { setExchangeRate(map[poolSelect].exchangeRate); setFixedExchangeRate(map[poolSelect].FixedExchangeRate || '') } else { setExchangeRate('0') }
+            } else if (variant === LiquidityVariant.BASE) {
+                const map: any = { UniswapV3: UniswapV3TVL }
+                if (poolSelect in map) { setExchangeRate(map[poolSelect].exchangeRate); setFixedExchangeRate(map[poolSelect].FixedExchangeRate || '') } else { setExchangeRate('0') }
             } else {
                 if (poolSelect === 'CMswap') setExchangeRate(CMswapTVL.exchangeRate)
             }
         }
         if (!wrappedRoute) updateRate()
-    }, [amountA, poolSelect, CMswapTVL, DMswapTVL, UdonTVL, ponderTVL, GameSwapTvl, JibSwapTvl, PancakeSwapTVL, txupdate, variant, wrappedRoute])
+    }, [amountA, poolSelect, CMswapTVL, DMswapTVL, UdonTVL, ponderTVL, GameSwapTvl, JibSwapTvl, PancakeSwapTVL, UniswapV3TVL, txupdate, variant, wrappedRoute])
     React.useEffect(() => {
         const fetchQuoteAndSetPool = async () => {
             try {
@@ -614,6 +640,13 @@ export default function Swap({
                     setBestPool(res.bestPool)
                     if (poolSelect !== res.bestPool) setPoolSelect(res.bestPool)
                     if (res.bestPool === 'PancakeSwap' && res.pancakeSwapFee && autoCmswapFee) setFeeSelect(res.pancakeSwapFee as any)
+                } else if (variant === LiquidityVariant.BASE) {
+                    const quotes = {UniswapV3: Number(quote?.UniswapV3Rate),}
+                    const res = selectBestRoute({ variant, quotes, currentPool: (poolSelect || undefined) as any, cmSwapBestFee: undefined, pancakeSwapBestFee: undefined, uniSwapV3BestFee: quote?.bestUniswapV3Fee })
+                    if (!res.bestPool) return
+                    setBestPool(res.bestPool)
+                    if (poolSelect !== res.bestPool) setPoolSelect(res.bestPool)
+                    if (res.bestPool === 'UniswapV3' && res.uniSwapV3Fee && autoCmswapFee) setFeeSelect(res.uniSwapV3Fee)
                 } else {
                     const quotes = { CMswap: Number(quote?.CMswapRate) }
                     const res = selectBestRoute({ variant, quotes, currentPool: (poolSelect || undefined) as any, cmSwapBestFee: quote?.CMswapBestFee })
@@ -625,18 +658,8 @@ export default function Swap({
             } catch (e) { console.error('Error fetching quote', e) }
         }
         fetchQuoteAndSetPool()
-    }, [CMswapTVL, DMswapTVL, UdonTVL, ponderTVL, GameSwapTvl, JibSwapTvl, PancakeSwapTVL, amountA, onLoading, variant])
-    React.useEffect(() => {
-        if (variant === LiquidityVariant.BSC) {
-            setFeeSelect(2500);
-        } else {
-            setFeeSelect(3000);
-        }
-        setAutoCmswapFee(true)
-    }, [tokenA, tokenB, variant])
+    }, [CMswapTVL, DMswapTVL, UdonTVL, ponderTVL, GameSwapTvl, JibSwapTvl, PancakeSwapTVL, UniswapV3TVL, amountA, onLoading, variant])
     React.useEffect(() => { setRouteQuoteMap({}) }, [tokenA.value, variant])
-
-    // Sync pool info with parent component for chart fee tier selection
     React.useEffect(() => {
         if (onPoolInfoChange) {
             if (poolSelect) {
@@ -672,6 +695,15 @@ export default function Swap({
                     const tvlValue = toNumber((PancakeSwapTVL as any)?.[meta.tvlKey])
                     const metrics = routeQuoteMap[`PancakeSwap-${meta.fee}`]
                     options.push({id: `PancakeSwap-${meta.fee}`, pool: 'PancakeSwap', label: 'PancakeSwap', fee: meta.fee, feeLabel: meta.label, tvl: tvlValue, tvlUnit: baseTvlUnit, description: ROUTE_DESCRIPTIONS.PancakeSwap, amountOut: metrics?.amountOut, priceQuote: metrics?.priceQuote})
+                })
+            }
+        } else if (variant === LiquidityVariant.BASE) {
+            const shouldShowUniswapV3 = CMSWAP_FEE_TIERS.some(meta => toNumber((UniswapV3TVL as any)?.[meta.tvlKey]) > 0) || poolSelect === 'UniswapV3' || bestPool === 'UniswapV3'
+            if (shouldShowUniswapV3) {
+                CMSWAP_FEE_TIERS.forEach(meta => {
+                    const tvlValue = toNumber((UniswapV3TVL as any)?.[meta.tvlKey])
+                    const metrics = routeQuoteMap[`UniswapV3-${meta.fee}`]
+                    options.push({id: `UniswapV3-${meta.fee}`, pool: 'UniswapV3', label: 'UniswapV3', fee: meta.fee, feeLabel: meta.label, tvl: tvlValue, tvlUnit: baseTvlUnit, description: ROUTE_DESCRIPTIONS.UniswapV3, amountOut: metrics?.amountOut, priceQuote: metrics?.priceQuote})
                 })
             }
         }
@@ -746,7 +778,7 @@ export default function Swap({
     const activeRouteId = React.useMemo(() => {
         const active = routeOptions.find(route => {
             if (route.pool !== poolSelect) return false
-            if (route.pool === 'CMswap' && route.fee !== undefined) return feeSelect === route.fee
+            if ((route.pool === 'CMswap' || route.pool === 'UniswapV3' || route.pool === 'PancakeSwap') && route.fee !== undefined) return feeSelect === route.fee
             return true
         })
         return active?.id
@@ -754,20 +786,14 @@ export default function Swap({
     const activeRoute = React.useMemo(() => routeOptions.find(route => route.id === activeRouteId), [routeOptions, activeRouteId])
     const suggestedRoute = React.useMemo(() => routeOptions.find(route => route.id === suggestedRouteId), [routeOptions, suggestedRouteId])
     const previewRoute = React.useMemo(() => suggestedRoute || activeRoute || routeOptions[0], [suggestedRoute, activeRoute, routeOptions])
-    const handleRouteSelect = React.useCallback(async (route: RouteOption, cmswapFeeOverride?: CmswapFee) => {
-        setPoolSelect(route.pool)
-        if (route.pool === 'CMswap') {
-        const feeToUse = (cmswapFeeOverride ?? route.fee)
-        if (feeToUse !== undefined) {
-            setFeeSelect(feeToUse)
-            setAutoCmswapFee(false)
-        } else {
-            const quote: any = await getQuote(amountA)
-            if (quote?.CMswapBestFee) {
-                setFeeSelect(quote.CMswapBestFee)
-                setAutoCmswapFee(true)
+    const handleRouteSelect = React.useCallback(async (route: RouteOption) => {
+        setPoolSelect(route.pool)   
+        if (route.pool === 'CMswap' || route.pool === 'UniswapV3' || route.pool === 'PancakeSwap') {
+            const feeToUse = route.fee
+            if (feeToUse !== undefined) {
+                setFeeSelect(feeToUse)
+                setAutoCmswapFee(false)
             }
-        }
         } else {
             setAutoCmswapFee(true)
         }

@@ -1,11 +1,12 @@
 import { chains, type SupportedChainId } from '@/lib/chains'
 
-export enum LiquidityVariant { BKC = 96, JBC = 8899, BKC_TESTNET = 25925, BSC = 56, }
+export enum LiquidityVariant { BKC = 96, JBC = 8899, BKC_TESTNET = 25925, BSC = 56, BASE = 8453, }
 export const getLiquidityVariant = (chainId?: number): LiquidityVariant => {
     switch (chainId) {
         case 8899: return LiquidityVariant.JBC
         case 25925: return LiquidityVariant.BKC_TESTNET
         case 56: return LiquidityVariant.BSC
+        case 8453: return LiquidityVariant.BASE
         case 96: default: return LiquidityVariant.BKC
     }
 }
@@ -35,6 +36,12 @@ export const liquidityVariantConfig = {
         chainId: 56 as SupportedChainId,
         isKap20Token: (_addr: string) => false,
         decimalsOf: (addr: string) => chains[56].tokens.find(t => t.value.toUpperCase() === addr.toUpperCase())?.decimal ?? 18,
+        displayPrecision: 4,
+    },
+    [LiquidityVariant.BASE]: {
+        chainId: 8453 as SupportedChainId,
+        isKap20Token: (_addr: string) => false,
+        decimalsOf: (addr: string) => chains[8453].tokens.find(t => t.value.toUpperCase() === addr.toUpperCase())?.decimal ?? 18,
         displayPrecision: 4,
     },
 } as const

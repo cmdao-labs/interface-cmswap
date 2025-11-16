@@ -1,9 +1,7 @@
 import { createPublicClient, http, erc20Abi, erc721Abi } from 'viem'
-import { bsc, bitkub, bitkubTestnet, jbc, } from 'viem/chains'
+import { bsc, bitkub, bitkubTestnet, jbc, base, } from 'viem/chains'
 import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3staker, WrappedNative, kap20abi, CMswapPoolDualRouterABI, CMswapUniSmartRouteABI, CMswapUniSmartRouteABIV2, UniswapPair, bkcUnwappedKKUB, cmSwapRefProgramABI, stakingV2FactoryABI, stakingV2ABI, stakingV3FactoryABI, stakingV3ABI, } from '@/lib/abi'
 
-type Token = { name: string; value: '0xstring'; logo: string; decimal: number; }
-type ChainData = { chainId: number; chain: typeof bitkub | typeof bitkubTestnet | typeof jbc  | typeof bsc; tokens: ReadonlyArray<Token>; publicClient: ReturnType<typeof createPublicClient>; [key: string]: unknown; }
 const chain25925 = {
     chainId: 25925,
     chain: bitkubTestnet,
@@ -148,8 +146,38 @@ const chain56 = {
     erc721ABI: {chainId: 56, abi: erc721Abi} as const,
     publicClient: createPublicClient({ chain: bsc, transport: http() }),
 } as const
+const chain8453 = {
+    chainId: 8453,
+    chain: base,
+    tokens: [
+        { name: 'ETH', value: '0xnative' as '0xstring', logo: 'https://raw.githubusercontent.com/SmolDapp/tokenAssets/refs/heads/main/tokens/8453/0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/logo-32.png', decimal: 18 },
+        { name: 'WETH', value: '0x4200000000000000000000000000000000000006' as '0xstring', logo: 'https://coin-images.coingecko.com/coins/images/39810/large/weth.png?1724139790', decimal: 18 },
+        { name: 'USDC', value: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as '0xstring', logo: 'https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694', decimal: 6 },
+        { name: 'cbBTC', value: '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf' as '0xstring', logo: 'https://coin-images.coingecko.com/coins/images/40143/large/cbbtc.webp?1726136727', decimal: 8 },
+        { name: 'AERO', value: '0x940181a94A35A4569E4529A3CDfB74e38FD98631' as '0xstring', logo: 'https://coin-images.coingecko.com/coins/images/31745/large/token.png?1696530564', decimal: 18 },
+        { name: 'VIRTUAL', value: '0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b' as '0xstring', logo: 'https://coin-images.coingecko.com/coins/images/34057/large/LOGOMARK.png?1708356054', decimal: 18 },
+        { name: 'ZORA', value: '0x1111111111166b7FE7bd91427724B487980aFc69' as '0xstring', logo: 'https://coin-images.coingecko.com/coins/images/54693/large/zora.jpg?1741094751', decimal: 18 },
+        { name: 'AVNT', value: '0x696F9436B67233384889472Cd7cD58A6fB5DF4f1' as '0xstring', logo: 'https://coin-images.coingecko.com/coins/images/68972/large/avnt-token.png?1757134448', decimal: 18 },
+        { name: 'CLANKER', value: '0x1bc0c42215582d5A085795f4baDbaC3ff36d1Bcb' as '0xstring', logo: 'https://coin-images.coingecko.com/coins/images/51440/large/CLANKER.png?1731232869', decimal: 18 },
+    ],
+    V3_FACTORY: '0x33128a8fC17869897dcE68Ed026d694621f6FDfD' as '0xstring',
+    V3_FACTORYCreatedAt: BigInt(1371680),
+    POSITION_MANAGER: '0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1' as '0xstring',
+    positionManagerCreatedAt: BigInt(1371714),
+    QOUTER_V2: '0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a' as '0xstring',
+    ROUTER02: '0x2626664c2603336E57B271c5C0b26F421741e481' as '0xstring',
+    v3FactoryContract: {chainId: 8453, abi: v3Factory, address: '0x33128a8fC17869897dcE68Ed026d694621f6FDfD' as '0xstring'} as const,
+    positionManagerContract: {chainId: 8453, abi: NonfungiblePositionManager, address: '0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1' as '0xstring'} as const,
+    qouterV2Contract: {chainId: 8453, abi: qouterV2, address: '0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a' as '0xstring'} as const,
+    router02Contract: {chainId: 8453, abi: router02, address: '0x2626664c2603336E57B271c5C0b26F421741e481' as '0xstring'} as const,
+    erc20ABI: {chainId: 8453, abi: erc20Abi} as const,
+    v3PoolABI: {chainId: 8453, abi: v3Pool} as const,
+    wrappedNative: {chainId: 8453, abi: WrappedNative, address: '0x4200000000000000000000000000000000000006' as '0xstring'} as const,
+    erc721ABI: {chainId: 8453, abi: erc721Abi} as const,
+    publicClient: createPublicClient({ chain: base, transport: http() }),
+} as const
 
-export const chains = {25925: chain25925, 8899: chain8899, 96: chain96, 56: chain56,} as const satisfies Record<number, ChainData>
+export const chains = {25925: chain25925, 8899: chain8899, 96: chain96, 56: chain56, 8453: chain8453,} as const
 export type SupportedChainId = keyof typeof chains extends `${infer Id extends number}` ? Id : never
 export type SupportedChainConfig = (typeof chains)[keyof typeof chains]
 export const getChainConfig = (chainId: number): SupportedChainConfig | undefined => chains[chainId as keyof typeof chains] as SupportedChainConfig | undefined

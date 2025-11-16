@@ -3,13 +3,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { type ReactNode } from 'react'
 import { cookieToInitialState, WagmiProvider, type Config } from 'wagmi'
 import { wagmiAdapter, projectId } from '@/config/reown'
-import { bitkub, bsc, jbc, bitkubTestnet, /*base, worldchain,*/ } from '@reown/appkit/networks'
+import { bitkub, base, bsc, jbc, bitkubTestnet, /*worldchain,*/ } from '@reown/appkit/networks'
 import { createAppKit } from '@reown/appkit/react'
 const queryClient = new QueryClient()
 if (!projectId) throw new Error('Project ID is not defined');
 createAppKit({
     adapters: [wagmiAdapter],
-    networks: [bitkub, bsc, jbc, bitkubTestnet, /*base, worldchain,*/],
+    networks: [bitkub, base, bsc, jbc, bitkubTestnet, /*worldchain,*/],
     defaultNetwork: bitkub,
     projectId,
     themeMode: 'dark',
@@ -17,8 +17,6 @@ createAppKit({
     chainImages: {
         8899: 'https://cmswap.mypinata.cloud/ipfs/bafkreiguxm4at5dehn6s7v2qniim7edqsntdmukwjmgyqkr4rv4aujvbdy',
         96: 'https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u',
-        56: 'https://cmswap.mypinata.cloud/ipfs/bafkreifw5yj7khnjb7vm6jpsos5cuzmaasi7gbg4y73lgrsvlnsvwxvlai',
-        25925: 'https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u',
     },
     features: { analytics: true, }
 })

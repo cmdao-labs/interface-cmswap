@@ -4,7 +4,7 @@ import { useAccount } from "wagmi";
 import { simulateContract, waitForTransactionReceipt, writeContract, getBalance, sendTransaction, type WriteContractErrorType } from "@wagmi/core";
 import { Button } from "@/components/ui/button";
 import { createPublicClient, http, erc20Abi, parseUnits } from "viem";
-import { jbc, bitkub, bitkubTestnet, bsc } from "viem/chains";
+import { jbc, bitkub, bitkubTestnet, bsc, base } from "viem/chains";
 import { Copy, CopyCheck,ScanQrCode,ChevronDown } from "lucide-react";
 import { config } from "../../config/reown";
 import { chains } from '@/lib/chains'
@@ -12,12 +12,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import QRScannerModal from "./QRScannerModal";
 
-type ChainConfig = { chain: any; chainId: number; explorer: string; rpc: string; blocktime: number; nameService?: "ENS" | "KNS"; lib: { tokens: any; }; };
+type ChainConfig = { chain: any; chainId: number; nameService?: "ENS" | "KNS"; lib: { tokens: any; }; };
 const chainConfigs: Record<number, ChainConfig> = {
-    25925: {chain: bitkubTestnet, chainId: 25925, explorer: "https://testnet.kubscan.com/", rpc: "https://rpc-testnet.bitkubchain.io", blocktime: 5, lib: { tokens: chains[25925].tokens } },
-    96: { chain: bitkub, chainId: 96, explorer: "https://www.kubscan.com/", rpc: "https://rpc.bitkubchain.io", blocktime: 5, nameService: "KNS", lib: { tokens: chains[96].tokens } },
-    8899: { chain: jbc, chainId: 8899, explorer: "https://exp.jbcha.in/", rpc: "https://rpc2-l1.jbc.xpool.pw", blocktime: 5, lib: { tokens: chains[8899].tokens } },
-    56: { chain: bsc, chainId: 56, explorer: "https://bscscan.com/", rpc: "https://bsc-dataseed1.binance.org/", blocktime: 3, lib: { tokens: chains[56].tokens } }
+    25925: {chain: bitkubTestnet, chainId: 25925, lib: { tokens: chains[25925].tokens } },
+    96: { chain: bitkub, chainId: 96, nameService: "KNS", lib: { tokens: chains[96].tokens } },
+    8899: { chain: jbc, chainId: 8899, lib: { tokens: chains[8899].tokens } },
+    56: { chain: bsc, chainId: 56, lib: { tokens: chains[56].tokens } },
+    8453: { chain: base, chainId: 8453, lib: { tokens: chains[8453].tokens } },
 };
 
 export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfig }: {
@@ -27,8 +28,8 @@ export default function SendTokenComponent({ setIsLoading, setErrMsg, chainConfi
 }) {
     const { address } = useAccount();
     const selectedChainConfig = chainConfigs[chainConfig || 96];
-    const { chain, rpc, nameService, lib } = selectedChainConfig;
-    const publicClient = createPublicClient({chain, transport: http(rpc)});
+    const { chain, nameService, lib } = selectedChainConfig;
+    const publicClient = createPublicClient({chain, transport: http()});
     const [to, setTo] = useState("");
     const [amount, setAmount] = useState("");
     const [balance, setBalance] = useState("");
