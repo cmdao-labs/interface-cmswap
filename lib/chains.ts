@@ -1,5 +1,5 @@
 import { createPublicClient, http, erc20Abi, erc721Abi } from 'viem'
-import { bsc, bitkub, bitkubTestnet, jbc, base, } from 'viem/chains'
+import { bsc, bitkub, bitkubTestnet, jbc, base, worldchain, } from 'viem/chains'
 import { NonfungiblePositionManager, v3Factory, v3Pool, qouterV2, router02, v3staker, WrappedNative, kap20abi, CMswapPoolDualRouterABI, CMswapUniSmartRouteABI, CMswapUniSmartRouteABIV2, UniswapPair, bkcUnwappedKKUB, cmSwapRefProgramABI, stakingV2FactoryABI, stakingV2ABI, stakingV3FactoryABI, stakingV3ABI, } from '@/lib/abi'
 
 const chain25925 = {
@@ -176,8 +176,37 @@ const chain8453 = {
     erc721ABI: {chainId: 8453, abi: erc721Abi} as const,
     publicClient: createPublicClient({ chain: base, transport: http() }),
 } as const
+const chain480 = {
+    chainId: 480,
+    chain: worldchain,
+    tokens: [
+        { name: 'ETH', value: '0xnative' as '0xstring', logo: 'https://raw.githubusercontent.com/SmolDapp/tokenAssets/refs/heads/main/tokens/8453/0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/logo-32.png', decimal: 18 },
+        { name: 'WETH', value: '0x4200000000000000000000000000000000000006' as '0xstring', logo: 'https://coin-images.coingecko.com/coins/images/39810/large/weth.png?1724139790', decimal: 18 },
+        { name: 'USDC', value: '0x79A02482A880bCE3F13e09Da970dC34db4CD24d1' as '0xstring', logo: 'https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694', decimal: 6 },
+        { name: 'WLD', value: '0x2cFc85d8E48F8EAB294be644d9E25C3030863003' as '0xstring', logo: 'https://coin-images.coingecko.com/coins/images/31069/large/worldcoin.jpeg?1696529903', decimal: 18 },
+        { name: 'WBTC', value: '0x03C7054BCB39f7b2e5B2c7AcB37583e32D70Cfa3' as '0xstring', logo: 'https://coin-images.coingecko.com/coins/images/51159/large/wbtc_28.png?1730242311', decimal: 8 },
+        { name: 'uSOL', value: '0x9B8Df6E244526ab5F6e6400d331DB28C8fdDdb55' as '0xstring', logo: 'https://coin-images.coingecko.com/coins/images/39987/large/UA-SOL_1.png?1725027946', decimal: 18 },
+        { name: 'SUSHI', value: '0xab09A728E53d3d6BC438BE95eeD46Da0Bbe7FB38' as '0xstring', logo: 'https://dd.dexscreener.com/ds-data/tokens/worldchain/0xab09a728e53d3d6bc438be95eed46da0bbe7fb38.png?size=lg&key=574fa0', decimal: 18 },
+        { name: 'ORO', value: '0xcd1E32B86953D79a6AC58e813D2EA7a1790cAb63' as '0xstring', logo: 'https://coin-images.coingecko.com/coins/images/70441/large/oro.png?1762076294', decimal: 18 },
+    ],
+    V3_FACTORY: '0x7a5028BDa40e7B173C278C5342087826455ea25a' as '0xstring',
+    V3_FACTORYCreatedAt: BigInt(1603366),
+    POSITION_MANAGER: '0xec12a9F9a09f50550686363766Cc153D03c27b5e' as '0xstring',
+    positionManagerCreatedAt: BigInt(1603405),
+    QOUTER_V2: '0x10158D43e6cc414deE1Bd1eB0EfC6a5cBCfF244c' as '0xstring',
+    ROUTER02: '0x091AD9e2e6e5eD44c1c66dB50e49A601F9f36cF6' as '0xstring',
+    v3FactoryContract: {chainId: 480, abi: v3Factory, address: '0x7a5028BDa40e7B173C278C5342087826455ea25a' as '0xstring'} as const,
+    positionManagerContract: {chainId: 480, abi: NonfungiblePositionManager, address: '0xec12a9F9a09f50550686363766Cc153D03c27b5e' as '0xstring'} as const,
+    qouterV2Contract: {chainId: 480, abi: qouterV2, address: '0x10158D43e6cc414deE1Bd1eB0EfC6a5cBCfF244c' as '0xstring'} as const,
+    router02Contract: {chainId: 480, abi: router02, address: '0x091AD9e2e6e5eD44c1c66dB50e49A601F9f36cF6' as '0xstring'} as const,
+    erc20ABI: {chainId: 480, abi: erc20Abi} as const,
+    v3PoolABI: {chainId: 480, abi: v3Pool} as const,
+    wrappedNative: {chainId: 480, abi: WrappedNative, address: '0x4200000000000000000000000000000000000006' as '0xstring'} as const,
+    erc721ABI: {chainId: 480, abi: erc721Abi} as const,
+    publicClient: createPublicClient({ chain: worldchain, transport: http() }),
+} as const
 
-export const chains = {25925: chain25925, 8899: chain8899, 96: chain96, 56: chain56, 8453: chain8453,} as const
+export const chains = {25925: chain25925, 8899: chain8899, 96: chain96, 56: chain56, 8453: chain8453, 480: chain480,} as const
 export type SupportedChainId = keyof typeof chains extends `${infer Id extends number}` ? Id : never
 export type SupportedChainConfig = (typeof chains)[keyof typeof chains]
 export const getChainConfig = (chainId: number): SupportedChainConfig | undefined => chains[chainId as keyof typeof chains] as SupportedChainConfig | undefined

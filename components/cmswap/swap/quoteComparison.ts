@@ -39,6 +39,7 @@ const VARIANT_POOLS: Record<LiquidityVariant, readonly RouteId[]> = {
     [LiquidityVariant.BSC]: ['PancakeSwap'],
     [LiquidityVariant.BKC_TESTNET]: ['CMswap'],
     [LiquidityVariant.BASE]: ['UniswapV3'],
+    [LiquidityVariant.WORLD]: ['UniswapV3'],
 }
 function isValidQuote(v: unknown): v is number {const n = Number(v); return Number.isFinite(n) && n > 0;}
 export function selectBestRoute({ variant, quotes, currentPool, cmSwapBestFee, pancakeSwapBestFee, uniSwapV3BestFee }: QuoteComparisonInput): QuoteComparisonResult {

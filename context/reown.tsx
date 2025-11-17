@@ -3,13 +3,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { type ReactNode } from 'react'
 import { cookieToInitialState, WagmiProvider, type Config } from 'wagmi'
 import { wagmiAdapter, projectId } from '@/config/reown'
-import { bitkub, base, bsc, jbc, bitkubTestnet, /*worldchain,*/ } from '@reown/appkit/networks'
+import { bitkub, base, worldchain, bsc, jbc, bitkubTestnet, } from '@reown/appkit/networks'
 import { createAppKit } from '@reown/appkit/react'
 const queryClient = new QueryClient()
 if (!projectId) throw new Error('Project ID is not defined');
 createAppKit({
     adapters: [wagmiAdapter],
-    networks: [bitkub, base, bsc, jbc, bitkubTestnet, /*worldchain,*/],
+    networks: [bitkub, base, worldchain, bsc, jbc, bitkubTestnet,],
     defaultNetwork: bitkub,
     projectId,
     themeMode: 'dark',
@@ -17,6 +17,7 @@ createAppKit({
     chainImages: {
         8899: 'https://cmswap.mypinata.cloud/ipfs/bafkreiguxm4at5dehn6s7v2qniim7edqsntdmukwjmgyqkr4rv4aujvbdy',
         96: 'https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u',
+        480: 'https://static.debank.com/image/chain/logo_url/world/3e8c6af046f442cf453ce79a12433e2f.png',
     },
     features: { analytics: true, }
 })

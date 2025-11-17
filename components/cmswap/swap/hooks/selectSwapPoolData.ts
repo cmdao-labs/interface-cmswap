@@ -4,6 +4,7 @@ import { useSwap8899PoolData } from './useSwap8899PoolData'
 import { useSwap25925PoolData } from './useSwap25925PoolData'
 import { useSwap56PoolData } from './useSwap56PoolData'
 import { useSwap8453PoolData } from './useSwap8453PoolData'
+import { useSwap480PoolData } from './useSwap480PoolData'
 
 export type UseSwapPoolDataFn = (params: any) => void
 export function selectSwapPoolDataHook(variant: LiquidityVariant): UseSwapPoolDataFn {
@@ -12,6 +13,7 @@ export function selectSwapPoolDataHook(variant: LiquidityVariant): UseSwapPoolDa
         case LiquidityVariant.BKC_TESTNET: return useSwap25925PoolData as unknown as UseSwapPoolDataFn
         case LiquidityVariant.BSC: return useSwap56PoolData as unknown as UseSwapPoolDataFn
         case LiquidityVariant.BASE: return useSwap8453PoolData as unknown as UseSwapPoolDataFn
+        case LiquidityVariant.WORLD: return useSwap480PoolData as unknown as UseSwapPoolDataFn
         case LiquidityVariant.BKC: default: return useSwap96PoolData as unknown as UseSwapPoolDataFn
     }
 }

@@ -148,6 +148,7 @@ export default function Swap({
         if (variant === LiquidityVariant.JBC) return { ...base, setCMswapTVL, setGameSwapTvl, setJibSwapTvl, setBestPathArray, setFixedExchangeRate, setOnLoading, setAmountA, setAmountB }
         if (variant === LiquidityVariant.BSC) return { ...base, setPancakeSwapTVL, setBestPathArray, setFixedExchangeRate, setOnLoading, setAmountA, setAmountB }
         if (variant === LiquidityVariant.BASE) return { ...base, setUniswapV3TVL, setBestPathArray, setFixedExchangeRate, setOnLoading, setAmountA, setAmountB }
+        if (variant === LiquidityVariant.WORLD) return { ...base, setUniswapV3TVL, setBestPathArray, setFixedExchangeRate, setOnLoading, setAmountA, setAmountB }
         if (variant === LiquidityVariant.BKC_TESTNET) return { ...base, setCMswapTVL, setAmountA, setAmountB, setNewPrice }
         return base
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -263,6 +264,38 @@ export default function Swap({
                 } catch {}
             }
             if (variant === LiquidityVariant.BASE) {
+                try {
+                    if (Number(amountForQuote) !== 0) {
+                        let bestOut = 0
+                        const feeTiers = CMSWAP_FEE_TIERS
+                        for (const meta of feeTiers) {
+                            const quoteOutput = await quoteExactInputSingle({ tokenIn: tokenA, tokenOut: tokenB, amount: amountForQuote, fee: meta.fee, parseAmount: (value: string) => parseUnits(value, getDecimals(tokenA)), suppressErrors: true })
+                            if (quoteOutput) {
+                                const out = Number(formatUnits(quoteOutput.amountOut, getDecimals(tokenB)))
+                                recordQuote(`UniswapV3-${meta.fee}`, out)
+                                if (out > bestOut) { bestOut = out; bestUniswapV3Fee = meta.fee as 100 | 500 | 3000 | 10000 }
+                            } else {
+                                recordQuote(`UniswapV3-${meta.fee}`)
+                            }
+                        }
+                        if (bestOut > 0) {
+                            UniswapV3Rate = bestOut
+                            if (shouldUpdateUI && poolSelect === "UniswapV3") {
+                                const selectedKey = `UniswapV3-${feeSelect}` as const
+                                const selectedOut = nextRouteQuoteMap[selectedKey]?.amountOut
+                                const outToUse = autoCmswapFee ? bestOut : (selectedOut ?? 0)
+                                if (outToUse > 0) {
+                                    setAmountB(outToUse.toString())
+                                    const execPriceAB = outToUse > 0 ? userAmountIn / outToUse : 0
+                                    setNewPrice(execPriceAB.toFixed(6))
+                                }
+                                if (autoCmswapFee && bestUniswapV3Fee !== undefined) setFeeSelect(bestUniswapV3Fee)
+                            }
+                        } else { if (shouldUpdateUI) setAmountB("") }
+                    }
+                } catch {}
+            }
+            if (variant === LiquidityVariant.WORLD) {
                 try {
                     if (Number(amountForQuote) !== 0) {
                         let bestOut = 0
@@ -591,6 +624,8 @@ export default function Swap({
             if (poolSelect === "JibSwap") return jibswap()
         } else if (variant === LiquidityVariant.BASE) {
             if (poolSelect === "UniswapV3") return CMswap()
+        } else if (variant === LiquidityVariant.WORLD) {
+            if (poolSelect === "UniswapV3") return CMswap()
         }
     }
     React.useEffect(() => {
@@ -605,6 +640,9 @@ export default function Swap({
                 const map: any = { PancakeSwap: PancakeSwapTVL }
                 if (poolSelect in map) { setExchangeRate(map[poolSelect].exchangeRate); setFixedExchangeRate(map[poolSelect].FixedExchangeRate || '') } else { setExchangeRate('0') }
             } else if (variant === LiquidityVariant.BASE) {
+                const map: any = { UniswapV3: UniswapV3TVL }
+                if (poolSelect in map) { setExchangeRate(map[poolSelect].exchangeRate); setFixedExchangeRate(map[poolSelect].FixedExchangeRate || '') } else { setExchangeRate('0') }
+            } else if (variant === LiquidityVariant.WORLD) {
                 const map: any = { UniswapV3: UniswapV3TVL }
                 if (poolSelect in map) { setExchangeRate(map[poolSelect].exchangeRate); setFixedExchangeRate(map[poolSelect].FixedExchangeRate || '') } else { setExchangeRate('0') }
             } else {
@@ -641,6 +679,13 @@ export default function Swap({
                     if (poolSelect !== res.bestPool) setPoolSelect(res.bestPool)
                     if (res.bestPool === 'PancakeSwap' && res.pancakeSwapFee && autoCmswapFee) setFeeSelect(res.pancakeSwapFee as any)
                 } else if (variant === LiquidityVariant.BASE) {
+                    const quotes = {UniswapV3: Number(quote?.UniswapV3Rate),}
+                    const res = selectBestRoute({ variant, quotes, currentPool: (poolSelect || undefined) as any, cmSwapBestFee: undefined, pancakeSwapBestFee: undefined, uniSwapV3BestFee: quote?.bestUniswapV3Fee })
+                    if (!res.bestPool) return
+                    setBestPool(res.bestPool)
+                    if (poolSelect !== res.bestPool) setPoolSelect(res.bestPool)
+                    if (res.bestPool === 'UniswapV3' && res.uniSwapV3Fee && autoCmswapFee) setFeeSelect(res.uniSwapV3Fee)
+                } else if (variant === LiquidityVariant.WORLD) {
                     const quotes = {UniswapV3: Number(quote?.UniswapV3Rate),}
                     const res = selectBestRoute({ variant, quotes, currentPool: (poolSelect || undefined) as any, cmSwapBestFee: undefined, pancakeSwapBestFee: undefined, uniSwapV3BestFee: quote?.bestUniswapV3Fee })
                     if (!res.bestPool) return
@@ -698,6 +743,15 @@ export default function Swap({
                 })
             }
         } else if (variant === LiquidityVariant.BASE) {
+            const shouldShowUniswapV3 = CMSWAP_FEE_TIERS.some(meta => toNumber((UniswapV3TVL as any)?.[meta.tvlKey]) > 0) || poolSelect === 'UniswapV3' || bestPool === 'UniswapV3'
+            if (shouldShowUniswapV3) {
+                CMSWAP_FEE_TIERS.forEach(meta => {
+                    const tvlValue = toNumber((UniswapV3TVL as any)?.[meta.tvlKey])
+                    const metrics = routeQuoteMap[`UniswapV3-${meta.fee}`]
+                    options.push({id: `UniswapV3-${meta.fee}`, pool: 'UniswapV3', label: 'UniswapV3', fee: meta.fee, feeLabel: meta.label, tvl: tvlValue, tvlUnit: baseTvlUnit, description: ROUTE_DESCRIPTIONS.UniswapV3, amountOut: metrics?.amountOut, priceQuote: metrics?.priceQuote})
+                })
+            }
+        } else if (variant === LiquidityVariant.WORLD) {
             const shouldShowUniswapV3 = CMSWAP_FEE_TIERS.some(meta => toNumber((UniswapV3TVL as any)?.[meta.tvlKey]) > 0) || poolSelect === 'UniswapV3' || bestPool === 'UniswapV3'
             if (shouldShowUniswapV3) {
                 CMSWAP_FEE_TIERS.forEach(meta => {
