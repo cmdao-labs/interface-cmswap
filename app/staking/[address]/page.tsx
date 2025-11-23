@@ -4,35 +4,14 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useAccount } from 'wagmi'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
-import { config } from '@/app/config'
-import ErrorModal from '@/app/components/error-modal'
+import { config } from '@/config/reown'
+import ErrorModal from '@/components/cmswap/error-modal'
 import { simulateContract, waitForTransactionReceipt, writeContract, readContract, readContracts, type WriteContractErrorType } from '@wagmi/core'
 import { formatEther } from "viem"
-import { v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, publicClient, erc721ABI, POSITION_MANAGER, positionManagerCreatedAt, V3_STAKER, v3StakerContract } from '@/app/lib/25925'
+import { chains } from '@/lib/chains'
 
-type MyPosition = {
-    Id: number;
-    Name: string;
-    Image: string;
-    FeeTier: number;
-    Pair: string;
-    Token0Addr: string;
-    Token1Addr: string;
-    Token0: string;
-    Token1: string;
-    Amount0: number;
-    Amount1: number;
-    MinPrice: number;
-    MaxPrice: number;
-    CurrPrice: number;
-    LowerTick: number;
-    UpperTick: number;
-    Liquidity: string;
-    Fee0: number;
-    Fee1: number;
-    IsStaking: boolean;
-    Reward: number;
-}
+const { v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, publicClient, erc721ABI, POSITION_MANAGER, positionManagerCreatedAt, V3_STAKER, v3StakerContract } = chains[25925]
+type MyPosition = { Id: number; Name: string; Image: string; FeeTier: number; Pair: string; Token0Addr: string; Token1Addr: string; Token0: string; Token1: string; Amount0: number; Amount1: number; MinPrice: number; MaxPrice: number; CurrPrice: number; LowerTick: number; UpperTick: number; Liquidity: string; Fee0: number; Fee1: number; IsStaking: boolean; Reward: number; }
 
 export default function Page() {
     const [isLoading, setIsLoading] = React.useState(false)
@@ -46,53 +25,24 @@ export default function Page() {
     const [position, setPosition] = React.useState<MyPosition[]>([])
     const [allPending, setAllPending] = React.useState('')
     const [allStaker, setAllStaker] = React.useState('')
-
-    const calcAmount0 = (
-        liquidity: number,
-        currentPrice: number,
-        priceLower: number,
-        priceUpper: number,
-        token0Decimals: number,
-        token1Decimals: number
-    ) => {
+    const calcAmount0 = (liquidity: number, currentPrice: number, priceLower: number, priceUpper: number, token0Decimals: number, token1Decimals: number) => {
         const decimalAdjustment = 10 ** (token0Decimals - token1Decimals)
         const mathCurrentPrice = Math.sqrt(currentPrice / decimalAdjustment)
         const mathPriceUpper = Math.sqrt(priceUpper / decimalAdjustment)
         const mathPriceLower = Math.sqrt(priceLower / decimalAdjustment)
-        
-        let math
-        if (mathCurrentPrice <= mathPriceLower) {
-            math = liquidity * ((mathPriceUpper - mathPriceLower) / (mathPriceLower * mathPriceUpper))
-        } else {
-            math = liquidity * ((mathPriceUpper - mathCurrentPrice) / (mathCurrentPrice * mathPriceUpper))
-        }
+        const math = mathCurrentPrice <= mathPriceLower ? liquidity * ((mathPriceUpper - mathPriceLower) / (mathPriceLower * mathPriceUpper)) : liquidity * ((mathPriceUpper - mathCurrentPrice) / (mathCurrentPrice * mathPriceUpper))
         const adjustedMath = math > 0 ? math : 0
         return adjustedMath
     }
-      
-    const calcAmount1 = (
-        liquidity: number,
-        currentPrice: number,
-        priceLower: number,
-        priceUpper: number,
-        token0Decimals: number,
-        token1Decimals: number
-    ) => {
+    const calcAmount1 = (liquidity: number, currentPrice: number, priceLower: number, priceUpper: number, token0Decimals: number, token1Decimals: number) => {
         const decimalAdjustment = 10 ** (token0Decimals - token1Decimals)
         const mathCurrentPrice = Math.sqrt(currentPrice / decimalAdjustment)
         const mathPriceUpper = Math.sqrt(priceUpper / decimalAdjustment)
         const mathPriceLower = Math.sqrt(priceLower / decimalAdjustment)
-        
-        let math
-        if (mathCurrentPrice >= mathPriceUpper) {
-            math = liquidity * (mathPriceUpper - mathPriceLower)
-        } else {
-            math = liquidity * (mathCurrentPrice - mathPriceLower)
-        }
+        const math = mathCurrentPrice >= mathPriceUpper ? liquidity * (mathPriceUpper - mathPriceLower) : liquidity * (mathCurrentPrice - mathPriceLower)
         const adjustedMath = math > 0 ? math : 0
         return adjustedMath
     }
-
     const stakeNft = async (_nftId: bigint) => {
         setIsLoading(true)
         try {
@@ -113,12 +63,9 @@ export default function Page() {
             const h2 = await writeContract(config, request2)
             await waitForTransactionReceipt(config, { hash: h2 })
             setTxupdate(h2)
-        } catch (e) {
-            setErrMsg(e as WriteContractErrorType)
-        }
+        } catch (e) {setErrMsg(e as WriteContractErrorType)}
         setIsLoading(false)
     }
-
     const unstakeNft = async (_nftId: bigint) => {
         setIsLoading(true)
         try {
@@ -135,17 +82,11 @@ export default function Page() {
             })
             const h1 = await writeContract(config, request1)
             await waitForTransactionReceipt(config, { hash: h1 })
-            const { request: request2 } = await simulateContract(config, { 
-                ...v3StakerContract, 
-                functionName: 'withdrawToken',
-                args: [_nftId, addr as '0xstring', '0x'] 
-            })
+            const { request: request2 } = await simulateContract(config, {...v3StakerContract, functionName: 'withdrawToken', args: [_nftId, addr as '0xstring', '0x']})
             const h2 = await writeContract(config, request2)
             await waitForTransactionReceipt(config, { hash: h2 })
             setTxupdate(h2)
-        } catch (e) {
-            setErrMsg(e as WriteContractErrorType)
-        }
+        } catch (e) {setErrMsg(e as WriteContractErrorType)}
         setIsLoading(false)
     }
 
@@ -159,38 +100,17 @@ export default function Page() {
         } else {
             router.push('/staking/' + address)
         }
-
         const fetch2 = async () => {
-            const _eventMyNftStaking = (await publicClient.getContractEvents({
-                ...erc721ABI,
-                address: POSITION_MANAGER,
-                eventName: 'Transfer',
-                args: { 
-                    to: V3_STAKER,
-                },
-                fromBlock: positionManagerCreatedAt,
-                toBlock: 'latest'
-            })).map(obj => {
-                return obj.args.tokenId
-            })
+            const _eventMyNftStaking = (await publicClient.getContractEvents({...erc721ABI, address: POSITION_MANAGER, eventName: 'Transfer', args: {to: V3_STAKER,}, fromBlock: positionManagerCreatedAt, toBlock: 'latest'}))
+                .map(obj => {return obj.args.tokenId})
             const eventMyNftStaking = [...new Set(_eventMyNftStaking)]
-            const checkMyNftOwner = await readContracts(config, {
-                contracts: eventMyNftStaking.map(obj => ({ ...v3StakerContract, functionName: 'deposits', args: [obj] }))
-            })
+            const checkMyNftOwner = await readContracts(config, {contracts: eventMyNftStaking.map(obj => ({ ...v3StakerContract, functionName: 'deposits', args: [obj] }))})
             const checkedMyNftStaking = eventMyNftStaking.filter((obj, index) => {
                 const res = checkMyNftOwner[index].result as unknown as [string, bigint, bigint, bigint][]
                 return res[0].toString().toUpperCase() === address?.toUpperCase()
             })
-            const tokenUriMyStaking = await readContracts(config, {
-                contracts: checkedMyNftStaking.map((obj) => (
-                    { ...positionManagerContract, functionName: 'tokenURI', args: [obj] }
-                ))
-            })
-            const posMyStaking = await readContracts(config, {
-                contracts: checkedMyNftStaking.map((obj) => (
-                    { ...positionManagerContract, functionName: 'positions', args: [obj] }
-                ))
-            })
+            const tokenUriMyStaking = await readContracts(config, {contracts: checkedMyNftStaking.map((obj) => ({ ...positionManagerContract, functionName: 'tokenURI', args: [obj] }))})
+            const posMyStaking = await readContracts(config, {contracts: checkedMyNftStaking.map((obj) => ({ ...positionManagerContract, functionName: 'positions', args: [obj] }))})
             const myReward = await readContracts(config, { 
                 contracts: checkedMyNftStaking.map((obj) => ({ 
                     ...v3StakerContract, 
@@ -204,23 +124,19 @@ export default function Page() {
                     }, obj] 
                 }))
             })
-
             const incentiveStat = await readContract(config, { ...v3StakerContract, functionName: 'incentives', args: ['0x54f969cc76b69f12f67a135d9a7f088edafa2e8ebb3e247859acd17d8e849993'] })
             setAllStaker(String(incentiveStat[2]))
-
             let _allPending = 0
             for (let i = 0; i <= myReward.length - 1; i++) {
                 const result: any = myReward[i].result
                 _allPending += Number(formatEther(result[0]))
             }
             setAllPending(String(_allPending))
-
             const myStaking : MyPosition[] = (await Promise.all(checkedMyNftStaking.map(async (obj, index) => {
                 const metadataFetch = await fetch(tokenUriMyStaking[index].result as string)
                 const metadata = await metadataFetch.json()
                 const pos = posMyStaking[index].result !== undefined ? posMyStaking[index].result as unknown as (bigint | string)[] : []
                 const reward = myReward[index].result !== undefined ? myReward[index].result as unknown as (bigint | bigint)[] : []
-
                 const pairAddr = await readContract(config, { ...v3FactoryContract, functionName: 'getPool', args: [pos[2] as '0xstring', pos[3] as '0xstring', Number(pos[4])] })
                 const slot0 = await readContract(config, { ...v3PoolABI, address: pairAddr, functionName: 'slot0' })
                 const tokenName = await readContracts(config, {
@@ -252,18 +168,7 @@ export default function Page() {
                 const _token1name = tokenName[1].status === 'success' ? String(tokenName[1].result) : ''
                 const _fee0 = qouteFee.result[0]
                 const _fee1 = qouteFee.result[1]
-                let token0addr
-                let token1addr
-                let token0name
-                let token1name
-                let amount0
-                let amount1
-                let lowerPrice
-                let upperPrice
-                let currPrice
-                let fee0
-                let fee1
-
+                let token0addr; let token1addr; let token0name; let token1name; let amount0; let amount1; let lowerPrice; let upperPrice; let currPrice; let fee0; let fee1;
                 if (_token1name === 'WJBC') {
                     token0addr = pos[3]
                     token1addr = pos[2]
@@ -301,7 +206,6 @@ export default function Page() {
                     fee0 = _fee1
                     fee1 = _fee0
                 }
-
                 return {
                     Id: Number(obj),
                     Name: String(metadata.name),
@@ -325,34 +229,20 @@ export default function Page() {
                     IsStaking: true,
                     Reward: Number(formatEther(reward[0]))
                 }
-            }))).filter((obj) => {
-                return Number(obj.Liquidity) !== 0
+            }))).filter((obj) => {return Number(obj.Liquidity) !== 0
             }).reverse()
-
             const balanceOfMyPosition = await readContract(config, { ...positionManagerContract, functionName: 'balanceOf', args: [addr as '0xstring'] })
             const init: any = {contracts: []}
             for (let i = 0; i <= Number(balanceOfMyPosition) - 1; i++) {
-                init.contracts.push(
-                    { ...positionManagerContract, functionName: 'tokenOfOwnerByIndex', args: [addr, i] }
-                )
+                init.contracts.push({ ...positionManagerContract, functionName: 'tokenOfOwnerByIndex', args: [addr, i] })
             }
             const tokenIdMyPosition = await readContracts(config, init)
-            const tokenUriMyPosition = await readContracts(config, {
-                contracts: tokenIdMyPosition.map((obj) => (
-                    { ...positionManagerContract, functionName: 'tokenURI', args: [obj.result] }
-                ))
-            })
-            const posMyPosition = await readContracts(config, {
-                contracts: tokenIdMyPosition.map((obj) => (
-                    { ...positionManagerContract, functionName: 'positions', args: [obj.result] }
-                ))
-            })
-
+            const tokenUriMyPosition = await readContracts(config, {contracts: tokenIdMyPosition.map((obj) => ({ ...positionManagerContract, functionName: 'tokenURI', args: [obj.result] }))})
+            const posMyPosition = await readContracts(config, {contracts: tokenIdMyPosition.map((obj) => ({ ...positionManagerContract, functionName: 'positions', args: [obj.result] }))})
             const myPosition : MyPosition[] = (await Promise.all(tokenIdMyPosition.map(async (obj, index) => {
                 const metadataFetch = await fetch(tokenUriMyPosition[index].result as string)
                 const metadata = await metadataFetch.json()
                 const pos = posMyPosition[index].result !== undefined ? posMyPosition[index].result as unknown as (bigint | string)[] : []
-
                 const pairAddr = await readContract(config, { ...v3FactoryContract, functionName: 'getPool', args: [pos[2] as '0xstring', pos[3] as '0xstring', Number(pos[4])] })
                 const slot0 = await readContract(config, { ...v3PoolABI, address: pairAddr, functionName: 'slot0' })
                 const tokenName = await readContracts(config, {
@@ -383,18 +273,7 @@ export default function Page() {
                 const _token1name = tokenName[1].status === 'success' ? String(tokenName[1].result) : ''
                 const _fee0 = qouteFee.result[0]
                 const _fee1 = qouteFee.result[1]
-                let token0addr
-                let token1addr
-                let token0name
-                let token1name
-                let amount0
-                let amount1
-                let lowerPrice
-                let upperPrice
-                let currPrice
-                let fee0
-                let fee1
-
+                let token0addr; let token1addr; let token0name; let token1name; let amount0; let amount1; let lowerPrice; let upperPrice; let currPrice; let fee0; let fee1;
                 if (_token1name === 'WJBC') {
                     token0addr = pos[3]
                     token1addr = pos[2]
@@ -432,7 +311,6 @@ export default function Page() {
                     fee0 = _fee1
                     fee1 = _fee0
                 }
-
                 return {
                     Id: Number(obj.result),
                     Name: String(metadata.name),
@@ -457,58 +335,32 @@ export default function Page() {
                     Reward: 0
                 }
             })))
-            // .filter((obj) => {
-            //     return (Number(obj.Liquidity) !== 0 && (obj.Token0 === 'tKUB' && obj.Token1 === 'tK'))
-            // })
             .reverse()
-
             setPosition(myStaking.concat(myPosition))
         }
-
         address !== undefined && fetch2()
     }, [config, address, addr, pathname, chain, txupdate])
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-black to-emerald-950 text-white">
-            {isLoading && (
-                <div className="fixed inset-0 z-[999] backdrop-blur-md bg-black/20 flex items-center justify-center">
-                    <div className="h-10 w-10 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
-                </div>
-            )}
+            {isLoading && <div className="fixed inset-0 z-[999] backdrop-blur-md bg-black/20 flex items-center justify-center"><div className="h-10 w-10 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" /></div>}
             <ErrorModal errorMsg={errMsg} setErrMsg={setErrMsg} />
             <header className="relative">
                 <div className="relative h-50 w-full overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black" />
                 </div>
-<div className="absolute bottom-0 left-0 right-0 transform translate-y-1/2 z-20">
-  <div className="container mx-auto px-4">
-    <div className="flex flex-col items-center text-center">
-      {/* Title */}
-      <h1 className="text-3xl md:text-5xl lg:text-6xl font-light tracking-wider text-white drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]">
-        <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-green-200">
-          Staking (tK-tKKUB) earn Points
-        </span>
-      </h1>
-
-      {/* Subtitle */}
-      <p className="mt-3 text-sm md:text-lg text-gray-300 leading-relaxed max-w-2xl">
-        Stake your tokens to earn <span className="text-green-400 font-semibold">reward points</span> 
-        and participate in <span className="text-green-300 font-semibold">Node Revenue Distribution</span>.  
-        <br className="hidden sm:block" />
-        If you <span className="text-red-400 font-semibold">withdraw</span> before distribution, 
-        you <span className="text-red-400 font-semibold">forfeit your eligibility</span>.
-         
-      </p>
-      <p>
-        <span className="text-red-400 font-semibold">kubtestnet no real distribution</span>
-      </p>
-
-      {/* Divider line (optional aesthetic) */}
-      <div className="mt-5 h-[2px] w-32 bg-gradient-to-r from-green-400/70 to-green-100/20 rounded-full" />
-    </div>
-  </div>
-</div>
-
+                <div className="absolute bottom-0 left-0 right-0 transform translate-y-1/2 z-20">
+                    <div className="container mx-auto px-4">
+                        <div className="flex flex-col items-center text-center">
+                            <h1 className="text-3xl md:text-5xl lg:text-6xl font-light tracking-wider text-white drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]">
+                                <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-green-200">Staking (tK-tKKUB) earn Points</span>
+                            </h1>
+                            <p className="mt-3 text-sm md:text-lg text-gray-300 leading-relaxed max-w-2xl">Stake your tokens to earn <span className="text-green-400 font-semibold">reward points</span>and participate in <span className="text-green-300 font-semibold">Node Revenue Distribution</span>. <br className="hidden sm:block" />If you <span className="text-red-400 font-semibold">withdraw</span> before distribution, you <span className="text-red-400 font-semibold">forfeit your eligibility</span>.</p>
+                            <p><span className="text-red-400 font-semibold">kubtestnet no real distribution</span></p>
+                            <div className="mt-5 h-[2px] w-32 bg-gradient-to-r from-green-400/70 to-green-100/20 rounded-full" />
+                        </div>
+                    </div>
+                </div>
             </header>
             <main className="container mx-auto p-4 md:p-6 mt-16 relative z-10">
                 <div className="mb-8">
@@ -568,11 +420,7 @@ export default function Page() {
                                                 </div>
                                             )}
                                         </>
-                                    ) : (
-                                        <div className="col-span-full bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-xl p-8 text-center text-slate-400">
-                                            No positions found.
-                                        </div>
-                                    )}
+                                    ) : <div className="col-span-full bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-xl p-8 text-center text-slate-400">No positions found.</div>}
                                 </div>
                             </>
                         </TabsContent>
@@ -592,6 +440,3 @@ export default function Page() {
         </div>
     )
 }
-    
-
-

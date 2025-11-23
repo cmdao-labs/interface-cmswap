@@ -1,0 +1,55 @@
+import { chains, type SupportedChainId } from '@/lib/chains'
+
+export enum LiquidityVariant { BKC = 96, JBC = 8899, BKC_TESTNET = 25925, BSC = 56, BASE = 8453, WORLD = 480, }
+export const getLiquidityVariant = (chainId?: number): LiquidityVariant => {
+    switch (chainId) {
+        case 8899: return LiquidityVariant.JBC
+        case 25925: return LiquidityVariant.BKC_TESTNET
+        case 56: return LiquidityVariant.BSC
+        case 8453: return LiquidityVariant.BASE
+        case 480: return LiquidityVariant.WORLD
+        case 96: default: return LiquidityVariant.BKC
+    }
+}
+export const liquidityVariantConfig = {
+    [LiquidityVariant.BKC]: {
+        chainId: 96 as SupportedChainId,
+        isKap20Token: (addr: string) => {
+            const t = chains[96].tokens[2]?.value?.toUpperCase()
+            return !!t && addr?.toUpperCase() === t
+        },
+        decimalsOf: (addr: string) => chains[96].tokens.find(t => t.value.toUpperCase() === addr.toUpperCase())?.decimal ?? 18,
+        displayPrecision: 4,
+    },
+    [LiquidityVariant.JBC]: {
+        chainId: 8899 as SupportedChainId,
+        isKap20Token: (_addr: string) => false,
+        decimalsOf: (addr: string) => chains[8899].tokens.find(t => t.value.toUpperCase() === addr.toUpperCase())?.decimal ?? 18,
+        displayPrecision: 4,
+    },
+    [LiquidityVariant.BKC_TESTNET]: {
+        chainId: 25925 as SupportedChainId,
+        isKap20Token: (addr: string) => false,
+        decimalsOf: (addr: string) => chains[25925].tokens.find(t => t.value.toUpperCase() === addr.toUpperCase())?.decimal ?? 18,
+        displayPrecision: 4,
+    },
+    [LiquidityVariant.BSC]: {
+        chainId: 56 as SupportedChainId,
+        isKap20Token: (_addr: string) => false,
+        decimalsOf: (addr: string) => chains[56].tokens.find(t => t.value.toUpperCase() === addr.toUpperCase())?.decimal ?? 18,
+        displayPrecision: 4,
+    },
+    [LiquidityVariant.BASE]: {
+        chainId: 8453 as SupportedChainId,
+        isKap20Token: (_addr: string) => false,
+        decimalsOf: (addr: string) => chains[8453].tokens.find(t => t.value.toUpperCase() === addr.toUpperCase())?.decimal ?? 18,
+        displayPrecision: 4,
+    },
+    [LiquidityVariant.WORLD]: {
+        chainId: 480 as SupportedChainId,
+        isKap20Token: (_addr: string) => false,
+        decimalsOf: (addr: string) => chains[480].tokens.find(t => t.value.toUpperCase() === addr.toUpperCase())?.decimal ?? 18,
+        displayPrecision: 4,
+    },
+} as const
+export type LiquidityVariantConfig = typeof liquidityVariantConfig[LiquidityVariant]
