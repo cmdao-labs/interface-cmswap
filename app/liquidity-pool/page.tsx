@@ -18,6 +18,10 @@ type ChainConfig = {
     V3_FACTORY: string;
     V3_FACTORYCreatedAt: bigint;
     positionManagerContract: any;
+    StakingFactoryV3Contract?: any;
+    StakingFactoryV3_Addr?: "0xstring";
+    StakingFactoryV3CreatedAt?: bigint;
+    v3StakerContract?: any;
   };
 };
 const chain96 = chains[96]
@@ -39,6 +43,7 @@ const chainConfigs: Record<number, ChainConfig> = {
       V3_FACTORY: chain96.V3_FACTORY,
       V3_FACTORYCreatedAt: chain96.V3_FACTORYCreatedAt,
       positionManagerContract: chain96.positionManagerContract,
+      v3StakerContract: chain96.v3StakerContract,
     },
   },
   8899: {
@@ -55,6 +60,7 @@ const chainConfigs: Record<number, ChainConfig> = {
       V3_FACTORY: chain8899.V3_FACTORY,
       V3_FACTORYCreatedAt: chain8899.V3_FACTORYCreatedAt,
       positionManagerContract: chain8899.positionManagerContract,
+      v3StakerContract: chain8899.v3StakerContract,
     },
   },
   25925: {
@@ -71,6 +77,10 @@ const chainConfigs: Record<number, ChainConfig> = {
       V3_FACTORY: chain25925.V3_FACTORY,
       V3_FACTORYCreatedAt: chain25925.V3_FACTORYCreatedAt,
       positionManagerContract: chain25925.positionManagerContract,
+      StakingFactoryV3Contract: chain25925.StakingFactoryV3Contract,
+      StakingFactoryV3_Addr: chain25925.StakingFactoryV3,
+      StakingFactoryV3CreatedAt: chain25925.StakingFactoryV3CreatedAt,
+      v3StakerContract: chain25925.v3StakerContract,
     },
   },
 };
