@@ -12,6 +12,8 @@ import {
   erc20Abi,
   createPublicClient,
   http,
+  encodeAbiParameters,
+  keccak256,
 } from 'viem';
 import Link from 'next/link';
 
@@ -19,7 +21,7 @@ import StakingV3Modal from './StakingV3Modal';
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { usePrice } from '@/app/context/getPrice';
-import { v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, publicClient, erc721ABI, POSITION_MANAGER, positionManagerCreatedAt, V3_STAKER, v3StakerContract } from '@/app/lib/25925'
+import { v3FactoryContract, positionManagerContract, erc20ABI, v3PoolABI, publicClient, erc721ABI, POSITION_MANAGER, positionManagerCreatedAt, StakingFactoryV3, StakingFactoryV3Contract, StakingFactoryV3CreatedAt, V3_STAKER, v3StakerContract } from '@/app/lib/25925'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 type ThemeId = 96 | 8899 | 56 | 3501 | 10143 | 25925;
@@ -160,7 +162,9 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
       tokenBLogo: string;
       totalStaked: number;
       apr: number;
-      pending: number;
+      stakingApr: number;
+      poolApr: number;
+      pending: string;
       staked: number;
       themeId: number;
       url : string;
@@ -242,6 +246,20 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
   React.useEffect(() => {
     setValidPools([])
   }, [chainConfig]);
+
+  const computeIncentiveId = (opts: { rewardToken: `0x${string}`; pool: `0x${string}`; startTime: bigint; endTime: bigint; refundee: `0x${string}` }): `0x${string}` => {
+    const encoded = encodeAbiParameters(
+      [
+        { type: 'address' },
+        { type: 'address' },
+        { type: 'uint256' },
+        { type: 'uint256' },
+        { type: 'address' },
+      ],
+      [opts.rewardToken, opts.pool, opts.startTime, opts.endTime, opts.refundee]
+    );
+    return keccak256(encoded) as `0x${string}`;
+  };
 
   React.useEffect(() => {
     if (!priceList || priceList.length < 2) return;
@@ -429,17 +447,42 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
 
       setValidPools(results);
       console.log('Valid pools:', results);
+      return results;
     };
 
-    const fetchPrograms = async () => {
-      // New implementation: derive programs from UniswapV3Staker IncentiveCreated events
+    const fetchPrograms = async (pools: typeof validPools) => {
       try {
+        // 1. Fetch all created incentives
         const created: any[] = await publicClient.getContractEvents({
           ...lib.StakingFactoryV3Contract,
           eventName: 'IncentiveCreated',
           fromBlock: lib.StakingFactoryV3CreatedAt,
           toBlock: 'latest',
         }) as any[];
+
+        // 2. Fetch user's staked NFTs (Transfer to StakingFactoryV3)
+        let myStakedTokenIds: bigint[] = [];
+        if (address) {
+          const events = await publicClient.getContractEvents({
+            ...erc721ABI,
+            address: POSITION_MANAGER,
+            eventName: 'Transfer',
+            args: { to: StakingFactoryV3 },
+            fromBlock: positionManagerCreatedAt,
+            toBlock: 'latest',
+          });
+          const uniqueIds = [...new Set(events.map(obj => obj.args.tokenId))];
+          // Verify ownership (deposits)
+          if (uniqueIds.length > 0) {
+            const deposits = await readContracts(config, {
+              contracts: uniqueIds.map(id => ({ ...StakingFactoryV3Contract, functionName: 'deposits', args: [id] }))
+            });
+            myStakedTokenIds = uniqueIds.filter((_, i) => {
+              const res = deposits[i].result as unknown as [string, bigint, bigint, bigint][];
+              return res && res[0] && res[0].toString().toUpperCase() === address.toUpperCase();
+            }) as bigint[];
+          }
+        }
 
         const items: typeof stakingList = [];
         for (const ev of created) {
@@ -448,6 +491,65 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
           const startTime = BigInt(ev.args.key?.startTime ?? ev.args.startTime ?? 0);
           const endTime = BigInt(ev.args.key?.endTime ?? ev.args.endTime ?? 0);
           const refundee = (ev.args.key?.refundee ?? ev.args.refundee) as '0xstring';
+
+          // Compute Incentive ID
+          const incentiveId = computeIncentiveId({ rewardToken, pool: poolAddr, startTime, endTime, refundee });
+
+          // Fetch Incentive Stats (Total Staked, etc.)
+          let totalStakedGlobal = 0;
+          let totalRewardAmount = BigInt(0);
+          try {
+            const stat = await readContract(config, { ...StakingFactoryV3Contract, functionName: 'incentives', args: [incentiveId] }) as any;
+            if (stat) {
+              if (stat[2] !== undefined) totalStakedGlobal = Number(stat[2]);
+              if (stat[0] !== undefined) totalRewardAmount = BigInt(stat[0]);
+            }
+          } catch {}
+
+          // Calculate User Rewards & Staked Count for this Incentive
+          let myPendingWei = BigInt(0);
+          let myStakedCount = 0;
+
+          if (myStakedTokenIds.length > 0) {
+            // Check which of my tokens are staked in THIS incentive
+            const stakeChecks = await readContracts(config, {
+              contracts: myStakedTokenIds.map(tid => ({ ...StakingFactoryV3Contract, functionName: 'stakes', args: [tid, incentiveId] }))
+            });
+            
+            const myTokensInThisIncentive: bigint[] = [];
+            for (let i = 0; i < myStakedTokenIds.length; i++) {
+              const st = stakeChecks[i].result;
+              let isStaked = false;
+              if (Array.isArray(st)) {
+                isStaked = st.some((v) => { try { return (typeof v === 'bigint' && v > BigInt(0)) || (typeof v === 'number' && v > 0); } catch { return false; } });
+              } else if (st && typeof st === 'object') {
+                isStaked = Object.values(st).some((v: any) => { try { return (typeof v === 'bigint' && v > BigInt(0)) || (typeof v === 'number' && v > 0); } catch { return false; } });
+              }
+              if (isStaked) myTokensInThisIncentive.push(myStakedTokenIds[i]);
+            }
+
+            myStakedCount = myTokensInThisIncentive.length;
+
+            if (myStakedCount > 0) {
+              const rewards = await readContracts(config, {
+                contracts: myTokensInThisIncentive.map(tid => ({
+                  ...StakingFactoryV3Contract,
+                  functionName: 'getRewardInfo',
+                  args: [{ rewardToken, pool: poolAddr, startTime, endTime, refundee }, tid]
+                }))
+              });
+              
+              for (const r of rewards) {
+                if (r.status === 'success' && r.result) {
+                  const res: any = r.result;
+                  let rewardAmt = BigInt(0);
+                   if (Array.isArray(res) && res.length > 0 && typeof res[0] === 'bigint') rewardAmt = res[0];
+                   else if (typeof res === 'bigint') rewardAmt = res;
+                   myPendingWei += rewardAmt;
+                }
+              }
+            }
+          }
 
           try {
             const [t0, t1, feeRes] = await readContracts(config, {
@@ -465,7 +567,7 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
             const tA = chainConfig.tokens.find(t => t.value.toLowerCase() === token0Addr.toLowerCase());
             const tB = chainConfig.tokens.find(t => t.value.toLowerCase() === token1Addr.toLowerCase());
 
-            // Resolve reward token name: prefer known token list, then ERC20 symbol, else short address
+            // Resolve reward token name
             let rewardName: string | undefined = chainConfig.tokens.find(t => t.value.toLowerCase() === (rewardToken as string).toLowerCase())?.name;
             if (!rewardName) {
               try {
@@ -479,178 +581,87 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
             }
             const rewardLabel = rewardName ?? `${rewardToken.slice(0,6)}...${rewardToken.slice(-4)}`;
 
-          items.push({
-            name: `Staking ${(tA?.name ?? 'Token0')}-${(tB?.name ?? 'Token1')} earn ${rewardLabel}`,
-            tokenALogo: tA?.logo || '/default2.png',
-            tokenBLogo: tB?.logo || '/default2.png',
-            totalStaked: 0,
-            apr: 0,
-            pending: 0,
-            staked: 0,
-            themeId: chainConfig.chainId,
-            url: `/staking/${poolAddr}`,
-            feeList: [ `${(fee/10000).toFixed(2)}%` ],
-            chain: (chain as any)?.name ?? 'Bitkub Testnet',
-            poolAddress: poolAddr as string,
-            rewardToken,
-            startTime,
-            endTime,
-            refundee,
-          });
+            // APR Calculation
+            let stakingApr = 0;
+            let poolApr = 0;
+            let totalApr = 0;
+
+            const poolData = pools.find(p => p.poolAddress.toLowerCase() === poolAddr.toLowerCase());
+            if (poolData) {
+              poolApr = poolData.apr;
+              const liquidityUSD = poolData.liquidity;
+
+              if (liquidityUSD > 0) {
+                const rewardTokenPrice = priceList.find(p => p.token === rewardName || p.token === rewardLabel)?.priceUSDT ?? 0;
+                const durationSeconds = Number(endTime - startTime);
+                if (durationSeconds > 0) {
+                  const totalRewardStr = formatEther(totalRewardAmount);
+                  const totalReward = Number(totalRewardStr);
+                  const rewardPerSec = totalReward / durationSeconds;
+                  const rewardPerYear = rewardPerSec * 31536000; // 365 * 24 * 3600
+                  const rewardYearlyUSD = rewardPerYear * rewardTokenPrice;
+                  stakingApr = (rewardYearlyUSD / liquidityUSD) * 100;
+                }
+              }
+            }
+            totalApr = stakingApr + poolApr;
+
+            items.push({
+              name: `Staking ${(tA?.name ?? 'Token0')}-${(tB?.name ?? 'Token1')} earn ${rewardLabel}`,
+              tokenALogo: tA?.logo || '/default2.png',
+              tokenBLogo: tB?.logo || '/default2.png',
+              totalStaked: totalStakedGlobal,
+              apr: totalApr,
+              stakingApr,
+              poolApr,
+              pending: formatEther(myPendingWei), // Full precision string
+              staked: myStakedCount,
+              themeId: chainConfig.chainId,
+              url: `/staking/${poolAddr}`,
+              feeList: [ `${(fee/10000).toFixed(2)}%` ],
+              chain: (chain as any)?.name ?? 'Bitkub Testnet',
+              poolAddress: poolAddr as string,
+              rewardToken,
+              startTime,
+              endTime,
+              refundee,
+            });
           } catch {
-          items.push({
-            name: `Staking ${poolAddr.slice(0,6)}... earn ...`,
-            tokenALogo: '/default2.png',
-            tokenBLogo: '/default2.png',
-            totalStaked: 0,
-            apr: 0,
-            pending: 0,
-            staked: 0,
-            themeId: chainConfig.chainId,
-            url: `/staking/${poolAddr}`,
-            feeList: [],
-            chain: (chain as any)?.name ?? 'Bitkub Testnet',
-            poolAddress: poolAddr as string,
-            rewardToken,
-            startTime,
-            endTime,
-            refundee,
-          });
+            items.push({
+              name: `Staking ${poolAddr.slice(0,6)}... earn ...`,
+              tokenALogo: '/default2.png',
+              tokenBLogo: '/default2.png',
+              totalStaked: totalStakedGlobal,
+              apr: 0,
+              stakingApr: 0,
+              poolApr: 0,
+              pending: formatEther(myPendingWei),
+              staked: myStakedCount,
+              themeId: chainConfig.chainId,
+              url: `/staking/${poolAddr}`,
+              feeList: [],
+              chain: (chain as any)?.name ?? 'Bitkub Testnet',
+              poolAddress: poolAddr as string,
+              rewardToken,
+              startTime,
+              endTime,
+              refundee,
+            });
           }
         }
         setStakingList(items);
-        return; // do not execute legacy code below
       } catch (e) {
         console.error('fetchPrograms (UniswapV3Staking) error:', e);
         setStakingList([]);
-        return;
       }
-
-      console.log('Fetching staking programs...');
-      console.log('V3_STAKER:', lib.StakingFactoryV3_Addr);
-
-      const incentiveStat = await readContract(config, { ...v3StakerContract, functionName: 'incentives', args: ['0x54f969cc76b69f12f67a135d9a7f088edafa2e8ebb3e247859acd17d8e849993'] })
-      
-      const logCreateData = await publicClient.getContractEvents({
-        ...lib.StakingFactoryV3Contract,
-        eventName: 'createIncentive',
-        fromBlock: lib.StakingFactoryV3CreatedAt,
-        toBlock: 'latest',
-      });
-
-      let CreateData = logCreateData.map((res: any) => ({
-        action: 'create',
-        token0: res.args.token0 as '0xstring',
-        token1: res.args.token1 as '0xstring',
-        fee: res.args.fee as '0xstring',
-        pool: res.args.pool as '0xstring',
-        tx: res.transactionHash as '0xstring',
-      }));
-
-      
-      const getMyReward = async () => {
-        try {
-          // 1️⃣ ดึง Event ของ NFT ที่ stake เข้าสู่ V3_STAKER
-          const events = await publicClientTestnet.getContractEvents({
-            ...erc721ABI,
-            address: POSITION_MANAGER,
-            eventName: 'Transfer',
-            args: { to: V3_STAKER },
-            fromBlock: positionManagerCreatedAt,
-            toBlock: 'latest',
-          });
-
-          // 2️⃣ เอาเฉพาะ tokenId ที่ unique
-          const eventMyNftStaking = [...new Set(events.map(obj => obj.args.tokenId))];
-          console.log("eventMyNftStaking", eventMyNftStaking);
-
-          if (eventMyNftStaking.length === 0) return 0;
-
-          // 3️⃣ อ่านข้อมูล deposit ของแต่ละ NFT
-          const checkMyNftOwner = await readContracts(config, {
-            contracts: eventMyNftStaking.map(tokenId => ({
-              ...v3StakerContract,
-              functionName: 'deposits',
-              args: [tokenId],
-            })),
-          });
-
-          console.log("checkMyNftOwner", checkMyNftOwner);
-
-          // 4️⃣ filter เฉพาะ NFT ที่ owner เป็น address ของเรา
-          const checkedMyNftStaking = eventMyNftStaking.filter((obj, index) => {
-                  const res = checkMyNftOwner[index].result as unknown as [string, bigint, bigint, bigint][]
-                  return res[0].toString().toUpperCase() === address?.toUpperCase()
-              })
-
-          console.log("checkedMyNftStaking", checkedMyNftStaking);
-
-          if (checkedMyNftStaking.length === 0) return 0;
-
-          // 5️⃣ ดึง reward info ของแต่ละ NFT
-          const myReward = await readContracts(config, {
-            contracts: checkedMyNftStaking.map(tokenId => ({
-              ...v3StakerContract,
-              functionName: 'getRewardInfo',
-              args: [{
-                rewardToken: '0xE7f64C5fEFC61F85A8b851d8B16C4E21F91e60c0' as '0xstring',
-                pool: '0x77069e705dce52ed903fd577f46dcdb54d4db0ac' as '0xstring',
-                startTime: BigInt(1755589200),
-                endTime: BigInt(3270351988),
-                refundee: '0x1fe5621152a33a877f2b40a4bb7bc824eebea1ea' as '0xstring',
-              }, tokenId],
-            })),
-          });
-
-          console.log("myReward", myReward);
-
-          // 6️⃣ รวม pending reward ทั้งหมด
-          let _allPending = 0
-          for (let i = 0; i <= myReward.length - 1; i++) {
-              const result: any = myReward[i].result
-              _allPending += Number(formatEther(result[0]))
-          }
-
-          console.log("totalPending", _allPending);
-          return {
-            totalPending: _allPending,
-            totalStaked: myReward.length
-          };
-        } catch (err) {
-          console.error("getMyReward error:", err);
-          return 0;
-        }
-      };
-
-      const result = await getMyReward();
-      console.log("pendingRewards",result);
-
-
-      //** FOR KUB STAKING */
-      const initials = async () => {
-        setStakingList([{
-          name: "Staking tKKUB-tK earn Points",
-          tokenALogo: "https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u",
-          tokenBLogo: "https://cmswap.mypinata.cloud/ipfs/bafkreifelq2ktrxybwnkyabw7veqzec3p4v47aoco7acnzdwj34sn7q56u",
-          totalStaked: Number(incentiveStat[2]),
-          apr: 0,
-          pending: result ? result.totalPending : 0,
-          staked: result ? result.totalStaked : 0,
-          themeId: 96,
-          url: '/staking/0x',
-          feeList: ["0.01%","0.05%","0.3%","1%"],
-          chain: "Bitkub Testnet",
-          poolAddress: '0x'
-        }]);
-      };
-        
-
-      initials();
     };
 
-    fetchPools();
-    fetchPrograms();
-  }, [priceList, chainConfig]);
+    const run = async () => {
+      const pools = await fetchPools();
+      await fetchPrograms(pools);
+    };
+    run();
+  }, [priceList, chainConfig, address]); // Added address dependency to re-fetch when user connects/changes account
 
   const handleSort = (field: SortField) => {
     if (sortBy === field) {
@@ -739,12 +750,12 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
           className={`flex items-center gap-1.5 p-1 rounded-full w-fit border ${theme.border} shadow-inner shadow-${theme.accent}/10 backdrop-blur-md bg-[#061f1c]`}
         >
           {[
-            { label: 'ALL Reward', value: 'allRP' },
-            { label: 'My Reward', value: 'myRP' },
-            { label: 'All Liquidity', value: 'allLP' },
-            { label: 'Listed', value: 'listedLP' },
-            { label: 'Not Listed', value: 'unlistedLP' },
-          ].map(({ label, value }) => (
+            { label: 'ALL Reward', value: 'allRP', show: selectedChainId === 1 || selectedChainId === 25925 },
+            { label: 'My Reward', value: 'myRP', show: selectedChainId === 1 || selectedChainId === 25925 },
+            { label: 'All Liquidity', value: 'allLP', show: true },
+            { label: 'Listed', value: 'listedLP', show: true },
+            { label: 'Not Listed', value: 'unlistedLP', show: true },
+          ].filter(i => i.show).map(({ label, value }) => (
             <button
               key={value}
               onClick={() => setListFilter(value)}
@@ -781,12 +792,12 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
       {/* --- Mobile --- */}
     <div className="sm:hidden grid grid-cols-2 gap-2 mt-2">
       {[
-        { label: 'ALL Reward', value: 'allRP' },
-        { label: 'My Reward', value: 'myRP' },
-        { label: 'All Liquidity', value: 'allLP' },
-        { label: 'Listed', value: 'listedLP' },
-        { label: 'Not Listed', value: 'unlistedLP' },
-      ].map(({ label, value }) => (
+        { label: 'ALL Reward', value: 'allRP', show: selectedChainId === 1 || selectedChainId === 25925 },
+        { label: 'My Reward', value: 'myRP', show: selectedChainId === 1 || selectedChainId === 25925 },
+        { label: 'All Liquidity', value: 'allLP', show: true },
+        { label: 'Listed', value: 'listedLP', show: true },
+        { label: 'Not Listed', value: 'unlistedLP', show: true },
+      ].filter(i => i.show).map(({ label, value }) => (
         <button
           key={value}
           onClick={() => setListFilter(value)}
@@ -894,7 +905,7 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
 
                           </div>
                           <div className="flex flex-col justify-center">
-                            <span className="text-white font-medium">{Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 }).format(Number(pool.pending))}</span>
+                            <span className="text-white font-medium">{pool.pending}</span>
                           </div>
                           <div className="flex flex-col justify-center">
                             <span className="text-white font-medium">{(pool.staked)}</span>
@@ -931,8 +942,8 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-white font-medium">{Number(pool.pending).toFixed(4)}</div>
-                            <div className={`font-bold text-lg ${theme.text}`}>{formatPercentage(pool.apr)}</div>
+                            <div className="text-white font-medium">{pool.pending}</div>
+                            <div className={`font-bold text-lg ${theme.text}`} title={`Staking APR: ${formatPercentage(pool.stakingApr)}\nPool APR: ${formatPercentage(pool.poolApr)}`}>{formatPercentage(pool.apr)}</div>
                           </div>
                         </div>
                         <div className="mt-3 flex items-center gap-2 whitespace-nowrap">
@@ -996,7 +1007,7 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
 </div>
 
                         <div className="text-right">
-                          <div className="text-white font-medium">{pool.pending.toFixed(4)}</div>
+                          <div className="text-white font-medium">{pool.pending}</div>
                           <div className={`font-bold text-lg ${theme.text}`}>{formatPercentage(pool.apr)}</div>
                      
                         </div>
@@ -1135,7 +1146,7 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
                           </div>
                           <div className="text-right">
                             <div className="text-white font-medium">{formatNumber(pool.volume24h)}</div>
-                            <div className={`font-bold text-lg ${theme.text}`}>{formatPercentage(pool.apr)}</div>
+                            <div className={`font-bold text-lg ${theme.text}`} title={`Staking APR: ${formatPercentage(pool.stakingApr)}\nPool APR: ${formatPercentage(pool.poolApr)}`}>{formatPercentage(pool.apr)}</div>
                             <div className="text-xs text-slate-400 mt-1">Fee: {formatNumber(pool.fee24h)}</div>
                           </div>
                         </div>

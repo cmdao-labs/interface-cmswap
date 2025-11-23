@@ -28,6 +28,13 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
   const [allStaker, setAllStaker] = React.useState("");
   const [currentIncentiveId, setCurrentIncentiveId] = React.useState<string>("");
   const [incentiveExists, setIncentiveExists] = React.useState<boolean | null>(null);
+  const [totalRewardAmount, setTotalRewardAmount] = React.useState<bigint>(BigInt(0));
+  const [now, setNow] = React.useState(Math.floor(Date.now() / 1000));
+
+  React.useEffect(() => {
+    const interval = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const computeIncentiveId = (opts: { rewardToken: `0x${string}`; pool: `0x${string}`; startTime: bigint; endTime: bigint; refundee: `0x${string}` }): `0x${string}` => {
     const encoded = encodeAbiParameters(
@@ -41,106 +48,6 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
       [opts.rewardToken, opts.pool, opts.startTime, opts.endTime, opts.refundee]
     );
     return keccak256(encoded) as `0x${string}`;
-  };
-
-  const getStakeRefundeeForToken = async (tokenId: bigint): Promise<{
-    refundee: `0x${string}`;
-    via: 'factory' | 'staker';
-    incentiveId: `0x${string}`;
-    pool: `0x${string}`;
-    startTime: bigint;
-    endTime: bigint;
-  } | null> => {
-    try {
-      const rewardToken = '0xE7f64C5fEFC61F85A8b851d8B16C4E21F91e60c0' as `0x${string}`;
-      // Derive the actual pool for this tokenId from its position data
-      const pos = await readContract(config, { ...positionManagerContract, functionName: 'positions', args: [tokenId] }) as any;
-      const token0 = String(pos?.token0 || pos?.[2] || '') as `0x${string}`;
-      const token1 = String(pos?.token1 || pos?.[3] || '') as `0x${string}`;
-      const fee = Number(pos?.fee ?? pos?.[4] ?? 0);
-      const pool = await readContract(config, { ...v3FactoryContract, functionName: 'getPool', args: [token0, token1, fee] }) as `0x${string}`;
-      // 1) Try to locate the exact incentive from events (robust)
-      try {
-        const events: any[] = await publicClient.getContractEvents({
-          ...StakingFactoryV3Contract,
-          eventName: 'IncentiveCreated',
-          fromBlock: StakingFactoryV3CreatedAt,
-          toBlock: 'latest'
-        });
-        // Filter only matching pool and rewardToken
-        const candidatesFromEvents = events
-          .map((ev: any) => ev.args)
-          .filter((a: any) => String(a?.key?.rewardToken || a?.rewardToken).toLowerCase() === rewardToken.toLowerCase()
-                           && String(a?.key?.pool || a?.pool).toLowerCase() === pool.toLowerCase());
-        for (const args of candidatesFromEvents) {
-          const startTime = BigInt(args?.key?.startTime || args?.startTime || 0);
-          const endTime = BigInt(args?.key?.endTime || args?.endTime || 0);
-          const refundee = String(args?.key?.refundee || args?.refundee) as `0x${string}`;
-          const id = computeIncentiveId({ rewardToken, pool, startTime, endTime, refundee });
-          try {
-            const st = await readContract(config, { ...StakingFactoryV3Contract, functionName: 'stakes', args: [tokenId, id] }) as any;
-            let exists = false;
-            if (Array.isArray(st)) {
-              exists = st.some((v) => {
-                try { return (typeof v === 'bigint' && v > BigInt(0)) || (typeof v === 'number' && v > 0); } catch { return false; }
-              });
-            } else if (st && typeof st === 'object') {
-              exists = Object.values(st).some((v: any) => {
-                try { return (typeof v === 'bigint' && v > BigInt(0)) || (typeof v === 'number' && v > 0); } catch { return false; }
-              });
-            }
-            if (exists) return { refundee, via: 'factory', incentiveId: id, pool, startTime, endTime };
-          } catch {}
-        }
-      } catch {}
-      // 2) Fallback to static times with common refendees
-      try {
-        const startTime = BigInt(1755589200);
-        const endTime = BigInt(3270351988);
-        const candidates: `0x${string}`[] = [address as `0x${string}`, '0x1fe5621152a33a877f2b40a4bb7bc824eebea1ea' as `0x${string}`];
-        for (const refundee of candidates) {
-          const id = computeIncentiveId({ rewardToken, pool, startTime, endTime, refundee });
-          try {
-            const st = await readContract(config, { ...StakingFactoryV3Contract, functionName: 'stakes', args: [tokenId, id] }) as any;
-            let exists = false;
-            if (Array.isArray(st)) {
-              exists = st.some((v) => {
-                try { return (typeof v === 'bigint' && v > BigInt(0)) || (typeof v === 'number' && v > 0); } catch { return false; }
-              });
-            } else if (st && typeof st === 'object') {
-              exists = Object.values(st).some((v: any) => {
-                try { return (typeof v === 'bigint' && v > BigInt(0)) || (typeof v === 'number' && v > 0); } catch { return false; }
-              });
-            }
-            if (exists) return { refundee, via: 'factory', incentiveId: id, pool, startTime, endTime };
-          } catch {}
-        }
-      } catch {}
-      // 3) Try legacy v3Staker contract (page.tsx flow)
-      try {
-        const startTime = BigInt(1755589200);
-        const endTime = BigInt(3270351988);
-        const candidates: `0x${string}`[] = [address as `0x${string}`, '0x1fe5621152a33a877f2b40a4bb7bc824eebea1ea' as `0x${string}`];
-        for (const refundee of candidates) {
-          const id = computeIncentiveId({ rewardToken, pool, startTime, endTime, refundee });
-          try {
-            const st = await readContract(config, { ...v3StakerContract, functionName: 'stakes', args: [tokenId, id] }) as any;
-            let exists = false;
-            if (Array.isArray(st)) {
-              exists = st.some((v) => {
-                try { return (typeof v === 'bigint' && v > BigInt(0)) || (typeof v === 'number' && v > 0); } catch { return false; }
-              });
-            } else if (st && typeof st === 'object') {
-              exists = Object.values(st).some((v: any) => {
-                try { return (typeof v === 'bigint' && v > BigInt(0)) || (typeof v === 'number' && v > 0); } catch { return false; }
-              });
-            }
-            if (exists) return { refundee, via: 'staker', incentiveId: id, pool, startTime, endTime };
-          } catch {}
-        }
-      } catch {}
-    } catch {}
-    return null;
   };
 
   // Determine active pool: prop > route param > fallback
@@ -202,53 +109,64 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
     setIsLoading(true)
     let lastCall: any = null;
     try {
-      // Ensure we choose the correct refundee matching the stake
-      const chosen = await getStakeRefundeeForToken(_nftId);
-      if (!chosen) {
-        setErrMsg(new Error('Stake not found for this NFT and incentive key. Check pool/time/refundee.') as unknown as WriteContractErrorType);
-        setIsLoading(false);
-        return;
-      }
-      const isFactory = chosen.via === 'factory';
-      const stakeContract = isFactory ? StakingFactoryV3Contract : v3StakerContract;
+      // Use current incentive keys directly since we filtered for them
+      const rewardToken = KEY_REWARD;
+      const pool = EFFECTIVE_POOL;
+      const startTime = KEY_START;
+      const endTime = KEY_END;
+      const refundee = KEY_REFUNDEE;
       
       const { request: request1 } = await simulateContract(config, { 
-          ...stakeContract, 
+          ...StakingFactoryV3Contract, 
           functionName: 'unstakeToken',
           args: [{
-              rewardToken: '0xE7f64C5fEFC61F85A8b851d8B16C4E21F91e60c0' as '0xstring',
-              pool: chosen.pool,
-              startTime: chosen.startTime,
-              endTime: chosen.endTime,
-              refundee: chosen.refundee
+              rewardToken,
+              pool,
+              startTime,
+              endTime,
+              refundee
           }, _nftId]
       })
+      
+      // Compute ID for error reporting
+      const encoded = encodeAbiParameters(
+        [
+          { type: 'address' },
+          { type: 'address' },
+          { type: 'uint256' },
+          { type: 'uint256' },
+          { type: 'address' },
+        ],
+        [rewardToken, pool as unknown as `0x${string}`, startTime, endTime, refundee]
+      );
+      const id = keccak256(encoded);
+
       lastCall = {
-        to: (stakeContract as any).address,
+        to: StakingFactoryV3Contract.address,
         functionName: 'unstakeToken',
         args: [{
-          rewardToken: '0xE7f64C5fEFC61F85A8b851d8B16C4E21F91e60c0',
-          pool: chosen.pool,
-          startTime: chosen.startTime,
-          endTime: chosen.endTime,
-          refundee: chosen.refundee,
+          rewardToken,
+          pool,
+          startTime,
+          endTime,
+          refundee,
         }, _nftId],
-        incentiveId: chosen.incentiveId,
-        via: chosen.via,
+        incentiveId: id,
+        via: 'factory',
       };
       const h1 = await writeContract(config, request1)
       await waitForTransactionReceipt(config, { hash: h1 })
       const { request: request2 } = await simulateContract(config, { 
-          ...stakeContract, 
+          ...StakingFactoryV3Contract, 
           functionName: 'withdrawToken',
           args: [_nftId, address as '0xstring', '0x'] 
       })
       lastCall = {
-        to: (stakeContract as any).address,
+        to: StakingFactoryV3Contract.address,
         functionName: 'withdrawToken',
         args: [_nftId, address as '0xstring', '0x'],
-        incentiveId: chosen.incentiveId,
-        via: chosen.via,
+        incentiveId: id,
+        via: 'factory',
       };
       const h2 = await writeContract(config, request2)
       await waitForTransactionReceipt(config, { hash: h2 })
@@ -310,6 +228,7 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
   React.useEffect(() => {
     const fetchPositions = async () => {
       if (!address) return;
+      let computedId: `0x${string}` | undefined;
       // Compute incentiveId for current key and check existence
       try {
         const rewardToken = KEY_REWARD;
@@ -328,12 +247,16 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
           [rewardToken, pool as unknown as `0x${string}`, startTime, endTime, refundee]
         );
         const id = keccak256(encoded);
+        computedId = id;
         setCurrentIncentiveId(id);
         const incentiveStat = await readContract(config, { ...StakingFactoryV3Contract, functionName: 'incentives', args: [id as '0xstring'] }) as any;
         // Heuristic: treat exists if any field non-zero. Prefer numberOfStakes (index 2) or totalReward (index 0)
         const exists = Boolean(incentiveStat) && (Number(incentiveStat[0] ?? 0) > 0 || Number(incentiveStat[2] ?? 0) >= 0);
         setIncentiveExists(exists);
-        if (incentiveStat && incentiveStat[2] !== undefined) setAllStaker(String(incentiveStat[2]));
+        if (incentiveStat) {
+          if (incentiveStat[2] !== undefined) setAllStaker(String(incentiveStat[2]));
+          if (incentiveStat[0] !== undefined) setTotalRewardAmount(BigInt(incentiveStat[0]));
+        }
       } catch {
         setIncentiveExists(false);
       }
@@ -343,8 +266,29 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
         init.contracts.push({ ...positionManagerContract, functionName: 'tokenOfOwnerByIndex', args: [address as '0xstring', i] })
       }
       const tokenIds = await readContracts(config, init);
-      const ids = tokenIds.map(t => (t.result as bigint)).filter(Boolean) as bigint[];
-      setPositions(ids);
+      const rawIds = tokenIds.map(t => (t.result as bigint)).filter(Boolean) as bigint[];
+      
+      // Filter owned positions by pool
+      const filteredPositions: bigint[] = [];
+      if (rawIds.length > 0) {
+        const posDetails = await readContracts(config, {
+          contracts: rawIds.map(id => ({ ...positionManagerContract, functionName: 'positions', args: [id] }))
+        });
+        for (let i = 0; i < rawIds.length; i++) {
+          const pos: any = posDetails[i].result;
+          if (!pos) continue;
+          const token0 = String(pos?.token0 || pos?.[2] || '') as `0x${string}`;
+          const token1 = String(pos?.token1 || pos?.[3] || '') as `0x${string}`;
+          const fee = Number(pos?.fee ?? pos?.[4] ?? 0);
+          try {
+             const pool = await readContract(config, { ...v3FactoryContract, functionName: 'getPool', args: [token0, token1, fee] }) as string;
+             if (pool.toLowerCase() === (EFFECTIVE_POOL as string).toLowerCase()) {
+               filteredPositions.push(rawIds[i]);
+             }
+          } catch {}
+        }
+      }
+      setPositions(filteredPositions);
 
       // Image fetching moved to separate effect that watches owned + staked
 
@@ -358,11 +302,32 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
       })).map(obj => obj.args.tokenId)
       const eventMyNftStaking = [...new Set(_eventMyNftStaking)]
       const checkMyNftOwner = await readContracts(config, { contracts: eventMyNftStaking.map(obj => ({ ...StakingFactoryV3Contract, functionName: 'deposits', args: [obj] })) })
-      const checkedMyNftStaking = eventMyNftStaking.filter((obj, index) => {
+      
+      // Filter staked positions by owner AND incentive
+      const validStaked: bigint[] = [];
+      const potentialStaked = eventMyNftStaking.filter((obj, index) => {
         const res = checkMyNftOwner[index].result as unknown as [string, bigint, bigint, bigint][]
-        return res[0].toString().toUpperCase() === address?.toUpperCase()
-      })
-      setStakedPositions(checkedMyNftStaking as bigint[])
+        return res && res[0] && res[0].toString().toUpperCase() === address?.toUpperCase()
+      }) as bigint[];
+
+      if (potentialStaked.length > 0 && computedId) {
+         const stakeChecks = await readContracts(config, {
+            contracts: potentialStaked.map(tid => ({ ...StakingFactoryV3Contract, functionName: 'stakes', args: [tid, computedId!] }))
+         });
+         for(let i=0; i<potentialStaked.length; i++) {
+            const st = stakeChecks[i].result;
+            let isStaked = false;
+            if (Array.isArray(st)) {
+               isStaked = st.some((v) => { try { return (typeof v === 'bigint' && v > BigInt(0)) || (typeof v === 'number' && v > 0); } catch { return false; } });
+            } else if (st && typeof st === 'object') {
+               isStaked = Object.values(st).some((v: any) => { try { return (typeof v === 'bigint' && v > BigInt(0)) || (typeof v === 'number' && v > 0); } catch { return false; } });
+            }
+            if (isStaked) validStaked.push(potentialStaked[i]);
+         }
+      }
+
+      setStakedPositions(validStaked)
+      const checkedMyNftStaking = validStaked;
       const myReward = await readContracts(config, { contracts: checkedMyNftStaking.map((obj) => ({ 
         ...StakingFactoryV3Contract, functionName: 'getRewardInfo', args: [{
           rewardToken: KEY_REWARD,
@@ -372,6 +337,7 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
           refundee: KEY_REFUNDEE
         }, obj] })) })
       let _allPending = 0
+      let _allPendingWei = BigInt(0)
       const _rewardByToken: Record<string, number> = {}
       for (let i = 0; i < myReward.length; i++) {
         const item: any = myReward[i];
@@ -381,12 +347,13 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
         if (Array.isArray(result) && result.length > 0 && typeof result[0] === 'bigint') bn = result[0];
         else if (typeof result === 'bigint') bn = result;
         else if (result && typeof result === 'object' && typeof (result[0] as any) === 'bigint') bn = (result[0] as any);
+        _allPendingWei += bn
         const val = Number(formatEther(bn));
         _allPending += val;
         const tid = (checkedMyNftStaking[i] as bigint)?.toString?.() ?? '';
         if (tid) _rewardByToken[tid] = val;
       }
-      setAllPending(String(_allPending))
+      setAllPending(formatEther(_allPendingWei))
       setRewardByToken(_rewardByToken)
       const _percentByToken: Record<string, number> = {}
       Object.entries(_rewardByToken).forEach(([k, v]) => {
@@ -502,23 +469,53 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
             </div>
           )}
           <div className="container mx-auto p-4 md:p-6">
-            <div className="mb-3 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-400">Incentive Key (debug)</span>
-                <Button variant="ghost" size="sm" className="h-6 px-2 py-0 text-[11px]" onClick={() => setShowDebug(v => !v)}>{showDebug ? 'Hide' : 'Show'}</Button>
+            <div className="mb-4 bg-slate-900/50 border border-slate-700/50 rounded-md p-4 text-xs">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-emerald-400 font-semibold uppercase tracking-wider">Incentive Data</span>
               </div>
-              {showDebug && (
-                <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 bg-slate-900/50 border border-slate-700/50 rounded-md p-3">
-                  <div><span className="text-gray-500">Pool:</span> <span className="break-all">{EFFECTIVE_POOL}</span></div>
-                  <div><span className="text-gray-500">Reward:</span> <span className="break-all">{KEY_REWARD}</span></div>
-                  <div><span className="text-gray-500">Start:</span> {Number(KEY_START)} ({new Date(Number(KEY_START) * 1000).toLocaleString()})</div>
-                  <div><span className="text-gray-500">End:</span> {Number(KEY_END)} ({new Date(Number(KEY_END) * 1000).toLocaleString()})</div>
-                  <div className="sm:col-span-2"><span className="text-gray-500">Refundee:</span> <span className="break-all">{KEY_REFUNDEE}</span></div>
-                  <div className="sm:col-span-2"><span className="text-gray-500">IncentiveId:</span> <span className="break-all">{currentIncentiveId}</span></div>
-                  <div><span className="text-gray-500">Exists:</span> {incentiveExists === null ? 'Checking…' : incentiveExists ? 'Yes' : 'No'}</div>
-                </div>
-              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                <div><span className="text-gray-500">Pool:</span> <span className="break-all font-mono text-gray-300">{EFFECTIVE_POOL}</span></div>
+                <div><span className="text-gray-500">Reward:</span> <span className="break-all font-mono text-gray-300">{KEY_REWARD}</span></div>
+                <div><span className="text-gray-500">Start:</span> <span className="text-gray-300">{Number(KEY_START)} ({new Date(Number(KEY_START) * 1000).toLocaleString()})</span></div>
+                <div><span className="text-gray-500">End:</span> <span className="text-gray-300">{Number(KEY_END)} ({new Date(Number(KEY_END) * 1000).toLocaleString()})</span></div>
+                
+                {(() => {
+                  const duration = Number(KEY_END - KEY_START);
+                  const hourlyRewardWei = duration > 0 ? (totalRewardAmount * BigInt(3600)) / BigInt(duration) : BigInt(0);
+                  const isStarted = BigInt(now) >= KEY_START;
+                  const isEnded = BigInt(now) >= KEY_END;
+                  let timeLeft = BigInt(0);
+                  let label = "";
+                  
+                  if (!isStarted) {
+                    timeLeft = KEY_START - BigInt(now);
+                    label = "Starting in";
+                  } else if (!isEnded) {
+                    timeLeft = KEY_END - BigInt(now);
+                    label = "Remaining Time";
+                  } else {
+                    label = "Ended";
+                  }
+
+                  const days = timeLeft / BigInt(86400);
+                  const hours = (timeLeft % BigInt(86400)) / BigInt(3600);
+                  const minutes = (timeLeft % BigInt(3600)) / BigInt(60);
+                  const seconds = timeLeft % BigInt(60);
+                  const timeString = timeLeft > 0 ? `${days}d ${hours}h ${minutes}m ${seconds}s` : "0s";
+
+                  return (
+                    <>
+                      <div><span className="text-gray-500">Hourly Reward:</span> <span className="text-gray-300">{formatEther(hourlyRewardWei)}</span></div>
+                      <div><span className="text-gray-500">Total Reward:</span> <span className="text-gray-300">{formatEther(totalRewardAmount)}</span></div>
+                      <div className="sm:col-span-2 mt-2 pt-2 border-t border-slate-800">
+                        <span className="text-gray-500">{label}:</span> <span className="text-emerald-400 font-mono text-sm ml-2">{timeString}</span>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
+
             {incentiveExists === false && (
               <div className="mb-3 bg-red-900/20 border border-red-700/40 text-red-300 text-xs rounded-md px-3 py-2">
                 Incentive not found for current key. Please verify pool/time/refundee.
@@ -534,78 +531,86 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
                 <div className="text-2xl font-light">{allStaker}</div>
               </div>
             </div>
-            {/* Top stake/unstake inputs hidden per request */}
-            <div className="mt-6">
-              <div className="text-sm text-gray-300 mb-2">My Position Token IDs</div>
-{/*               <div className="flex flex-wrap gap-2">
-                {(() => {
-                  const allIds = Array.from(new Set([
-                    ...positions.map((id) => id.toString()),
-                    ...stakedPositions.map((id) => id.toString()),
-                  ]));
-                  if (allIds.length === 0) {
-                    return <div className="text-gray-400 text-sm">No positions found.</div>;
-                  }
-                  return allIds.map((sid) => (
-                    <span key={`tag-${sid}`} className="px-3 py-1 rounded-md bg-slate-800 border border-slate-700 text-white text-xs">#{sid}</span>
-                  ));
-                })()}
-              </div> */}
-              {positions.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-3">
-                  {positions.map((id) => {
-                    const key = id.toString();
-                    const src = positionImages[key];
-                    const d = detailsByToken[key];
-                    return (
-                      <div key={`img-${key}`} className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-lg p-2 flex flex-col text-[10px]">
-                        {src ? (
-                          <img src={src} alt={`Position #${key}`} className="w-full h-24 object-contain rounded" />
-                        ) : (
-                          <div className="text-gray-500 text-[10px] py-4 text-center">No preview</div>
-                        )}
-                        <div className="mt-1 text-[10px] text-gray-300">#{key}</div>
-                        <div className="mt-1 text-[10px] text-gray-400">Fee: {d?.fee ?? '-'}</div>
-                        <div className="mt-1 text-[10px] text-gray-400">Current: {d?.currentTick ?? '-'} | Min: {d?.tickLower ?? '-'} | Max: {d?.tickUpper ?? '-'}</div>
-                        <div className="mt-2">
-                          <Button size="sm" className="w-full py-1 text-[11px]" onClick={() => stakeNft(BigInt(key))}>Stake</Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              {stakedPositions.length > 0 && (
-                <div className="mt-4">
-                  <div className="text-sm text-gray-300 mb-2">My Staked Positions</div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {stakedPositions.map((id) => {
-                      const key = id.toString();
-                      const src = positionImages[key];
-                      const d = detailsByToken[key];
-                      const pct = percentByToken[key] ?? 0;
-                      return (
-                        <div key={`stk-${key}`} className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-lg p-2 flex flex-col text-[10px]">
-                          {src ? (
-                            <img src={src} alt={`Position #${key}`} className="w-full h-24 object-contain rounded" />
-                          ) : (
-                            <div className="text-gray-500 text-[10px] py-4 text-center">No preview</div>
-                          )}
-                          <div className="mt-1 text-[10px] text-gray-300">#{key}</div>
-                          <div className="mt-1 text-[10px] text-gray-400">Fee: {d?.fee ?? '-'}</div>
-                          <div className="mt-1 text-[10px] text-gray-400">Current: {d?.currentTick ?? '-'} | Min: {d?.tickLower ?? '-'} | Max: {d?.tickUpper ?? '-'}</div>
-                          <div className="mt-1 text-[10px] text-emerald-400">Pending reward: {pct.toFixed(2)}%</div>
-                          <div className="mt-2 grid grid-cols-2 gap-2">
-                            <Button size="sm" variant="outline" className="w-full py-1 text-[11px]" onClick={() => unstakeNft(BigInt(key))}>Unstake + Withdraw</Button>
-                            <Button size="sm" variant="ghost" className="w-full py-1 text-[11px]" onClick={() => directWithdraw(BigInt(key))}>Direct Withdraw</Button>
+            
+            {/* Conditional Rendering for Positions */}
+            {(() => {
+               const isStarted = BigInt(now) >= KEY_START;
+               if (!isStarted) {
+                 const timeLeft = KEY_START - BigInt(now);
+                 const days = timeLeft / BigInt(86400);
+                 const hours = (timeLeft % BigInt(86400)) / BigInt(3600);
+                 const minutes = (timeLeft % BigInt(3600)) / BigInt(60);
+                 const seconds = timeLeft % BigInt(60);
+                 return (
+                   <div className="mt-8 p-8 bg-slate-900/40 border border-slate-700/30 rounded-xl flex flex-col items-center justify-center text-center">
+                     <div className="text-gray-400 uppercase tracking-widest text-sm mb-4">Staking Starts In</div>
+                     <div className="text-4xl md:text-6xl font-thin font-mono text-emerald-400">
+                       {Number(days)}d {Number(hours)}h {Number(minutes)}m {Number(seconds)}s
+                     </div>
+                   </div>
+                 );
+               }
+
+               return (
+                <div className="mt-6">
+                  <div className="text-sm text-gray-300 mb-2">My Position Token IDs</div>
+                  {positions.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-3">
+                      {positions.map((id) => {
+                        const key = id.toString();
+                        const src = positionImages[key];
+                        const d = detailsByToken[key];
+                        return (
+                          <div key={`img-${key}`} className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-lg p-2 flex flex-col text-[10px]">
+                            {src ? (
+                              <img src={src} alt={`Position #${key}`} className="w-full h-24 object-contain rounded" />
+                            ) : (
+                              <div className="text-gray-500 text-[10px] py-4 text-center">No preview</div>
+                            )}
+                            <div className="mt-1 text-[10px] text-gray-300">#{key}</div>
+                            <div className="mt-1 text-[10px] text-gray-400">Fee: {d?.fee ?? '-'}</div>
+                            <div className="mt-1 text-[10px] text-gray-400">Current: {d?.currentTick ?? '-'} | Min: {d?.tickLower ?? '-'} | Max: {d?.tickUpper ?? '-'}</div>
+                            <div className="mt-2">
+                              <Button size="sm" className="w-full py-1 text-[11px]" onClick={() => stakeNft(BigInt(key))}>Stake</Button>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {stakedPositions.length > 0 && (
+                    <div className="mt-4">
+                      <div className="text-sm text-gray-300 mb-2">My Staked Positions</div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {stakedPositions.map((id) => {
+                          const key = id.toString();
+                          const src = positionImages[key];
+                          const d = detailsByToken[key];
+                          const pct = percentByToken[key] ?? 0;
+                          return (
+                            <div key={`stk-${key}`} className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-lg p-2 flex flex-col text-[10px]">
+                              {src ? (
+                                <img src={src} alt={`Position #${key}`} className="w-full h-24 object-contain rounded" />
+                              ) : (
+                                <div className="text-gray-500 text-[10px] py-4 text-center">No preview</div>
+                              )}
+                              <div className="mt-1 text-[10px] text-gray-300">#{key}</div>
+                              <div className="mt-1 text-[10px] text-gray-400">Fee: {d?.fee ?? '-'}</div>
+                              <div className="mt-1 text-[10px] text-gray-400">Current: {d?.currentTick ?? '-'} | Min: {d?.tickLower ?? '-'} | Max: {d?.tickUpper ?? '-'}</div>
+                              <div className="mt-1 text-[10px] text-emerald-400">Pending reward: {pct.toFixed(2)}%</div>
+                              <div className="mt-2 grid grid-cols-2 gap-2">
+                                <Button size="sm" variant="outline" className="w-full py-1 text-[11px]" onClick={() => unstakeNft(BigInt(key))}>Unstake + Withdraw</Button>
+                                <Button size="sm" variant="ghost" className="w-full py-1 text-[11px]" onClick={() => directWithdraw(BigInt(key))}>Direct Withdraw</Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+               );
+            })()}
           </div>
         </div>
       </DialogContent>

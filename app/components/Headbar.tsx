@@ -38,18 +38,17 @@ export default function Headbar() {
                                             </Link>
                                         {/* )} */}
                                         {typeof chainId === 'number' && [25925].includes(chainId) && address === "0xCA811301C650C92fD45ed32A81C0B757C61595b6" && (
-                                            <Link href="/earn" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                                <Button variant="ghost" className="cursor-pointer">Earn</Button>
-                                            </Link>
-                                        )}
-                                        <Link href="/liquidity-pool" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
-                                            <Button variant="ghost" className="cursor-pointer">Liquidity</Button>
-                                        </Link>
-                                        {chainId === 25925 && (
-                                            <>
-                                                <Link href="/referral" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
+                                            <Link href="/referral" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
                                                 <Button variant="ghost" className="cursor-pointer">Referral Program</Button>
                                                 </Link>
+                                        )}
+                                 
+                                        {chainId === 25925 && (
+                                            <>
+                                                <Link href="/liquidity-pool" className="text-white/70 hover:text-[#32ffa7] transition-colors text-sm">
+                                            <Button variant="ghost" className="cursor-pointer">Liquidity</Button>
+                                        </Link>
+                                         
                                             </>
                                         )}
                                 </div>

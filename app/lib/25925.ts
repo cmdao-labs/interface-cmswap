@@ -42,7 +42,7 @@ export const StakingFactoryV2Contract = {chainId: 25925, abi: stakingV2FactoryAB
 
 export const StakingFactoryV3 = '0xe445e132E9D4d0863E0BE079faf716A97250f37E' as '0xstring' // Uniswap V3 Staking Factory Address
 export const StakingFactoryV3Contract = {chainId: 25925, abi: stakingV3ABI, address: StakingFactoryV3} as const 
-export const StakingFactoryV3CreatedAt = BigInt(23935424)
+export const StakingFactoryV3CreatedAt = BigInt(26183742)
 
 export const StakingV2ABI = {chainId: 25925, abi: stakingV2ABI}
 export const StakingV3ABI = {chainId: 25925, abi: stakingV3ABI}
