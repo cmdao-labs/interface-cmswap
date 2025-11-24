@@ -36,7 +36,7 @@ const chain25925 = {
     StakingFactoryV2Contract: { chainId: 25925, abi: stakingV2FactoryABI, address: '0xB2335f770497Caaa9DE22f1296f172939AB786Ca' as '0xstring' } as const,
     StakingFactoryV3: '0xe445e132E9D4d0863E0BE079faf716A97250f37E' as '0xstring',
     StakingFactoryV3Contract: { chainId: 25925, abi: v3staker, address: '0xe445e132E9D4d0863E0BE079faf716A97250f37E' as '0xstring' } as const,
-    StakingFactoryV3CreatedAt: BigInt(26183742),
+    StakingFactoryV3CreatedAt: BigInt(26205618),
     StakingV2ABI: { chainId: 25925, abi: stakingV2ABI } as const,
     StakingV3ABI: { chainId: 25925, abi: v3staker } as const,
     cmSwapRefProgram: '0x01837156518e60362048e78d025a419c51346f55' as '0xstring',

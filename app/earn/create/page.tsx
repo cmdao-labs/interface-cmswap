@@ -791,56 +791,88 @@ const CreateEarnProgram = () => {
   };
 
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center mb-8">
-      {[
-        {
-          number: 1,
-          title: "Select Staking Type",
-          description: "Choose staking program type",
-        },
-        {
-          number: 2,
-          title: "Select Pool",
-          description: "Choose a liquidity pool",
-        },
-        {
-          number: 3,
-          title: "Add Reward",
-          description: "Set rewards and period",
-        },
-        { number: 4, title: "Review", description: "Confirm farm details" },
-      ].map((step, index, arr) => (
-        <div key={step.number} className="flex items-center">
-          <div
-            className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-              currentStep >= step.number
-                ? `${currentTheme.accent} ${currentTheme.bg}`
-                : ` ${currentTheme.border} ${currentTheme.hover}`
-            }`}
-          >
-            {currentStep > step.number ? (
-              <Check className={`w-5 h-5 ${currentTheme.text}`} />
-            ) : (
-              <span
-                className={`text-sm font-medium ${
-                  currentStep >= step.number
-                    ? currentTheme.text
-                    : "text-gray-400"
-                }`}
-              >
-                {step.number}
-              </span>
-            )}
-          </div>
-          {index < arr.length - 1 && (
+    <div className="mb-6 sm:mb-8">
+      {/* Mobile: Simple dots with current step info */}
+      <div className="sm:hidden">
+        <div className="text-center mb-3">
+          <p className="text-xs text-gray-400">
+            Step {currentStep} of 4
+          </p>
+          <p className="text-sm font-medium text-white mt-1">
+            {[
+              "Select Staking Type",
+              "Select Pool",
+              "Add Reward",
+              "Review"
+            ][currentStep - 1]}
+          </p>
+        </div>
+        <div className="flex items-center justify-center gap-2">
+          {[1, 2, 3, 4].map((step) => (
             <div
-              className={`w-16 h-0.5 mx-4 ${
-                currentStep > step.number ? currentTheme.accent : "bg-gray-600"
+              key={step}
+              className={`h-2 rounded-full transition-all ${
+                currentStep >= step
+                  ? `bg-gradient-to-r from-emerald-400 to-green-500 w-8 shadow-lg shadow-emerald-500/50`
+                  : "bg-gray-700 w-2"
               }`}
             />
-          )}
+          ))}
         </div>
-      ))}
+      </div>
+
+      {/* Desktop: Full step indicator */}
+      <div className="hidden sm:flex items-center justify-center">
+        {[
+          {
+            number: 1,
+            title: "Select Staking Type",
+            description: "Choose staking program type",
+          },
+          {
+            number: 2,
+            title: "Select Pool",
+            description: "Choose a liquidity pool",
+          },
+          {
+            number: 3,
+            title: "Add Reward",
+            description: "Set rewards and period",
+          },
+          { number: 4, title: "Review", description: "Confirm farm details" },
+        ].map((step, index, arr) => (
+          <div key={step.number} className="flex items-center">
+            <div
+              className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+                currentStep >= step.number
+                  ? `${currentTheme.accent} ${currentTheme.bg}`
+                  : ` ${currentTheme.border} ${currentTheme.hover}`
+              }`}
+            >
+              {currentStep > step.number ? (
+                <Check className={`w-5 h-5 ${currentTheme.text}`} />
+              ) : (
+                <span
+                  className={`text-sm font-medium ${
+                    currentStep >= step.number
+                      ? currentTheme.text
+                      : "text-gray-400"
+                  }`}
+                >
+                  {step.number}
+                </span>
+              )}
+            </div>
+            {index < arr.length - 1 && (
+              <div
+                className={`w-16 h-0.5 mx-4 ${
+                  currentStep > step.number ? currentTheme.accent : "bg-gray-600"
+                }`}
+              />
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 
@@ -2028,13 +2060,13 @@ const CreateEarnProgram = () => {
               <div className="space-y-6">
                 <div>
                   <h2
-                    className="text-3xl font-bold text-white mb-2 tracking-wide"
+                    className="text-xl sm:text-3xl font-bold text-white mb-2 tracking-wide"
                     style={{ letterSpacing: "0.04em" }}
                   >
                     Review Farm Details
                   </h2>
                   <p
-                    className="text-gray-400 text-base tracking-normal"
+                    className="text-gray-400 text-sm sm:text-base tracking-normal"
                     style={{ letterSpacing: "0.015em" }}
                   >
                     Confirm your farming program configuration
@@ -2048,10 +2080,10 @@ const CreateEarnProgram = () => {
                     >
                       Program Information
                     </h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                       <div>
                         <div
-                          className="text-gray-400 ml-2 text-sm tracking-normal"
+                          className="text-gray-400 text-xs sm:text-sm tracking-normal break-words"
                           style={{ letterSpacing: "0.015em" }}
                         >
                           {selectLockOption === "1"
@@ -2060,45 +2092,47 @@ const CreateEarnProgram = () => {
                             ? "Multiple Lock : "
                             : "Staking : "}
                           <span
-                            className={`${currentTheme.text} tracking-wide`}
+                            className={`${currentTheme.text} tracking-wide block sm:inline mt-1 sm:mt-0`}
                             style={{
                               letterSpacing: "0.025em",
-                              fontSize: "0.9rem",
+                              fontSize: "0.85rem",
                             }}
                           >
                             {selectTokenInfo?.name || selectedPool?.name}
                           </span>{" "}
-                          → Earn{" "}
+                          <span className="block sm:inline">→ Earn{" "}</span>
                           <span
-                            className={`${currentTheme.text} tracking-wide`}
+                            className={`${currentTheme.text} tracking-wide block sm:inline mt-1 sm:mt-0`}
                             style={{
                               letterSpacing: "0.025em",
-                              fontSize: "0.9rem",
+                              fontSize: "0.85rem",
                             }}
                           >
                             {rewardTokenInfo?.name}
                           </span>
                         </div>
                         <div
-                          className="text-gray-400 ml-2 text-sm tracking-normal"
+                          className="text-gray-400 text-xs sm:text-sm tracking-normal break-words"
                           style={{ letterSpacing: "0.015em" }}
                         >
-                          Staked Duration :{" "}
+                          <span className="block sm:inline">Duration: </span>
                           <span
-                            className={`${currentTheme.text} tracking-wide`}
+                            className={`${currentTheme.text} tracking-wide block sm:inline font-semibold`}
                             style={{
                               letterSpacing: "0.025em",
-                              fontSize: "0.9rem",
+                              fontSize: "0.85rem",
                             }}
                           >
                             {parseInt(effectiveDuration).toLocaleString()}
                           </span>{" "}
-                          Blocks (~{" "}
-                          {convertBlocksToTimeString(
-                            Number(effectiveDuration),
-                            avgBlockTime
-                          )}
-                          )
+                          <span className="block sm:inline text-[10px] sm:text-xs">
+                            Blocks (~{" "}
+                            {convertBlocksToTimeString(
+                              Number(effectiveDuration),
+                              avgBlockTime
+                            )}
+                            )
+                          </span>
                         </div>
                         <div
                           className="text-gray-400 ml-2 text-sm tracking-normal"
@@ -2146,7 +2180,7 @@ const CreateEarnProgram = () => {
                     </div>
 
                     <div
-                      className="flex items-center gap-2 text-sm text-gray-400 tracking-normal"
+                      className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs sm:text-sm text-gray-400 tracking-normal"
                       style={{ letterSpacing: "0.015em" }}
                     >
                       <span>Contract Address:</span>
@@ -2159,17 +2193,17 @@ const CreateEarnProgram = () => {
                             "stakingCa"
                           )
                         }
-                        className="flex items-center gap-1 text-white transition-colors"
+                        className="flex items-center gap-1 text-white transition-colors break-all"
                       >
-                        <span>
+                        <span className="font-mono text-[10px] sm:text-xs">
                           {stakingType === "Token Staking"
                             ? selectToken
                             : selectedPool?.poolAddress || "N/A"}
                         </span>
                         {copiedAddress === "stakingCa" ? (
-                          <CopyCheck size={16} />
+                          <CopyCheck size={14} className="shrink-0" />
                         ) : (
-                          <Copy size={16} />
+                          <Copy size={14} className="shrink-0" />
                         )}
                       </button>
                     </div>
@@ -2270,16 +2304,16 @@ const CreateEarnProgram = () => {
                         </div>
                       )}
                     </div>
-                    <div>
+                    <div className="space-y-2">
                       <span
-                        className="text-gray-400 text-sm tracking-normal"
+                        className="text-gray-400 text-xs sm:text-sm tracking-normal block"
                         style={{ letterSpacing: "0.015em" }}
                       >
                         Block reward range:
                       </span>
                       <span
-                        className="ml-2 text-white tracking-wide"
-                        style={{ letterSpacing: "0.02em", fontSize: "0.9rem" }}
+                        className="text-white tracking-wide text-xs sm:text-sm block break-all"
+                        style={{ letterSpacing: "0.02em" }}
                       >
                         {estimatedStartBlock}
                         {" - "}
@@ -2359,19 +2393,19 @@ const CreateEarnProgram = () => {
                   </div>
 
                   <div
-                    className="flex items-center gap-2 text-sm text-gray-400 tracking-normal"
+                    className="flex flex-col gap-2 text-xs sm:text-sm text-gray-400 tracking-normal"
                     style={{ letterSpacing: "0.015em" }}
                   >
-                    <span>Contract Address :</span>
+                    <span>Contract Address:</span>
                     <button
                       onClick={() => copyToClipboard(rewardToken, "reward")}
-                      className="flex items-center gap-1 text-white transition-colors"
+                      className="flex items-center gap-1 text-white transition-colors break-all text-left"
                     >
-                      <span>{rewardToken}</span>
+                      <span className="font-mono text-[10px] sm:text-xs">{rewardToken}</span>
                       {copiedAddress === "reward" ? (
-                        <CopyCheck size={16} />
+                        <CopyCheck size={14} className="shrink-0" />
                       ) : (
-                        <Copy size={16} />
+                        <Copy size={14} className="shrink-0" />
                       )}
                     </button>
                   </div>
@@ -2392,27 +2426,20 @@ const CreateEarnProgram = () => {
                     </span>
                   </div>
 
-                  <div>
+                  <div className="space-y-2">
                     <span
-                      className="text-gray-400 text-sm tracking-normal"
+                      className="text-gray-400 text-xs sm:text-sm tracking-normal block"
                       style={{ letterSpacing: "0.015em" }}
                     >
-                      Reward Durations {" : "}
-                      <span className="text-white">
-                        {" "}
-                        {Number(effectiveDuration).toLocaleString()} Blocks (
-                        {convertBlocksToTimeString(
-                          Number(effectiveDuration),
-                          avgBlockTime
-                        )}
-                        )
-                      </span>
+                      Reward Durations:
                     </span>
-                    <span
-                      className={`ml-2 text-white tracking-wide`}
-                      style={{ letterSpacing: "0.02em", fontSize: "0.9rem" }}
-                    >
-                      {" "}
+                    <span className="text-white text-xs sm:text-sm block break-words">
+                      {Number(effectiveDuration).toLocaleString()} Blocks (
+                      {convertBlocksToTimeString(
+                        Number(effectiveDuration),
+                        avgBlockTime
+                      )}
+                      )
                     </span>
                   </div>
 

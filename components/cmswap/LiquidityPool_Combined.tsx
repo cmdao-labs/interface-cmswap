@@ -252,6 +252,7 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
 
   React.useEffect(() => {
     setValidPools([])
+    setListFilter('allLP') // Reset to All Liquidity when chain changes
   }, [chainConfig]);
 
   const computeIncentiveId = (opts: { rewardToken: `0x${string}`; pool: `0x${string}`; startTime: bigint; endTime: bigint; refundee: `0x${string}` }): `0x${string}` => {
@@ -766,6 +767,19 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
                 
         </div>
      <div className="my-4">
+                {['allRP', 'myRP'].includes(listFilter) && (
+                  <div className="flex justify-end mb-4">
+                    <Button
+                        variant="outline"
+                        className={`font-mono h-auto rounded-xl text-xs flex flex-col bg-[#162638] text-[#00ff9d] border-${theme.accent}/20 hover:bg-${theme.accent}/10 text-black`}
+                      >
+                        <Link href="/earn/create" className="text-white/60 hover:text-[#32ffa7] text-xs flex items-center gap-1 font-mono">
+                          <span >Create Staking Program</span>
+                        </Link>
+            
+                    </Button>
+                  </div>
+                )}
       {/* --- PC --- */}
       <div className="hidden sm:flex items-center justify-between gap-3">
         <div
@@ -918,50 +932,64 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
         </div>
 
         {/* --- Mobile List View (Reward) --- */}
-        <div className="lg:hidden space-y-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-white">Pool</h2>
-            <h2 className="text-lg font-semibold text-white">Pending/APR 24H</h2>
+        <div className="lg:hidden space-y-3">
+          <div className="mb-3">
+            <h2 className="text-sm font-semibold text-white">Staking Programs</h2>
           </div>
           {sortedStaking.map((pool, index) => {
             const theme = themes[pool.themeId as ThemeId];
             return (
               <div
                 key={index}
-                className={`bg-slate-800/50 backdrop-blur-xl rounded-xl border ${theme.border} p-4 hover:bg-slate-800/70 transition-all cursor-pointer`}
+                className={`bg-slate-800/50 backdrop-blur-xl rounded-xl border ${theme.border} p-3 hover:bg-slate-800/70 transition-all`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="relative w-10 h-10 shrink-0">
-                      <img src={pool.tokenALogo || '/default2.png'} alt="token1" className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0" />
-                      <img src={pool.tokenBLogo || '/default2.png'} alt="token2" className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0" />
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <div className="inline-block text-[10px] sm:text-[11px] px-2 py-[2px] rounded-md bg-slate-700/40 text-slate-300 w-fit mb-1">
-                        {pool.chain}
-                      </div>
-                      <div className="font-semibold text-white text-sm sm:text-base leading-tight truncate">
-                        {pool.name}
-                      </div>
-                      <div className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
-                        Fee: {pool.feeList?.join(' • ')}
-                      </div>
-                      <div className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
-                        Total Staked: {(pool.totalStaked)}
-                      </div>
-                    </div>
+                {/* Header with tokens and chain */}
+                <div className="flex items-start gap-2 mb-2">
+                  <div className="relative w-10 h-10 shrink-0">
+                    <img src={pool.tokenALogo || '/default2.png'} alt="token1" className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0" />
+                    <img src={pool.tokenBLogo || '/default2.png'} alt="token2" className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0" />
                   </div>
-                  <div className="text-right">
-                    <div className="text-white font-medium">
-                       {Number(pool.pending).toFixed(4)}
+                  <div className="flex-1 min-w-0">
+                    <div className="inline-block text-[9px] px-1.5 py-0.5 rounded bg-slate-700/40 text-slate-300 mb-1">
+                      {pool.chain}
                     </div>
-                    <div className={`font-bold text-lg ${theme.text}`}>
-                      {formatPercentage(pool.apr)}
+                    <div className="font-semibold text-white text-xs leading-tight line-clamp-2">
+                      {pool.name}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 whitespace-nowrap mt-3 pt-3 border-t border-slate-700/30">
-                  <Button variant="ghost" className="w-full cursor-pointer px-2 py-1 text-xs" onClick={() => {
+
+                {/* Info grid */}
+                <div className="grid grid-cols-2 gap-2 mb-2 text-[10px]">
+                  <div>
+                    <div className="text-slate-400">Fee Tier</div>
+                    <div className="text-white font-medium">{pool.feeList?.[0] || '-'}</div>
+                  </div>
+                  <div>
+                    <div className="text-slate-400">Total Staked</div>
+                    <div className="text-white font-medium">{pool.totalStaked}</div>
+                  </div>
+                  <div>
+                    <div className="text-slate-400">Pending</div>
+                    <div className="text-white font-medium">{Number(pool.pending).toFixed(4)}</div>
+                  </div>
+                  <div>
+                    <div className="text-slate-400">Your Stake</div>
+                    <div className="text-white font-medium">{pool.staked}</div>
+                  </div>
+                </div>
+
+                {/* APR highlight */}
+                <div className="flex items-center justify-between mb-2 p-2 bg-slate-900/50 rounded-lg">
+                  <span className="text-[10px] text-slate-400">APR</span>
+                  <span className={`font-bold text-base ${theme.text}`}>{formatPercentage(pool.apr)}</span>
+                </div>
+
+                {/* Action button */}
+                <Button 
+                  variant="ghost" 
+                  className="w-full cursor-pointer py-2 text-xs" 
+                  onClick={() => {
                     setSelectedProgramAddr(pool.poolAddress as `0x${string}`);
                     setSelectedIncentive({
                       rewardToken: pool.rewardToken as `0x${string}`,
@@ -971,10 +999,10 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
                       refundee: pool.refundee as `0x${string}`
                     });
                     setOpenStake(true);
-                  }}>
-                    Go Farm
-                  </Button>
-                </div>
+                  }}
+                >
+                  Go Farm
+                </Button>
               </div>
             );
           })}
@@ -1117,53 +1145,59 @@ export default function LiquidityPool({ chainConfig }: { chainConfig: ChainConfi
         </div>
 
         {/* --- Mobile View (Liquidity) --- */}
-        <div className="lg:hidden space-y-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-white">Pool</h2>
-            <h2 className="text-lg font-semibold text-white">Vol/APR 24H</h2>
+        <div className="lg:hidden space-y-3">
+          <div className="mb-3">
+            <h2 className="text-sm font-semibold text-white">Liquidity Pools</h2>
           </div>
           {sortedPools.map((pool) => {
             const theme = themes[pool.themeId as ThemeId];
             return (
               <div
                 key={`${pool.tokenA}-${pool.tokenB}-${pool.fee}-${pool.poolAddress}`}
-                className={`bg-slate-800/50 backdrop-blur-xl rounded-xl border ${theme.border} p-4 hover:bg-slate-800/70 transition-all cursor-pointer`}
+                className={`bg-slate-800/50 backdrop-blur-xl rounded-xl border ${theme.border} p-3 hover:bg-slate-800/70 transition-all`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="relative w-10 h-10">
-                      <img src={pool.tokenALogo || '/default2.png'} alt="token1" className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0" />
-                      <img src={pool.tokenBLogo || '/default2.png'} alt="token2" className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0" />
-                    </div>
-                    <div>
-                      <div className="font-semibold text-white">
-                        {pool.tokenA} / {pool.tokenB}
-                      </div>
-                      <div className={`text-sm ${theme.text}`}>
-                        {(pool.fee / 10000)}% Fee
-                      </div>
-                      <div className="text-xs text-slate-400 mt-1">
-                        TVL: {formatNumber(pool.liquidity)}
-                      </div>
-                    </div>
+                {/* Header with tokens */}
+                <div className="flex items-start gap-2 mb-2">
+                  <div className="relative w-10 h-10 shrink-0">
+                    <img src={pool.tokenALogo || '/default2.png'} alt="token1" className="w-8 h-8 rounded-full border-2 border-[#1a1b2e] bg-white z-0 absolute top-0 left-0" />
+                    <img src={pool.tokenBLogo || '/default2.png'} alt="token2" className="w-6 h-6 rounded-full border-2 border-[#1a1b2e] bg-white z-10 absolute bottom-0 right-0" />
                   </div>
-                  <div className="text-right">
-                    <div className="text-white font-medium">
-                      {formatNumber(pool.volume24h)}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-white text-xs leading-tight">
+                      {pool.tokenA} / {pool.tokenB}
                     </div>
-                    <div className={`font-bold text-lg ${theme.text}`}>
-                      {formatPercentage(pool.apr)}
-                    </div>
-                    <div className="text-xs text-slate-400 mt-1">
-                      Fee: {formatNumber(pool.fee24h)}
+                    <div className="inline-block text-[9px] px-1.5 py-0.5 rounded bg-slate-700/40 text-slate-300 mt-1">
+                      {(pool.fee / 10000)}% Fee
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 whitespace-nowrap mt-3 pt-3 border-t border-slate-700/30">
-                  <Button variant="ghost" className="flex-1 cursor-pointer px-2 py-1 text-xs" onClick={() => handleClick(`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=liquidity`)}>
+
+                {/* Info grid */}
+                <div className="grid grid-cols-2 gap-2 mb-2 text-[10px]">
+                  <div>
+                    <div className="text-slate-400">TVL</div>
+                    <div className="text-white font-medium">{formatNumber(pool.liquidity)}</div>
+                  </div>
+                  <div>
+                    <div className="text-slate-400">Volume 24H</div>
+                    <div className="text-white font-medium">{formatNumber(pool.volume24h)}</div>
+                  </div>
+                  <div>
+                    <div className="text-slate-400">Fees 24H</div>
+                    <div className="text-white font-medium">{formatNumber(pool.fee24h)}</div>
+                  </div>
+                  <div>
+                    <div className="text-slate-400">APR</div>
+                    <div className={`font-bold text-sm ${theme.text}`}>{formatPercentage(pool.apr)}</div>
+                  </div>
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex gap-2 pt-2 border-t border-slate-700/30">
+                  <Button variant="ghost" className="flex-1 py-2 text-xs" onClick={() => handleClick(`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=liquidity`)}>
                     Supply
                   </Button>
-                  <Button variant="ghost" className="flex-1 cursor-pointer px-2 py-1 text-xs" onClick={() => handleClick(`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=swap`)}>
+                  <Button variant="ghost" className="flex-1 py-2 text-xs" onClick={() => handleClick(`/swap?input=${pool.tokenAaddr}&output=${pool.tokenBaddr}&tab=swap`)}>
                     Swap
                   </Button>
                 </div>

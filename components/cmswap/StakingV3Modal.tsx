@@ -45,7 +45,6 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
   const [incentiveExists, setIncentiveExists] = React.useState<boolean | null>(null);
   const [totalRewardAmount, setTotalRewardAmount] = React.useState<bigint>(BigInt(0));
   const [now, setNow] = React.useState(Math.floor(Date.now() / 1000));
-  const [poolTokens, setPoolTokens] = React.useState<{ token0: string; token1: string } | null>(null);
 
   React.useEffect(() => {
     const interval = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
@@ -430,29 +429,6 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
   }, [open, positions, stakedPositions]);
 
   React.useEffect(() => {
-    const fetchPoolTokens = async () => {
-      if (!EFFECTIVE_POOL) return;
-      try {
-        const [t0, t1] = await readContracts(config, {
-          contracts: [
-            { ...v3PoolABI, address: EFFECTIVE_POOL, functionName: 'token0' },
-            { ...v3PoolABI, address: EFFECTIVE_POOL, functionName: 'token1' },
-          ]
-        });
-        if (t0.status === 'success' && t1.status === 'success') {
-          setPoolTokens({
-            token0: String(t0.result),
-            token1: String(t1.result)
-          });
-        }
-      } catch (e) {
-        console.error('Failed to fetch pool tokens', e);
-      }
-    };
-    if (open) fetchPoolTokens();
-  }, [open, EFFECTIVE_POOL]);
-
-  React.useEffect(() => {
     const fetchDetails = async () => {
       const allIds: bigint[] = Array.from(new Set([...(positions || []), ...(stakedPositions || [])]));
       if (allIds.length === 0) {
@@ -610,7 +586,7 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
                             <div className="mt-1 text-[10px] text-gray-400">Fee: {d?.fee ?? '-'}</div>
                             <div className="mt-1 text-[10px] text-gray-400">Current: {d?.currentTick ?? '-'} | Min: {d?.tickLower ?? '-'} | Max: {d?.tickUpper ?? '-'}</div>
                             <div className="mt-2">
-                              <Button size="sm" className="w-full py-1 text-[11px]" onClick={() => stakeNft(BigInt(key))}>Stake</Button>
+                              <Button size="sm" className="w-full py-2 text-xs sm:text-sm" onClick={() => stakeNft(BigInt(key))}>Stake</Button>
                             </div>
                           </div>
                         );
@@ -637,9 +613,15 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
                               <div className="mt-1 text-[10px] text-gray-400">Fee: {d?.fee ?? '-'}</div>
                               <div className="mt-1 text-[10px] text-gray-400">Current: {d?.currentTick ?? '-'} | Min: {d?.tickLower ?? '-'} | Max: {d?.tickUpper ?? '-'}</div>
                               <div className="mt-1 text-[10px] text-emerald-400">Pending reward: {pct.toFixed(2)}%</div>
-                              <div className="mt-2 grid grid-cols-2 gap-2">
-                                <Button size="sm" variant="outline" className="w-full py-1 text-[11px]" onClick={() => unstakeNft(BigInt(key))}>Unstake + Withdraw</Button>
-                                <Button size="sm" variant="ghost" className="w-full py-1 text-[11px]" onClick={() => directWithdraw(BigInt(key))}>Direct Withdraw</Button>
+                              <div className="mt-2 flex flex-col sm:grid sm:grid-cols-2 gap-2">
+                                <Button size="sm" variant="outline" className="w-full py-2 text-xs" onClick={() => unstakeNft(BigInt(key))}>
+                                  <span className="hidden sm:inline">Unstake + Withdraw</span>
+                                  <span className="sm:hidden">Unstake</span>
+                                </Button>
+                                <Button size="sm" variant="ghost" className="w-full py-2 text-xs" onClick={() => directWithdraw(BigInt(key))}>
+                                  <span className="hidden sm:inline">Direct Withdraw</span>
+                                  <span className="sm:hidden">Withdraw</span>
+                                </Button>
                               </div>
                             </div>
                           );
@@ -650,23 +632,6 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
                 </div>
                );
             })()}
-
-            {positions.length === 0 && poolTokens && (
-              <div className="mt-8 p-6 bg-slate-900/40 border border-slate-700/30 rounded-xl flex flex-col items-center justify-center text-center">
-                <div className="text-gray-300 text-sm mb-4">
-                  No eligible liquidity found. You can supply liquidity here.
-                </div>
-                <Button 
-                  variant="default" 
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                  onClick={() => {
-                    window.open(`/swap?input=${poolTokens.token0}&output=${poolTokens.token1}&tab=liquidity`, '_blank');
-                  }}
-                >
-                  Supply Liquidity
-                </Button>
-              </div>
-            )}
           </div>
         </div>
       </DialogContent>
