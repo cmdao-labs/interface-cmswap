@@ -586,7 +586,7 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
                             <div className="mt-1 text-[10px] text-gray-400">Fee: {d?.fee ?? '-'}</div>
                             <div className="mt-1 text-[10px] text-gray-400">Current: {d?.currentTick ?? '-'} | Min: {d?.tickLower ?? '-'} | Max: {d?.tickUpper ?? '-'}</div>
                             <div className="mt-2">
-                              <Button size="sm" className="w-full py-1 text-[11px]" onClick={() => stakeNft(BigInt(key))}>Stake</Button>
+                              <Button size="sm" className="w-full py-2 text-xs sm:text-sm" onClick={() => stakeNft(BigInt(key))}>Stake</Button>
                             </div>
                           </div>
                         );
@@ -613,9 +613,15 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
                               <div className="mt-1 text-[10px] text-gray-400">Fee: {d?.fee ?? '-'}</div>
                               <div className="mt-1 text-[10px] text-gray-400">Current: {d?.currentTick ?? '-'} | Min: {d?.tickLower ?? '-'} | Max: {d?.tickUpper ?? '-'}</div>
                               <div className="mt-1 text-[10px] text-emerald-400">Pending reward: {pct.toFixed(2)}%</div>
-                              <div className="mt-2 grid grid-cols-2 gap-2">
-                                <Button size="sm" variant="outline" className="w-full py-1 text-[11px]" onClick={() => unstakeNft(BigInt(key))}>Unstake + Withdraw</Button>
-                                <Button size="sm" variant="ghost" className="w-full py-1 text-[11px]" onClick={() => directWithdraw(BigInt(key))}>Direct Withdraw</Button>
+                              <div className="mt-2 flex flex-col sm:grid sm:grid-cols-2 gap-2">
+                                <Button size="sm" variant="outline" className="w-full py-2 text-xs" onClick={() => unstakeNft(BigInt(key))}>
+                                  <span className="hidden sm:inline">Unstake + Withdraw</span>
+                                  <span className="sm:hidden">Unstake</span>
+                                </Button>
+                                <Button size="sm" variant="ghost" className="w-full py-2 text-xs" onClick={() => directWithdraw(BigInt(key))}>
+                                  <span className="hidden sm:inline">Direct Withdraw</span>
+                                  <span className="sm:hidden">Withdraw</span>
+                                </Button>
                               </div>
                             </div>
                           );
