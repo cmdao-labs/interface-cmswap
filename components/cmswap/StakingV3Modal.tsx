@@ -45,7 +45,6 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
   const [incentiveExists, setIncentiveExists] = React.useState<boolean | null>(null);
   const [totalRewardAmount, setTotalRewardAmount] = React.useState<bigint>(BigInt(0));
   const [now, setNow] = React.useState(Math.floor(Date.now() / 1000));
-  const [poolTokens, setPoolTokens] = React.useState<{ token0: string; token1: string } | null>(null);
 
   React.useEffect(() => {
     const interval = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
@@ -430,29 +429,6 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
   }, [open, positions, stakedPositions]);
 
   React.useEffect(() => {
-    const fetchPoolTokens = async () => {
-      if (!EFFECTIVE_POOL) return;
-      try {
-        const [t0, t1] = await readContracts(config, {
-          contracts: [
-            { ...v3PoolABI, address: EFFECTIVE_POOL, functionName: 'token0' },
-            { ...v3PoolABI, address: EFFECTIVE_POOL, functionName: 'token1' },
-          ]
-        });
-        if (t0.status === 'success' && t1.status === 'success') {
-          setPoolTokens({
-            token0: String(t0.result),
-            token1: String(t1.result)
-          });
-        }
-      } catch (e) {
-        console.error('Failed to fetch pool tokens', e);
-      }
-    };
-    if (open) fetchPoolTokens();
-  }, [open, EFFECTIVE_POOL]);
-
-  React.useEffect(() => {
     const fetchDetails = async () => {
       const allIds: bigint[] = Array.from(new Set([...(positions || []), ...(stakedPositions || [])]));
       if (allIds.length === 0) {
@@ -650,23 +626,6 @@ export default function StakingV3Modal({ open, onOpenChange, poolAddress, incent
                 </div>
                );
             })()}
-
-            {positions.length === 0 && poolTokens && (
-              <div className="mt-8 p-6 bg-slate-900/40 border border-slate-700/30 rounded-xl flex flex-col items-center justify-center text-center">
-                <div className="text-gray-300 text-sm mb-4">
-                  No eligible liquidity found. You can supply liquidity here.
-                </div>
-                <Button 
-                  variant="default" 
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                  onClick={() => {
-                    window.open(`/swap?input=${poolTokens.token0}&output=${poolTokens.token1}&tab=liquidity`, '_blank');
-                  }}
-                >
-                  Supply Liquidity
-                </Button>
-              </div>
-            )}
           </div>
         </div>
       </DialogContent>

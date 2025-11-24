@@ -791,56 +791,88 @@ const CreateEarnProgram = () => {
   };
 
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center mb-8">
-      {[
-        {
-          number: 1,
-          title: "Select Staking Type",
-          description: "Choose staking program type",
-        },
-        {
-          number: 2,
-          title: "Select Pool",
-          description: "Choose a liquidity pool",
-        },
-        {
-          number: 3,
-          title: "Add Reward",
-          description: "Set rewards and period",
-        },
-        { number: 4, title: "Review", description: "Confirm farm details" },
-      ].map((step, index, arr) => (
-        <div key={step.number} className="flex items-center">
-          <div
-            className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-              currentStep >= step.number
-                ? `${currentTheme.accent} ${currentTheme.bg}`
-                : ` ${currentTheme.border} ${currentTheme.hover}`
-            }`}
-          >
-            {currentStep > step.number ? (
-              <Check className={`w-5 h-5 ${currentTheme.text}`} />
-            ) : (
-              <span
-                className={`text-sm font-medium ${
-                  currentStep >= step.number
-                    ? currentTheme.text
-                    : "text-gray-400"
-                }`}
-              >
-                {step.number}
-              </span>
-            )}
-          </div>
-          {index < arr.length - 1 && (
+    <div className="mb-6 sm:mb-8">
+      {/* Mobile: Simple dots with current step info */}
+      <div className="sm:hidden">
+        <div className="text-center mb-3">
+          <p className="text-xs text-gray-400">
+            Step {currentStep} of 4
+          </p>
+          <p className="text-sm font-medium text-white mt-1">
+            {[
+              "Select Staking Type",
+              "Select Pool",
+              "Add Reward",
+              "Review"
+            ][currentStep - 1]}
+          </p>
+        </div>
+        <div className="flex items-center justify-center gap-2">
+          {[1, 2, 3, 4].map((step) => (
             <div
-              className={`w-16 h-0.5 mx-4 ${
-                currentStep > step.number ? currentTheme.accent : "bg-gray-600"
+              key={step}
+              className={`h-2 rounded-full transition-all ${
+                currentStep >= step
+                  ? `bg-gradient-to-r from-emerald-400 to-green-500 w-8 shadow-lg shadow-emerald-500/50`
+                  : "bg-gray-700 w-2"
               }`}
             />
-          )}
+          ))}
         </div>
-      ))}
+      </div>
+
+      {/* Desktop: Full step indicator */}
+      <div className="hidden sm:flex items-center justify-center">
+        {[
+          {
+            number: 1,
+            title: "Select Staking Type",
+            description: "Choose staking program type",
+          },
+          {
+            number: 2,
+            title: "Select Pool",
+            description: "Choose a liquidity pool",
+          },
+          {
+            number: 3,
+            title: "Add Reward",
+            description: "Set rewards and period",
+          },
+          { number: 4, title: "Review", description: "Confirm farm details" },
+        ].map((step, index, arr) => (
+          <div key={step.number} className="flex items-center">
+            <div
+              className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+                currentStep >= step.number
+                  ? `${currentTheme.accent} ${currentTheme.bg}`
+                  : ` ${currentTheme.border} ${currentTheme.hover}`
+              }`}
+            >
+              {currentStep > step.number ? (
+                <Check className={`w-5 h-5 ${currentTheme.text}`} />
+              ) : (
+                <span
+                  className={`text-sm font-medium ${
+                    currentStep >= step.number
+                      ? currentTheme.text
+                      : "text-gray-400"
+                  }`}
+                >
+                  {step.number}
+                </span>
+              )}
+            </div>
+            {index < arr.length - 1 && (
+              <div
+                className={`w-16 h-0.5 mx-4 ${
+                  currentStep > step.number ? currentTheme.accent : "bg-gray-600"
+                }`}
+              />
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 
